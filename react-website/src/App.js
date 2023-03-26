@@ -1,11 +1,14 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route} from 'react-router-dom';
+
 import {auth} from './Firebase/firebase'
 import {onAuthStateChanged} from 'firebase/auth'
 import { AuthProvider } from './Firebase/AuthContext';
+
 import './App.css';
 import Navbar from './components/Navbar';
-import { BrowserRouter as Router, Routes, Route} from 'react-router-dom';
+
 import PrivateRoute from './PrivateRoute';
 import SignUp from './pages/signup';
 import VerifyEmail from './pages/verifyEmail';

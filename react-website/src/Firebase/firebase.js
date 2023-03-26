@@ -2,6 +2,8 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import {getAuth} from 'firebase/auth';
+import { getDatabase } from "firebase/database";
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -14,12 +16,14 @@ const firebaseConfig = {
   storageBucket: "structuredcreativeplanning.appspot.com",
   messagingSenderId: "626832906767",
   appId: "1:626832906767:web:caf2aa99f077227a26e17a",
-  measurementId: "G-PPL8YEET14"
+  measurementId: "G-PPL8YEET14",
+  databaseURL: "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
-const auth = getAuth(app)
+export const auth = getAuth(app)
+export const database = getDatabase(app)
 
-export {auth}
+export default {app}
