@@ -10,6 +10,7 @@ import PrivateRoute from './PrivateRoute';
 import SignUp from './pages/signup';
 import VerifyEmail from './pages/verifyEmail';
 import Profile from './pages/profile';
+import Login from './pages/Login';
   
 function App() {
 
@@ -28,6 +29,7 @@ return (
             <Navbar />
             <Routes>
                 <Route path='/sign-up' element={<SignUp/>} />
+                <Route path='/login' element={<Login/>} />
                 <Route path='/verify-email' element={<VerifyEmail/>} />
                 <Route path='/profile' element={<Profile/>} />
                 <Route exact path='/' element={

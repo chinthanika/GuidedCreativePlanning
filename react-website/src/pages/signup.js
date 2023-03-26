@@ -72,11 +72,11 @@ function SignUp() {
             placeholder='Confirm password'
             onChange={e => setConfirmPassword(e.target.value)}/>
 
-          <button type='submit'>Register</button>
+          <button type='submit'>Sign Up</button>
         </form>
         <span>
           Already have an account?  
-          <Link to='/login'>login</Link>
+          <Link to='/login'>Sign In.</Link>
         </span>
       </div>
     </div>
