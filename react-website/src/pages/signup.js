@@ -1,9 +1,11 @@
-import {useState} from 'react'
+import { useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+
+import { auth } from '../Firebase/firebase'
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
+import { useAuthValue } from '../Firebase/AuthContext.js'
+
 import '../forms.css'
-import {auth} from '../Firebase/firebase'
-import {useNavigate, Link} from 'react-router-dom'
-import {createUserWithEmailAndPassword, sendEmailVerification} from 'firebase/auth'
-import {useAuthValue} from '../Firebase/AuthContext.js'
 
 function SignUp() {
 
@@ -12,11 +14,19 @@ function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
-  const {setTimeActive} = useAuthValue()
+  const { setTimeActive } = useAuthValue()
 
+  //Validate password through double-entry
+
+  /*Returns 
+  * isValid : Boolean
+  */
   const validatePassword = () => {
+
     let isValid = true
-    if (password !== '' && confirmPassword !== ''){
+
+    if (password !== '' && confirmPassword !== '') {
+
       if (password !== confirmPassword) {
         isValid = false
         setError('Passwords does not match')
@@ -26,17 +36,24 @@ function SignUp() {
   }
 
   const register = e => {
+
     e.preventDefault()
     setError('')
-    if(validatePassword()) {
+    
+    if (validatePassword()) {
+
       // Create a new user with email and password using firebase
-        createUserWithEmailAndPassword(auth, email, password)
+      createUserWithEmailAndPassword(auth, email, password)
+
+        //When the user has signed up, send a verification message to their email then
+        //navigate to the email verification page.
         .then(() => {
-          sendEmailVerification(auth.currentUser)   
-          .then(() => {
-            setTimeActive(true)
-            navigate('/verify-email')
-          }).catch((err) => alert(err.message))
+          sendEmailVerification(auth.currentUser)
+            .then(() => {
+              setTimeActive(true)
+              navigate('/verify-email')
+            })
+            .catch((err) => alert(err.message))
         })
         .catch(err => setError(err.message))
     }
@@ -51,31 +68,31 @@ function SignUp() {
         <h1>Register</h1>
         {error && <div className='auth__error'>{error}</div>}
         <form onSubmit={register} name='registration_form'>
-          <input 
-            type='email' 
+          <input
+            type='email'
             value={email}
             placeholder="Enter your email"
             required
-            onChange={e => setEmail(e.target.value)}/>
+            onChange={e => setEmail(e.target.value)} />
 
-          <input 
+          <input
             type='password'
-            value={password} 
+            value={password}
             required
             placeholder='Enter your password'
-            onChange={e => setPassword(e.target.value)}/>
+            onChange={e => setPassword(e.target.value)} />
 
-            <input 
+          <input
             type='password'
-            value={confirmPassword} 
+            value={confirmPassword}
             required
             placeholder='Confirm password'
-            onChange={e => setConfirmPassword(e.target.value)}/>
+            onChange={e => setConfirmPassword(e.target.value)} />
 
           <button type='submit'>Sign Up</button>
         </form>
         <span>
-          Already have an account?  
+          Already have an account?
           <Link to='/login'>Sign In.</Link>
         </span>
       </div>
