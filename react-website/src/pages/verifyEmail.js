@@ -1,9 +1,12 @@
 import './verifyEmail.css'
 import {useAuthValue} from '../Firebase/AuthContext'
 import {useState, useEffect} from 'react'
-import {auth} from '../Firebase/firebase'
+import {auth, database} from '../Firebase/firebase'
 import {sendEmailVerification} from 'firebase/auth'
 import {useNavigate} from 'react-router-dom'
+import { ref, set } from "firebase/database"
+
+//function writeUser() {}
 
 function VerifyEmail() {
 
@@ -19,6 +22,9 @@ function VerifyEmail() {
         if(currentUser?.emailVerified){
           clearInterval(interval)
           navigate('/')
+          set(ref(database, 'users/' + currentUser.uid), {
+            email: currentUser.email
+          });
         }
       })
       .catch((err) => {
