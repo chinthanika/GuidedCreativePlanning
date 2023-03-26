@@ -3,7 +3,7 @@ import '../forms.css'
 import {auth} from '../Firebase/firebase'
 import {useNavigate, Link} from 'react-router-dom'
 import {createUserWithEmailAndPassword, sendEmailVerification} from 'firebase/auth'
-import {useAuthValue} from '../Firebase/AuthContext'
+import {useAuthValue} from '../Firebase/AuthContext.js'
 
 function SignUp() {
 
