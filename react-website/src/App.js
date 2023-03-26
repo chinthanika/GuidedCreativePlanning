@@ -6,6 +6,7 @@ import { AuthProvider } from './Firebase/AuthContext';
 import './App.css';
 import Navbar from './components/Navbar';
 import { BrowserRouter as Router, Routes, Route} from 'react-router-dom';
+import PrivateRoute from './PrivateRoute';
 import SignUp from './pages/signup';
 import VerifyEmail from './pages/verifyEmail';
 import Profile from './pages/profile';
@@ -29,7 +30,11 @@ return (
                 <Route path='/sign-up' element={<SignUp/>} />
                 <Route path='/verify-email' element={<VerifyEmail/>} />
                 <Route path='/profile' element={<Profile/>} />
-                <Route exact path='/' element={< Profile />} />
+                <Route exact path='/' element={
+                    <PrivateRoute>
+                    <Profile/>
+                    </PrivateRoute>
+                }/>
             </Routes>
         </AuthProvider>
     </Router>
