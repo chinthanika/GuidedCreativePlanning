@@ -26,7 +26,7 @@ return (
             <Navbar />
             <Routes>
                 <Route path='/sign-up' element={<SignUp/>} />
-                <Route path='/email-verification' element={<VerifyEmail/>} />
+                <Route path='/verify-email' element={<VerifyEmail/>} />
             </Routes>
         </AuthProvider>
     </Router>

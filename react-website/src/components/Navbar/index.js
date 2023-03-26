@@ -8,7 +8,7 @@ const Navbar = () => {
     <>
       <Nav>
         <NavMenu>
-          <NavLink to="/sign-up" activeStyle>
+          <NavLink to="/sign-up">
             Sign Up
           </NavLink>
         </NavMenu>
