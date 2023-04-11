@@ -17,6 +17,9 @@ const Navbar = () => {
           <NavLink to="/profile">
             Profile
           </NavLink>
+          <NavLink to="/new-story">
+            New Story
+          </NavLink>
         </NavMenu>
       </Nav>
     </>
