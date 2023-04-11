@@ -1,13 +1,25 @@
 import numpy as np
 import json
 import requests
+import spacy
+
+import re
+
+import pandas as pd
+
+import networkx as nx
+import matplotlib.pyplot as plt
+
 from flask import Flask, request, render_template
+from flask_cors import CORS
+
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 import math
 import torch
 import IPython
 
 app = Flask(__name__)
+CORS(app)
 
 tokenizer = AutoTokenizer.from_pretrained("Babelscape/rebel-large")
 model = AutoModelForSeq2SeqLM.from_pretrained("Babelscape/rebel-large")
@@ -143,19 +155,38 @@ def from_text_to_kb(text, span_length=128, verbose=False):
 
     return kb
 
+def clean_text(text):
+    cleaned = re.sub(r"[\(\[].*?[\)\]]", "", str(text))
+    return (cleaned)
+
 #If a user visits "/" the relationform is rendered
 @app.route('/')
 def show_relation_form():
     return render_template('relationform.html')
 
-@app.route('/',methods=['GET', 'POST'])
+@app.route('/characters',methods=['GET', 'POST'])
 def predict():
     # Get the data from the POST request.
-    text = request.form.get("text", False)
-    
-    # Make prediction using model loaded from disk as per the data.
-    prediction = from_text_to_kb(text, verbose=True)
+    text = request.get_json("text")
+
+    nlp_text = clean_text(text)
+
+    #Find all the characters in the text
+    people = []
+    nlp = spacy.load("backend\hp_ner_model")
+    doc = nlp(nlp_text)
+    for ent in doc.ents:
+        if not ent in people:
+            people.append(ent)
+            print(ent)
+
+    # Extract the relationships in the text
+    prediction = from_text_to_kb(str(text), verbose=True)
+
     prediction = prediction.json_convert()
+
+    relations = json.loads(prediction)
+    print(relations)
 
     return prediction
 
