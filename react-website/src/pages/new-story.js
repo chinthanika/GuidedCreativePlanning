@@ -46,7 +46,7 @@ function NewStory() {
 
         let nodeId = 0;
         nodes.forEach(node => {
-            nodeMap.set(node, { id: nodeId, name: node });
+            nodeMap.set(node, { id: node});
             nodeId++;
         });
 
