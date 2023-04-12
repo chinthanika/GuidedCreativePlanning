@@ -3,7 +3,6 @@ import {useAuthValue} from '../Firebase/AuthContext'
 import { signOut } from 'firebase/auth' 
 import { auth } from '../Firebase/firebase'
 
-
 function Profile() {
   const {currentUser} = useAuthValue()
 
