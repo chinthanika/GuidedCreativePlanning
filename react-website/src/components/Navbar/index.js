@@ -20,6 +20,9 @@ const Navbar = () => {
           <NavLink to="/new-story">
             New Story
           </NavLink>
+          {/* <NavLink to="/character-map">
+            Character Map
+          </NavLink> */}
         </NavMenu>
       </Nav>
     </>

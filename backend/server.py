@@ -172,13 +172,13 @@ def predict():
     nlp_text = clean_text(text)
 
     #Find all the characters in the text
-    people = []
-    nlp = spacy.load("backend\hp_ner_model")
-    doc = nlp(nlp_text)
-    for ent in doc.ents:
-        if not ent in people:
-            people.append(ent)
-            print(ent)
+    # people = []
+    # nlp = spacy.load("backend\hp_ner_model")
+    # doc = nlp(nlp_text)
+    # for ent in doc.ents:
+    #     if not ent in people:
+    #         people.append(ent)
+    #         print(ent)
 
     # Extract the relationships in the text
     prediction = from_text_to_kb(str(text), verbose=True)
