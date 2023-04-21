@@ -129,8 +129,6 @@ function CharacterMap() {
     // Convert the set of links back to an array
     const flattenedLinks = Array.from(links, (link) => JSON.parse(link));
 
-    console.log(nodes, flattenedLinks);
-
     return { nodes, links: flattenedLinks };
   };
 
