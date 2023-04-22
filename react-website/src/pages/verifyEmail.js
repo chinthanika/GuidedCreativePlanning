@@ -29,7 +29,8 @@ function VerifyEmail() {
             navigate('/')
 
             set(ref(database, 'users/' + currentUser.uid), {
-              email: currentUser.email
+              email: currentUser.email,
+              uid: currentUser.uid
             });
           }
         })
