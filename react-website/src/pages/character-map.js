@@ -3,7 +3,7 @@ import ForceGraph2D from 'react-force-graph-2d'; // Import a third-party library
 import axios from 'axios'; // Import a third-party library for making HTTP requests
 
 import 'firebase/database'; // Import the Firebase Realtime Database
-import { set, ref, onValue, get, child } from "firebase/database"; // Import database functions from Firebase
+import { set, ref, onValue, orderByChild, equalTo, query, update } from "firebase/database"; // Import database functions from Firebase
 import { DatabaseReference } from 'firebase/database';
 
 import { useAuthValue } from '../Firebase/AuthContext'; // Import a custom hook for accessing Firebase authentication
@@ -73,6 +73,17 @@ function CharacterMap() {
       }),
       links: data.links,
     };
+
+    const nodeRef = ref(database, `stories/${userId}/graph/nodes`);
+    const q = query(nodeRef, orderByChild("id"), equalTo(selectedNode.id));
+
+    onValue(q, (snapshot) => {
+      snapshot.forEach((childSnapshot) => {
+        const nodeKey = childSnapshot.key;
+        update(ref(database, `stories/${userId}/graph/nodes/${nodeKey}`), { text: textInput });
+      });
+    });
+
     setData(updatedData);
   }, [data, selectedNode, textInput]);
 
