@@ -12,6 +12,7 @@ import { database } from '../Firebase/firebase'; // Import the Firebase configur
 import SpriteText from 'three-spritetext'
 
 import Graph from '../components/Graph'
+import { updatePassword } from 'firebase/auth';
 
 function CharacterMap() {
   const { currentUser } = useAuthValue(); // Get the current user from Firebase authentication
@@ -120,43 +121,47 @@ function CharacterMap() {
     const nodes = new Map();
     const links = new Set();
     const visited = new Set();
-
+  
     const getLinks = (nodeId) => {
       return data.links.filter((link) => link.source === nodeId && !visited.has(link.target));
     };
-
+  
     const isTwoWayLinked = (link1, link2) => {
       return link1.source === link2.target && link1.target === link2.source;
     };
-
+  
     const removeLink = (linkToRemove) => {
       data.links.splice(data.links.findIndex((link) => link === linkToRemove), 1);
     };
-
+  
     const rootNodeNames = new Set(data.nodes.map(node => node.id));
     data.links.forEach(link => {
-      rootNodeNames.delete(link.target);
-      if (data.links.some((l) => isTwoWayLinked(link, l))) {
-        rootNodeNames.add(link.source);
-        removeLink(data.links.find((l) => isTwoWayLinked(link, l) && l.source !== link.source));
+      if (!data.nodes.some(node => node.id === link.source) || !data.nodes.some(node => node.id === link.target)) {
+        removeLink(link);
+      } else {
+        rootNodeNames.delete(link.target);
+        if (data.links.some((l) => isTwoWayLinked(link, l))) {
+          rootNodeNames.add(link.source);
+          removeLink(data.links.find((l) => isTwoWayLinked(link, l) && l.source !== link.source));
+        }
       }
     });
-
+  
     const queue = Array.from(rootNodeNames, rootNodeName => ({ id: rootNodeName, level: 1 }));
     while (queue.length > 0) {
       const { id, level } = queue.shift();
       visited.add(id);
-
+  
       const children = getLinks(id);
       const childNodes = children.map((link) => ({ id: link.target, level: level + 1 }));
       queue.push(...childNodes);
-
+  
       if (!nodes.has(id)) {
         nodes.set(id, level);
       } else if (nodes.get(id) > level) {
         nodes.set(id, level);
       }
-
+  
       children.forEach((link) => {
         if (visited.has(link.target)) {
           links.add(JSON.stringify({ link: link.link, source: link.source, target: link.target }));
@@ -165,19 +170,19 @@ function CharacterMap() {
         }
       });
     }
-
+  
     // Convert the set of links back to an array
     const flattenedLinks = Array.from(links, (link) => JSON.parse(link));
-
+  
     // Build a mapping of node IDs to their assigned levels
     const nodeLevels = {};
     nodes.forEach((level, id) => {
       nodeLevels[id] = level;
     });
-
+  
     // Build the final list of nodes with text attribute added
     const finalNodes = data.nodes.filter((node) => nodes.has(node.id)).map((node) => ({ id: node.id, level: nodes.get(node.id), text: node.text || "" }));
-
+  
     return { nodes: finalNodes, links: flattenedLinks };
   };
 
@@ -248,7 +253,7 @@ function CharacterMap() {
               <textarea
                 type="text"
                 value={textInput}
-                placeholder={`This is where you can enter the details about the ${selectedNode?.id} node.`}
+                placeholder={`This is where you can enter the details about ${selectedNode?.id}.`}
                 onChange={(e) => {
                   setTextInput((prevTextInput) => e.target.value);
                   console.log(textInput)

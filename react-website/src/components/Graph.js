@@ -26,7 +26,7 @@ const Graph = ({ data, getNodeSize, handleNodeClick }) => {
       }}
       onNodeClick={handleNodeClick}
     />
-    <NodeTable nodes={data.nodes} links={data.links} />
+    <NodeTable nodes={data.nodes} />
     <LinkTable links={data.links} nodes={data.nodes} />
     </div>
     

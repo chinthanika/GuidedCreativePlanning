@@ -47,8 +47,6 @@ function LinkTable({ links, nodes }) {
 
     const { currentUser } = useAuthValue()
 
-    console.log(links)
-
     // Creating style object
     const classes = useStyles();
 
@@ -76,7 +74,6 @@ function LinkTable({ links, nodes }) {
             id: index + 1
         }));
         setRows(newRows);
-        console.log(rows)
     }, [links]);
 
     // Initial states
@@ -118,7 +115,6 @@ function LinkTable({ links, nodes }) {
     const handleSave = () => {
         setEdit(!isEdit);
         setRows(rows);
-        console.log("saved : ", rows);
         setDisable(true);
         setOpen(true);
 
@@ -127,7 +123,7 @@ function LinkTable({ links, nodes }) {
             set(ref(database, `stories/${currentUser.uid}/graph/links/${(row.id - 1)}`), {
                 source: row.source,
                 link: row.link,
-                target: row.target
+                target: row.target,
             });
         });
     };
@@ -173,12 +169,9 @@ function LinkTable({ links, nodes }) {
     // Handle the case of delete confirmation where 
     // user click yes delete a specific row of id:i
     const handleRemoveClick = () => {
-        console.log(rowToDelete)
         const list = [...rows];
         list.splice(rowToDelete - 1, 1);
-        console.log(list)
         setRows(list);
-        console.log(rows)
         setShowConfirm(false);
 
         set(ref(database, `stories/${currentUser.uid}/graph/links/${(rowToDelete - 1)}`), null);

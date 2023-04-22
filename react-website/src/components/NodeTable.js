@@ -43,7 +43,7 @@ const useStyles = makeStyles({
 });
 
 
-function NodeTable({ nodes, links }) {
+function NodeTable({ nodes }) {
 
     const { currentUser } = useAuthValue()
 
@@ -143,13 +143,6 @@ function NodeTable({ nodes, links }) {
         list.splice(rowToDelete - 1, 1);
         setRows(list);
         setShowConfirm(false);
-
-        links.forEach((link, index) => {
-            console.log(rowToDelete.name)
-            if (link.source === rowToDelete.name || link.target === rowToDelete.name) {
-              remove(ref(database, `stories/${currentUser.uid}/graph/links/${index}`));
-            }
-        })
 
         remove(ref(database, `stories/${currentUser.uid}/graph/nodes/${(rowToDelete - 1)}`));
     };
