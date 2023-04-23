@@ -1,0 +1,161 @@
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+.draggable-container {
+  width: 20rem;
+  height: 100%;
+}
+
+.MDBContainer {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.horizontal-timeline {
+  overflow-x: hidden;
+  overflow-y: hidden;
+  white-space: nowrap;
+  position: relative;
+  flex-grow: 1;
+  padding-bottom: 33rem;
+}
+
+.horizontal-timeline .items .items-list {
+  display: inline-flex;
+  position: relative;
+  text-align: center;
+  padding-top: 100px;
+  margin-right: 0;
+  white-space: normal;
+}
+
+.horizontal-timeline .items .items-list:before {
+  content: "";
+  position: absolute;
+  height: 50px;
+  border-right: 2px dashed #dee2e6;
+  top: 0;
+}
+
+.horizontal-timeline .items .items-list:last-child:before {
+  content: "";
+  position: absolute;
+  height: 100px;
+  border-right: 2px dashed #dee2e6;
+  top: 0;
+}
+
+.horizontal-timeline .items .items-list .circle {
+  position: relative;
+  left: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background-color: #dee2e6;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.horizontal-timeline .items .items-list .circle.main-event {
+  position: relative;
+  left: 0;
+  right: 0;
+  width: 300px;
+  height: 300px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background-color: #dee2e6;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.horizontal-timeline .items .items-list .event-date {
+  font-size: 0.9rem;
+}
+
+.horizontal-timeline .items .items-list .description-container {
+  position: absolute;
+  top: 350px;
+  left: 50%;
+  width: 400px;
+  margin-left: -200px;
+  padding: 1rem;
+  padding-top: 5rem;
+}
+
+.delete-event-btn {
+  margin-left: 10px; /* Add a margin to separate it from the Add Event button */
+}
+
+.circle.deleting {
+  cursor: pointer;
+}
+
+.delete-x {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: red;
+  color: white;
+  font-weight: bold;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+  line-height: 16px;
+}
+
+.horizontal-timeline .items .items-list .add-event-btn {
+  position: relative;
+  top: 50px;
+  margin: 0 auto;
+  white-space: nowrap;
+  padding-top: 0px;
+}
+
+
+
+@media (min-width: 1140px) {
+  .horizontal-timeline .items .items-list {
+      display: inline-block;
+      width: 24%;
+      padding-top: 45px;
+  }
+
+  .horizontal-timeline .items .items-list .circle {
+      position: relative;
+      top: 50px;
+      left: 0;
+      right: 0;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto;
+      border-radius: 50%;
+      background-color: #dee2e6;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+  }
+
+  .draggable-container {
+    display: inline-flex;
+    align-items: center;
+    width: 20%;
+    height: 100%;
+  }
+
+}

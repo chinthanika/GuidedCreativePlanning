@@ -92,4 +92,4 @@ function NewStory() {
     );
 }
 
-export default NewStory
+export default NewStory;
