@@ -23,6 +23,9 @@ const Navbar = () => {
           <NavLink to="/character-map">
             Character Map
           </NavLink>
+          <NavLink to="/story-timeline">
+            Timeline
+          </NavLink>
         </NavMenu>
       </Nav>
     </>

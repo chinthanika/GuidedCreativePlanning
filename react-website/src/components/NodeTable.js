@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 
-import firebase from 'firebase/app'
 import 'firebase/database'
 
 import { useAuthValue } from '../Firebase/AuthContext'
@@ -55,7 +54,7 @@ function NodeTable({ nodes }) {
     // Defining a state named rows
     // which we can update by calling on setRows function
     const [rows, setRows] = useState([
-        { id: 1, name: "", level: 0, },
+        { id: 1, name: "", level: 1, },
     ]);
 
     useEffect(() => {

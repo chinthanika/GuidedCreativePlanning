@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 
-import firebase from 'firebase/app'
 import 'firebase/database'
 
 import { useAuthValue } from '../Firebase/AuthContext'
 import { database } from '../Firebase/firebase'
-import { ref, set, remove } from "firebase/database"
+import { ref, set } from "firebase/database"
 
 import CreateIcon from "@material-ui/icons/Create";
 import {

@@ -5,6 +5,7 @@ import SpriteText from "three-spritetext";
 import NodeTable from './NodeTable'
 import LinkTable from './LinkTable'
 
+//Return the Force Graph Component
 const Graph = ({ data, getNodeSize, handleNodeClick }) => {
   return (
     <div>

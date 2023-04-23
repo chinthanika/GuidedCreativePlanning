@@ -16,6 +16,7 @@ import Profile from './pages/profile';
 import Login from './pages/login';
 import NewStory from './pages/new-story';
 import CharacterMap from './pages/character-map';
+import StoryTimeline from './pages/timeline';
   
 function App() {
 
@@ -41,6 +42,7 @@ return (
                 <Route path='/profile' element={<Profile/>} />
                 <Route path='/new-story' element={<NewStory/>}/>
                 <Route path='/character-map' element={<CharacterMap/>}/>
+                <Route path='/story-timeline' element={<StoryTimeline/>}/>
                 <Route exact path='/' element={
                     <PrivateRoute>
                     <Profile/>
