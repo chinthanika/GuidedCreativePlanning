@@ -3,7 +3,7 @@ import React from 'react';
 import firebase from 'firebase/app';
 import 'firebase/database';
 
-import TextEditor from '../components/TextEditor';
+import TextEditor from '../../components/TextEditor';
 import "./story.css"
 
 function StoryEditor() {

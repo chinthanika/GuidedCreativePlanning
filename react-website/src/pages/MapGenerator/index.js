@@ -5,8 +5,8 @@ import firebase from 'firebase/app'
 import 'firebase/database'
 import axios from 'axios'
 
-import { useAuthValue } from '../Firebase/AuthContext'
-import { database } from '../Firebase/firebase'
+import { useAuthValue } from '../../Firebase/AuthContext'
+import { database } from '../../Firebase/firebase';
 import { ref, set, get } from "firebase/database"
 
 function MapGenerator() {

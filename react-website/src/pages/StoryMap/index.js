@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback } from 'react'; // Import React hooks 
 
 import 'firebase/database'; // Import the Firebase Realtime Database
 import { set, ref, onValue, orderByChild, equalTo, query, update } from "firebase/database"; // Import database functions from Firebase
-import { useAuthValue } from '../Firebase/AuthContext'; // Import a custom hook for accessing Firebase authentication
-import { database } from '../Firebase/firebase'; // Import the Firebase configuration and initialize the Firebase app
+import { useAuthValue } from '../../Firebase/AuthContext'; // Import a custom hook for accessing Firebase authentication
+import { database } from '../../Firebase/firebase'; // Import the Firebase configuration and initialize the Firebase app
 
-import Graph from '../components/Graph';
+import Graph from '../../components/Graph'
 
 function StoryMap() {
   const { currentUser } = useAuthValue(); // Get the current user from Firebase authentication
