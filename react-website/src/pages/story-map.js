@@ -7,7 +7,7 @@ import { database } from '../Firebase/firebase'; // Import the Firebase configur
 
 import Graph from '../components/Graph';
 
-function CharacterMap() {
+function StoryMap() {
   const { currentUser } = useAuthValue(); // Get the current user from Firebase authentication
 
   const userId = currentUser ? currentUser.uid : null;
@@ -16,7 +16,12 @@ function CharacterMap() {
   // Initialize empty nodes and links arrays
   var nodes = [
     {
-      id: "Unknown",
+      id: "Unknown1",
+      level: 1,
+      text: ""
+    },
+    {
+      id: "Unknown2",
       level: 1,
       text: ""
     }
@@ -24,8 +29,8 @@ function CharacterMap() {
   var links = [
     {
       link: "Unknown",
-      source: "Unknown",
-      target: "Unknown"
+      source: "Unknown1",
+      target: "Unknown2"
     }
   ];
 
@@ -293,4 +298,4 @@ function CharacterMap() {
     </div>
   );
 }
-export default CharacterMap;
+export default StoryMap;

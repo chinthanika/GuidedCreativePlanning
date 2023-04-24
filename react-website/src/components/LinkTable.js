@@ -15,6 +15,7 @@ import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import AddBoxIcon from "@material-ui/icons/AddBox";
 import DoneIcon from "@material-ui/icons/Done";
 import ClearIcon from "@material-ui/icons/Clear";
+import CancelIcon from '@material-ui/icons/Cancel';
 
 import { makeStyles } from "@material-ui/core/styles";
 
@@ -81,6 +82,17 @@ function LinkTable({ links, nodes }) {
     const [disable, setDisable] = React.useState(true);
     const [showConfirm, setShowConfirm] = React.useState(false);
 
+    const [originalRows, setOriginalRows] = useState([]);
+
+    useEffect(() => {
+        setOriginalRows(rows);
+    }, [rows]);
+
+    const handleCancel = () => {
+        setRows(originalRows);
+        setEdit(false);
+    };
+
     // Function For closing the alert snackbar
     const handleClose = (event, reason) => {
         if (reason === "clickaway") {
@@ -120,9 +132,9 @@ function LinkTable({ links, nodes }) {
         // update Firebase database
         rows.forEach((row) => {
             set(ref(database, `stories/${currentUser.uid}/graph/links/${(row.id - 1)}`), {
-                source: row.source,
-                link: row.link,
-                target: row.target,
+                source: row.source.trim(),
+                link: row.link.trim(),
+                target: row.target.trim(),
             });
         });
     };
@@ -216,6 +228,10 @@ function LinkTable({ links, nodes }) {
                                                 SAVE
                                             </Button>
                                         )}
+                                        <Button onClick={handleCancel}>
+                                            <CancelIcon />
+                                            CANCEL
+                                        </Button>
                                     </div>
                                 )}
                             </div>
@@ -229,11 +245,12 @@ function LinkTable({ links, nodes }) {
                                     <CreateIcon />
                                     EDIT
                                 </Button>
+
                             </div>
                         )}
                     </div>
                 </div>
-                <TableRow align="center"> </TableRow>
+                <TableRow align="center"></TableRow>
 
                 <Table
                     className={classes.table}
@@ -242,22 +259,22 @@ function LinkTable({ links, nodes }) {
                 >
                     <caption>Links</caption>
                     <TableHead>
-                        <TableRow>
+                        <TableRow key="TableRow">
                             <TableCell align="left">ID</TableCell>
                             <TableCell align="center">Source</TableCell>
                             <TableCell align="center">Link</TableCell>
                             <TableCell align="center">Target</TableCell>
-                            <TableCell align="center"> Delete </TableCell>
+                            <TableCell align="center">Delete</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {rows.map((row, i) => {
                             return (
                                 <div>
-                                    <TableRow >
+                                    <TableRow key={i}>
                                         {isEdit ? (
                                             <div>
-                                                <TableCell padding="none">
+                                                <TableCell padding="none" key={`edit-source-${i}`}>
                                                     <select
                                                         style={{ width: "100px" }}
                                                         name="source"
@@ -268,14 +285,14 @@ function LinkTable({ links, nodes }) {
                                                         {nodes.map(nodes => <option>{nodes.id}</option>)}
                                                     </select>
                                                 </TableCell>
-                                                <TableCell padding="none" align="center">
+                                                <TableCell padding="none" align="center" key={`edit-link-${i}`}>
                                                     <input
                                                         value={row.link}
                                                         name="link"
                                                         onChange={(e) => handleInputChange(e, i)}
                                                     />
                                                 </TableCell>
-                                                <TableCell padding="none">
+                                                <TableCell padding="none" key={`edit-target-${i}`}>
                                                     <select
                                                         style={{ width: "100px" }}
                                                         name="target"
@@ -289,19 +306,19 @@ function LinkTable({ links, nodes }) {
                                             </div>
                                         ) : (
                                             <div>
-                                                <TableCell scope="row" align="left">
+                                                <TableCell scope="row" align="left" key={`id-${i}`}>
                                                     {row.id}
                                                 </TableCell>
-                                                <TableCell scope="row" align="center">
+                                                <TableCell scope="row" align="center" key={`source-${i}`}>
                                                     {row.source}
                                                 </TableCell>
-                                                <TableCell scope="row" align="center">
+                                                <TableCell scope="row" align="center" key={`link-${i}`}>
                                                     {row.link}
                                                 </TableCell>
-                                                <TableCell scope="row" align="center">
+                                                <TableCell scope="row" align="center" key={`target-${i}`}>
                                                     {row.target}
                                                 </TableCell>
-                                                <TableCell scope="row" align="center">
+                                                <TableCell scope="row" align="center" key={`buttons-${i}`}>
                                                     {isEdit ? (
                                                         <Button className="mr10" onClick={handleConfirm}>
                                                             <ClearIcon />
