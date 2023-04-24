@@ -81,6 +81,7 @@ function StoryMap() {
 
   // Handle node click
   const handleNodeClick = useCallback((node) => {
+    console.log('Node clicked:', node);
     if (!node) {
       return;
     }
