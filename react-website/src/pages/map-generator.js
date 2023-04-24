@@ -10,7 +10,7 @@ import { database } from '../Firebase/firebase'
 import { ref, set, get } from "firebase/database"
 
 function MapGenerator() {
-    const url = 'http://localhost:5000/characters';
+    const url = 'https://guided-creative-planning.herokuapp.com/api/characters';
 
     const { currentUser } = useAuthValue()
     const [text, setText] = useState('')
@@ -21,6 +21,9 @@ function MapGenerator() {
         setIsLoading(true);
       
         const summaryRef = ref(database, `stories/${currentUser.uid}/summary`);
+
+        console.log(currentUser.uid)
+
         const snapshot = await get(summaryRef);
       
         if (!snapshot.exists()) {
