@@ -164,7 +164,7 @@ def predict():
     nlp_text = clean_text(text)
 
     # Extract the relationships in the text
-    prediction = from_text_to_kb(str(text), verbose=True)
+    prediction = from_text_to_kb(str(nlp_text), verbose=True)
 
     try:
         import orjson as json
