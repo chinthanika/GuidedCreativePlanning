@@ -1,1 +1,12 @@
 node_modules
+
+__pycache__/
+venv/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+*.egg-info/
+dist/
+build/
+*.sqlite3
