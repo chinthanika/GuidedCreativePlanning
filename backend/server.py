@@ -1,5 +1,3 @@
-
-
 import json
 import re
 
@@ -21,8 +19,8 @@ def show_relation_form():
 def predict():
     from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
     
-    tokenizer = AutoTokenizer.from_pretrained("Babelscape/rebel-large")
-    model = AutoModelForSeq2SeqLM.from_pretrained("Babelscape/rebel-large")
+    tokenizer = AutoTokenizer.from_pretrained("Babelscape/rebel-base")
+    model = AutoModelForSeq2SeqLM.from_pretrained("Babelscape/rebel-base")
 
     def extract_relations_from_model_output(text):
         relations = []
@@ -178,4 +176,7 @@ def predict():
     relations = json.loads(prediction)
     print(relations)
 
-    return predictio
+    return prediction
+
+if __name__ == '__main__':
+    app.run(threaded=False)
