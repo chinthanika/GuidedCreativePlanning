@@ -17,14 +17,17 @@ const Navbar = () => {
           <NavLink to="/profile">
             Profile
           </NavLink>
-          <NavLink to="/new-story">
-            New Story
+          <NavLink to="/map-generator">
+            Map Generator
           </NavLink>
-          <NavLink to="/character-map">
-            Character Map
+          <NavLink to="/story-map">
+            Story Map
           </NavLink>
           <NavLink to="/story-timeline">
             Timeline
+          </NavLink>
+          <NavLink to="/story-editor">
+            Story Editor
           </NavLink>
         </NavMenu>
       </Nav>

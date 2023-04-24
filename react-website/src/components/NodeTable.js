@@ -60,7 +60,7 @@ function NodeTable({ nodes }) {
     useEffect(() => {
         const newRows = nodes.map((node, index) => ({
             key: `node-${index + 1}`,
-            name: node.id,
+            name: node.id.trim(),
             level: node.level,
             id: index + 1,
         }));
@@ -203,7 +203,7 @@ function NodeTable({ nodes }) {
                         )}
                     </div>
                 </div>
-                <TableRow align="center"> </TableRow>
+                <TableRow align="center"></TableRow>
 
                 <Table
                     className={classes.table}
@@ -213,8 +213,8 @@ function NodeTable({ nodes }) {
                     <caption>Nodes</caption>
                     <TableHead>                       
                         <TableRow>
-                            <TableCell align="left" >ID</TableCell>
-                            <TableCell align="center" >Name</TableCell>
+                            <TableCell align="left">ID</TableCell>
+                            <TableCell align="center">Name</TableCell>
                             <TableCell align="center">Level</TableCell>
                             <TableCell align="center"> Delete </TableCell>
                         </TableRow>
@@ -223,36 +223,29 @@ function NodeTable({ nodes }) {
                         {rows.map((row, i) => {
                             return (
                                 <div>
-                                    <TableRow >
+                                    <TableRow key={i}>
                                         {isEdit ? (
                                             <div>
-                                                <TableCell padding="none" align="center">
+                                                <TableCell padding="none" align="center" key={`edit-name-${i}`}>
                                                     <input
                                                         value={row.name}
                                                         name="name"
                                                         onChange={(e) => handleInputChange(e, i)}
                                                     />
                                                 </TableCell>
-                                                <TableCell padding="none" align="center">
-                                                    <input
-                                                        value={row.level}
-                                                        name="level"
-                                                        onChange={(e) => handleInputChange(e, i)}
-                                                    />
-                                                </TableCell>
                                             </div>
                                         ) : (
                                             <div>
-                                                <TableCell scope="row" align="left">
+                                                <TableCell scope="row" align="left" key={`id-${i}`}>
                                                     {row.id}
                                                 </TableCell>
-                                                <TableCell scope="row" align="center">
+                                                <TableCell scope="row" align="center" key={`name-${i}`}>
                                                     {row.name}
                                                 </TableCell>
-                                                <TableCell scope="row" align="center">
+                                                <TableCell scope="row" align="center" key={`level-${i}`}>
                                                     {row.level}
                                                 </TableCell>
-                                                <TableCell scope="row" align="center">
+                                                <TableCell scope="row" align="center" key={`buttons-${i}`}>
                                                 {isEdit ? (
                                                         <Button className="mr10" onClick={handleConfirm}>
                                                             <ClearIcon />

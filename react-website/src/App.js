@@ -14,9 +14,10 @@ import SignUp from './pages/signup';
 import VerifyEmail from './pages/verifyEmail';
 import Profile from './pages/profile';
 import Login from './pages/login';
-import NewStory from './pages/new-story';
-import CharacterMap from './pages/character-map';
+import MapGenerator from './pages/map-generator';
+import StoryMap from './pages/story-map';
 import StoryTimeline from './pages/timeline';
+import StoryEditor from './pages/story';
   
 function App() {
 
@@ -40,9 +41,10 @@ return (
                 <Route path='/login' element={<Login/>} />
                 <Route path='/verify-email' element={<VerifyEmail/>} />
                 <Route path='/profile' element={<Profile/>} />
-                <Route path='/new-story' element={<NewStory/>}/>
-                <Route path='/character-map' element={<CharacterMap/>}/>
+                <Route path='/map-generator' element={<MapGenerator/>}/>
+                <Route path='/story-map' element={<StoryMap/>}/>
                 <Route path='/story-timeline' element={<StoryTimeline/>}/>
+                <Route path='/story-editor' element={<StoryEditor/>}/>
                 <Route exact path='/' element={
                     <PrivateRoute>
                     <Profile/>

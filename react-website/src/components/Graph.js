@@ -8,7 +8,7 @@ import LinkTable from './LinkTable'
 //Return the Force Graph Component
 const Graph = ({ data, getNodeSize, handleNodeClick }) => {
   return (
-    <div>
+    <>
     <ForceGraph2D
       graphData={data}
       nodeAutoColorBy="level"
@@ -27,9 +27,9 @@ const Graph = ({ data, getNodeSize, handleNodeClick }) => {
       }}
       onNodeClick={handleNodeClick}
     />
-    <NodeTable nodes={data.nodes} />
-    <LinkTable links={data.links} nodes={data.nodes} />
-    </div>
+    <NodeTable nodes={data.nodes}/>
+    <LinkTable links={data.links} nodes={data.nodes}/>
+    </>
     
   );
 };
