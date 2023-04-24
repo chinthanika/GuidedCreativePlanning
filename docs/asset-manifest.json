@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/GuidedCreativePlanning/Login/static/css/main.515e49f8.css",
-    "main.js": "/GuidedCreativePlanning/Login/static/js/main.6cf9be9d.js",
-    "static/js/787.e403dcb9.chunk.js": "/GuidedCreativePlanning/Login/static/js/787.e403dcb9.chunk.js",
-    "index.html": "/GuidedCreativePlanning/Login/index.html",
-    "main.515e49f8.css.map": "/GuidedCreativePlanning/Login/static/css/main.515e49f8.css.map",
-    "main.6cf9be9d.js.map": "/GuidedCreativePlanning/Login/static/js/main.6cf9be9d.js.map",
-    "787.e403dcb9.chunk.js.map": "/GuidedCreativePlanning/Login/static/js/787.e403dcb9.chunk.js.map"
+    "main.css": "/GuidedCreativePlanning/static/css/main.515e49f8.css",
+    "main.js": "/GuidedCreativePlanning/static/js/main.95897a6d.js",
+    "static/js/787.e403dcb9.chunk.js": "/GuidedCreativePlanning/static/js/787.e403dcb9.chunk.js",
+    "index.html": "/GuidedCreativePlanning/index.html",
+    "main.515e49f8.css.map": "/GuidedCreativePlanning/static/css/main.515e49f8.css.map",
+    "main.95897a6d.js.map": "/GuidedCreativePlanning/static/js/main.95897a6d.js.map",
+    "787.e403dcb9.chunk.js.map": "/GuidedCreativePlanning/static/js/787.e403dcb9.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.515e49f8.css",
-    "static/js/main.6cf9be9d.js"
+    "static/js/main.95897a6d.js"
   ]
 }
