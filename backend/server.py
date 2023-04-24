@@ -1,14 +1,5 @@
-import numpy as np
 import json
-import requests
-import spacy
-
 import re
-
-import pandas as pd
-
-import networkx as nx
-import matplotlib.pyplot as plt
 
 from flask import Flask, request, render_template
 from flask_cors import CORS
@@ -16,7 +7,6 @@ from flask_cors import CORS
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 import math
 import torch
-import IPython
 
 app = Flask(__name__)
 CORS(app)
