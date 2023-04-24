@@ -162,7 +162,7 @@ tzdata==2023.2
 tzlocal==4.3
 uri-template==1.2.0
 urllib3==1.26.14
-vboxapi==1.0
+vboxapi==4.3.10
 virtualenv==20.19.0
 wasabi==1.1.1
 wcwidth==0.2.6
