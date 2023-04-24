@@ -2,3 +2,8 @@
 name = "guided-creative-planning"
 version = "0.1.0"
 edition = "2018"
+include = ["backend/server.py"]
+
+[[bin]]
+name = "binary1"
+path = "src/main.rs"
