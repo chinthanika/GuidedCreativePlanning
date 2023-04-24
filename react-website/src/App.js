@@ -10,14 +10,14 @@ import './App.css';
 import Navbar from './components/Navbar';
 
 import PrivateRoute from './PrivateRoute';
-import SignUp from './pages/signup';
-import VerifyEmail from './pages/verifyEmail';
-import Profile from './pages/profile';
-import Login from './pages/login';
-import MapGenerator from './pages/map-generator';
-import StoryMap from './pages/story-map';
-import StoryTimeline from './pages/timeline';
-import StoryEditor from './pages/story';
+import SignUp from './pages/SignUp';
+import VerifyEmail from './pages/VerifyEmail';
+import Profile from './pages/Profile';
+import Login from './pages/Login';
+import MapGenerator from './pages/MapGenerator';
+import StoryMap from './pages/StoryMap';
+import StoryTimeline from './pages/Timeline';
+import StoryEditor from './pages/StoryEditor';
   
 function App() {
 
