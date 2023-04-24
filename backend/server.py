@@ -19,8 +19,8 @@ def show_relation_form():
 def predict():
     from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
     
-    tokenizer = AutoTokenizer.from_pretrained("Babelscape/rebel-base")
-    model = AutoModelForSeq2SeqLM.from_pretrained("Babelscape/rebel-base")
+    tokenizer = AutoTokenizer.from_pretrained("t5-small")
+    model = AutoModelForSeq2SeqLM.from_pretrained("t5-small")
 
     def extract_relations_from_model_output(text):
         relations = []
