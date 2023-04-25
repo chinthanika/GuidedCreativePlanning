@@ -178,5 +178,8 @@ def predict():
 
     return prediction
 
+# if __name__ == '__main__':
+#     app.run(threaded=False)
+
 if __name__ == '__main__':
-    app.run(threaded=False)
+    app.run(port=5000, debug=True)
