@@ -9,7 +9,7 @@ import { useAuthValue } from '../Firebase/AuthContext'
 import { database } from '../Firebase/firebase'
 import { ref, set, get } from "firebase/database"
 
-function MapGenerator() {
+function MapGenerator() { 
     const url = 'http://127.0.0.1:5000/characters';
 
     const { currentUser } = useAuthValue()
