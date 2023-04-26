@@ -62,6 +62,8 @@ function Profile() {
       .catch((error) => {
         console.log(error);
       });
+
+      setOpen(false)
   };
 
   const handleTitleSave = () => {

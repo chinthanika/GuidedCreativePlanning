@@ -10,7 +10,7 @@ import { database } from '../Firebase/firebase'
 import { ref, set, get } from "firebase/database"
 
 function MapGenerator() { 
-    const url = 'http://10.163.5.194:5000/characters';
+    const url = 'http://localhost:5000/characters';
 
     const { currentUser } = useAuthValue()
     const [text, setText] = useState('')
@@ -83,7 +83,7 @@ function MapGenerator() {
       
         setIsLoading(false);
       
-        navigate('/character-map')
+        navigate('/story-map')
       }
 
     return (

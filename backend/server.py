@@ -9,8 +9,8 @@ import math
 import torch
 
 app = Flask(__name__)
-# CORS(app)
-CORS(app, resources={r"/*": {"origins": "https://chinthanika.github.io/GuidedCreativePlanning/#/map-generator"}})
+CORS(app)
+# CORS(app, resources={r"/*": {"origins": "https://chinthanika.github.io/GuidedCreativePlanning/#/map-generator"}})
 
 
 tokenizer = AutoTokenizer.from_pretrained("Babelscape/rebel-large")
