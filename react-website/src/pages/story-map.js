@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'; // Import React hooks for managing state and lifecycle events
 import ForceGraph2D from 'react-force-graph-2d'; // Import a third-party library for rendering 3D force-directed graphs in React
 import axios from 'axios'; // Import a third-party library for making HTTP requests
@@ -133,8 +134,29 @@ function CharacterMap() {
     const links = new Set();
     const visited = new Set();
 
+    if (!data || !data.hasOwnProperty('links') || !data.hasOwnProperty('nodes')) {
+      console.error('Data object is null or missing "links" property');
+      return;
+    }
+
+    const levelData = [];
+
+    if (!Array.isArray(data.nodes)) {
+      levelData.nodes = Object.values(data.nodes);
+    }
+    else {
+      levelData.nodes = data.nodes;
+    }
+
+    if (!Array.isArray(data.links)) {
+      levelData.links = Object.values(levelData.links);
+    }
+    else {
+      levelData.links = data.links;
+    }
+
     const getLinks = (nodeId) => {
-      return data.links.filter((link) => link.source === nodeId && !visited.has(link.target));
+      return levelData.links.filter((link) => link.source === nodeId && !visited.has(link.target));
     };
 
     const isTwoWayLinked = (link1, link2) => {
@@ -142,19 +164,19 @@ function CharacterMap() {
     };
 
     const removeLink = (linkToRemove) => {
-      data.links.splice(data.links.findIndex((link) => link === linkToRemove), 1);
+      levelData.links.splice(levelData.links.findIndex((link) => link === linkToRemove), 1);
     };
 
-    const rootNodeNames = new Set(data.nodes.map(node => node.id));
-    data.links.forEach(link => {
+    const rootNodeNames = new Set(levelData.nodes.map(node => node.id));
+    levelData.links.forEach(link => {
       rootNodeNames.delete(link.target);
-      if (!data.nodes.some(node => node.id === link.source) || !data.nodes.some(node => node.id === link.target)) {
+      if (!levelData.nodes.some(node => node.id === link.source) || !levelData.nodes.some(node => node.id === link.target)) {
         removeLink(link);
       } else {
         rootNodeNames.delete(link.target);
-        if (data.links.some((l) => isTwoWayLinked(link, l))) {
+        if (levelData.links.some((l) => isTwoWayLinked(link, l))) {
           rootNodeNames.add(link.source);
-          removeLink(data.links.find((l) => isTwoWayLinked(link, l) && l.source !== link.source));
+          removeLink(levelData.links.find((l) => isTwoWayLinked(link, l) && l.source !== link.source));
         }
       }
     });
@@ -214,22 +236,19 @@ function CharacterMap() {
     });
 
     // Build the final list of nodes with text attribute added
-    const finalNodes = data.nodes.filter((node) => nodes.has(node.id)).map((node) => ({ id: node.id, level: nodes.get(node.id), text: node.text || "" }));
+    const finalNodes = levelData.nodes.filter((node) => nodes.has(node.id)).map((node) => ({ id: node.id, level: nodes.get(node.id), text: node.text || "" }));
 
     return { nodes: finalNodes, links: flattenedLinks };
   };
-  
+
   function onGraphData(snapshot) {
     if (snapshot.exists()) {
       const data = snapshot.val();
 
       const nodes_links = assignLevels(data);
 
-      const hiddenNodes = data.nodes.filter((node) => !nodes_links.nodes.some((n) => n.id === node.id));
-
       const finalNodes = nodes_links.nodes.map((node) => ({
         ...node,
-        hidden: false, // add hidden property to nodes
       }));
 
       const finalLinks = nodes_links.links.map((link) => ({
@@ -241,11 +260,6 @@ function CharacterMap() {
       setData({ nodes: finalNodes, links: finalLinks });
       setTextInput('');
       setSelectedNode({});
-
-      hiddenNodes.forEach((node) => {
-        const nodeRef = ref(database, `stories/${userId}/graph/nodes/${node.id}`);
-        set(nodeRef, { ...node, hidden: true }); // update the hidden property of nodes in the database
-      });
 
       const graphRef = ref(database, `stories/${userId}/graph`);
       set(graphRef, { nodes: finalNodes, links: finalLinks }); // update the graph data in the database

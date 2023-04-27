@@ -123,11 +123,25 @@ function NodeTable({ nodes, links }) {
     const handleInputChange = (e, index) => {
         setDisable(false);
         const { name, value } = e.target;
+
+        // // update link source or target if node id is edited
+        // links.forEach((link, i) => {
+        //     if (link.source === rows[index].name) {
+        //         const newLinks = [...links];
+        //         newLinks[i].source = value;
+        //         setLinks(newLinks);
+        //     }
+        //     if (link.target === rows[index].name) {
+        //         const newLinks = [...links];
+        //         newLinks[i].target = value;
+        //         setLinks(newLinks);
+        //     }
+        // });
+
         const list = [...rows];
         list[index][name] = value;
         setRows(list);
     };
-
     // Showing delete confirmation to users
     const handleConfirm = (i) => {
         setRowToDelete(i);
@@ -147,7 +161,7 @@ function NodeTable({ nodes, links }) {
         links.forEach((link, index) => {
             console.log(rowToDelete.name)
             if (link.source === rowToDelete.name || link.target === rowToDelete.name) {
-              remove(ref(database, `stories/${currentUser.uid}/graph/links/${index}`));
+                remove(ref(database, `stories/${currentUser.uid}/graph/links/${index}`));
             }
         })
 
@@ -203,10 +217,10 @@ function NodeTable({ nodes, links }) {
                                     <AddBoxIcon onClick={handleAdd} />
                                     ADD
                                 </Button>
-                                <Button align="right" onClick={handleEdit}>
+                                {/* <Button align="right" onClick={handleEdit}>
                                     <CreateIcon />
                                     EDIT
-                                </Button>
+                                </Button> */}
                             </div>
                         )}
                     </div>
@@ -219,7 +233,7 @@ function NodeTable({ nodes, links }) {
                     aria-label="a dense table"
                 >
                     <caption>Nodes</caption>
-                    <TableHead>                       
+                    <TableHead>
                         <TableRow>
                             <TableCell align="left" >ID</TableCell>
                             <TableCell align="center" >Name</TableCell>
@@ -261,7 +275,7 @@ function NodeTable({ nodes, links }) {
                                                     {row.level}
                                                 </TableCell>
                                                 <TableCell scope="row" align="center">
-                                                {isEdit ? (
+                                                    {isEdit ? (
                                                         <Button className="mr10" onClick={handleConfirm}>
                                                             <ClearIcon />
                                                         </Button>
