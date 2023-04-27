@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 
+import firebase from 'firebase/app'
 import 'firebase/database'
 
 import { useAuthValue } from '../Firebase/AuthContext'
@@ -41,8 +42,7 @@ const useStyles = makeStyles({
     },
 });
 
-
-function NodeTable({ nodes }) {
+function NodeTable({ nodes, links }) {
 
     const { currentUser } = useAuthValue()
 
@@ -54,13 +54,13 @@ function NodeTable({ nodes }) {
     // Defining a state named rows
     // which we can update by calling on setRows function
     const [rows, setRows] = useState([
-        { id: 1, name: "", level: 1, },
+        { id: 1, name: "", level: 0, },
     ]);
 
     useEffect(() => {
         const newRows = nodes.map((node, index) => ({
             key: `node-${index + 1}`,
-            name: node.id.trim(),
+            name: node.id,
             level: node.level,
             id: index + 1,
         }));
@@ -111,7 +111,8 @@ function NodeTable({ nodes }) {
         // update Firebase database
         rows.forEach((row) => {
             set(ref(database, `stories/${currentUser.uid}/graph/nodes/${(row.id - 1)}`), {
-                id: row.name
+                id: row.name,
+                level: 1
             });
         });
     };
@@ -142,6 +143,13 @@ function NodeTable({ nodes }) {
         list.splice(rowToDelete - 1, 1);
         setRows(list);
         setShowConfirm(false);
+
+        links.forEach((link, index) => {
+            console.log(rowToDelete.name)
+            if (link.source === rowToDelete.name || link.target === rowToDelete.name) {
+              remove(ref(database, `stories/${currentUser.uid}/graph/links/${index}`));
+            }
+        })
 
         remove(ref(database, `stories/${currentUser.uid}/graph/nodes/${(rowToDelete - 1)}`));
     };
@@ -203,7 +211,7 @@ function NodeTable({ nodes }) {
                         )}
                     </div>
                 </div>
-                <TableRow align="center"></TableRow>
+                <TableRow align="center"> </TableRow>
 
                 <Table
                     className={classes.table}
@@ -213,8 +221,8 @@ function NodeTable({ nodes }) {
                     <caption>Nodes</caption>
                     <TableHead>                       
                         <TableRow>
-                            <TableCell align="left">ID</TableCell>
-                            <TableCell align="center">Name</TableCell>
+                            <TableCell align="left" >ID</TableCell>
+                            <TableCell align="center" >Name</TableCell>
                             <TableCell align="center">Level</TableCell>
                             <TableCell align="center"> Delete </TableCell>
                         </TableRow>
@@ -223,29 +231,36 @@ function NodeTable({ nodes }) {
                         {rows.map((row, i) => {
                             return (
                                 <div>
-                                    <TableRow key={i}>
+                                    <TableRow >
                                         {isEdit ? (
                                             <div>
-                                                <TableCell padding="none" align="center" key={`edit-name-${i}`}>
+                                                <TableCell padding="none" align="center">
                                                     <input
                                                         value={row.name}
                                                         name="name"
                                                         onChange={(e) => handleInputChange(e, i)}
                                                     />
                                                 </TableCell>
+                                                <TableCell padding="none" align="center">
+                                                    <input
+                                                        value={row.level}
+                                                        name="level"
+                                                        onChange={(e) => handleInputChange(e, i)}
+                                                    />
+                                                </TableCell>
                                             </div>
                                         ) : (
                                             <div>
-                                                <TableCell scope="row" align="left" key={`id-${i}`}>
+                                                <TableCell scope="row" align="left">
                                                     {row.id}
                                                 </TableCell>
-                                                <TableCell scope="row" align="center" key={`name-${i}`}>
+                                                <TableCell scope="row" align="center">
                                                     {row.name}
                                                 </TableCell>
-                                                <TableCell scope="row" align="center" key={`level-${i}`}>
+                                                <TableCell scope="row" align="center">
                                                     {row.level}
                                                 </TableCell>
-                                                <TableCell scope="row" align="center" key={`buttons-${i}`}>
+                                                <TableCell scope="row" align="center">
                                                 {isEdit ? (
                                                         <Button className="mr10" onClick={handleConfirm}>
                                                             <ClearIcon />

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuthValue } from '../Firebase/AuthContext'
-import { signOut } from 'firebase/auth'
+import { signOut, getAuth, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'
 import { auth } from '../Firebase/firebase'
 import { ref, remove, onValue, set } from "firebase/database";
 import { database } from '../Firebase/firebase';
@@ -52,18 +52,30 @@ function Profile() {
     };
   }, [])
 
-  const handleDeleteAccount = () => {
-    const userRef = ref(database, `users/${currentUser.uid}`)
-
-    remove(userRef)
-      .then(() => {
-        currentUser.delete();
-      })
-      .catch((error) => {
+  const handleDeleteAccount = async () => {
+    const userRef = ref(database, `users/${currentUser.uid}`);
+  
+    // Prompt the user to re-enter their email and password
+    const email = prompt("Please enter your email address");
+    const password = prompt("Please enter your password");
+  
+    if (email && password) {
+      try {
+        // Reauthenticate the user
+        const credential = EmailAuthProvider.credential(email, password);
+        await reauthenticateWithCredential(currentUser, credential);
+  
+        // Remove the user's data from the Realtime Database
+        await remove(userRef);
+  
+        // Delete the user from Firebase Authentication
+        await currentUser.delete();
+      } catch (error) {
         console.log(error);
-      });
-
-      setOpen(false)
+      }
+    } else {
+      console.log("Email and password are required for account deletion.");
+    }
   };
 
   const handleTitleSave = () => {
