@@ -92,7 +92,12 @@ function MapGenerator() {
         type='text'
         value={text}
         required
-        placeholder='Enter your plot in as much detail as possible.'
+        placeholder=' 1. Summarize the plot of your story in 500 to 1500 words.
+        2. Keep in mind that the more words you include the longer it takes to generate the map!
+        3. If you exceed 1500 words, or have less than 500 words, the map will lose accuracy.
+        4. If you want, you could also generate the map in chunks, generating it for small snippets at a time.
+        5. When you have finished entering the summary click SAVE and wait. Do not go to another page on this website! I will switch you to the next page when I have generated your map.
+        6. Go ahead and input your story summary.'
         onChange={e => setText(e.target.value)} />
 
       <button onClick={handleSubmit} disabled={isLoading}>

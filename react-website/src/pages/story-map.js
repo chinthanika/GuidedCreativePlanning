@@ -26,16 +26,16 @@ function CharacterMap() {
   // Empty arrays for nodes and links
   var nodes = [
     {
-      id: "Unknown",
+      id: "Click Me for Instructions!",
       level: 1,
-      text: ""
+      text: "1. This is where you can see your story map.\n\n2. This map is generated based on the input you entered into the map generator.\n\n3. To view it, click 'Render Map'. Wait! Read the rest of the instructions first.\n\n4. To view the name of a node, hover over it. You can do the same to view the name of a link.\n\n5. Here, the nodes represent the entities in your story (these could be characters, locations, topics you tackle, etc.). The links represent the relationships between the nodes they connect.\n\n6. Click on a node to view only the nodes directly connected to it and add details about it, like me. For example, if it's a character, what's their motivation? Where are they from? What kind of life do they live? If it's a location, what does it look like? What's the atmosphere? When you're done, click Render Map to see the whole map again.\n\n7. You can add new nodes using the 'Node' Table beside me. Just click the ADD button, type in the name of the node, and click SAVE. You should see your node added to the table with no connecting links.\n\n8. When you've added all the nodes you want, scroll down and click ADD at the 'Link' Table to add the links to connect them. A 'Source' is the node where the link starts, and a 'Target' is the node where the link ends. You can select these from a drop down list of nodes. The link is the type of relationship.\n\n9. Click SAVE to save your new links. (Warning! If you haven't hit save after adding your nodes, they won't appear on the drop down lists.\n\n10. Click EDIT to edit the existing links, choosing new sources and targets or changing the link name. Clicking CANCEL will remove the changes you made after you last clicked SAVE.\n\n11. Click the trash icon beside a node or link to delete it.\n\n12. At first, your map will be disjointed, with the map in separate parts. Now that you know how to change it, try to connect them by adding the links that connect them to nodes in other parts so that, at the end, you have one whole map.\n\n13. Go ahead and click Render Map to get started!"
     }
   ];
   var links = [
     {
       link: "Unknown",
-      source: "Unknown",
-      target: "Unknown"
+      source: "Click Me for Instructions!",
+      target: "Click Me for Instructions!"
     }
   ];
 
@@ -278,7 +278,7 @@ function CharacterMap() {
       <button onClick={() => {
         fetchData()
       }}>
-        RenderGraph
+        Render Map
       </button>
       <div style={{ display: "flex", alignItems: "center" }}>
         <div style={{ position: "relative" }}>

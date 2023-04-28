@@ -11,7 +11,7 @@ import Navbar from './components/Navbar';
 
 import PrivateRoute from './PrivateRoute';
 import SignUp from './pages/signup';
-import VerifyEmail from './pages/verifyEmail';
+import VerifyEmail from './pages/verify-email';
 import Profile from './pages/profile';
 import Login from './pages/login';
 import MapGenerator from './pages/map-generator';

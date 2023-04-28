@@ -18,7 +18,7 @@ import { ref, set,onValue } from "firebase/database"
 import FormatToolbar from './FormatToolbar';
 
 const initialValue = [{
-  type: 'paragraph', children: [{ text: 'My first paragraph!', },],
+  type: 'paragraph', children: [{ text: '1. Higlight a part of me and click B, or press Ctrl+B to make me bold!\n\n2. Higlight a part of me and click I, or press Ctrl+I to make me italicized!\n\n3. Higlight a part of me and click U, or press Ctrl+U to underline me!\n\n Click the save icon your story!', },],
 },
 ];
 
