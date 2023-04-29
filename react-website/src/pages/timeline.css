@@ -87,7 +87,7 @@ html, body {
 
 .horizontal-timeline .items .items-list .description-container {
   position: absolute;
-  top: 410px;
+  top: 510px;
   left: 50%;
   width: 400px;
   margin-left: -200px;
@@ -97,7 +97,7 @@ html, body {
 
 .horizontal-timeline .items .items-list .setting-container {
   position: absolute;
-  top: 250px;
+  top: 350px;
   left: 50%;
   width: 400px;
   margin-left: -200px;

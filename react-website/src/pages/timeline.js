@@ -35,7 +35,7 @@ function StoryTimeline() {
 
     const [events, setEvents] = useState([]);
 
-    const [showDescription, setShowDescription] = useState(null);
+    const [showData, setShowData] = useState(null);
 
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -44,6 +44,7 @@ function StoryTimeline() {
     const [newEvent, setNewEvent] = useState({
         date: "",
         title: "",
+        setting: "",
         description: "",
         isMainEvent: false
     });
@@ -121,8 +122,7 @@ function StoryTimeline() {
     const handleAddEvent = () => {
         if (
             moment(newEvent.date, "DD/MM/YYYY", true).isValid() &&
-            newEvent.title &&
-            newEvent.description
+            newEvent.title
         ) {
             setEvents([...events, newEvent].sort((a, b) => {
                 return moment(a.date, "DD/MM/YYYY").diff(moment(b.date, "DD/MM/YYYY"));
@@ -182,7 +182,7 @@ function StoryTimeline() {
             setEventToDelete(event);
             setShowDeleteModal(true);
         }
-        setShowDescription(showDescription === event.index ? null : event.index);
+        setShowData(showData === event.index ? null : event.index);
     };
     return (
         <MDBContainer fluid className="py-5">
@@ -330,7 +330,7 @@ function StoryTimeline() {
                                                         {event.title}
                                                     </span>
                                                 </div>
-                                                {showDescription === event.index && (
+                                                {showData === event.index && (
                                                     <div className="containers-wrapper" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                                                         <div className="setting-container">
                                                             <textarea
