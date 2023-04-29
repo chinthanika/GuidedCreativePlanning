@@ -87,7 +87,17 @@ html, body {
 
 .horizontal-timeline .items .items-list .description-container {
   position: absolute;
-  top: 350px;
+  top: 410px;
+  left: 50%;
+  width: 400px;
+  margin-left: -200px;
+  padding: 1rem;
+  padding-top: 5rem;
+}
+
+.horizontal-timeline .items .items-list .setting-container {
+  position: absolute;
+  top: 250px;
   left: 50%;
   width: 400px;
   margin-left: -200px;

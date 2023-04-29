@@ -56,13 +56,15 @@ function StoryTimeline() {
                 date: "01/01/2001",
                 title: "Click Me for Instructions!",
                 isMainEvent: true,
-                description: "1. Here, you can enter the events of your story.\n\n2. To add a new event click the ADD EVENT button, fill in the details and click SAVE. When you do that, the sample events and I will disappear and be replaced by your new events.\n\n3. Be careful when entering the details! If you make a mistake, you'll have to delete the event and add it again.\n\n4. This timeline is ordered by the date, so be careful to enter it properly!\n\n5. The date needs to be in the format DD/MM/YYYY.\n\n6. If the date is in the wrong format or any of the fields are empty, you won't be able to save the event.\n\n7. To delete events, click the DELETE EVENT button, then click the trash can icon in the events you want to delete. Click DONE when you've removed all the events you want to remove.\n\n8. If you have more events than you can see on the screen don't worry! Just drag the timeline left to view later events, and right to view older ones.\n\n 9. Go ahead and add your first event!"
+                setting: "This Website",
+                description: "1. Here, you can enter the events of your story.\n\n2. To add a new event click the ADD EVENT button, fill in the details and click SAVE. When you do that, the sample events and I will disappear and be replaced by your new events.\n\n3. When you're entering the setting of your story try to define the location and describe it? Was it crowded or empty? What was the ambience like?\n\n4. Be careful when entering the details! If you make a mistake, you'll have to delete the event and add it again.\n\n5. This timeline is ordered by the date, so be careful to enter it properly!\n\n6. The date needs to be in the format DD/MM/YYYY.\n\n7. If the date is in the wrong format or any of the fields are empty, you won't be able to save the event.\n\n8. To delete events, click the DELETE EVENT button, then click the trash can icon in the events you want to delete. Click DONE when you've removed all the events you want to remove.\n\n9. If you have more events than you can see on the screen don't worry! Just drag the timeline left to view later events, and right to view older ones.\n\n 10. Go ahead and add your first event!"
             },
             {
                 index: 1,
                 date: "02/06/2022",
                 title: "Main Event",
                 isMainEvent: true,
+                setting: "None",
                 description:
                     "Tom, a student at X university, is found dead in his room."
             },
@@ -71,6 +73,7 @@ function StoryTimeline() {
                 date: "05/06/2022",
                 title: "Minor Event",
                 isMainEvent: false,
+                setting: "None",
                 description:
                     "Tom's parents employ private detective James to find justice for their son."
             },
@@ -79,6 +82,7 @@ function StoryTimeline() {
                 date: "07/06/2022",
                 title: "Minor Event",
                 isMainEvent: false,
+                setting: "None",
                 description:
                     "James visits the crime scene."
             },
@@ -87,6 +91,7 @@ function StoryTimeline() {
                 date: "08/06/2022",
                 title: "Main Event",
                 isMainEvent: true,
+                setting: "None",
                 description:
                     "Another student, Lea, is found dead in the kitchens."
             }
@@ -125,6 +130,7 @@ function StoryTimeline() {
             setNewEvent({
                 date: "",
                 title: "",
+                setting: "",
                 description: "",
                 isMainEvent: false
             });
@@ -235,6 +241,22 @@ function StoryTimeline() {
                                     <div className="pb-4">
                                         <textarea
                                             className="form-control"
+                                            placeholder="Setting"
+                                            value={newEvent.setting}
+                                            onChange={(e) =>
+                                                setNewEvent({
+                                                    ...newEvent,
+                                                    setting: e.target.value,
+                                                })
+                                            }
+                                            cols="40"
+                                            rows="10"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="pb-4">
+                                        <textarea
+                                            className="form-control"
                                             placeholder="Description"
                                             value={newEvent.description}
                                             onChange={(e) =>
@@ -309,14 +331,25 @@ function StoryTimeline() {
                                                     </span>
                                                 </div>
                                                 {showDescription === event.index && (
-                                                    <div className="description-container">
-                                                        <textarea
-                                                            cols="40"
-                                                            rows="20"
-                                                            className="description"
-                                                            value={event.description}
-                                                            readOnly
-                                                        ></textarea>
+                                                    <div className="containers-wrapper" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                                                        <div className="setting-container">
+                                                            <textarea
+                                                                cols="40"
+                                                                rows="10"
+                                                                className="setting"
+                                                                value={event.setting}
+                                                                readOnly
+                                                            ></textarea>
+                                                        </div>
+                                                        <div className="description-container">
+                                                            <textarea
+                                                                cols="40"
+                                                                rows="20"
+                                                                className="description"
+                                                                value={event.description}
+                                                                readOnly
+                                                            ></textarea>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
