@@ -1,13 +1,17 @@
 import React from "react";
 
-import { Nav, NavLink, NavMenu } 
+import { LogoContainer, LogoWithName , Nav, NavLink, NavMenu } 
     from "./NavbarElements";
+import Logo from "./Logo";
   
 const Navbar = () => {
   return (
     <>
       <Nav>
         <NavMenu>
+          <LogoWithName>
+            HummingBird
+          </LogoWithName>
           <NavLink to="/sign-up">
             Sign Up
           </NavLink>

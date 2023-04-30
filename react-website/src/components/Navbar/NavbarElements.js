@@ -1,6 +1,7 @@
 import { FaBars } from "react-icons/fa";
 import { NavLink as Link } from "react-router-dom";
 import styled from "styled-components";
+import Logo from "./Logo";
   
 export const Nav = styled.nav`
   background: #111111;
@@ -12,7 +13,7 @@ export const Nav = styled.nav`
 `;
   
 export const NavLink = styled(Link)`
-  color: #EEEEEE;
+  color: #F8F3D4;
   display: flex;
   align-items: center;
   text-decoration: none;
@@ -51,3 +52,24 @@ white-space: nowrap; */
     display: none;
   }
 `;
+
+
+// Add new styled component for the logo and name
+export const LogoContainer = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+export const BrandName = styled.h1`
+  color: #F8F3D4;
+  margin-left: 1px;
+`;
+
+// Use this component in your navigation bar
+// Replace 'YourName' with your desired name or brand name
+ export const LogoWithName = () => (
+  <LogoContainer>
+    <Logo />
+    <BrandName>HummingBird</BrandName>
+  </LogoContainer>
+);
