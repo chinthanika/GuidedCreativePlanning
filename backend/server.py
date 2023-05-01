@@ -8,14 +8,16 @@ from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 import math
 import torch
 
+# Create a Flask app instance and enable Cross-Origin Resource Sharing (CORS)
 app = Flask(__name__)
 CORS(app)
-# CORS(app, resources={r"/*": {"origins": "https://chinthanika.github.io/GuidedCreativePlanning/#/map-generator"}})
 
 
+# Load the pre-trained tokenizer and sequence-to-sequence model
 tokenizer = AutoTokenizer.from_pretrained("Babelscape/rebel-large")
 model = AutoModelForSeq2SeqLM.from_pretrained("Babelscape/rebel-large")
 
+# Extract relations from model output
 def extract_relations_from_model_output(text):
     relations = []
     relation, subject, relation, object_ = '', '', '', ''
@@ -23,6 +25,9 @@ def extract_relations_from_model_output(text):
     current = 'x'
     text_replaced = text.replace("<s>", "").replace("<pad>", "").replace("</s>", "")
     for token in text_replaced.split():
+        # If the token is a triplet and the relation is not empty
+        # set the current state to 't'
+        # append a dictionary containing head, type, and tail to relations list
         if token == "<triplet>":
             current = 't'
             if relation != '':
@@ -33,6 +38,9 @@ def extract_relations_from_model_output(text):
                 })
                 relation = ''
             subject = ''
+        # Else if the token is a subject and the relation is not empty
+        # set the current state to 's'
+        # append a dictionary containing head, type, and tail to relations list
         elif token == "<subj>":
             current = 's'
             if relation != '':
@@ -42,16 +50,24 @@ def extract_relations_from_model_output(text):
                     'tail': object_.strip()
                 })
             object_ = ''
+        # Else if the token is a subject
+        # se the current state to 'o' 
+        # set the relation to an empty string
         elif token == "<obj>":
             current = 'o'
             relation = ''
+        # Build the respective parts of the relation
         else:
+            # If the current state is 't' add the token to the subject variable
             if current == 't':
                 subject += ' ' + token
+            # If the current state is 's' add the token to the object variable
             elif current == 's':
                 object_ += ' ' + token
+                # If the current state is 'o' add the token to the relation variable
             elif current == 'o':
                 relation += ' ' + token
+    # If the subject, relation and object all have values, append a dictionary head, type, and tail to relations list
     if subject != '' and relation != '' and object_ != '':
         relations.append({
             'head': subject.strip(),
@@ -60,29 +76,36 @@ def extract_relations_from_model_output(text):
         })
     return relations
 
+# Represents a knowledge base of relations
 class KB():
     def __init__(self):
-        self.relations = []
+        self.relations = [] # Initialize an empty list to hold the relations
 
+    # Compare two relations, r1 and r2, to check if they have the same values for "head", "type", and "tail"
     def are_relations_equal(self, r1, r2):
         return all(r1[attr] == r2[attr] for attr in ["head", "type", "tail"])
 
+    # Check if a given relation, r1, already exists in the list of relations
     def exists_relation(self, r1):
         return any(self.are_relations_equal(r1, r2) for r2 in self.relations)
 
+    # Add a new relation, r, to the list of relations if it does not already exist
     def add_relation(self, r):
         if not self.exists_relation(r):
             self.relations.append(r)
 
+    # Print all the relations in the list
     def print(self):
         print("Relations:")
         for r in self.relations:
             print(f"  {r}")
 
+    # Convert the knowledge base to a JSON string
     def json_convert(self):
       json_str = json.dumps(self.relations, indent=4)
       return json_str
 
+# Convert input text to a knowledge base of relations
 def from_text_to_kb(text, span_length=128, verbose=False):
     # tokenize whole text
     inputs = tokenizer([text], return_tensors="pt")
@@ -147,10 +170,6 @@ def from_text_to_kb(text, span_length=128, verbose=False):
 
     return kb
 
-def clean_text(text):
-    cleaned = re.sub(r"[\(\[].*?[\)\]]", "", str(text))
-    return (cleaned)
-
 #If a user visits "/" the relationform is rendered
 @app.route('/')
 def show_relation_form():
@@ -161,19 +180,8 @@ def predict():
     # Get the data from the POST request.
     text = request.get_json("text")
 
-    nlp_text = clean_text(text)
-
-    #Find all the characters in the text
-    # people = []
-    # nlp = spacy.load("backend\hp_ner_model")
-    # doc = nlp(nlp_text)
-    # for ent in doc.ents:
-    #     if not ent in people:
-    #         people.append(ent)
-    #         print(ent)
-
     # Extract the relationships in the text
-    prediction = from_text_to_kb(str(text), verbose=True)
+    prediction = from_text_to_kb(str(text))
 
     prediction = prediction.json_convert()
 
@@ -183,8 +191,5 @@ def predict():
     return prediction
 
 
-# if __name__ == '__main__':
-#     app.run(threaded=False)
-
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(port=5000)

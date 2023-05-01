@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import firebase from 'firebase/app'
 import 'firebase/database'
 import axios from 'axios'
 
@@ -22,16 +21,17 @@ function MapGenerator() {
 
     const summaryRef = ref(database, `stories/${currentUser.uid}/summary`);
 
-    console.log(currentUser.uid)
-
+    // Check if the summary exists in the database
     const snapshot = await get(summaryRef);
 
+    // If the summary does not exist in the database, add it
     if (!snapshot.exists()) {
       set(summaryRef, text);
     }
 
     setText('');
 
+    // Send a POST request to the URL with the text as the payload, and store the response in the 'response' variable.
     const response = await axios.post(url, { text: text });
 
     // Create array of nodes for knowledge graph
@@ -45,10 +45,8 @@ function MapGenerator() {
     // Map each unique node to an object with an id and a group
     const nodeMap = new Map();
 
-    let nodeId = 0;
     nodes.forEach(node => {
       nodeMap.set(node, { id: node });
-      nodeId++;
     });
 
     // Create an array of links and map each triplet to a link object
@@ -92,16 +90,16 @@ function MapGenerator() {
         type='text'
         value={text}
         required
-        placeholder=' 1. Summarize the plot of your story in 500 to 1500 words.
+        placeholder=' 1. Summarize the plot of your story in 500 to 1000 words.
         2. Keep in mind that the more words you include the longer it takes to generate the map!
-        3. If you exceed 1500 words, or have less than 500 words, the map will lose accuracy.
+        3. If you exceed 1000 words, or have less than 500 words, the map will lose accuracy.
         4. If you want, you could also generate the map in chunks, generating it for small snippets at a time.
         5. When you have finished entering the summary click SAVE and wait. Do not go to another page on this website! I will switch you to the next page when I have generated your map.
         6. Go ahead and input your story summary.'
         onChange={e => setText(e.target.value)} />
 
       <button onClick={handleSubmit} disabled={isLoading}>
-        {isLoading ? 'Loading...' : 'Save'}
+        {isLoading ? 'LOADING..' : 'SAVE'}
       </button>
 
     </div>

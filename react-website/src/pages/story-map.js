@@ -1,27 +1,19 @@
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'; // Import React hooks for managing state and lifecycle events
-import ForceGraph2D from 'react-force-graph-2d'; // Import a third-party library for rendering 3D force-directed graphs in React
-import axios from 'axios'; // Import a third-party library for making HTTP requests
+import { useState, useEffect, useCallback } from 'react'; 
 
-import 'firebase/database'; // Import the Firebase Realtime Database
-import { set, ref, onValue, orderByChild, equalTo, query, update } from "firebase/database"; // Import database functions from Firebase
-import { DatabaseReference } from 'firebase/database';
+import 'firebase/database'; 
+import { set, ref, onValue, orderByChild, equalTo, query, update } from "firebase/database"; 
 
-import { useAuthValue } from '../Firebase/AuthContext'; // Import a custom hook for accessing Firebase authentication
-import { database } from '../Firebase/firebase'; // Import the Firebase configuration and initialize the Firebase app
-
-import SpriteText from 'three-spritetext'
+import { useAuthValue } from '../Firebase/AuthContext'; 
+import { database } from '../Firebase/firebase'; 
 
 import Graph from '../components/Graph'
-import { updatePassword } from 'firebase/auth';
 
 function CharacterMap() {
-  const { currentUser } = useAuthValue(); // Get the current user from Firebase authentication
+  const { currentUser } = useAuthValue(); 
 
   const userId = currentUser ? currentUser.uid : null;
-  const graphRef = ref(database, 'stories/' + userId + '/' + 'graph/');
-
-  //  const [data, setData] = useState({});
+  const graphRef = ref(database, `stories/${userId}/graph/`);
 
   // Empty arrays for nodes and links
   var nodes = [
@@ -39,34 +31,31 @@ function CharacterMap() {
     }
   ];
 
-  var nodes_links = {};
-
-  const [graph, setGraph] = useState(<div></div>); // Store the graph data
+  // Define state variables
   const [data, setData] = useState({ nodes, links }); // Store the graph data
-
   const [selectedNode, setSelectedNode] = useState({}); // Keep track of the selected node ID
   const [textInput, setTextInput] = useState(selectedNode ? selectedNode.text : "None.");
 
+  // Update the text input when the selected node changes
   useEffect(() => {
-    console.log("textInput updated: ", textInput);
     if (selectedNode && selectedNode.text) {
-      console.log("Here.")
       setTextInput(selectedNode.text);
 
     }
-  }, [textInput]);
+  }, [textInput, selectedNode]);
 
   // Determine node size based on level
   const getNodeSize = (level) => {
     return 10 / level;
   };
 
-  const textInputRef = useRef(selectedNode ? selectedNode.text : "");
-  const [updateTextInput, setUpdateTextInput] = useState(false);
-
+  // Handle the Save button click to update the node's text
   const handleSaveClick = useCallback(() => {
+
+    // Create an updated data object with the modified node text.
     const updatedData = {
       nodes: data.nodes.map((node) => {
+        // If the node is the selected node, update its text with the input value.
         if (node.id === selectedNode.id) {
           return { ...node, text: textInput };
         }
@@ -75,6 +64,7 @@ function CharacterMap() {
       links: data.links,
     };
 
+    // Update the node text in the database.
     const nodeRef = ref(database, `stories/${userId}/graph/nodes`);
     const q = query(nodeRef, orderByChild("id"), equalTo(selectedNode.id));
 
@@ -85,15 +75,18 @@ function CharacterMap() {
       });
     });
 
+    // Update the local data state with the updated data.
     setData(updatedData);
-  }, [data, selectedNode, textInput]);
+  }, [data, selectedNode, textInput, userId]);
 
+  // Handle node click event to display connected nodes and update the selected node
   const handleNodeClick = useCallback((node) => {
     if (!node) {
       return;
     }
     setSelectedNode(node);
 
+    // Find all connected nodes and add them to a set.
     const connectedNodes = new Set([node.id]);
     data.links.forEach((link) => {
       if (link.source.id === node.id || link.source === node.id) {
@@ -103,14 +96,10 @@ function CharacterMap() {
       }
     });
 
+    // Filter the nodes and links data to only include connected nodes and their links.
     const finalNodes = data.nodes
       .filter(node => connectedNodes.has(node.id) || node.id === selectedNode.id)
       .map(node => ({ ...node }));
-
-    // const finalNodes = data.nodes.map((node) => ({
-    //   ...node,
-    //   hidden: !connectedNodes.has(node.id),
-    // }));
 
     const finalLinks = data.links
       .filter(
@@ -127,18 +116,21 @@ function CharacterMap() {
     setData({ nodes: finalNodes, links: finalLinks });
     setTextInput(node.text || "");
 
-  }, [data]);
+  }, [data, selectedNode]);
 
+  // Assign levels to nodes based on their connections
   const assignLevels = (data) => {
     const nodes = new Map();
     const links = new Set();
     const visited = new Set();
 
+    // Check if the data object is valid and has the required properties.
     if (!data || !data.hasOwnProperty('links') || !data.hasOwnProperty('nodes')) {
       console.error('Data object is null or missing "links" property');
       return;
     }
 
+    // Prepare the levelData object with nodes and links as arrays.
     const levelData = [];
 
     if (!Array.isArray(data.nodes)) {
@@ -155,18 +147,22 @@ function CharacterMap() {
       levelData.links = data.links;
     }
 
+    // Get links connected to a specific node
     const getLinks = (nodeId) => {
       return levelData.links.filter((link) => link.source === nodeId && !visited.has(link.target));
     };
 
+    // Check if two links are connected bi-directionally
     const isTwoWayLinked = (link1, link2) => {
       return link1.source === link2.target && link1.target === link2.source;
     };
 
+    // Remove a link from the levelData.links array
     const removeLink = (linkToRemove) => {
       levelData.links.splice(levelData.links.findIndex((link) => link === linkToRemove), 1);
     };
 
+    // Identify root nodes (nodes with no incoming links).
     const rootNodeNames = new Set(levelData.nodes.map(node => node.id));
     levelData.links.forEach(link => {
       rootNodeNames.delete(link.target);
@@ -181,24 +177,33 @@ function CharacterMap() {
       }
     });
 
+    // Initialize the queue with the root nodes and their initial levels.
     const queue = Array.from(rootNodeNames, rootNodeName => ({ id: rootNodeName, level: 1 }));
+    
+    // Process nodes using a breadth-first search approach.
     while (queue.length > 0) {
+
+      // Get the next node from the queue and mark it as visited.
       const { id, level } = queue.shift();
       visited.add(id);
 
+      // Get the child nodes connected to the current node and their levels.
       const children = getLinks(id);
       const childNodes = children.map((link) => {
         const childLevel = level + (link.source === id ? 1 : 0); // check if link.source is the current node
         return { id: link.target, level: childLevel };
       });
+      // Add the child nodes to the queue for further processing.
       queue.push(...childNodes);
 
+      // Set the level of the current node in the nodes Map.
       if (!nodes.has(id)) {
         nodes.set(id, level);
       } else if (nodes.get(id) > level) {
         nodes.set(id, level);
       }
 
+      // Handle the links connected to the current node.
       children.forEach((link) => {
         if (visited.has(link.target)) {
           links.add(JSON.stringify({ link: link.link, source: link.source, target: link.target }));
@@ -207,6 +212,7 @@ function CharacterMap() {
         }
       });
 
+      // Adjust the levels of child nodes if necessary.
       links.forEach((link) => {
         if (nodes.get(link.source) === level && nodes.get(link.target) === level) {
           // increase link.target's level and the levels of its child nodes by 1
@@ -241,6 +247,7 @@ function CharacterMap() {
     return { nodes: finalNodes, links: flattenedLinks };
   };
 
+  // Handle graph data fetched from the database
   function onGraphData(snapshot) {
     if (snapshot.exists()) {
       const data = snapshot.val();
@@ -268,6 +275,8 @@ function CharacterMap() {
     }
   }
 
+  // Fetch data from the database
+  // and call onGraphData
   function fetchData() {
     onValue(graphRef, onGraphData);
 
@@ -287,7 +296,7 @@ function CharacterMap() {
             getNodeSize={getNodeSize}
             handleNodeClick={handleNodeClick}
           />
-          {selectedNode && selectedNode.id != undefined && (
+          {selectedNode && selectedNode.id !== undefined && (
             <div
               style={{
                 position: 'absolute',
@@ -300,7 +309,7 @@ function CharacterMap() {
               <textarea cols="40" rows="20"
                 type="text"
                 value={textInput}
-                placeholder={`This is where you can enter the details about ${selectedNode?.id}.`}
+                placeholder={`This is where you can enter the details about ${selectedNode?.id}. For example, if ${selectedNode?.id} is a character, then try adding their background story and motivation. If ${selectedNode?.id} is a location, try to describe its ambience and what it looks like.`}
                 onChange={(e) => {
                   setTextInput((prevTextInput) => e.target.value);
                   console.log(textInput)

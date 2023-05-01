@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
     MDBBtn,
     MDBCol,
@@ -33,6 +33,7 @@ function StoryTimeline() {
 
     const timelineRef = ref(database, `stories/${userId}/timeline/`);
 
+    //Initialize state variables
     const [events, setEvents] = useState([]);
 
     const [showData, setShowData] = useState(null);
@@ -117,16 +118,20 @@ function StoryTimeline() {
         return () => {
             unsubscribe();
         };
-    }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sampleEvents]);
 
+    // Add a new event to the timeline
     const handleAddEvent = () => {
         if (
             moment(newEvent.date, "DD/MM/YYYY", true).isValid() &&
             newEvent.title
         ) {
+            // Add the new event to the state variable and sort the events by date
             setEvents([...events, newEvent].sort((a, b) => {
                 return moment(a.date, "DD/MM/YYYY").diff(moment(b.date, "DD/MM/YYYY"));
             }));
+            // Reset the new event state variable and hide the new event form
             setNewEvent({
                 date: "",
                 title: "",
@@ -152,20 +157,25 @@ function StoryTimeline() {
         }
     };
 
+    // Toggle delete mode for events
     const handleDeleteMode = () => {
         setIsDeleting(!isDeleting);
     };
 
+    // Show the new event form
     const handleShowNewEventForm = () => {
         setShowNewEventForm(true);
     };
 
+    // Cancel adding a new event and reset the new event state variable
     const handleCancelAddEvent = () => {
         setNewEvent({ date: '', title: '', description: '' });
         setShowNewEventForm(false);
     };
 
+    // Delete an event from the timeline
     const handleDeleteEvent = () => {
+        // Filter the events to remove the event to be deleted from the state variable
         const filteredEvents = events.filter((e) => e.id !== eventToDelete.id);
         setEvents(filteredEvents);
 
@@ -176,7 +186,7 @@ function StoryTimeline() {
         setShowDeleteModal(false);
     };
 
-
+    // Handle click on an event circle
     const handleCircleClick = (event, target) => {
         if (isDeleting && target === "delete-icon") {
             setEventToDelete(event);
@@ -234,8 +244,8 @@ function StoryTimeline() {
                                                 })
                                             }
                                         >
-                                            <option value={false}>Not a main event</option>
-                                            <option value={true}>Main event</option>
+                                            <option value={false}>Minor Event</option>
+                                            <option value={true}>Main Event</option>
                                         </select>
                                     </div>
                                     <div className="pb-4">
@@ -272,14 +282,14 @@ function StoryTimeline() {
                                     </div>
                                     <div className="d-flex justify-content-between">
                                         <MDBBtn onClick={handleAddEvent} size="sm">
-                                            Save
+                                            SAVE
                                         </MDBBtn>
                                         <MDBBtn
                                             onClick={handleCancelAddEvent}
                                             size="sm"
                                             color="secondary"
                                         >
-                                            Cancel
+                                            CANCEL
                                         </MDBBtn>
                                     </div>
                                     <div
@@ -295,10 +305,10 @@ function StoryTimeline() {
                                         size="sm"
                                         className="add-event-btn"
                                     >
-                                        Add Event
+                                        ADD EVENT
                                     </MDBBtn>
                                     <MDBBtn onClick={handleDeleteMode} size="sm" className="delete-event-btn">
-                                        {isDeleting ? 'Done' : 'Delete Events'}
+                                        {isDeleting ? 'DONE' : 'DELETE EVENTS'}
                                     </MDBBtn>
                                 </>
                             )}
@@ -361,7 +371,7 @@ function StoryTimeline() {
                 </MDBCol>
             </MDBRow>
             <Dialog open={showDeleteModal} onClose={() => setShowDeleteModal(false)}>
-                <DialogTitle>Delete Event</DialogTitle>
+                <DialogTitle>DELETE EVENT</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
                         Are you sure you want to delete this event?
@@ -369,10 +379,10 @@ function StoryTimeline() {
                 </DialogContent>
                 <DialogActions>
                     <MDBBtn color="secondary" onClick={() => setShowDeleteModal(false)}>
-                        No
+                        NO
                     </MDBBtn>
                     <MDBBtn color="primary" onClick={handleDeleteEvent}>
-                        Yes
+                        YES
                     </MDBBtn>
                 </DialogActions>
             </Dialog>

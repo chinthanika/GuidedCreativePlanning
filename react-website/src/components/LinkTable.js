@@ -93,7 +93,7 @@ function LinkTable({ links, nodes }) {
         setEdit(false);
     };
 
-    // Function For closing the alert snackbar
+    // Close the alert snackbar
     const handleClose = (event, reason) => {
         if (reason === "clickaway") {
             return;
@@ -101,7 +101,7 @@ function LinkTable({ links, nodes }) {
         setOpen(false);
     };
 
-    // Function For adding new row object
+    // Add new row object
     const handleAdd = () => {
         setRows([
             ...rows,
@@ -115,21 +115,21 @@ function LinkTable({ links, nodes }) {
         setEdit(true);
     };
 
-    // Function to handle edit
+    // Handle edit
     const handleEdit = (i) => {
         // If edit mode is true setEdit will 
         // set it to false and vice versa
         setEdit(!isEdit);
     };
 
-    // Function to handle save
+    // Handle save
     const handleSave = () => {
         setEdit(!isEdit);
         setRows(rows);
         setDisable(true);
         setOpen(true);
 
-        // update Firebase database
+        // Update Firebase database
         rows.forEach((row) => {
             set(ref(database, `stories/${currentUser.uid}/graph/links/${(row.id - 1)}`), {
                 source: row.source.trim(),
@@ -139,9 +139,7 @@ function LinkTable({ links, nodes }) {
         });
     };
 
-    // The handleInputChange handler can be set up to handle
-    // many different inputs in the form, listen for changes 
-    // to input elements and record their values in state
+    // Handle a change in the link attribute of a link
     const handleInputChange = (e, index) => {
         setDisable(false);
         const { name, value } = e.target;
@@ -150,6 +148,7 @@ function LinkTable({ links, nodes }) {
         setRows(list);
     };
 
+    // Handle a change in a link's source
     const handleSourceChange = (e, index) => {
         setDisable(false);
         setSource(e.target.value);
@@ -159,6 +158,7 @@ function LinkTable({ links, nodes }) {
         setRows(list);
     }
 
+    // Handle a change in a link's target
     const handleTargetChange = (e, index) => {
         setDisable(false);
         setTarget(e.target.value);
@@ -175,8 +175,6 @@ function LinkTable({ links, nodes }) {
         setShowConfirm(true);
     };
 
-    // Handle the case of delete confirmation where 
-    // user click yes delete a specific row of id:i
     // Handle the case of delete confirmation where 
     // user click yes delete a specific row of id:i
     const handleRemoveClick = () => {

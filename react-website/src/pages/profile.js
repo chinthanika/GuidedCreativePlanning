@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuthValue } from '../Firebase/AuthContext'
-import { signOut, getAuth, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'
+import { signOut, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'
 import { auth } from '../Firebase/firebase'
 import { ref, remove, onValue, set } from "firebase/database";
 import { database } from '../Firebase/firebase';
@@ -20,6 +20,7 @@ function Profile() {
   const summaryRef = ref(database, `stories/${currentUser?.uid}/summary`)
   const titleRef = ref(database, `stories/${currentUser?.uid}/title`)
 
+  // Initialize state variables for managing component state
   const [open, setOpen] = useState(false);
   const [summary, setSummary] = useState("");
   const [title, setTitle] = useState("");
@@ -50,8 +51,10 @@ function Profile() {
       unsubscribeSummary();
       unsubscribeTitle();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Function to handle account deletion
   const handleDeleteAccount = async () => {
     const userRef = ref(database, `users/${currentUser.uid}`);
   
@@ -78,20 +81,24 @@ function Profile() {
     }
   };
 
+  // Save the updated title in Firebase
   const handleTitleSave = () => {
     set(titleRef, title);
     setEditingTitle(false);
   };
 
+  // Save the updated summary in Firebase
   const handleSummarySave = () => {
     set(summaryRef, summary);
     setEditingSummary(false);
   };
 
+  // Open the account deletion confirmation dialog box
   const handleClickOpen = () => {
     setOpen(true);
   };
 
+  // Close the account deletion confirmation dialog box
   const handleClose = () => {
     setOpen(false);
   };

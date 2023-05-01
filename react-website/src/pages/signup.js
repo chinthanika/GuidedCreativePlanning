@@ -16,11 +16,7 @@ function SignUp() {
   const navigate = useNavigate()
   const { setTimeActive } = useAuthValue()
 
-  //Validate password through double-entry
-
-  /*Returns 
-  * isValid : Boolean
-  */
+  // Validate password through double-entry
   const validatePassword = () => {
 
     let isValid = true
@@ -45,8 +41,8 @@ function SignUp() {
       // Create a new user with email and password using firebase
       createUserWithEmailAndPassword(auth, email, password)
 
-        //When the user has signed up, send a verification message to their email then
-        //navigate to the email verification page.
+        // When the user has signed up, send a verification message to their email then
+        // navigate to the email verification page.
         .then(() => {
           sendEmailVerification(auth.currentUser)
             .then(() => {

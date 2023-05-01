@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from "react";
 
-import firebase from 'firebase/app'
 import 'firebase/database'
 
 import { useAuthValue } from '../Firebase/AuthContext'
 import { database } from '../Firebase/firebase'
 import { ref, set, remove } from "firebase/database"
 
-import CreateIcon from "@material-ui/icons/Create";
 import {
     Box, Button, Snackbar, Table,
     TableBody, TableCell, TableHead, TableRow
@@ -73,7 +71,7 @@ function NodeTable({ nodes, links }) {
     const [disable, setDisable] = React.useState(true);
     const [showConfirm, setShowConfirm] = React.useState(false);
 
-    // Function For closing the alert snackbar
+    // Close the alert snackbar
     const handleClose = (event, reason) => {
         if (reason === "clickaway") {
             return;
@@ -81,7 +79,7 @@ function NodeTable({ nodes, links }) {
         setOpen(false);
     };
 
-    // Function For adding new row object
+    // Add new row object
     const handleAdd = () => {
         setRows([
             ...rows,
@@ -94,21 +92,14 @@ function NodeTable({ nodes, links }) {
         setEdit(true);
     };
 
-    // Function to handle edit
-    const handleEdit = (i) => {
-        // If edit mode is true setEdit will 
-        // set it to false and vice versa
-        setEdit(!isEdit);
-    };
-
-    // Function to handle save
+    // Handle save
     const handleSave = () => {
         setEdit(!isEdit);
         setRows(rows);
         setDisable(true);
         setOpen(true);
 
-        // update Firebase database
+        // Update Firebase database
         rows.forEach((row) => {
             set(ref(database, `stories/${currentUser.uid}/graph/nodes/${(row.id - 1)}`), {
                 id: row.name,
@@ -117,32 +108,16 @@ function NodeTable({ nodes, links }) {
         });
     };
 
-    // The handleInputChange handler can be set up to handle
-    // many different inputs in the form, listen for changes 
-    // to input elements and record their values in state
+    // Handle a change in the node name
     const handleInputChange = (e, index) => {
         setDisable(false);
         const { name, value } = e.target;
-
-        // // update link source or target if node id is edited
-        // links.forEach((link, i) => {
-        //     if (link.source === rows[index].name) {
-        //         const newLinks = [...links];
-        //         newLinks[i].source = value;
-        //         setLinks(newLinks);
-        //     }
-        //     if (link.target === rows[index].name) {
-        //         const newLinks = [...links];
-        //         newLinks[i].target = value;
-        //         setLinks(newLinks);
-        //     }
-        // });
 
         const list = [...rows];
         list[index][name] = value;
         setRows(list);
     };
-    // Showing delete confirmation to users
+    // Show delete confirmation to users
     const handleConfirm = (i) => {
         setRowToDelete(i);
 
@@ -217,10 +192,6 @@ function NodeTable({ nodes, links }) {
                                     <AddBoxIcon onClick={handleAdd} />
                                     ADD
                                 </Button>
-                                {/* <Button align="right" onClick={handleEdit}>
-                                    <CreateIcon />
-                                    EDIT
-                                </Button> */}
                             </div>
                         )}
                     </div>
@@ -252,13 +223,6 @@ function NodeTable({ nodes, links }) {
                                                     <input
                                                         value={row.name}
                                                         name="name"
-                                                        onChange={(e) => handleInputChange(e, i)}
-                                                    />
-                                                </TableCell>
-                                                <TableCell padding="none" align="center">
-                                                    <input
-                                                        value={row.level}
-                                                        name="level"
                                                         onChange={(e) => handleInputChange(e, i)}
                                                     />
                                                 </TableCell>

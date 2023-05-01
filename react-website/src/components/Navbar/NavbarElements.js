@@ -3,6 +3,7 @@ import { NavLink as Link } from "react-router-dom";
 import styled from "styled-components";
 import Logo from "./Logo";
   
+// Styled component for navigation
 export const Nav = styled.nav`
   background: #111111;
   height: 85px;
@@ -12,6 +13,7 @@ export const Nav = styled.nav`
   z-index: 12;
 `;
   
+// Styled component for navigation links
 export const NavLink = styled(Link)`
   color: #F8F3D4;
   display: flex;
@@ -25,6 +27,7 @@ export const NavLink = styled(Link)`
   }
 `;
   
+// Styled FaBars component
 export const Bars = styled(FaBars)`
   display: none;
   color: #808080;
@@ -39,6 +42,7 @@ export const Bars = styled(FaBars)`
   }
 `;
   
+// Styled component for the navigation menu
 export const NavMenu = styled.div`
   display: flex;
   align-items: center;
@@ -54,19 +58,19 @@ white-space: nowrap; */
 `;
 
 
-// Add new styled component for the logo and name
+// Styled component for the logo
 export const LogoContainer = styled.div`
   display: flex;
   align-items: center;
 `;
 
+//Styled component for the brand name
 export const BrandName = styled.h1`
   color: #F8F3D4;
   margin-left: 1px;
 `;
 
-// Use this component in your navigation bar
-// Replace 'YourName' with your desired name or brand name
+// Styled component for the logo and brand name
  export const LogoWithName = () => (
   <LogoContainer>
     <Logo />

@@ -15,16 +15,13 @@ function Login() {
   const { setTimeActive } = useAuthValue()
   const navigate = useNavigate()
 
-  //Logs the user in and
-  //check if they are verified.
-  //If not verifiedsend a verification email and
-  //display the email verification page.
-  //If they are verified,
-  //navigate to the profile page.
+  // Handle user log in
   const login = e => {
     e.preventDefault()
+    // Sign in with email and password using Firebase authentication
     signInWithEmailAndPassword(auth, email, password)
       .then(() => {
+        // If user's email is not verified, send verification email and navigate to verification page
         if (!auth.currentUser.emailVerified) {
           sendEmailVerification(auth.currentUser)
             .then(() => {
@@ -33,6 +30,7 @@ function Login() {
             })
             .catch(err => alert(err.message))
         } else {
+          // Navigate to the home page
           navigate('/')
         }
       })
@@ -63,7 +61,7 @@ function Login() {
         </form>
         <p>
           Don't have an account?
-          <Link to='/sign-up'>Create one here</Link>
+          <Link to='/sign-up'> Create one here</Link>
         </p>
       </div>
     </div>
