@@ -1,0 +1,14 @@
+{
+    
+    "model_type": "spert",
+    "model_path": "data/models/conll04",
+    "tokenizer_path": "data/models/conll04",
+    "max_seq_length": 512,
+    "eval_batch_size": 1,
+    "relation_types": 2,
+    "entity_types": 2,
+    "prop_drop": 0.1,
+    "max_pairs": 100,
+    "sampling_processes": 1,
+    "max_span_size": 10
+  }
