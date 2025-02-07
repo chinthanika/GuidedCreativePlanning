@@ -51,8 +51,9 @@ def get_relations_with_deepseek(text):
         {
         "entities": [
             {
-                "id": <number>,
+                "id": SHA-256 hash of name,
                 "name": <string>,
+                "aliases": "Other names by which the entity is referred to, e.g. first name only/last name only/nicknames/by occupation/etc."
                 "type": "Person/Organization/Location",
                 "attributes": {
                     <attributes>
