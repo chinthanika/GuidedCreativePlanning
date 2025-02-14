@@ -1,11 +1,94 @@
 import { useState, useEffect, useCallback } from 'react'; // Import React hooks for managing state and lifecycle events
 
 import 'firebase/database'; // Import the Firebase Realtime Database
-import { set, ref, onValue, orderByChild, equalTo, query, update } from "firebase/database"; // Import database functions from Firebase
+import { set, ref, get, onValue, orderByChild, equalTo, query, update } from "firebase/database"; // Import database functions from Firebase
 import { useAuthValue } from '../Firebase/AuthContext'; // Import a custom hook for accessing Firebase authentication
 import { database } from '../Firebase/firebase'; // Import the Firebase configuration and initialize the Firebase app
 
 import Graph from '../components/Graph';
+
+
+// const StoryMap = () => {
+//   const { currentUser } = useAuthValue()
+
+//   var nodes = [
+//     {
+//       id: "Unknown1",
+//       level: 1,
+//       text: ""
+//     },
+//     {
+//       id: "Unknown2",
+//       level: 1,
+//       text: ""
+//     }
+//   ];
+//   var links = [
+//     {
+//       link: "Unknown",
+//       source: "Unknown1",
+//       target: "Unknown2"
+//     }
+//   ];
+
+//   const [graphData, setGraphData] = useState({ nodes, links });
+//   const [loading, setLoading] = useState(true);
+
+//   useEffect(() => {
+//     const fetchGraphData = async () => {
+//       const graphRef = ref(database, `stories/${currentUser.uid}/graph`);
+//       const graphSnapshot = await get(graphRef);
+
+//       if (graphSnapshot.exists()) {
+//         const { links, nodes } = graphSnapshot.val();
+//         console.log("Links: ", links,"\nNodes: ", nodes)
+//         setGraphData({
+//           nodes: nodes.map(node => ({
+//             id: node.id,
+//             label: node.label,
+//             group: node.group,
+//           })),
+//           links: links.map(link => ({
+//             from: link.source,
+//             to: link.target,
+//             label: link.type,
+//           })),
+//         });
+//       }
+
+//       console.log("Maybe GraphDats(?): ", graphData);
+//       setLoading(false);
+//     };
+
+//     fetchGraphData();
+//     console.log("Graph Data: ", graphData)
+//   }, [currentUser, graphData]);
+
+//   if (loading) return <div>Loading...</div>;
+
+//   const options = {
+//     nodes: {
+//       shape: 'dot',
+//       size: 15,
+//     },
+//     links: {
+//       arrows: 'to',
+//     },
+//     physics: {
+//       stabilization: false,
+//     },
+//   };
+
+//   return (
+//     <div style={{ height: '500px', width: '100%' }}>
+//       <Graph graph={graphData} options={options} />
+//     </div>
+//   );
+// };
+
+// export default StoryMap;
+
+
 
 function StoryMap() {
   const { currentUser } = useAuthValue(); // Get the current user from Firebase authentication
@@ -61,6 +144,7 @@ function StoryMap() {
         if (node.id === selectedNode.id) {
           return { ...node, text: textInput };
         }
+        console.log(node)
         return node;
       }),
       links: data.links,
@@ -108,7 +192,7 @@ function StoryMap() {
           connectedNodes.has(link.target?.id || link.target)
       )
       .map((link) => ({
-        link: link.link,
+        link: link.type,
         source: link.source?.id || link.source,
         target: link.target?.id || link.target,
       }));
@@ -178,7 +262,12 @@ function StoryMap() {
       children.forEach((link) => {
         if (visited.has(link.target)) {
           // Add link as a stringified JSON object if the target has already been visited
-          links.add(JSON.stringify({ link: link.link, source: link.source, target: link.target }));
+          links.add(JSON.stringify({ 
+            link: link.type, 
+            source: link.source, 
+            target: link.target, 
+            context: link.context 
+          }));
         } else {
           // Add link as a stringified JSON object
           links.add(JSON.stringify(link));
@@ -196,7 +285,15 @@ function StoryMap() {
     });
   
     // Build the final list of nodes with text attribute added
-    const finalNodes = data.nodes.filter((node) => nodes.has(node.id)).map((node) => ({ id: node.id, level: nodes.get(node.id), text: node.text || "" }));
+    const finalNodes = data.nodes.filter((node) => nodes.has(node.id)).map((node) => ({ 
+      id: node.id, 
+      label: node.label,
+      level: nodes.get(node.id), 
+      text: node.text || "",
+      group: node.group,
+      aliases: node.aliases,
+      attributes: node.attributes
+    }));
   
     // Return the final nodes and links
     return { nodes: finalNodes, links: flattenedLinks };
@@ -206,6 +303,7 @@ function StoryMap() {
     if (snapshot.exists()) {
       // Get the graph data from the snapshot
       const data = snapshot.val();
+      console.log(data)
   
       // Assign levels to the nodes and links
       const nodes_links = assignLevels(data);
@@ -218,12 +316,14 @@ function StoryMap() {
         ...node,
         hidden: false, // add hidden property to nodes
       }));
+      console.log("Final Nodes: ",  finalNodes)
   
       // Update the final list of links
       const finalLinks = nodes_links.links.map((link) => ({
         link: link.link,
         source: link.source,
         target: link.target,
+        context: link.context
       }));
   
       // Set the graph data, clear the text input and selected node
@@ -283,7 +383,7 @@ function StoryMap() {
               <textarea
                 type="text"
                 value={textInput}
-                placeholder={`This is where you can enter the details about ${selectedNode?.id}.`}
+                placeholder={`This is where you can enter the details about ${selectedNode?.label}.`}
                 onChange={(e) => {
                   setTextInput((prevTextInput) => e.target.value);
                 }}

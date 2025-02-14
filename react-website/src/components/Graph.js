@@ -7,13 +7,14 @@ import LinkTable from './LinkTable'
 
 //Return the Force Graph Component
 const Graph = ({ data, getNodeSize, handleNodeClick }) => {
+  console.log("Received by graph: ", data)
   return (
     <>
     <ForceGraph2D
       graphData={data}
       nodeAutoColorBy="level"
       nodeVal={(node) => getNodeSize(node.level)}
-      nodeLabel={(node) => node.id}
+      nodeLabel={(node) => node.label}
       linkDirectionalArrowLength={3.5}
       linkDirectionalArrowRelPos={1}
       linkCurvature={0.25}

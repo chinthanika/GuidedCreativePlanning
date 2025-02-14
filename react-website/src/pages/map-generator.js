@@ -70,6 +70,9 @@ function MapGenerator() {
       type,
       attributes
     }) => {
+      if (aliases && aliases == ""){
+        aliases = "None"
+      }
       // Check if an alias of this entity already exists
       const existingNode = Array.from(nodes.values()).find(node =>
         node.aliases && node.aliases.includes(name)
@@ -139,7 +142,7 @@ function MapGenerator() {
 
     setIsLoading(false);
 
-    navigate('/character-map')
+    navigate('/story-map')
   }
 
   return (
