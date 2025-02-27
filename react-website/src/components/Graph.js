@@ -18,10 +18,10 @@ const Graph = ({ data, getNodeSize, handleNodeClick }) => {
       linkDirectionalArrowLength={3.5}
       linkDirectionalArrowRelPos={1}
       linkCurvature={0.25}
-      linkLabel={(link) => link.link}
+      linkLabel={(link) => link.type}
       linkThreeObjectExtend={true}
       linkThreeObject={(link) => {
-        const sprite = new SpriteText(link.name);
+        const sprite = new SpriteText(link.type);
         sprite.color = 'lightgrey';
         sprite.textHeight = 1.5;
         return sprite;
