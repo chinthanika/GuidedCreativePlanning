@@ -1,27 +1,68 @@
 import { useState, useEffect } from "react";
 import { Modal, Box, Button, TextField, Typography } from "@material-ui/core";
 
-const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, deleteNode, nodes, links }) => {
+const SYSTEM_FIELDS = new Set([
+  "index", "fx", "fy", "vx", "vy", "__indexColor", "indexColor", "x", "y"
+]);
+
+const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, deleteNode }) => {
   const [nodeData, setNodeData] = useState({});
+  const [attributes, setAttributes] = useState({});
+  const [newFieldName, setNewFieldName] = useState("");
 
   useEffect(() => {
-    setNodeData(selectedNode ? { ...selectedNode } : {});
+    if (selectedNode) {
+      // Remove system fields from nodeData before setting state
+      const filteredData = Object.fromEntries(
+        Object.entries(selectedNode).filter(([key]) => !SYSTEM_FIELDS.has(key))
+      );
+      // Parse attributes field separately
+      const parsedAttributes = selectedNode.attributes ? { ...selectedNode.attributes } : {};
+      
+      setNodeData(filteredData);
+      setAttributes(parsedAttributes);
+    } else {
+      setNodeData({});
+      setAttributes({});
+    }
   }, [selectedNode]);
 
-  
   // Handles input change for any field dynamically
   const handleInputChange = (field, value) => {
     setNodeData((prev) => ({
       ...prev,
       [field]: value,
     }));
-    console.log(nodeData)
   };
 
-  // Saves node changes
+  const handleAttributeChange = (field, value) => {
+    setAttributes((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  // Handles adding new custom fields
+  const handleAddNewField = () => {
+    console.log("Adding new field...")
+    if (!newFieldName.trim() || SYSTEM_FIELDS.has(newFieldName)) return; // Prevent empty/system field names
+
+    setNodeData((prev) => ({
+      ...prev,
+      [newFieldName]: "" // Initialize new field with an empty string
+    }));
+
+    setNewFieldName(""); // Reset input
+  };
+
+  // Saves node changes (without system fields)
   const handleSaveClick = () => {
-    if (!nodeData.text?.trim()) return; // Ensure the text field is not empty
-    updateNode(nodeData);
+    // if (!nodeData.text?.trim()) return; // Ensure the text field is not empty
+    const updatedNode = {
+      ...nodeData,
+      attributes: attributes
+    }
+    updateNode(updatedNode); // Save without system fields
     handleCloseModal();
   };
 
@@ -41,13 +82,13 @@ const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, d
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          width: 300, // Reduced width
-          maxHeight: "70vh", // Limit height
-          backgroundColor: "rgba(255, 255, 255, 0.95)", // Opaque background
+          width: 300,
+          maxHeight: "70vh",
+          backgroundColor: "rgba(255, 255, 255, 0.95)",
           boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
           padding: 16,
           borderRadius: 8,
-          overflowY: "auto", // Scroll if content exceeds maxHeight
+          overflowY: "auto",
         }}
       >
         <Typography id="modal-title" variant="h6" style={{ marginBottom: 16, textAlign: "center" }}>
@@ -55,20 +96,57 @@ const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, d
         </Typography>
 
         {/* Dynamically Create Input Fields */}
-        <Box style={{ maxHeight: "50vh", overflowY: "auto", paddingRight: 8 }}> {/* Scrollable content */}
+        <Box style={{ maxHeight: "50vh", overflowY: "auto", paddingRight: 8 }}>
           {Object.entries(nodeData).map(([key, value]) => (
-            key !== "id" && ( // Exclude the ID field from editing
-              <TextField
-                key={key}
-                label={key}
-                value={value}
-                onChange={(e) => handleInputChange(key, e.target.value)}
-                fullWidth
-                size="small"
-                style={{ marginTop: 8 }}
-              />
-            )
+            <TextField
+              key={key}
+              label={key}
+              value={value}
+              onChange={(e) => handleInputChange(key, e.target.value)}
+              fullWidth
+              size="small"
+              style={{ marginTop: 8 }}
+            />
           ))}
+
+        </Box>
+          {/* Attributes Section */}
+        <Typography variant="subtitle1" style={{ marginTop: 16 }}>
+          Attributes
+        </Typography>
+        <Box style={{ maxHeight: "20vh", overflowY: "auto", paddingRight: 8 }}>
+          {Object.entries(attributes).map(([key, value]) => (
+            <TextField
+              key={key}
+              label={key}
+              value={value}
+              onChange={(e) => handleAttributeChange(key, e.target.value)}
+              fullWidth
+              size="small"
+              style={{ marginTop: 8 }}
+            />
+          ))}
+        </Box>
+
+        {/* Add New Field */}
+        <Box style={{ marginTop: 16 }}>
+          <TextField
+            label="New Field Name"
+            value={newFieldName}
+            onChange={(e) => setNewFieldName(e.target.value)}
+            fullWidth
+            size="small"
+          />
+          <Button
+            onClick={handleAddNewField}
+            variant="contained"
+            color="primary"
+            size="small"
+            style={{ marginTop: 8 }}
+            disabled={!newFieldName.trim()}
+          >
+            Add Field
+          </Button>
         </Box>
 
         {/* Action Buttons */}

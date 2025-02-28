@@ -11,23 +11,26 @@ import { ref, set, get } from "firebase/database"
 
 // Function to remove duplicate entities by checking against existing ones in Firebase
 function deduplicateEntities(newEntities, existingEntities) {
+  console.log(existingEntities)
   const nodes = new Map();
   newEntities.forEach(({ id, name, aliases, type, attributes }) => {
     if (!aliases || aliases === "") {
       aliases = "None";
     }
     
-    const existingNode = existingEntities.find(node =>
-      node.label === name || (node.aliases && node.aliases.includes(name))
-    );
-    
-    if (!existingNode) {
-      nodes.set(name, { 
-        id, 
-        label: name, 
-        group: type, 
-        aliases, 
-        attributes });
+    if (existingEntities != undefined){
+      const existingNode = existingEntities.find(node =>
+        node.label === name || (node.aliases && node.aliases.includes(name))
+      );
+      
+      if (!existingNode) {
+        nodes.set(name, { 
+          id, 
+          label: name, 
+          group: type, 
+          aliases, 
+          attributes });
+      }
     }
   });
   return Array.from(nodes.values());
@@ -71,53 +74,32 @@ function MapGenerator() {
     const graphSnapshot = await get(graphRef);
 
     if (!summarySnapshot.exists()) {
-      set(summaryRef, text);
+        set(summaryRef, text);
     }
     setText('');
 
     const response = await axios.post(url, { text: text });
 
-    const existingGraph = graphSnapshot.exists() ? graphSnapshot.val() : { nodes: [], links: [] };
-
-    // Create array of nodes for knowledge graph
-    // const nodes = new Set();
-
-    // response.data.forEach(({ head, tail }) => {
-    //   nodes.add(head);
-    //   nodes.add(tail);
-    // });
-
-    // Map each unique node to an object with an id and a group
-    //const nodeMap = new Map();
-
-    // let nodeId = 0;
-    // nodes.forEach(node => {
-    //   nodeMap.set(node, { id: node});
-    //   nodeId++;
-    // });
-
-    // // Create an array of links and map each triplet to a link object
-    // const links = response.data.map(({ head, type, tail }) => ({
-    //   source: head,
-    //   link: type,
-    //   target: tail
-    // }));
+    // Ensure existingGraph has default empty arrays
+    const existingGraph = graphSnapshot.exists() ? graphSnapshot.val() : {};
+    const existingNodes = Array.isArray(existingGraph.nodes) ? existingGraph.nodes : [];
+    const existingLinks = Array.isArray(existingGraph.links) ? existingGraph.links : [];
 
     // Deduplicate new entities and links before adding them
-    const newNodes = deduplicateEntities(response.data.entities, existingGraph.nodes);
+    const newNodes = deduplicateEntities(response.data.entities, existingNodes);
     const newLinks = deduplicateLinks(response.data.relationships.map(({ entity1_id, entity2_id, relationship, context }) => ({
-      source: entity1_id,
-      target: entity2_id,
-      type: relationship,
-      context
-    })), existingGraph.links);
+        source: entity1_id,
+        target: entity2_id,
+        type: relationship,
+        context
+    })), existingLinks);
 
     // Update Firebase with new and existing nodes and links
-    set(graphRef, { nodes: [...existingGraph.nodes, ...newNodes], links: [...existingGraph.links, ...newLinks] });
+    set(graphRef, { nodes: [...existingNodes, ...newNodes], links: [...existingLinks, ...newLinks] });
+
     setIsLoading(false);
     navigate('/story-map');
-  }
-
+};
 
 
     // const nodes = new Map();

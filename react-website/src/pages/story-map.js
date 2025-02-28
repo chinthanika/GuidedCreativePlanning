@@ -9,32 +9,9 @@ import { Input, Button, Modal, Box } from '@material-ui/core';
 import { v4 as uuidv4 } from "uuid";
 
 function StoryMap() {
-
-  var nodes = [
-    {
-      id: "Unknown1",
-      label: "Unknown1",
-      level: 1,
-      text: ""
-    },
-    {
-      id: "Unknown2",
-      label: "Unknown2",
-      level: 1,
-      text: ""
-    }
-  ];
-  var links = [
-    {
-      type: "Unknown",
-      source: "Unknown1",
-      target: "Unknown2"
-    }
-  ];
-
   const { currentUser } = useAuthValue();
   const userId = currentUser ? currentUser.uid : null;
-  const [data, setData] = useState({ nodes, links });
+  const [data, setData] = useState({ nodes: [], links: []  });
   const [selectedNode, setSelectedNode] = useState(null);
   const [textInput, setTextInput] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -74,28 +51,35 @@ function StoryMap() {
     return 10 / level;
   };
 
-  const handleSaveClick = useCallback(() => {
+  const handleSaveClick = useCallback(async () => {
     if (!selectedNode) return;
 
     const updatedData = {
-      nodes: data.nodes.map((node) =>
-        node.id === selectedNode.id ? { ...node, text: textInput } : node
-      ),
-      links: data.links,
+        nodes: data.nodes.map((node) =>
+            node.id === selectedNode.id ? { ...node, text: textInput } : node
+        ),
+        links: data.links,
     };
 
     const nodeRef = ref(database, `stories/${userId}/graph/nodes`);
     const q = query(nodeRef, orderByChild("id"), equalTo(selectedNode.id));
-    onValue(q, (snapshot) => {
-      snapshot.forEach((childSnapshot) => {
-        const nodeKey = childSnapshot.key;
-        update(ref(database, `stories/${userId}/graph/nodes/${nodeKey}`), { text: textInput });
-      });
-    });
 
-    setData(updatedData);
+    try {
+        const snapshot = await get(q);
+        if (snapshot.exists()) {
+            snapshot.forEach((childSnapshot) => {
+                const nodeKey = childSnapshot.key;
+                update(ref(database, `stories/${userId}/graph/nodes/${nodeKey}`), { text: textInput });
+            });
+        }
+    } catch (error) {
+        console.error("Error updating node:", error);
+    }
+
+    setData(updatedData);  // Be careful: this might still cause unnecessary re-renders
     setIsModalOpen(false);
-  }, [data, selectedNode, textInput, userId]);
+}, [data, selectedNode, textInput, userId]);
+
 
   // Opens the modal for editing a node
   const handleNodeClick = (node) => {
@@ -104,12 +88,38 @@ function StoryMap() {
   };
 
   const updateNode = (updatedNode) => {
-    setData((prevData) => ({
-      ...prevData,
-      nodes: prevData.nodes.map((node) => (node.id === updatedNode.id ? updatedNode : node))
-  }));
-  set(ref(database, `stories/${currentUser.uid}/graph/nodes/${updatedNode.id}`), updatedNode);
-};
+    console.log("Updating: ", updatedNode);
+  
+    setData((prevData) => {
+      const updatedNodes = prevData.nodes.map((node) =>
+        node.id === updatedNode.id ? { ...node, ...updatedNode } : node
+      );
+  
+      return { ...prevData, nodes: updatedNodes };
+    });
+  
+    // Use setTimeout to ensure the state update is reflected in logs
+    setTimeout(() => {
+      console.log("Updated Nodes: ", data.nodes);
+    }, 100);
+  
+    // Ensure the correct node is updated in Firebase
+    if (updatedNode.id) {
+      const nodeIndex = data.nodes.findIndex((node) => node.id === updatedNode.id);
+      console.log("Updated Node: ", updatedNode)
+      if (nodeIndex !== -1) {
+        set(ref(database, `stories/${currentUser.uid}/graph/nodes/${nodeIndex}`), updatedNode)
+          .then(() => console.log("Node successfully updated in Firebase"))
+          .catch((error) => console.error("Error updating node: ", error));
+      } else {
+        console.error("Error: Node with ID not found in dataset");
+      }
+    } else {
+      console.error("Error: updatedNode.id is undefined");
+    }
+  };
+  
+  
 
   const deleteNode = (nodeId) => {
     setData((prevData) => ({
@@ -123,6 +133,7 @@ function StoryMap() {
   const addNode = () => {
     const newNode = { id: data.nodes.length, text: "New Node" };
     setData((prev) => ({ ...prev, nodes: [...prev.nodes, newNode] }));
+    console.log("Adding Nodes: ", data)
     set(ref(database, `stories/${userId}/graph/nodes/${newNode.id}`), newNode).then(showNotification);
   };
 
@@ -159,38 +170,39 @@ function StoryMap() {
     const nodes = new Map();
     const links = new Set();
     const visited = new Set();
-    console.log("Data links: ", snapshotData.links)
+    console.log("Data links: ", snapshotData.links, "\nData Nodes:", snapshotData.nodes)
 
     // Get links for a given node
     const getLinks = (nodeId) => {
       return snapshotData.links.filter((link) => link.source === nodeId && !visited.has(link.target));
     };
 
-    // // Check if two links are bidirectional
-    // const isTwoWayLinked = (link1, link2) => {
-    //   return link1.source === link2.target && link1.target === link2.source;
-    // };
+    // Check if two links are bidirectional
+    const isTwoWayLinked = (link1, link2) => {
+      return link1.source === link2.target && link1.target === link2.source;
+    };
 
-    // // Remove a link from the data
-    // const removeLink = (linkToRemove) => {
-    //   data.links.splice(data.links.findIndex((link) => link === linkToRemove), 1);
-    // };
+    // Remove a link from the data
+    const removeLink = (linkToRemove) => {
+      snapshotData.links.splice(snapshotData.links.findIndex((link) => link === linkToRemove), 1);
+    };
 
     // Find root nodes
     const rootNodeNames = new Set(snapshotData.nodes.map(node => node.id));
-    // data.links.forEach(link => {
-    //   if (!data.nodes.some(node => node.id === link.source) || !data.nodes.some(node => node.id === link.target)) {
-    //     // Remove link if source or target node doesn't exist
-    //     removeLink(link);
-    //   } else {
-    //     rootNodeNames.delete(link.target);
-    //     if (data.links.some((l) => isTwoWayLinked(link, l))) {
-    //       // Check for bidirectional links
-    //       rootNodeNames.add(link.source);
-    //       removeLink(data.links.find((l) => isTwoWayLinked(link, l) && l.source !== link.source));
-    //     }
-    //   }
-    // });
+    console.log("After creating rootNodeNames, Snapshot: ", snapshotData.nodes)
+    snapshotData.links.forEach(link => {
+      if (!snapshotData.nodes.some(node => node.id === link.source) || !snapshotData.nodes.some(node => node.id === link.target)) {
+        // Remove link if source or target node doesn't exist
+        removeLink(link);
+      } else {
+        rootNodeNames.delete(link.target);
+        if (snapshotData.links.some((l) => isTwoWayLinked(link, l))) {
+          // Check for bidirectional links
+          rootNodeNames.add(link.source);
+          removeLink(snapshotData.links.find((l) => isTwoWayLinked(link, l) && l.source !== link.source));
+        }
+      }
+    });
 
     // Create a queue of root nodes
     const queue = Array.from(rootNodeNames, rootNodeName => ({ id: rootNodeName, level: 1 }));
@@ -216,10 +228,10 @@ function StoryMap() {
         if (visited.has(link.target)) {
           // Add link as a stringified JSON object if the target has already been visited
           links.add(JSON.stringify({
-            link: link.type,
+            type: link.type,
             source: link.source,
             target: link.target,
-            context: link.context
+            context: link.context || ""
           }));
         } else {
           // Add link as a stringified JSON object
@@ -237,15 +249,19 @@ function StoryMap() {
       nodeLevels[id] = level;
     });
 
+    console.log("Before filtering: ", nodes)
+
+    console.log("Filtering Nodes: ", snapshotData.nodes.filter((node)=> nodes.has(node.id)))
     // Build the final list of nodes with text attribute added
-    const finalNodes = data.nodes.filter((node) => nodes.has(node.id)).map((node) => ({
+    const finalNodes = snapshotData.nodes.filter((node) => nodes.has(node.id)).map((node) => ({
+      ...node,
       id: node.id,
       label: node.label,
       level: nodes.get(node.id),
-      text: node.text || "",
+      note: node.note || "",
       group: node.group,
       aliases: node.aliases,
-      attributes: node.attributes,
+      attributes: node.attributes || {attribute : "None"},
       hidden: false
     }));
     console.log("Final nodes and links: ", finalNodes, flattenedLinks)
@@ -254,15 +270,17 @@ function StoryMap() {
   };
 
   function onGraphData(snapshot) {
+    console.log("Getting snapshot...")
     // Check if the data exists
     if (snapshot.exists()) {
       // Get the graph data from the snapshot
       const snapshotData = snapshot.val();
       console.log("Got snapshot: ", snapshotData)
       console.log(snapshotData.nodes, snapshotData.links)
+
       // Assign levels to the nodes and links
       const nodes_links = assignLevels(snapshotData);
-      console.log("Assigned levels: ", snapshotData)
+      console.log("Assigned levels: ", nodes_links)
       // Filter out hidden nodes
       const hiddenNodes = data.nodes.filter((node) => !nodes_links.nodes.some((n) => n.id === node.id));
 
@@ -278,11 +296,12 @@ function StoryMap() {
         type: link.type,
         source: link.source,
         target: link.target,
-        context: link.context
+        context: link.context || "None"
       }));
       if (finalNodes.length > 0 && finalLinks.length > 0){
               // Set the graph data, clear the text input and selected node
         setData({ nodes: finalNodes, links: finalLinks });
+        console.log(data)
       }
       else {
         console.log ("Data gone: ", finalNodes, finalLinks)
@@ -299,6 +318,7 @@ function StoryMap() {
 
       // Update the graph data in the database
       const graphRef = ref(database, `stories/${userId}/graph`);
+      console.log("Updating at onGraphData: ", finalNodes, finalLinks)
       set(graphRef, { nodes: finalNodes, links: finalLinks });
     } else {
       // If no data is available, show a message
@@ -342,7 +362,7 @@ function StoryMap() {
       <Button
         variant="contained"
         onClick={() =>
-          addNode({ id: `${nodes.length + 1}`, name: "New Node", links: [] })
+          addNode({ id: `${data.nodes.length + 1}`, name: "New Node", links: [] })
         }
         sx={{ mt: 2 }}
       >
