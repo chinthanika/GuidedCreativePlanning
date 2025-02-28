@@ -111,7 +111,7 @@ function StoryMap() {
   ];
   var links = [
     {
-      link: "Unknown",
+      type: "Unknown",
       source: "Unknown1",
       target: "Unknown2"
     }
@@ -192,9 +192,10 @@ function StoryMap() {
           connectedNodes.has(link.target?.id || link.target)
       )
       .map((link) => ({
-        link: link.type,
+        type: link.type,
         source: link.source?.id || link.source,
         target: link.target?.id || link.target,
+        context: link.context
       }));
 
     setData({ nodes: finalNodes, links: finalLinks });
@@ -263,7 +264,7 @@ function StoryMap() {
         if (visited.has(link.target)) {
           // Add link as a stringified JSON object if the target has already been visited
           links.add(JSON.stringify({ 
-            link: link.type, 
+            type: link.type, 
             source: link.source, 
             target: link.target, 
             context: link.context 
@@ -292,7 +293,7 @@ function StoryMap() {
       text: node.text || "",
       group: node.group,
       aliases: node.aliases,
-      attributes: node.attributes
+      attributes: node.attributes || "None"
     }));
   
     // Return the final nodes and links
@@ -320,7 +321,7 @@ function StoryMap() {
   
       // Update the final list of links
       const finalLinks = nodes_links.links.map((link) => ({
-        link: link.link,
+        type: link.type,
         source: link.source,
         target: link.target,
         context: link.context
