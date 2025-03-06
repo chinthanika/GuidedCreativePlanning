@@ -7,11 +7,14 @@ import Graph from '../components/Graph';
 import GraphModal from '../components/graph-modal';
 import { Input, Button, Modal, Box } from '@material-ui/core';
 import { v4 as uuidv4 } from "uuid";
+import { sha256 } from 'js-sha256';
+
+var sha256 = require('js-sha256');
 
 function StoryMap() {
   const { currentUser } = useAuthValue();
   const userId = currentUser ? currentUser.uid : null;
-  const [data, setData] = useState({ nodes: [], links: []  });
+  const [data, setData] = useState({ nodes: [], links: [] });
   const [selectedNode, setSelectedNode] = useState(null);
   const [textInput, setTextInput] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,7 +23,7 @@ function StoryMap() {
   const [newLinkTarget, setNewLinkTarget] = useState("");
   const [newNodeName, setNewNodeName] = useState("");
   const [notification, setNotification] = useState(false);
-  
+
   const graphRef = ref(database, `stories/${userId}/graph/`);
 
   useEffect(() => {
@@ -55,30 +58,30 @@ function StoryMap() {
     if (!selectedNode) return;
 
     const updatedData = {
-        nodes: data.nodes.map((node) =>
-            node.id === selectedNode.id ? { ...node, text: textInput } : node
-        ),
-        links: data.links,
+      nodes: data.nodes.map((node) =>
+        node.id === selectedNode.id ? { ...node, text: textInput } : node
+      ),
+      links: data.links,
     };
 
     const nodeRef = ref(database, `stories/${userId}/graph/nodes`);
     const q = query(nodeRef, orderByChild("id"), equalTo(selectedNode.id));
 
     try {
-        const snapshot = await get(q);
-        if (snapshot.exists()) {
-            snapshot.forEach((childSnapshot) => {
-                const nodeKey = childSnapshot.key;
-                update(ref(database, `stories/${userId}/graph/nodes/${nodeKey}`), { text: textInput });
-            });
-        }
+      const snapshot = await get(q);
+      if (snapshot.exists()) {
+        snapshot.forEach((childSnapshot) => {
+          const nodeKey = childSnapshot.key;
+          update(ref(database, `stories/${userId}/graph/nodes/${nodeKey}`), { text: textInput });
+        });
+      }
     } catch (error) {
-        console.error("Error updating node:", error);
+      console.error("Error updating node:", error);
     }
 
     setData(updatedData);  // Be careful: this might still cause unnecessary re-renders
     setIsModalOpen(false);
-}, [data, selectedNode, textInput, userId]);
+  }, [data, selectedNode, textInput, userId]);
 
 
   // Opens the modal for editing a node
@@ -89,20 +92,20 @@ function StoryMap() {
 
   const updateNode = (updatedNode) => {
     console.log("Updating: ", updatedNode);
-  
+
     setData((prevData) => {
       const updatedNodes = prevData.nodes.map((node) =>
         node.id === updatedNode.id ? { ...node, ...updatedNode } : node
       );
-  
+
       return { ...prevData, nodes: updatedNodes };
     });
-  
+
     // Use setTimeout to ensure the state update is reflected in logs
     setTimeout(() => {
       console.log("Updated Nodes: ", data.nodes);
     }, 100);
-  
+
     // Ensure the correct node is updated in Firebase
     if (updatedNode.id) {
       const nodeIndex = data.nodes.findIndex((node) => node.id === updatedNode.id);
@@ -118,23 +121,55 @@ function StoryMap() {
       console.error("Error: updatedNode.id is undefined");
     }
   };
-  
-  
 
   const deleteNode = (nodeId) => {
-    setData((prevData) => ({
-      ...prevData,
-      nodes: prevData.nodes.filter((node) => node.id !== nodeId),
-      links: prevData.links.filter((link) => link.source !== nodeId && link.target !== nodeId)
-  }));
-  remove(ref(database, `stories/${currentUser.uid}/graph/nodes/${nodeId}`));
+    const nodeIndex = data.nodes.findIndex((node) => node.id === nodeId);
+    if (nodeIndex === -1) return; // Exit if node is not found
+  
+    // Find the indices of the links to be deleted
+    const linkIndices = data.links
+      .map((link, linkIndex) => (link.source === nodeId || link.target === nodeId ? linkIndex : -1))
+      .filter((linkIndex) => linkIndex !== -1);
+  
+    setData((prevData) => {
+      const updatedNodes = prevData.nodes.filter((node) => node.id !== nodeId);
+      const updatedLinks = prevData.links.filter((link) => link.source !== nodeId && link.target !== nodeId);
+  
+      // Remove node from Firebase using its index
+      remove(ref(database, `stories/${currentUser.uid}/graph/nodes/${nodeIndex}`));
+  
+      // Remove related links from Firebase using their indices
+      linkIndices.forEach((linkIndex) => {
+        remove(ref(database, `stories/${currentUser.uid}/graph/links/${linkIndex}`));
+      });
+  
+      return { ...prevData, nodes: updatedNodes, links: updatedLinks };
+    });
   };
+  
+  const addNode = async () => {
+    const nodeName = "New Node"; // Default name
 
-  const addNode = () => {
-    const newNode = { id: data.nodes.length, text: "New Node" };
+    const id = sha256(nodeName)
+  
+    const newNode = {
+      id,
+      label: nodeName,
+      aliases: "",
+      attributes: {},
+      group: "Uncategorized",
+      hidden: false,
+      level: 1,
+      note: ""
+    };
+  
     setData((prev) => ({ ...prev, nodes: [...prev.nodes, newNode] }));
-    console.log("Adding Nodes: ", data)
-    set(ref(database, `stories/${userId}/graph/nodes/${newNode.id}`), newNode).then(showNotification);
+    console.log("Adding Node: ", newNode);
+  
+    // Store in Firebase
+    set(ref(database, `stories/${userId}/graph/nodes/${newNode.id}`), newNode)
+      .then(showNotification)
+      .catch((error) => console.error("Error adding node:", error));
   };
 
   // // Adds a new link between nodes
@@ -190,6 +225,7 @@ function StoryMap() {
     // Find root nodes
     const rootNodeNames = new Set(snapshotData.nodes.map(node => node.id));
     console.log("After creating rootNodeNames, Snapshot: ", snapshotData.nodes)
+    console.log("At line 193: ", snapshotData.links)
     snapshotData.links.forEach(link => {
       if (!snapshotData.nodes.some(node => node.id === link.source) || !snapshotData.nodes.some(node => node.id === link.target)) {
         // Remove link if source or target node doesn't exist
@@ -203,7 +239,7 @@ function StoryMap() {
         }
       }
     });
-
+    console.log("At line 206: ", snapshotData.links)
     // Create a queue of root nodes
     const queue = Array.from(rootNodeNames, rootNodeName => ({ id: rootNodeName, level: 1 }));
     while (queue.length > 0) {
@@ -237,12 +273,13 @@ function StoryMap() {
           // Add link as a stringified JSON object
           links.add(JSON.stringify(link));
         }
+        console.log("Adding Links as children: ", links)
       });
     }
 
     // Convert the set of links back to an array
     const flattenedLinks = Array.from(links, (link) => JSON.parse(link));
-
+    console.log("Flattened: ", flattenedLinks)
     // Build a mapping of node IDs to their assigned levels
     const nodeLevels = {};
     nodes.forEach((level, id) => {
@@ -251,7 +288,7 @@ function StoryMap() {
 
     console.log("Before filtering: ", nodes)
 
-    console.log("Filtering Nodes: ", snapshotData.nodes.filter((node)=> nodes.has(node.id)))
+    console.log("Filtering Nodes: ", snapshotData.nodes.filter((node) => nodes.has(node.id)))
     // Build the final list of nodes with text attribute added
     const finalNodes = snapshotData.nodes.filter((node) => nodes.has(node.id)).map((node) => ({
       ...node,
@@ -261,7 +298,7 @@ function StoryMap() {
       note: node.note || "",
       group: node.group,
       aliases: node.aliases,
-      attributes: node.attributes || {attribute : "None"},
+      attributes: node.attributes || { attribute: "None" },
       hidden: false
     }));
     console.log("Final nodes and links: ", finalNodes, flattenedLinks)
@@ -298,13 +335,13 @@ function StoryMap() {
         target: link.target,
         context: link.context || "None"
       }));
-      if (finalNodes.length > 0 && finalLinks.length > 0){
-              // Set the graph data, clear the text input and selected node
+      if (finalNodes.length > 0 && finalLinks.length > 0) {
+        // Set the graph data, clear the text input and selected node
         setData({ nodes: finalNodes, links: finalLinks });
         console.log(data)
       }
       else {
-        console.log ("Data gone: ", finalNodes, finalLinks)
+        console.log("Data gone: ", finalNodes, finalLinks)
       }
 
       setTextInput("");

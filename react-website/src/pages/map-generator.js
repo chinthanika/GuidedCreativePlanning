@@ -93,7 +93,7 @@ function MapGenerator() {
         type: relationship,
         context
     })), existingLinks);
-
+    console.log(newLinks)
     // Update Firebase with new and existing nodes and links
     set(graphRef, { nodes: [...existingNodes, ...newNodes], links: [...existingLinks, ...newLinks] });
 

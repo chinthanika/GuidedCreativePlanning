@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Modal, Box, Button, TextField, Typography } from "@material-ui/core";
 
 const SYSTEM_FIELDS = new Set([
-  "index", "fx", "fy", "vx", "vy", "__indexColor", "indexColor", "x", "y"
+  "attributes", "index", "fx", "fy", "vx", "vy", "__indexColor", "indexColor", "x", "y"
 ]);
 
 const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, deleteNode }) => {
@@ -18,7 +18,7 @@ const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, d
       );
       // Parse attributes field separately
       const parsedAttributes = selectedNode.attributes ? { ...selectedNode.attributes } : {};
-      
+
       setNodeData(filteredData);
       setAttributes(parsedAttributes);
     } else {
@@ -69,7 +69,7 @@ const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, d
   // Deletes node
   const handleDeleteClick = () => {
     if (window.confirm("Are you sure you want to delete this node?")) {
-      deleteNode(selectedNode.label);
+      deleteNode(selectedNode.id);
       handleCloseModal();
     }
   };
@@ -108,26 +108,24 @@ const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, d
               style={{ marginTop: 8 }}
             />
           ))}
-
-        </Box>
           {/* Attributes Section */}
-        <Typography variant="subtitle1" style={{ marginTop: 16 }}>
-          Attributes
-        </Typography>
-        <Box style={{ maxHeight: "20vh", overflowY: "auto", paddingRight: 8 }}>
-          {Object.entries(attributes).map(([key, value]) => (
-            <TextField
-              key={key}
-              label={key}
-              value={value}
-              onChange={(e) => handleAttributeChange(key, e.target.value)}
-              fullWidth
-              size="small"
-              style={{ marginTop: 8 }}
-            />
-          ))}
+          <Typography variant="subtitle1" style={{ marginTop: 16 }}>
+            Attributes
+          </Typography>
+          <Box style={{ maxHeight: "20vh", overflowY: "auto", paddingRight: 8 }}>
+            {Object.entries(attributes).map(([key, value]) => (
+              <TextField
+                key={key}
+                label={key}
+                value={value}
+                onChange={(e) => handleAttributeChange(key, e.target.value)}
+                fullWidth
+                size="small"
+                style={{ marginTop: 8 }}
+              />
+            ))}
+          </Box>
         </Box>
-
         {/* Add New Field */}
         <Box style={{ marginTop: 16 }}>
           <TextField
@@ -148,7 +146,6 @@ const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, d
             Add Field
           </Button>
         </Box>
-
         {/* Action Buttons */}
         <Box style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
           <Button onClick={handleSaveClick} variant="contained" color="primary" size="small">
