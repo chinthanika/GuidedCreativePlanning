@@ -8,8 +8,9 @@ import GraphModal from '../components/graph-modal';
 import { Input, Button, Modal, Box } from '@material-ui/core';
 import { v4 as uuidv4 } from "uuid";
 import { sha256 } from 'js-sha256';
+import NewNodeModal from '../components/NewNodeModal';
 
-var sha256 = require('js-sha256');
+// var sha256 = require('js-sha256');
 
 function StoryMap() {
   const { currentUser } = useAuthValue();
@@ -18,6 +19,7 @@ function StoryMap() {
   const [selectedNode, setSelectedNode] = useState(null);
   const [textInput, setTextInput] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNewNodeModalOpen, setIsNewNodeModalOpen] = useState(false);
   const [newNodeText, setNewNodeText] = useState("");
   const [newLinkSource, setNewLinkSource] = useState("");
   const [newLinkTarget, setNewLinkTarget] = useState("");
@@ -147,15 +149,58 @@ function StoryMap() {
     });
   };
   
-  const addNode = async () => {
-    const nodeName = "New Node"; // Default name
+  // const addNode = async () => {
+  //   const nodeName = "New Node"; // Default name
 
-    const id = sha256(nodeName)
+  //   const id = sha256(nodeName)
   
+  //   const newNode = {
+  //     id: id,
+  //     label: nodeName,
+  //     aliases: "",
+  //     attributes: {},
+  //     group: "Uncategorized",
+  //     hidden: false,
+  //     level: 1,
+  //     note: ""
+  //   };
+  
+  //   setData((prev) => ({ ...prev, nodes: [...prev.nodes, newNode] }));
+  //   console.log("Adding Node: ", newNode);
+  
+  //   // Store in Firebase
+  //   set(ref(database, `stories/${userId}/graph/nodes/${data.nodes.length}`), newNode)
+  //     .then(showNotification)
+  //     .catch((error) => console.error("Error adding node:", error));
+  // };
+
+  const addNode = () => {
+    setIsNewNodeModalOpen(true); // Open modal to input new node details
+  };
+
+  const closeNewNodeModal = () => {
+    setIsNewNodeModalOpen(false);
+  };
+
+  const saveNewNode = async (nodeDetails) => {
+    const { label, aliases } = nodeDetails;
+  
+    // Check if node name or alias already exists
+    const existingNode = data.nodes.find(node => 
+      node.label.toLowerCase() === label.toLowerCase() || 
+      node.aliases.split(",").map(a => a.trim().toLowerCase()).includes(label.toLowerCase())
+    );
+  
+    if (existingNode) {
+      const confirmAdd = window.confirm(`A node with this name or alias already exists: ${existingNode.label}. Do you still want to proceed?`);
+      if (!confirmAdd) return;
+    }
+  
+    const id = sha256(label);
     const newNode = {
-      id,
-      label: nodeName,
-      aliases: "",
+      id: id,
+      label: label,
+      aliases: aliases || "",
       attributes: {},
       group: "Uncategorized",
       hidden: false,
@@ -164,12 +209,13 @@ function StoryMap() {
     };
   
     setData((prev) => ({ ...prev, nodes: [...prev.nodes, newNode] }));
-    console.log("Adding Node: ", newNode);
   
     // Store in Firebase
-    set(ref(database, `stories/${userId}/graph/nodes/${newNode.id}`), newNode)
+    set(ref(database, `stories/${userId}/graph/nodes/${data.nodes.length}`), newNode)
       .then(showNotification)
       .catch((error) => console.error("Error adding node:", error));
+  
+    closeNewNodeModal(); // Close the modal after saving
   };
 
   // // Adds a new link between nodes
@@ -399,12 +445,18 @@ function StoryMap() {
       <Button
         variant="contained"
         onClick={() =>
-          addNode({ id: `${data.nodes.length + 1}`, name: "New Node", links: [] })
+          addNode({ name: "New Node", links: [] })
         }
         sx={{ mt: 2 }}
       >
         + Add Node
       </Button>
+      <NewNodeModal
+      isOpen={isNewNodeModalOpen}
+      closeModal={() => closeNewNodeModal}
+      onSave={saveNewNode}>
+
+      </NewNodeModal>
     </div>
   );
 

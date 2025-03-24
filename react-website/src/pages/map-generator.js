@@ -9,6 +9,8 @@ import { useAuthValue } from '../Firebase/AuthContext'
 import { database } from '../Firebase/firebase'
 import { ref, set, get } from "firebase/database"
 
+
+
 // Function to remove duplicate entities by checking against existing ones in Firebase
 function deduplicateEntities(newEntities, existingEntities) {
   console.log(existingEntities)
