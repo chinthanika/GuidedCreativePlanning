@@ -9,6 +9,8 @@ import { Input, Button, Modal, Box } from '@material-ui/core';
 import { v4 as uuidv4 } from "uuid";
 import { sha256 } from 'js-sha256';
 import NewNodeModal from '../components/NewNodeModal';
+import NewLinkModal from '../components/NewLinkModal';
+import EditLinkModal from '../components/EditLinkModal';
 
 // var sha256 = require('js-sha256');
 
@@ -20,10 +22,11 @@ function StoryMap() {
   const [textInput, setTextInput] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNewNodeModalOpen, setIsNewNodeModalOpen] = useState(false);
-  const [newNodeText, setNewNodeText] = useState("");
+  const [isNewLinkModalOpen, setIsNewLinkModalOpen] = useState(false);
+  const [isEditLinkModalOpen, setIsEditLinkModalOpen] = useState(false);
+  const [selectedLink, setSelectedLink] = useState(null);
   const [newLinkSource, setNewLinkSource] = useState("");
   const [newLinkTarget, setNewLinkTarget] = useState("");
-  const [newNodeName, setNewNodeName] = useState("");
   const [notification, setNotification] = useState(false);
 
   const graphRef = ref(database, `stories/${userId}/graph/`);
@@ -92,6 +95,11 @@ function StoryMap() {
     setIsModalOpen(true);
   };
 
+  const handleLinkClick = (link) => {
+    setSelectedLink(link);
+    setIsEditLinkModalOpen(true);
+  };
+
   const updateNode = (updatedNode) => {
     console.log("Updating: ", updatedNode);
 
@@ -127,33 +135,33 @@ function StoryMap() {
   const deleteNode = (nodeId) => {
     const nodeIndex = data.nodes.findIndex((node) => node.id === nodeId);
     if (nodeIndex === -1) return; // Exit if node is not found
-  
+
     // Find the indices of the links to be deleted
     const linkIndices = data.links
       .map((link, linkIndex) => (link.source === nodeId || link.target === nodeId ? linkIndex : -1))
       .filter((linkIndex) => linkIndex !== -1);
-  
+
     setData((prevData) => {
       const updatedNodes = prevData.nodes.filter((node) => node.id !== nodeId);
       const updatedLinks = prevData.links.filter((link) => link.source !== nodeId && link.target !== nodeId);
-  
+
       // Remove node from Firebase using its index
       remove(ref(database, `stories/${currentUser.uid}/graph/nodes/${nodeIndex}`));
-  
+
       // Remove related links from Firebase using their indices
       linkIndices.forEach((linkIndex) => {
         remove(ref(database, `stories/${currentUser.uid}/graph/links/${linkIndex}`));
       });
-  
+
       return { ...prevData, nodes: updatedNodes, links: updatedLinks };
     });
   };
-  
+
   // const addNode = async () => {
   //   const nodeName = "New Node"; // Default name
 
   //   const id = sha256(nodeName)
-  
+
   //   const newNode = {
   //     id: id,
   //     label: nodeName,
@@ -164,10 +172,10 @@ function StoryMap() {
   //     level: 1,
   //     note: ""
   //   };
-  
+
   //   setData((prev) => ({ ...prev, nodes: [...prev.nodes, newNode] }));
   //   console.log("Adding Node: ", newNode);
-  
+
   //   // Store in Firebase
   //   set(ref(database, `stories/${userId}/graph/nodes/${data.nodes.length}`), newNode)
   //     .then(showNotification)
@@ -184,18 +192,18 @@ function StoryMap() {
 
   const saveNewNode = async (nodeDetails) => {
     const { label, aliases } = nodeDetails;
-  
+
     // Check if node name or alias already exists
-    const existingNode = data.nodes.find(node => 
-      node.label.toLowerCase() === label.toLowerCase() || 
+    const existingNode = data.nodes.find(node =>
+      node.label.toLowerCase() === label.toLowerCase() ||
       node.aliases.split(",").map(a => a.trim().toLowerCase()).includes(label.toLowerCase())
     );
-  
+
     if (existingNode) {
       const confirmAdd = window.confirm(`A node with this name or alias already exists: ${existingNode.label}. Do you still want to proceed?`);
       if (!confirmAdd) return;
     }
-  
+
     const id = sha256(label);
     const newNode = {
       id: id,
@@ -207,15 +215,112 @@ function StoryMap() {
       level: 1,
       note: ""
     };
-  
+
     setData((prev) => ({ ...prev, nodes: [...prev.nodes, newNode] }));
-  
+
     // Store in Firebase
     set(ref(database, `stories/${userId}/graph/nodes/${data.nodes.length}`), newNode)
       .then(showNotification)
       .catch((error) => console.error("Error adding node:", error));
-  
+
     closeNewNodeModal(); // Close the modal after saving
+  };
+
+  const openNewLinkModal = () => {
+    setIsNewLinkModalOpen(true);
+  };
+
+  const closeNewLinkModal = () => {
+    setIsNewLinkModalOpen(false);
+  };
+
+  const openEditLinkModal = (link) => {
+    setSelectedLink(link);
+    setIsEditLinkModalOpen(true);
+  };
+
+  const closeEditLinkModal = () => {
+    setSelectedLink(null);
+    setIsEditLinkModalOpen(false);
+  };
+
+
+  const saveNewLink = (linkDetails) => {
+    const { context, source, target, type } = linkDetails;
+
+    if (source === target) {
+      alert("Source and target must be different.");
+      return;
+    }
+
+    if (!source || !target) {
+      alert("Source and target must not be empty.");
+      return;
+    }
+
+    const existingLink = data.links.find(
+      (link) => link.source === source && link.target === target
+    );
+
+    if (existingLink) {
+      alert("A link with the same source and target already exists.");
+      return;
+    }
+
+    const newLink = {
+      context: context || "",
+      source,
+      target,
+      type: type || "Unspecified"
+    };
+
+    setData((prev) => ({ ...prev, links: [...prev.links, newLink] }));
+
+    set(ref(database, `stories/${userId}/graph/links/${data.links.length}`), newLink)
+      .then(showNotification)
+      .catch((error) => console.error("Error adding link:", error));
+
+    closeNewLinkModal();
+  };
+
+  const saveEditedLink = (linkDetails) => {
+    const { context, source, target, type } = linkDetails;
+
+    if (source === target) {
+      alert("Source and target must be different.");
+      return;
+    }
+
+    if (!source || !target) {
+      alert("Source and target must not be empty.");
+      return;
+    }
+
+    const existingLink = data.links.find(
+      (link) => link.source === source && link.target === target && link !== selectedLink
+    );
+
+    if (existingLink) {
+      alert("A link with the same source and target already exists.");
+      return;
+    }
+
+    setData((prev) => {
+      const updatedLinks = prev.links.map((link) =>
+        link.source === selectedLink.source && link.target === selectedLink.target ? { ...link, source, target, type } : link
+      );
+
+      return { ...prev, links: updatedLinks };
+    });
+
+    const linkIndex = data.links.findIndex((link) => link.source === selectedLink.source && link.target === selectedLink.target);
+    if (linkIndex !== -1) {
+      set(ref(database, `stories/${userId}/graph/links/${linkIndex}`), { context, source, target, type })
+        .then(showNotification)
+        .catch((error) => console.error("Error updating link:", error));
+    }
+
+    closeEditLinkModal();
   };
 
   // // Adds a new link between nodes
@@ -392,6 +497,7 @@ function StoryMap() {
 
       setTextInput("");
       setSelectedNode({});
+      setSelectedLink({});
 
       // Update the hidden property of nodes in the database
       hiddenNodes.forEach((node) => {
@@ -422,6 +528,7 @@ function StoryMap() {
             data={data}
             getNodeSize={getNodeSize}
             handleNodeClick={handleNodeClick}
+            handleLinkClick={handleLinkClick}
             nodeAutoColorBy="id"
           />
         </div>
@@ -452,11 +559,39 @@ function StoryMap() {
         + Add Node
       </Button>
       <NewNodeModal
-      isOpen={isNewNodeModalOpen}
-      closeModal={closeNewNodeModal}
-      onSave={saveNewNode}>
+        isOpen={isNewNodeModalOpen}
+        closeModal={closeNewNodeModal}
+        onSave={saveNewNode}>
 
       </NewNodeModal>
+
+      {/* Button to Add New Links */}
+      <Button
+        variant="contained"
+        onClick={() =>
+          openNewLinkModal({ name: "New Link", links: [] })
+        }
+        sx={{ mt: 2 }}
+      >
+        + Add Link
+      </Button>
+      <NewLinkModal
+        isOpen={isNewLinkModalOpen}
+        closeModal={closeNewLinkModal}
+        onSave={saveNewLink}
+        nodes={data.nodes}>
+
+      </NewLinkModal>
+
+      {selectedLink && (
+        <EditLinkModal
+          isOpen={isEditLinkModalOpen}
+          closeModal={closeEditLinkModal}
+          onSave={saveEditedLink}
+          link={selectedLink}
+          nodes={data.nodes}
+        />
+      )}
     </div>
   );
 

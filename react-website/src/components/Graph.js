@@ -2,11 +2,8 @@ import React from "react";
 import ForceGraph2D from 'react-force-graph-2d'; // Import a third-party library for rendering 3D force-directed graphs in React
 import SpriteText from "three-spritetext";
 
-import NodeTable from './NodeTable'
-import LinkTable from './LinkTable'
-
 //Return the Force Graph Component
-const Graph = ({ data, getNodeSize, handleNodeClick }) => {
+const Graph = ({ data, getNodeSize, handleNodeClick, handleLinkClick }) => {
   console.log("Received by graph: ", data)
   return (
     <>
@@ -27,6 +24,7 @@ const Graph = ({ data, getNodeSize, handleNodeClick }) => {
         return sprite;
       }}
       onNodeClick={handleNodeClick}
+      onLinkClick={handleLinkClick}
     />
     {/* <NodeTable nodes={data.nodes}/> */}
     {/* <LinkTable links={data.links} nodes={data.nodes}/> */}
