@@ -453,7 +453,7 @@ function StoryMap() {
       </Button>
       <NewNodeModal
       isOpen={isNewNodeModalOpen}
-      closeModal={() => closeNewNodeModal}
+      closeModal={closeNewNodeModal}
       onSave={saveNewNode}>
 
       </NewNodeModal>
