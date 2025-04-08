@@ -30,6 +30,23 @@ function StoryTimeline() {
 
     const { currentUser } = useAuthValue(); // Get the current user from Firebase authentication
     const userId = currentUser ? currentUser.uid : null;
+    const stageIndices = {}; // to track position within each stage
+
+    const stages = [
+        "introduction",
+        "rising action",
+        "climax",
+        "falling action",
+        "resolution",
+    ]
+
+    const stageColours = {
+        introduction: "#A7C7E7",
+        "rising action": "#C1E1C1",
+        climax: "#FAA0A0",
+        "falling action": "#FFFAA0",
+        resolution: "#C3B1E1",
+    };
 
     const timelineRef = ref(database, `stories/${userId}/timeline/`);
 
@@ -40,12 +57,22 @@ function StoryTimeline() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [eventToDelete, setEventToDelete] = useState(null);
+    const [stageCounts, setStageCounts] = useState({
+        introduction: 0,
+        "rising action": 0,
+        climax: 0,
+        "falling action": 0,
+        resolution: 0
+    });
+
+    const [viewMode, setViewMode] = useState("linear");
 
     const [newEvent, setNewEvent] = useState({
         date: "",
         title: "",
         description: "",
-        isMainEvent: false
+        isMainEvent: false,
+        stage: stages[0],
     });
     const [showNewEventForm, setShowNewEventForm] = useState(false);
 
@@ -57,7 +84,8 @@ function StoryTimeline() {
                 title: "The First Murder",
                 isMainEvent: true,
                 description:
-                    "Tom, a student at X university, is found dead in his room."
+                    "Tom, a student at X university, is found dead in his room.",
+                stage: stages[0],
             },
             {
                 index: 1,
@@ -65,7 +93,8 @@ function StoryTimeline() {
                 title: "James Enters the Scene",
                 isMainEvent: false,
                 description:
-                    "Tom's parents employ private detective James to find justice for their son."
+                    "Tom's parents employ private detective James to find justice for their son.",
+                stage: stages[1],
             },
             {
                 index: 2,
@@ -73,7 +102,8 @@ function StoryTimeline() {
                 title: "Tom's Crime Scene",
                 isMainEvent: false,
                 description:
-                    "James visits the crime scene."
+                    "James visits the crime scene.",
+                stage: stages[1],
             },
             {
                 index: 3,
@@ -81,12 +111,60 @@ function StoryTimeline() {
                 title: "The Second Murder",
                 isMainEvent: true,
                 description:
-                    "Another student, Lea, is found dead in the kitchens."
+                    "Another student, Lea, is found dead in the kitchens.",
+                stage: stages[2],
+            },
+            {
+                index: 4,
+                date: "09/06/2022",
+                title: "The Murderer is Found",
+                isMainEvent: true,
+                description:
+                    "It's Joe!!!",
+                stage: stages[3],
+            },
+            {
+                index: 5,
+                date: "09/06/2022",
+                title: "The Murderer is Sent to Jail",
+                isMainEvent: true,
+                description:
+                    "Mwahahahahahaha",
+                stage: stages[4],
             }
         ];
 
     useEffect(() => {
-        // Fetch events from Firebase
+        // Fetch initial data synchronously
+        get(timelineRef)
+            .then((snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    const eventsArray = Object.keys(data).map((key, index) => ({
+                        ...data[key],
+                        id: key,
+                        index: index,
+                    }));
+                    const sortedEvents = eventsArray.sort((a, b) =>
+                        moment(a.date, "DD/MM/YYYY").diff(moment(b.date, "DD/MM/YYYY"))
+                    );
+                    setEvents(sortedEvents);
+                    setStageCounts({
+                        introduction: sortedEvents.filter((event) => event.stage === "introduction").length,
+                        risingAction: sortedEvents.filter((event) => event.stage === "rising action").length,
+                        climax: sortedEvents.filter((event) => event.stage === "climax").length,
+                        fallingAction: sortedEvents.filter((event) => event.stage === "falling action").length,
+                        resolution: sortedEvents.filter((event) => event.stage === "resolution").length,
+                    });
+                } else {
+                    setEvents(sampleEvents);
+                }
+            })
+            .catch((error) => {
+                console.error("Error fetching initial data:", error);
+            });
+
+        // Set up real-time listener
         const unsubscribe = onValue(timelineRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -95,16 +173,24 @@ function StoryTimeline() {
                     id: key,
                     index: index,
                 }));
-                setEvents(eventsArray);
+                const sortedEvents = eventsArray.sort((a, b) =>
+                    moment(a.date, "DD/MM/YYYY").diff(moment(b.date, "DD/MM/YYYY"))
+                );
+                setEvents(sortedEvents);
             } else {
                 setEvents(sampleEvents);
             }
         });
 
         return () => {
-            unsubscribe();
+            unsubscribe(); // Clean up the listener when the component unmounts
         };
-    }, []);
+    }, [timelineRef]);
+
+    // Toggle view mode
+    const toggleViewMode = () => {
+        setViewMode((prevMode) => (prevMode === "linear" ? "freytag" : "linear"));
+    };
 
     const handleAddEvent = () => {
         if (
@@ -119,7 +205,8 @@ function StoryTimeline() {
                 date: "",
                 title: "",
                 description: "",
-                isMainEvent: false
+                isMainEvent: false,
+                stage: stages[0],
             });
             setShowNewEventForm(false);
 
@@ -163,6 +250,62 @@ function StoryTimeline() {
         setShowDeleteModal(false);
     };
 
+    const getEventPosition = (stage, index, stageCounts) => {
+        const baseSpacing = 100; // Horizontal spacing
+        const verticalSpacing = 50; // Vertical height per step
+
+        const introY = 4 * verticalSpacing;
+        const climaxY = introY - stageCounts.risingAction * verticalSpacing;
+
+        // Horizontal start positions
+        const introStartX = 0;
+        const introEndX = introStartX + (stageCounts.introduction - 1) * baseSpacing;
+
+        const risingStartX = introEndX + baseSpacing;
+        const risingEndX = risingStartX + (stageCounts.risingAction - 1) * baseSpacing;
+
+        const climaxStartX = risingEndX + baseSpacing;
+        const climaxEndX = climaxStartX + (stageCounts.climax - 1) * baseSpacing;
+
+        const fallingStartX = climaxEndX + baseSpacing;
+        const resolutionStartX = fallingStartX + (stageCounts.fallingAction) * baseSpacing;
+
+        switch (stage) {
+            case "introduction":
+                return {
+                    left: `${introStartX + index * baseSpacing}px`,
+                    top: `${introY}px`
+                };
+
+            case "rising action":
+                return {
+                    left: `${risingStartX + index * baseSpacing}px`,
+                    top: `${introY - (index + 1) * verticalSpacing}px`
+                };
+
+            case "climax":
+                return {
+                    left: `${climaxStartX + index * baseSpacing}px`,
+                    top: `${climaxY}px`
+                };
+
+            case "falling action": {
+                return {
+                    left: `${fallingStartX + index * baseSpacing}px`,
+                    top: `${climaxY + (index + 1) * verticalSpacing}px`
+                };
+            }
+
+            case "resolution":
+                return {
+                    left: `${resolutionStartX + index * baseSpacing}px`,
+                    top: `${introY}px`
+                };
+
+            default:
+                return { left: "0px", top: "0px" };
+        }
+    };
 
     const handleCircleClick = (event, target) => {
         if (isDeleting && target === "delete-icon") {
@@ -173,6 +316,9 @@ function StoryTimeline() {
     };
     return (
         <MDBContainer fluid className="py-5">
+            <MDBBtn onClick={toggleViewMode} size="sm" className="toggle-view-btn">
+                {viewMode === "linear" ? "Switch to Freytag's Pyramid" : "Switch to Linear View"}
+            </MDBBtn>
             <MDBRow>
                 <MDBCol lg="9">
                     <div className="horizontal-timeline">
@@ -194,6 +340,24 @@ function StoryTimeline() {
                                             pattern="\d{2}/\d{2}/\d{4}"
                                             required
                                         />
+                                    </div>
+                                    <div className="pb-4">
+                                        <select
+                                            className="form-control"
+                                            value={newEvent.stage}
+                                            onChange={(e) =>
+                                                setNewEvent({
+                                                    ...newEvent,
+                                                    stage: e.target.value,
+                                                })
+                                            }
+                                        >
+                                            {stages.map((stage) => (
+                                                <option key={stage} value={stage}>
+                                                    {stage.replace(/^\w/, (c) => c.toUpperCase())} {/* Capitalize the first letter */}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div className="pb-4">
                                         <input
@@ -274,49 +438,64 @@ function StoryTimeline() {
                                 </>
                             )}
                         </div>
-                        <Draggable axis="x">
-                            <MDBTypography listInLine className="items">
-                                {events
-                                    .sort((a, b) =>
-                                        moment(a.date, "DD/MM/YYYY").diff(moment(b.date, "DD/MM/YYYY"))
-                                    )
-                                    .map((event) => (
+                        {viewMode === "freytag" ? (
+                            <Draggable axis="x">
+                                <div className="freytag-pyramid" style={{ position: "relative", height: "600px" }}>
+                                    {events.map((event) => {
+                                        if (!stageIndices[event.stage]) {
+                                            stageIndices[event.stage] = 0;
+                                        }
+
+                                        const stageIndex = stageIndices[event.stage];
+                                        const position = getEventPosition(event.stage, stageIndex, stageCounts);
+                                        stageIndices[event.stage]++; // increment for the next one
+
+                                        return (
+                                            <div
+                                                key={event.index}
+                                                className={`pyramid-event ${event.stage}`}
+                                                style={{
+                                                    position: "absolute",
+                                                    ...position,
+                                                }}
+                                            >
+                                                <div
+                                                    className={`circle ${event.isMainEvent ? "main-event" : ""}`}
+                                                    style={{
+                                                        backgroundColor: stageColours[event.stage],
+                                                    }}
+                                                >
+                                                    <span className="event-title">{event.title}</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </Draggable>
+                        ) : (
+                            <Draggable axis="x">
+                                <MDBTypography listInLine className="items">
+                                    {events.map((event) => (
                                         <li className="items-list" key={event.index}>
                                             <div className="px-4">
                                                 <div
-                                                    className={`circle ${event.isMainEvent ? "main-event" : ""
-                                                        } ${isDeleting ? "deleting" : ""}`}
-                                                    onClick={(e) => handleCircleClick(event, e.target.getAttribute("data-target"))}
+                                                    className={`circle ${event.isMainEvent ? "main-event" : ""}`}
+                                                    style={{
+                                                        backgroundColor: "#dee2e6", // Grey for linear mode
+                                                    }}
                                                 >
-                                                    {isDeleting && (
-                                                        <DeleteOutlineIcon
-                                                            className="delete-icon"
-                                                            data-target="delete-icon"
-                                                            fontSize="small"
-                                                        />
-                                                    )}
                                                     <span className="event-date">{event.date}</span>
                                                     <br />
                                                     <span className="event-title" style={{ fontWeight: "bold" }}>
                                                         {event.title}
                                                     </span>
                                                 </div>
-                                                {showDescription === event.index && (
-                                                    <div className="description-container">
-                                                        <textarea
-                                                            cols="40"
-                                                            rows="20"
-                                                            className="description"
-                                                            value={event.description}
-                                                            readOnly
-                                                        ></textarea>
-                                                    </div>
-                                                )}
                                             </div>
                                         </li>
                                     ))}
-                            </MDBTypography>
-                        </Draggable>
+                                </MDBTypography>
+                            </Draggable>
+                        )}
                     </div>
                 </MDBCol>
             </MDBRow>
