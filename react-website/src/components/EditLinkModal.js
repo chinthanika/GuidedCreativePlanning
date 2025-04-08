@@ -24,7 +24,13 @@ const EditLinkModal = ({ isOpen, closeModal, onSave, link, nodes }) => {
 
     const handleSave = () => {
         if (source && target && source !== target) {
-            onSave({ ...link, context, source, target, type });
+            console.log(source, target);
+            onSave({ 
+                ...link, 
+                context, 
+                source: source, 
+                target: target,
+                type });
             closeModal();
         } else {
             alert("Source and target must be different and not empty.");
@@ -63,7 +69,7 @@ const EditLinkModal = ({ isOpen, closeModal, onSave, link, nodes }) => {
                 />
                 <TextField
                     label="Source Node"
-                    value={source.id || source}
+                    value={source}
                     onChange={(e) => setSource(e.target.value)}
                     select
                     SelectProps={{ native: true }}
@@ -81,7 +87,7 @@ const EditLinkModal = ({ isOpen, closeModal, onSave, link, nodes }) => {
                 </TextField>
                 <TextField
                     label="Target Node"
-                    value={target.id || target}
+                    value={target}
                     onChange={(e) => setTarget(e.target.value)}
                     select
                     SelectProps={{ native: true }}
@@ -98,7 +104,7 @@ const EditLinkModal = ({ isOpen, closeModal, onSave, link, nodes }) => {
                     ))}
                 </TextField>
                 <TextField
-                    label="Relationship"
+                    label="Relationship Type"
                     value={type}
                     onChange={(e) => setType(e.target.value)}
                     fullWidth

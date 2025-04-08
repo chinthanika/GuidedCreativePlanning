@@ -249,6 +249,7 @@ function StoryMap() {
     const { context, source, target, type } = linkDetails;
 
     if (source === target) {
+      console.log("Source: ", source, " Target: ", target);
       alert("Source and target must be different.");
       return;
     }
@@ -285,8 +286,10 @@ function StoryMap() {
 
   const saveEditedLink = (linkDetails) => {
     const { context, source, target, type } = linkDetails;
+    console.log(source, target, type, context)
 
     if (source === target) {
+      console.log("Source: ", source, " Target: ", target);
       alert("Source and target must be different.");
       return;
     }
