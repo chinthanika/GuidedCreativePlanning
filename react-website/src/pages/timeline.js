@@ -253,9 +253,11 @@ function StoryTimeline() {
     const getEventPosition = (stage, index, stageCounts) => {
         const baseSpacing = 100; // Horizontal spacing
         const verticalSpacing = 50; // Vertical height per step
+        const minStart = 350;
+        const maxEnd = 250;
 
-        const introY = 4 * verticalSpacing;
-        const climaxY = introY - stageCounts.risingAction * verticalSpacing;
+        const introY = 8 * verticalSpacing;
+        const climaxY = 4 * verticalSpacing;
 
         // Horizontal start positions
         const introStartX = 0;
@@ -264,11 +266,15 @@ function StoryTimeline() {
         const risingStartX = introEndX + baseSpacing;
         const risingEndX = risingStartX + (stageCounts.risingAction - 1) * baseSpacing;
 
+        const risingStartY = introY - baseSpacing;
+        const risingEndY = -3 * verticalSpacing
+
         const climaxStartX = risingEndX + baseSpacing;
         const climaxEndX = climaxStartX + (stageCounts.climax - 1) * baseSpacing;
 
         const fallingStartX = climaxEndX + baseSpacing;
         const resolutionStartX = fallingStartX + (stageCounts.fallingAction) * baseSpacing;
+
 
         switch (stage) {
             case "introduction":
@@ -278,21 +284,27 @@ function StoryTimeline() {
                 };
 
             case "rising action":
+                const risingRange = minStart - maxEnd;
+                const risingStep = stageCounts.risingAction > 1 ? risingRange / (stageCounts.risingAction - 1) : 0;
                 return {
                     left: `${risingStartX + index * baseSpacing}px`,
-                    top: `${introY - (index + 1) * verticalSpacing}px`
+                    top: `${minStart - index * risingStep}px`
                 };
 
             case "climax":
                 return {
                     left: `${climaxStartX + index * baseSpacing}px`,
-                    top: `${climaxY}px`
+                    top: `${climaxY + 1}px`
                 };
 
             case "falling action": {
+                const start = 250;
+                const end = 350;
+                const range = end - start;
+                const step = stageCounts.fallingAction > 1 ? range / (stageCounts.fallingAction - 1) : 0;
                 return {
                     left: `${fallingStartX + index * baseSpacing}px`,
-                    top: `${climaxY + (index + 1) * verticalSpacing}px`
+                    top: `${start + index * step}px`
                 };
             }
 
