@@ -3,7 +3,7 @@ from flask_cors import CORS
 import requests  # For making API requests to DeepSeek
 import json
 import re
-# from openai import OpenAI
+import os
 import openai
 import logging
 app = Flask(__name__)
@@ -11,7 +11,10 @@ CORS(app)
 
 # Replace with your DeepSeek API endpoint and API key
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/analyze"  # Example endpoint
-DEEPSEEK_API_KEY = "sk-a4bdfd2c8efe498d96173f6cab697f02"  # Replace with your actual API key
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")  # Replace with your actual API key
+
+if not DEEPSEEK_API_KEY:
+    raise ValueError("DEEPSEEK_API_KEY environment variable is not set")
 
 openai.log = "debug"
 
