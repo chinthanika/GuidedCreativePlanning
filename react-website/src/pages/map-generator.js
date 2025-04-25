@@ -57,7 +57,7 @@ function deduplicateLinks(newLinks, existingLinks) {
 
 function MapGenerator() {
   //const url = 'http://127.0.0.1:5000/characters';
-  const url = 'http://127.0.0.1:5000/characters';
+  const url = 'https://guidedcreativeplanning-1.onrender.com/characters'; // API endpoint for character generation
 
   // const url = 'https://guided-creative-planning.herokuapp.com/api/characters';
 
