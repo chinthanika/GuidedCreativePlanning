@@ -18,7 +18,7 @@ import { ref, set,onValue } from "firebase/database"
 import FormatToolbar from './FormatToolbar';
 
 const initialValue = [{
-  type: 'paragraph', children: [{ text: 'My first paragraph!', },],
+  type: 'paragraph', children: [{ text: 'No data...', },],
 },
 ];
 
@@ -38,19 +38,39 @@ function TextEditor() {
   useEffect(() => {
     if (userId) {
       const fetchStory = async () => {
-        onValue(storyRef, (snapshot) => {
-          const data = snapshot.val();
+        try {
+          // Wrap the onValue listener in a Promise to handle it asynchronously
+          const data = await new Promise((resolve, reject) => {
+            onValue(
+              storyRef,
+              (snapshot) => {
+                const data = snapshot.val();
+                resolve(data); // Resolve the Promise with the fetched data
+              },
+              (error) => {
+                reject(error); // Reject the Promise if an error occurs
+              },
+              { onlyOnce: true } // Ensure the listener is only triggered once
+            );
+          });
+  
           if (data && data.content) {
-            console.log(data.content)
-            setValue(JSON.parse(data.content));
+            console.log("Data exists:", data.content);
+            setValue(JSON.parse(data.content)); // Load the fetched content into the editor
           } else {
-            setValue(initialValue); // Set the value to initialValue if no data is fetched
+            console.log("No data found. Uploading initial value...");
+            // Upload the initial value to Firebase
+            await set(storyRef, { content: JSON.stringify(initialValue) });
+            setValue(initialValue); // Set the editor value to the initial value
           }
-          setLoading(false);
-        });
-
-        console.log(value)
+        } catch (error) {
+          console.error("Error fetching story:", error);
+          setValue(initialValue); // Fallback to initialValue if an error occurs
+        } finally {
+          setLoading(false); // Ensure loading state is updated
+        }
       };
+  
       fetchStory();
     } else {
       setValue(initialValue);
@@ -134,7 +154,7 @@ function TextEditor() {
   }, []);
 
   return (
-    <>
+    <div key={value ? JSON.stringify(value) : 'loading'}>
       <Fragment>
         <FormatToolbar>
           <button
@@ -178,7 +198,7 @@ function TextEditor() {
       ) : (
         <div>Loading...</div>
       )}
-    </>
+    </div>
   );
 }
 

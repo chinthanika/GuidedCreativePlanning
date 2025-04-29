@@ -26,7 +26,7 @@ import { database } from '../Firebase/firebase'; // Import the Firebase configur
 
 import "./timeline.css";
 
-function StoryTimeline() {
+function StoryTimeline({ isVertical = false }) {
 
     const { currentUser } = useAuthValue(); // Get the current user from Firebase authentication
     const userId = currentUser ? currentUser.uid : null;
@@ -134,6 +134,33 @@ function StoryTimeline() {
             }
         ];
 
+    const renderEvents = () => {
+        return events.map((event) => (
+            <div
+                key={event.index}
+                className={`timeline-event ${event.stage}`}
+                style={{
+                    backgroundColor: stageColours[event.stage],
+                    marginBottom: isVertical ? "20px" : "0", // Add spacing for vertical layout
+                    cursor: isDeleting ? "pointer" : "default", // Change cursor to pointer when deleting
+                }}
+                onClick={() => handleCircleClick(event, "delete-target")} // Trigger delete logic
+            >
+                <div className="circle">
+                    <span className="event-title">
+                        {event.title}
+                    </span>
+                    {isDeleting && (
+                        <DeleteOutlineIcon
+                            className="delete-icon"
+                            onClick={() => handleCircleClick(event, "delete-target")}
+                        />
+                    )}
+                </div>
+            </div>
+        ));
+    };
+
     useEffect(() => {
         // Fetch initial data synchronously
         get(timelineRef)
@@ -227,6 +254,7 @@ function StoryTimeline() {
     };
 
     const handleDeleteMode = () => {
+        console.log("Delete mode activated");
         setIsDeleting(!isDeleting);
     };
 
@@ -240,18 +268,25 @@ function StoryTimeline() {
     };
 
     const handleDeleteEvent = () => {
+        console.log("Deleting event:", eventToDelete);
         const filteredEvents = events.filter((e) => e.id !== eventToDelete.id);
-        setEvents(filteredEvents);
+        setEvents(filteredEvents); // Update the state
 
         // Delete the event from Firebase
         const eventRef = ref(database, `stories/${userId}/timeline/${eventToDelete.id}`);
-        remove(eventRef);
+        remove(eventRef)
+            .then(() => {
+                console.log("Event deleted successfully");
+            })
+            .catch((error) => {
+                console.error("Error deleting event:", error);
+            });
 
-        setShowDeleteModal(false);
+        setShowDeleteModal(false); // Close the modal
     };
 
     const getEventPosition = (stage, index, stageCounts) => {
-        const baseSpacing = 100; // Horizontal spacing
+        const baseSpacing = 150; // Horizontal spacing
         const verticalSpacing = 50; // Vertical height per step
         const minStart = 350;
         const maxEnd = 250;
@@ -320,17 +355,21 @@ function StoryTimeline() {
     };
 
     const handleCircleClick = (event, target) => {
-        if (isDeleting && target === "delete-icon") {
-            setEventToDelete(event);
-            setShowDeleteModal(true);
+        console.log("Clicked event:", event);
+        if (isDeleting && target === "delete-target") {
+            setEventToDelete(event); // Set the event to delete
+            setShowDeleteModal(true); // Show the delete confirmation modal
+        } else {
+            setShowDescription(showDescription === event.index ? null : event.index);
         }
-        setShowDescription(showDescription === event.index ? null : event.index);
     };
     return (
         <MDBContainer fluid className="py-5">
-            <MDBBtn onClick={toggleViewMode} size="sm" className="toggle-view-btn">
-                {viewMode === "linear" ? "Switch to Freytag's Pyramid" : "Switch to Linear View"}
-            </MDBBtn>
+            {!isVertical && (
+                <MDBBtn onClick={toggleViewMode} size="sm" className="toggle-view-btn">
+                    {viewMode === "linear" ? "Switch to Freytag's Pyramid" : "Switch to Linear View"}
+                </MDBBtn>
+            )}
             <MDBRow>
                 <MDBCol lg="9">
                     <div className="horizontal-timeline">
@@ -418,13 +457,17 @@ function StoryTimeline() {
                                         />
                                     </div>
                                     <div className="d-flex justify-content-between">
-                                        <MDBBtn onClick={handleAddEvent} size="sm">
+                                        <MDBBtn
+                                            onClick={handleAddEvent}
+                                            size="sm"
+                                            className="save-event-btn">
                                             Save
                                         </MDBBtn>
                                         <MDBBtn
                                             onClick={handleCancelAddEvent}
                                             size="sm"
                                             color="secondary"
+                                            className="cancel-event-btn"
                                         >
                                             Cancel
                                         </MDBBtn>
@@ -445,14 +488,44 @@ function StoryTimeline() {
                                         Add Event
                                     </MDBBtn>
                                     <MDBBtn onClick={handleDeleteMode} size="sm" className="delete-event-btn">
-                                        {isDeleting ? 'Done' : 'Delete Events'}
+                                        {isDeleting ? "Done" : "Delete Events"}
                                     </MDBBtn>
                                 </>
                             )}
                         </div>
-                        {viewMode === "freytag" ? (
+                        {isVertical ? (
+                            <div className="vertical-timeline" style={{ overflowY: "scroll", height: "400px" }}>
+                                {events.map((event) => (
+                                    <div
+                                        key={event.index}
+                                        className={`timeline-event ${event.stage}`}
+                                        style={{
+                                            backgroundColor: stageColours[event.stage],
+                                            marginBottom: isVertical ? "20px" : "0", // Add spacing for vertical layout
+                                            cursor: isDeleting ? "pointer" : "default", // Change cursor to pointer when deleting
+                                        }}
+                                        onClick={() => isDeleting && handleCircleClick(event, "delete-target")} // Trigger delete logic if isDeleting is true
+                                    >
+                                        <div className="circle">
+                                            <span className="event-title">{event.title}</span>
+                                            {isDeleting && (
+                                                <DeleteOutlineIcon
+                                                    className="delete-icon"
+                                                    onClick={() => handleCircleClick(event, "delete-target")}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : viewMode === "freytag" ? (
                             <Draggable axis="x">
-                                <div className="freytag-pyramid" style={{ position: "relative", height: "600px" }}>
+                                <div
+                                    className="freytag-pyramid"
+                                    style={{
+                                        position: "relative",
+                                        height: "100vh",
+                                    }}>
                                     {events.map((event) => {
                                         if (!stageIndices[event.stage]) {
                                             stageIndices[event.stage] = 0;
@@ -460,7 +533,7 @@ function StoryTimeline() {
 
                                         const stageIndex = stageIndices[event.stage];
                                         const position = getEventPosition(event.stage, stageIndex, stageCounts);
-                                        stageIndices[event.stage]++; // increment for the next one
+                                        stageIndices[event.stage]++; // Increment for the next one
 
                                         return (
                                             <div
@@ -477,7 +550,15 @@ function StoryTimeline() {
                                                         backgroundColor: stageColours[event.stage],
                                                     }}
                                                 >
-                                                    <span className="event-title">{event.title}</span>
+                                                    {isDeleting && (
+                                                        <DeleteOutlineIcon
+                                                            className="delete-icon"
+                                                            onClick={() => handleCircleClick(event, "delete-target")}
+                                                        />
+                                                    )}
+                                                    <span className="event-title">
+                                                        {event.title}
+                                                    </span>
                                                 </div>
                                             </div>
                                         );
@@ -494,13 +575,22 @@ function StoryTimeline() {
                                                     className={`circle ${event.isMainEvent ? "main-event" : ""}`}
                                                     style={{
                                                         backgroundColor: "#dee2e6", // Grey for linear mode
+                                                        marginBottom: isVertical ? "20px" : "0", // Add spacing for vertical layout
+                                                        cursor: isDeleting ? "pointer" : "default", // Change cursor to pointer when deleting
                                                     }}
+                                                    onClick={() => isDeleting && handleCircleClick(event, "delete-target")} // Trigger delete logic if isDeleting is true
                                                 >
                                                     <span className="event-date">{event.date}</span>
                                                     <br />
                                                     <span className="event-title" style={{ fontWeight: "bold" }}>
                                                         {event.title}
                                                     </span>
+                                                    {isDeleting && (
+                                                        <DeleteOutlineIcon
+                                                            className="delete-icon"
+                                                            onClick={() => handleCircleClick(event, "delete-target")}
+                                                        />
+                                                    )}
                                                 </div>
                                             </div>
                                         </li>
