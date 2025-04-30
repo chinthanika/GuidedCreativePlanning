@@ -23,6 +23,8 @@ import { set, ref, onValue, get, push, query, remove } from "firebase/database";
 import { useAuthValue } from '../Firebase/AuthContext'; // Import a custom hook for accessing Firebase authentication
 import { database } from '../Firebase/firebase'; // Import the Firebase configuration and initialize the Firebase app
 
+import NewEventModal from "../components/NewEventModal";
+import EventDetailsModal from "../components/EventDetailsModal"; // Import a custom modal component for displaying event details
 
 import "./timeline.css";
 
@@ -55,7 +57,12 @@ function StoryTimeline({ isVertical = false }) {
     const [showDescription, setShowDescription] = useState(null);
 
     const [isDeleting, setIsDeleting] = useState(false);
+
+    const [isNewEventModalOpen, setIsNewEventModalOpen] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isEventDetailsModalOpen, setIsEventDetailsModalOpen] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState(null);
+
     const [eventToDelete, setEventToDelete] = useState(null);
     const [stageCounts, setStageCounts] = useState({
         introduction: 0,
@@ -133,6 +140,30 @@ function StoryTimeline({ isVertical = false }) {
                 stage: stages[4],
             }
         ];
+
+    const handleShowNewEventModal = () => {
+        setIsNewEventModalOpen(true);
+    };
+
+    const handleCloseNewEventModal = () => {
+        setIsNewEventModalOpen(false);
+    };
+
+    const handleSaveNewEvent = (newEvent) => {
+        if (
+            moment(newEvent.date, "DD/MM/YYYY", true).isValid() &&
+            newEvent.title &&
+            newEvent.description
+        ) {
+            setEvents([...events, newEvent].sort((a, b) => {
+                return moment(a.date, "DD/MM/YYYY").diff(moment(b.date, "DD/MM/YYYY"));
+            }));
+
+            // Save to Firebase
+            const newEventRef = push(timelineRef);
+            set(newEventRef, newEvent);
+        }
+    };
 
     const renderEvents = () => {
         return events.map((event) => (
@@ -355,14 +386,16 @@ function StoryTimeline({ isVertical = false }) {
     };
 
     const handleCircleClick = (event, target) => {
-        console.log("Clicked event:", event);
         if (isDeleting && target === "delete-target") {
-            setEventToDelete(event); // Set the event to delete
-            setShowDeleteModal(true); // Show the delete confirmation modal
+          setEventToDelete(event); // Set the event to delete
+          setShowDeleteModal(true); // Show the delete confirmation modal
         } else {
-            setShowDescription(showDescription === event.index ? null : event.index);
+          setSelectedEvent(event); // Set the selected event
+          setIsEventDetailsModalOpen(true); // Open the event details modal
+          console.log("Event editing: ", isEventDetailsModalOpen);
         }
     };
+
     return (
         <MDBContainer fluid className="py-5">
             {!isVertical && (
@@ -374,124 +407,40 @@ function StoryTimeline({ isVertical = false }) {
                 <MDBCol lg="9">
                     <div className="horizontal-timeline">
                         <div className="position-relative">
-                            {showNewEventForm ? (
-                                <div className="position-relative">
-                                    <div className="event-date mb-2">
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            placeholder="Date (dd/mm/yyyy)"
-                                            value={newEvent.date}
-                                            onChange={(e) =>
-                                                setNewEvent({
-                                                    ...newEvent,
-                                                    date: e.target.value,
-                                                })
-                                            }
-                                            pattern="\d{2}/\d{2}/\d{4}"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="pb-4">
-                                        <select
-                                            className="form-control"
-                                            value={newEvent.stage}
-                                            onChange={(e) =>
-                                                setNewEvent({
-                                                    ...newEvent,
-                                                    stage: e.target.value,
-                                                })
-                                            }
-                                        >
-                                            {stages.map((stage) => (
-                                                <option key={stage} value={stage}>
-                                                    {stage.replace(/^\w/, (c) => c.toUpperCase())} {/* Capitalize the first letter */}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="pb-4">
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            placeholder="Title"
-                                            value={newEvent.title}
-                                            onChange={(e) =>
-                                                setNewEvent({
-                                                    ...newEvent,
-                                                    title: e.target.value,
-                                                })
-                                            }
-                                            required
-                                        />
-                                    </div>
-                                    <div className="pb-4">
-                                        <select
-                                            className="form-control"
-                                            value={newEvent.isMainEvent}
-                                            onChange={(e) =>
-                                                setNewEvent({
-                                                    ...newEvent,
-                                                    isMainEvent: e.target.value === "true",
-                                                })
-                                            }
-                                        >
-                                            <option value={false}>Not a main event</option>
-                                            <option value={true}>Main event</option>
-                                        </select>
-                                    </div>
-                                    <div className="pb-4">
-                                        <textarea
-                                            className="form-control"
-                                            placeholder="Description"
-                                            value={newEvent.description}
-                                            onChange={(e) =>
-                                                setNewEvent({
-                                                    ...newEvent,
-                                                    description: e.target.value,
-                                                })
-                                            }
-                                            cols="40"
-                                            rows="20"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="d-flex justify-content-between">
-                                        <MDBBtn
-                                            onClick={handleAddEvent}
-                                            size="sm"
-                                            className="save-event-btn">
-                                            Save
-                                        </MDBBtn>
-                                        <MDBBtn
-                                            onClick={handleCancelAddEvent}
-                                            size="sm"
-                                            color="secondary"
-                                            className="cancel-event-btn"
-                                        >
-                                            Cancel
-                                        </MDBBtn>
-                                    </div>
-                                    <div
-                                        className="position-absolute top-0 start-0 w-100 h-100"
-                                        style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
-                                        onClick={handleCancelAddEvent}
-                                    />
-                                </div>
-                            ) : (
-                                <>
-                                    <MDBBtn
-                                        onClick={handleShowNewEventForm}
-                                        size="sm"
-                                        className="add-event-btn"
-                                    >
-                                        Add Event
-                                    </MDBBtn>
-                                    <MDBBtn onClick={handleDeleteMode} size="sm" className="delete-event-btn">
-                                        {isDeleting ? "Done" : "Delete Events"}
-                                    </MDBBtn>
-                                </>
-                            )}
+                            <EventDetailsModal
+                                isOpen={isEventDetailsModalOpen}
+                                closeModal={() => setIsEventDetailsModalOpen(false)}
+                                event={selectedEvent}
+                                onSave={(updatedEvent) => {
+                                    // Update the event in the state
+                                    const updatedEvents = events.map((e) =>
+                                        e.index === updatedEvent.index ? updatedEvent : e
+                                    );
+                                    setEvents(updatedEvents);
+
+                                    // Update the event in Firebase
+                                    const eventRef = ref(database, `stories/${userId}/timeline/${updatedEvent.id}`);
+                                    set(eventRef, updatedEvent);
+                                }}
+                            />
+                            <>
+                                <MDBBtn
+                                    onClick={handleShowNewEventModal}
+                                    size="sm"
+                                    className="add-event-btn"
+                                >
+                                    Add Event
+                                </MDBBtn>
+                                <NewEventModal
+                                    isOpen={isNewEventModalOpen}
+                                    closeModal={handleCloseNewEventModal}
+                                    onSave={handleSaveNewEvent}
+                                    stages={stages}
+                                />
+                                <MDBBtn onClick={handleDeleteMode} size="sm" className="delete-event-btn">
+                                    {isDeleting ? "Done" : "Delete Events"}
+                                </MDBBtn>
+                            </>
                         </div>
                         {isVertical ? (
                             <div className="vertical-timeline" style={{ overflowY: "scroll", height: "400px" }}>
@@ -504,7 +453,7 @@ function StoryTimeline({ isVertical = false }) {
                                             marginBottom: isVertical ? "20px" : "0", // Add spacing for vertical layout
                                             cursor: isDeleting ? "pointer" : "default", // Change cursor to pointer when deleting
                                         }}
-                                        onClick={() => isDeleting && handleCircleClick(event, "delete-target")} // Trigger delete logic if isDeleting is true
+                                        onClick={() => handleCircleClick(event, "view-details")} // Pass the event to handleCircleClick
                                     >
                                         <div className="circle">
                                             <span className="event-title">{event.title}</span>
@@ -549,6 +498,7 @@ function StoryTimeline({ isVertical = false }) {
                                                     style={{
                                                         backgroundColor: stageColours[event.stage],
                                                     }}
+                                                    onClick={() => handleCircleClick(event, "view-details")} // Pass the event to handleCircleClick
                                                 >
                                                     {isDeleting && (
                                                         <DeleteOutlineIcon
@@ -578,7 +528,7 @@ function StoryTimeline({ isVertical = false }) {
                                                         marginBottom: isVertical ? "20px" : "0", // Add spacing for vertical layout
                                                         cursor: isDeleting ? "pointer" : "default", // Change cursor to pointer when deleting
                                                     }}
-                                                    onClick={() => isDeleting && handleCircleClick(event, "delete-target")} // Trigger delete logic if isDeleting is true
+                                                    onClick={() => handleCircleClick(event, "view-details")} // Pass the event to handleCircleClick
                                                 >
                                                     <span className="event-date">{event.date}</span>
                                                     <br />

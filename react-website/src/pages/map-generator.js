@@ -9,6 +9,7 @@ import { useAuthValue } from '../Firebase/AuthContext'
 import { database } from '../Firebase/firebase'
 import { ref, set, get } from "firebase/database"
 
+import './map-generator.css'
 
 
 // Function to remove duplicate entities by checking against existing ones in Firebase
@@ -20,7 +21,7 @@ function deduplicateEntities(newEntities, existingEntities) {
       aliases = "None";
     }
     
-    if (existingEntities != undefined){
+    if (existingEntities !== undefined){
       const existingNode = existingEntities.find(node =>
         node.label === name || (node.aliases && node.aliases.includes(name))
       );
@@ -191,19 +192,28 @@ function MapGenerator() {
     
 
   return (
-    <div>
-      <textarea rows="40" cols="150"
-        type='text'
-        value={text}
-        required
-        placeholder='Enter your plot in as much detail as possible.'
-        onChange={e => setText(e.target.value)} />
+    <div className="map-generator-container">
+    <textarea
+      rows="20"
+      cols="100"
+      className="map-generator-textarea"
+      type="text"
+      value={text}
+      required
+      placeholder="Enter your plot in as much detail as possible."
+      onChange={(e) => setText(e.target.value)}
+    />
 
-      <button onClick={handleSubmit} disabled={isLoading}>
-        {isLoading ? 'Loading...' : 'Save'}
+    <div className="map-generator-buttons">
+      <button
+        onClick={handleSubmit}
+        disabled={isLoading}
+        className="map-generator-btn save-btn"
+      >
+        {isLoading ? "Loading..." : "Save"}
       </button>
-
     </div>
+  </div>
   );
 }
 

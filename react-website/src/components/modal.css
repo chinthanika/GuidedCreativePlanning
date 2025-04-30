@@ -1,0 +1,32 @@
+/* General modal button styling */
+.modal-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    border: none;
+}
+
+/* Save button styling */
+.save-btn {
+    background-color: #28a745; /* Green background */
+    color: #fff; /* White text */
+}
+
+.save-btn:hover {
+    background-color: #218838; /* Darker green on hover */
+    transform: scale(1.05); /* Slight zoom effect */
+}
+
+/* Cancel button styling */
+.cancel-btn {
+    background-color: #6c757d; /* Grey background */
+    color: #fff; /* White text */
+}
+
+.cancel-btn:hover {
+    background-color: #5a6268; /* Darker grey on hover */
+    transform: scale(1.05); /* Slight zoom effect */
+}

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Box, Button, TextField, Typography } from '@material-ui/core';
 
+import "./modal.css";
+
 const NewLinkModal = ({ isOpen, closeModal, onSave, nodes }) => {
     const [context, setContext] = useState('');
     const [source, setSource] = useState('');
@@ -101,10 +103,17 @@ const NewLinkModal = ({ isOpen, closeModal, onSave, nodes }) => {
                 />
 
                 <Box style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
-                    <Button onClick={handleSave} variant="contained" color="primary" size="small" disabled={!source || !target || source === target}>
+                    <Button
+                        onClick={handleSave}
+                        className="modal-btn save-btn"
+                        disabled={!source || !target || source === target}
+                    >
                         Save
                     </Button>
-                    <Button onClick={closeModal} variant="outlined" color="secondary" size="small">
+                    <Button
+                        onClick={closeModal}
+                        className="modal-btn cancel-btn"
+                    >
                         Cancel
                     </Button>
                 </Box>
