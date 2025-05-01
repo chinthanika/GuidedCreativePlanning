@@ -39,7 +39,7 @@ function SignUp() {
 
     e.preventDefault()
     setError('')
-    
+
     if (validatePassword()) {
 
       // Create a new user with email and password using firebase
@@ -88,12 +88,11 @@ function SignUp() {
             required
             placeholder='Confirm password'
             onChange={e => setConfirmPassword(e.target.value)} />
-
-          <button type='submit'>Sign Up</button>
+          <button type='submit' className="form-btn">Sign Up</button>
         </form>
         <span>
           Already have an account?
-          <Link to='/login'>Sign In.</Link>
+          <Link to='/login'> Sign In. </Link>
         </span>
       </div>
     </div>

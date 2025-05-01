@@ -9,7 +9,7 @@ import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import { Button, IconButton, TextField } from "@material-ui/core";
+import { Button, IconButton, TextField, TextareaAutosize } from "@material-ui/core";
 import EditIcon from "@material-ui/icons/Edit";
 import SaveIcon from "@material-ui/icons/Save";
 import './profile.css'
@@ -94,48 +94,63 @@ function Profile() {
 
         {currentUser && (
           <>
-                  <div>
-          <strong>Story Title: </strong>
-          {editingTitle ? (
-            <>
-              <TextField
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-              <IconButton onClick={handleTitleSave}>
-                <SaveIcon />
-              </IconButton>
-            </>
-          ) : (
-            <>
-              <span>{title}</span>
-              <IconButton onClick={() => setEditingTitle(true)}>
-                <EditIcon />
-              </IconButton>
-            </>
-          )}
-        </div>
-        <div>
-          <strong>Story Summary: </strong>
-          {editingSummary ? (
-            <>
-              <textarea rows="40" cols="150"
-                value={summary}
-                onChange={(e) => setSummary(e.target.value)}
-              />
-              <IconButton onClick={handleSummarySave}>
-                <SaveIcon />
-              </IconButton>
-            </>
-          ) : (
-            <>
-              <span>{summary}</span>
-              <IconButton onClick={() => setEditingSummary(true)}>
-                <EditIcon />
-              </IconButton>
-            </>
-          )}
-        </div>
+            <div>
+              <strong>Story Title: </strong>
+              {editingTitle ? (
+                <>
+                  <TextField
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                  <IconButton onClick={handleTitleSave}>
+                    <SaveIcon />
+                  </IconButton>
+                </>
+              ) : (
+                <>
+                  <span>{title}</span>
+                  <IconButton onClick={() => setEditingTitle(true)}>
+                    <EditIcon />
+                  </IconButton>
+                </>
+              )}
+            </div>
+            <div>
+              <strong>Story Summary: </strong>
+              <div className="story-summary-container">
+                {editingSummary ? (
+                  <>
+                    <TextareaAutosize
+                      value={summary}
+                      onChange={(e) => setSummary(e.target.value)}
+                      rowsMin={10}
+                      className="profile-textarea"
+                    />
+                    <IconButton onClick={handleSummarySave} className="save-icon">
+                      <SaveIcon />
+                    </IconButton>
+                  </>
+                ) : (
+                  <>
+                    <div className="profile-summary">
+                      {summary
+                        ? summary.split("\n").map((line, index) => (
+                          <p key={index} style={{ margin: "0 0 20px" }}>
+                            {line}
+                          </p>
+                        ))
+                        : "No summary available."}
+                    </div>
+                    <IconButton
+                      onClick={() => setEditingSummary(true)}
+                      className="edit-icon"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </>
+                )}
+              </div>
+            </div>
             <Button variant="contained" color="secondary" onClick={handleClickOpen}>
               Delete Account
             </Button>
