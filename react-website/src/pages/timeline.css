@@ -15,6 +15,22 @@ html, body {
   padding: 0;
 }
 
+.MDBBtn {
+  padding: 10px 20px; /* Add padding for a cleaner look */
+  margin: 5px; /* Add spacing between buttons */
+  border-radius: 5px; /* Rounded corners */
+  font-size: 14px; /* Adjust font size */
+  font-weight: bold; /* Make text bold */
+  text-transform: uppercase; /* Make text uppercase */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Add hover effects */
+}
+
+.MDBBtn:hover {
+  background-color: #007bff; /* Change background color on hover */
+  color: #fff; /* Change text color on hover */
+  transform: scale(1.05); /* Slight zoom effect */
+}
+
 .freytag-pyramid {
   position: relative;
   height: 600px;
@@ -23,6 +39,14 @@ html, body {
   padding-left: 100px; /* Add padding before the first node */
   background-color: transparent; /* Ensure no background color */
   border: none; /* Remove the border */
+}
+
+.freytag-pyramid .circle {
+  width: 100px; /* Increase width */
+  height: 100px; /* Increase height */
+  font-size: 14px; /* Adjust font size for better readability */
+  padding: 10px; /* Add padding for text spacing */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow for better visibility */
 }
 
 .pyramid-event {
@@ -136,8 +160,75 @@ html, body {
   padding-top: 5rem;
 }
 
+.add-event-btn {
+  background-color: #28a745; /* Green background */
+  color: #fff; /* White text */
+  border: none; /* Remove border */
+  margin-top: 5px;
+  margin-left: 5px;
+  margin-right: 5px;
+  margin-bottom: 15px;
+  padding: 10px 20px; /* Add padding for a cleaner look */
+}
+
+.save-event-btn {
+  background-color: #28a745; /* Blue background */
+  color: #fff; /* White text */
+  border: none; /* Remove border */
+  padding: 10px 20px; /* Add padding for a cleaner look */
+  margin-top: 5px;
+  margin-left: 5px;
+  margin-right: 5px;
+  margin-bottom: 15px;
+  font-size: 14px; /* Adjust font size */
+  font-weight: bold; /* Make text bold */
+  text-transform: uppercase; /* Make text uppercase */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Add hover effects */
+}
+
+.save-event-btn:hover {
+  background-color: #29a345; 
+  transform: scale(1.05); 
+}
+
+.cancel-event-btn {
+  background-color: #6c757d; 
+  color: #fff; /* White text */
+  border: none; /* Remove border */
+  padding: 10px 20px; /* Add padding for a cleaner look */
+  margin-top: 5px;
+  margin-left: 5px;
+  margin-right: 5px;
+  margin-bottom: 15px;
+  font-size: 14px; /* Adjust font size */
+  font-weight: bold; /* Make text bold */
+  text-transform: uppercase; /* Make text uppercase */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Add hover effects */
+}
+.cancel-event-btn:hover {
+  background-color: #5a6268; /* Darker grey on hover */
+  transform: scale(1.05); /* Slight zoom effect */
+}
+
 .delete-event-btn {
-  margin-left: 10px; /* Add a margin to separate it from the Add Event button */
+  background-color: #dc3545; /* Red background */
+  color: #fff; /* White text */
+  border: none; /* Remove border */
+  margin-top: 5px;
+  margin-left: 5px;
+  margin-right: 5px;
+  margin-bottom: 15px;
+  padding: 10px 20px; /* Add padding for a cleaner look */
+}
+
+.toggle-view-btn {
+  background-color: #000000; /* Blue background */
+  color: #fff; /* White text */
+  border: none; /* Remove border */
+  margin-bottom: 15px;
+  margin-top: 5px;
+  margin-left: 5px;
+  padding: 10px 20px; /* Add padding for a cleaner look */
 }
 
 .circle.deleting {
@@ -158,7 +249,7 @@ html, body {
   line-height: 16px;
 }
 
-.horizontal-timeline .items .items-list .add-event-btn .toggle-view-btn {
+.horizontal-timeline .items .items-list {
   position: relative;
   top: 50px;
   margin: 0 auto;
@@ -199,4 +290,48 @@ html, body {
     height: 100%;
   }
 
+}
+
+.vertical-timeline {
+  display: flex;
+  flex-direction: column; /* Stack events vertically */
+  align-items: center;
+  height: 100%; /* Full height for scrolling */
+}
+
+.timeline-event {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 80%; /* Adjust width as needed */
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
+  transition: border 0.2s ease;
+}
+
+.timeline-event:hover {
+  transform: scale(1.05); /* Slight zoom effect on hover */
+}
+
+.timeline-event .circle {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000; /* Black text */
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.dashed-line {
+  position: absolute;
+  height: 2px; /* Line thickness */
+  background-color: transparent;
+  border-top: 2px dashed #ccc; /* Dashed line style */
+  z-index: 1; /* Ensure it appears behind the circles */
 }

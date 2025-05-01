@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Modal, Box, Button, TextField, Typography } from "@material-ui/core";
 
+import "./modal.css";
+
 const NewNodeModal = ({ isOpen, closeModal, onSave }) => {
   const [name, setName] = useState("");
   const [group, setGroup] = useState("");
@@ -93,10 +95,17 @@ const NewNodeModal = ({ isOpen, closeModal, onSave }) => {
         />
 
         <Box style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
-          <Button onClick={handleSave} variant="contained" color="primary" size="small" disabled={!name}>
+          <Button
+            onClick={handleSave}
+            className="modal-btn save-btn"
+            disabled={!name}
+          >
             Save
           </Button>
-          <Button onClick={closeModal} variant="outlined" color="secondary" size="small">
+          <Button
+            onClick={closeModal}
+            className="modal-btn cancel-btn"
+          >
             Cancel
           </Button>
         </Box>

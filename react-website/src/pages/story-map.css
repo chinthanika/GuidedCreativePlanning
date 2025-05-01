@@ -1,4 +1,132 @@
-@import "../node_modules/@syncfusion/ej2-base/styles/material.css";
-@import "../node_modules/@syncfusion/ej2-react-navigations/styles/material.css";
-@import "../node_modules/@syncfusion/ej2-inputs/styles/material.css";
-@import "../node_modules/@syncfusion/ej2-buttons/styles/material.css";
+/* Container for the story map */
+.story-map-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+/* Graph container */
+.graph-container {
+    width: 100%;
+    height: 100%;
+    margin: 20px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.graph-container > canvas, .graph-container > div {
+    width: 100%;
+    height: 100%;
+}
+
+/* Button container for story map */
+.story-map-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* Styled buttons */
+.story-map-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.story-map-btn:hover {
+    transform: scale(1.05);
+}
+
+.render-btn {
+    background-color: 007bff;
+    /* Blue background */
+    color: #000000;
+    /* White text */
+    border: none;
+    /* Remove border */
+    margin-bottom: 15px;
+    margin-top: 5px;
+    margin-left: 5px;
+    padding: 10px 20px;
+    /* Add padding for a cleaner look */
+    text-transform: none;
+}
+
+.render-btn:hover {
+    background-color: #dee2e604;
+    /* Darker  on hover */
+}
+
+.add-node-btn {
+    background-color: #ffc107;
+    /* Blue background */
+    color: #000000;
+    /* White text */
+    border: none;
+    /* Remove border */
+    margin-bottom: 15px;
+    margin-top: 5px;
+    margin-left: 5px;
+    padding: 10px 20px;
+    /* Add padding for a cleaner look */
+    text-transform: none;
+}
+
+.add-node-btn:hover {
+    background-color: #e0a800;
+    /* Darker green on hover */
+}
+
+.add-link-btn {
+    background-color: #ffc107;
+    /* Yellow background */
+    color: #000000;
+    /* White text */
+    border: none;
+    /* Remove border */
+    margin-bottom: 15px;
+    margin-top: 5px;
+    margin-left: 5px;
+    padding: 10px 20px;
+    /* Add padding for a cleaner look */
+    text-transform: none;
+    text-transform: none;
+}
+
+.add-link-btn:hover {
+    background-color: #e0a800;
+    /* Darker yellow on hover */
+}
+
+/* Modal styling */
+.modal-container {
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-input {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.modal-input:focus {
+    border-color: #007bff;
+    outline: none;
+}

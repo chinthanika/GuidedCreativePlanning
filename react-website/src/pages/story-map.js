@@ -12,7 +12,7 @@ import NewNodeModal from '../components/NewNodeModal';
 import NewLinkModal from '../components/NewLinkModal';
 import EditLinkModal from '../components/EditLinkModal';
 
-// var sha256 = require('js-sha256');
+import './story-map.css';
 
 function StoryMap() {
   const { currentUser } = useAuthValue();
@@ -521,71 +521,64 @@ function StoryMap() {
 
   return (
     <div>
-      {/* Button to trigger graph rendering */}
-      <button onClick={() => onValue(graphRef, onGraphData)}>RenderGraph</button>
+      <div className="story-map-buttons">
+        <button
+          onClick={() => onValue(graphRef, onGraphData)}
+          className="story-map-btn render-btn"
+        >
+          RenderGraph
 
-      {/* Graph Display */}
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <div style={{ position: "relative" }}>
-          <Graph
-            data={data}
-            getNodeSize={getNodeSize}
-            handleNodeClick={handleNodeClick}
-            handleLinkClick={handleLinkClick}
-            nodeAutoColorBy="id"
-          />
-        </div>
+        </button>
+
+        <button
+          onClick={addNode}
+          className="story-map-btn add-node-btn"
+        >
+          + Add Node
+        </button>
+        <button
+          onClick={openNewLinkModal}
+          className="story-map-btn add-link-btn"
+        >
+          + Add Link
+        </button>
       </div>
 
-      {/* Graph Modal for Node Editing */}
+
+
+      {/* Graph Display */}
+      <div
+        className="graph-container">
+        <Graph
+          data={data}
+          getNodeSize={getNodeSize}
+          handleNodeClick={handleNodeClick}
+          handleLinkClick={handleLinkClick}
+          nodeAutoColorBy="id"
+        />
+      </div>
+
+      {/* Modals */}
       {selectedNode && (
         <GraphModal
           isModalOpen={isModalOpen}
           handleCloseModal={closeModal}
-          selectedNode={selectedNode ?? ""}
+          selectedNode={selectedNode}
           updateNode={updateNode}
           deleteNode={deleteNode}
-          // addLink={addLink}
-          nodes={data.nodes}
-          links={data.links}
         />
       )}
-
-      {/* Button to Add New Nodes */}
-      <Button
-        variant="contained"
-        onClick={() =>
-          addNode({ name: "New Node", links: [] })
-        }
-        sx={{ mt: 2 }}
-      >
-        + Add Node
-      </Button>
       <NewNodeModal
         isOpen={isNewNodeModalOpen}
         closeModal={closeNewNodeModal}
-        onSave={saveNewNode}>
-
-      </NewNodeModal>
-
-      {/* Button to Add New Links */}
-      <Button
-        variant="contained"
-        onClick={() =>
-          openNewLinkModal({ name: "New Link", links: [] })
-        }
-        sx={{ mt: 2 }}
-      >
-        + Add Link
-      </Button>
+        onSave={saveNewNode}
+      />
       <NewLinkModal
         isOpen={isNewLinkModalOpen}
         closeModal={closeNewLinkModal}
         onSave={saveNewLink}
-        nodes={data.nodes}>
-
-      </NewLinkModal>
-
+        nodes={data.nodes}
+      />
       {selectedLink && (
         <EditLinkModal
           isOpen={isEditLinkModalOpen}
