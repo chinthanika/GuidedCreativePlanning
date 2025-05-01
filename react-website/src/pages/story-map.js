@@ -91,6 +91,7 @@ function StoryMap() {
 
   // Opens the modal for editing a node
   const handleNodeClick = (node) => {
+    console.log("Clicked node: ", node);
     setSelectedNode(node);
     setIsModalOpen(true);
   };
