@@ -58,12 +58,11 @@ function Login() {
             required
             placeholder='Enter your password'
             onChange={e => setPassword(e.target.value)} />
-
-          <button type='submit'>Sign In</button>
+          <button type='submit' className="form-btn">Sign In</button>
         </form>
         <p>
-          Don't have and account?
-          <Link to='/register'>Create one here</Link>
+          Don't have an account?  
+          <Link to='/register'> Create one here </Link>
         </p>
       </div>
     </div>
