@@ -1,7 +1,7 @@
 import React from "react";
 import { Nav, NavLink, NavMenu, NavRight, ProfileIcon, AuthButtons } from "./NavbarElements";
 import { FaUserCircle } from "react-icons/fa"; // Profile icon
-import { useAuth } from "./useAuth.js"; // Custom hook to check if the user is logged in
+import { useAuth } from "./useAuth"; // Custom hook to check if the user is logged in
 
 const Navbar = () => {
   const { isLoggedIn } = useAuth(); // Check if the user is logged in
