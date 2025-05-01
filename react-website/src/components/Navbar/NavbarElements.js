@@ -3,12 +3,12 @@ import { NavLink as Link } from "react-router-dom";
 import styled from "styled-components";
   
 export const Nav = styled.nav`
-  background: #111111;
-  height: 85px;
   display: flex;
   justify-content: space-between;
-  padding: 0.2rem calc((100vw - 1000px) / 2);
-  z-index: 12;
+  align-items: center;
+  height: 60px;
+  background-color: #111111;
+  padding: 0 20px;
 `;
   
 export const NavLink = styled(Link)`
@@ -23,31 +23,56 @@ export const NavLink = styled(Link)`
     color: #4d4dff;
   }
 `;
-  
-export const Bars = styled(FaBars)`
-  display: none;
-  color: #808080;
-  @media screen and (max-width: 768px) {
-    display: block;
-    position: absolute;
-    top: 0;
-    right: 0;
-    transform: translate(-100%, 75%);
-    font-size: 1.8rem;
-    cursor: pointer;
+
+export const NavMenu = styled.div`
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+
+  a {
+    color: #eeeeee;
+    text-decoration: none;
+    font-size: 16px;
+
+    &:hover {
+      color: #4d4dff;
+    }
   }
 `;
   
-export const NavMenu = styled.div`
+export const NavRight = styled.div`
   display: flex;
   align-items: center;
-  margin-right: -24px;
-  /* Second Nav */
-  /* margin-right: 24px; */
-  /* Third Nav */
-  /* width: 100vw;
-white-space: nowrap; */
-  @media screen and (max-width: 768px) {
-    display: none;
+  gap: 20px;
+`;
+
+// Profile icon
+export const ProfileIcon = styled.div`
+  color: #eeeeee;
+  cursor: pointer;
+
+  &:hover {
+    color: #4d4dff;
+  }
+`;
+
+// Auth buttons (Sign In/Sign Up)
+export const AuthButtons = styled.div`
+  display: flex;
+  gap: 10px;
+
+  a {
+    color: #eeeeee;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 5px 10px;
+    border: 1px solid #eeeeee;
+    border-radius: 4px;
+
+    &:hover {
+      background-color: #4d4dff;
+      color: #ffffff;
+    }
   }
 `;
