@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
-import { Modal, Box, Button, TextField, Typography } from "@material-ui/core";
+import { Modal, Box, Button, TextField, Typography, Select, MenuItem } from "@material-ui/core";
 
 const SYSTEM_FIELDS = new Set([
-  "attributes", "index", "fx", "fy", "vx", "vy", "__indexColor", "indexColor", "x", "y"
+  "index", "fx", "fy", "vx", "vy", "__indexColor", "indexColor", "x", "y", "hidden", "level", "note"
 ]);
 
 const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, deleteNode }) => {
   const [nodeData, setNodeData] = useState({});
-  const [attributes, setAttributes] = useState({});
   const [newFieldName, setNewFieldName] = useState("");
 
   useEffect(() => {
@@ -16,14 +15,15 @@ const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, d
       const filteredData = Object.fromEntries(
         Object.entries(selectedNode).filter(([key]) => !SYSTEM_FIELDS.has(key))
       );
-      // Parse attributes field separately
-      const parsedAttributes = selectedNode.attributes ? { ...selectedNode.attributes } : {};
 
-      setNodeData(filteredData);
-      setAttributes(parsedAttributes);
+      // Default the group to "Person" if not already set
+      setNodeData({
+        group: "Person", // Default group
+        attributes: {}, // Initialize attributes if not present
+        ...filteredData,
+      });
     } else {
-      setNodeData({});
-      setAttributes({});
+      setNodeData({ group: "Person", attributes: {} }); // Default group and attributes for new nodes
     }
   }, [selectedNode]);
 
@@ -35,16 +35,19 @@ const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, d
     }));
   };
 
-  const handleAttributeChange = (field, value) => {
-    setAttributes((prev) => ({
+  // Handles input change for attributes
+  const handleAttributeChange = (attribute, value) => {
+    setNodeData((prev) => ({
       ...prev,
-      [field]: value,
+      attributes: {
+        ...prev.attributes,
+        [attribute]: value,
+      },
     }));
   };
 
   // Handles adding new custom fields
   const handleAddNewField = () => {
-    console.log("Adding new field...")
     if (!newFieldName.trim() || SYSTEM_FIELDS.has(newFieldName)) return; // Prevent empty/system field names
 
     setNodeData((prev) => ({
@@ -55,14 +58,13 @@ const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, d
     setNewFieldName(""); // Reset input
   };
 
-  // Saves node changes (without system fields)
+  // Saves node changes (including attributes)
   const handleSaveClick = () => {
-    // if (!nodeData.text?.trim()) return; // Ensure the text field is not empty
     const updatedNode = {
       ...nodeData,
-      attributes: attributes
-    }
-    updateNode(updatedNode); // Save without system fields
+      attributes: { ...nodeData.attributes }, // Ensure attributes are included
+    };
+    updateNode(updatedNode); // Save the updated node
     handleCloseModal();
   };
 
@@ -74,6 +76,35 @@ const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, d
     }
   };
 
+  // Define attributes based on the group
+  const getAttributesForGroup = (group) => {
+    if (group === "Person") {
+      return [
+        "Character Motivation",
+        "Backstory",
+        "Personality Traits",
+        "Speech Patterns",
+        "Appearance",
+        "Goals",
+        "Flaws",
+      ];
+    } else if (group === "Location") {
+      return [
+        "Time",
+        "Place",
+        "Mood",
+        "Context",
+      ];
+    } else if (group === "Organization") {
+      return [
+        "Purpose",
+        "Structure",
+        "Factions",
+      ];
+    }
+    return [];
+  };
+
   return (
     <Modal open={isModalOpen} onClose={handleCloseModal} aria-labelledby="modal-title">
       <Box
@@ -82,52 +113,21 @@ const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, d
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          width: 300,
-          maxHeight: "70vh",
+          width: 400,
           backgroundColor: "rgba(255, 255, 255, 0.95)",
           boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
           padding: 16,
           borderRadius: 8,
           overflowY: "auto",
+          maxHeight: "80vh",
         }}
       >
         <Typography id="modal-title" variant="h6" style={{ marginBottom: 16, textAlign: "center" }}>
           Edit Node
         </Typography>
 
-        {/* Dynamically Create Input Fields */}
-        <Box style={{ maxHeight: "50vh", overflowY: "auto", paddingRight: 8 }}>
-          {Object.entries(nodeData).map(([key, value]) => (
-            <TextField
-              key={key}
-              label={key}
-              value={value}
-              onChange={(e) => handleInputChange(key, e.target.value)}
-              fullWidth
-              size="small"
-              style={{ marginTop: 8 }}
-            />
-          ))}
-          {/* Attributes Section */}
-          <Typography variant="subtitle1" style={{ marginTop: 16 }}>
-            Attributes
-          </Typography>
-          <Box style={{ maxHeight: "20vh", overflowY: "auto", paddingRight: 8 }}>
-            {Object.entries(attributes).map(([key, value]) => (
-              <TextField
-                key={key}
-                label={key}
-                value={value}
-                onChange={(e) => handleAttributeChange(key, e.target.value)}
-                fullWidth
-                size="small"
-                style={{ marginTop: 8 }}
-              />
-            ))}
-          </Box>
-        </Box>
-        {/* Add New Field */}
-        <Box style={{ marginTop: 16 }}>
+        {/* Add New Field at the Top */}
+        <Box style={{ marginBottom: 16 }}>
           <TextField
             label="New Field Name"
             value={newFieldName}
@@ -146,6 +146,67 @@ const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, d
             Add Field
           </Button>
         </Box>
+
+        {/* Dynamically Create Input Fields */}
+        <Box>
+          {Object.entries(nodeData).map(([key, value]) => {
+            if (key === "id" || key === "attributes") {
+              // Do not render the "id" or "attributes" field but keep it in nodeData
+              return null;
+            }
+            if (key === "group") {
+              // Render dropdown for the "group" field
+              return (
+                <Select
+                  key={key}
+                  value={value}
+                  onChange={(e) => handleInputChange(key, e.target.value)}
+                  fullWidth
+                  size="small"
+                  style={{ marginBottom: 12 }}
+                >
+                  <MenuItem value="Person">Person</MenuItem>
+                  <MenuItem value="Organization">Organization</MenuItem>
+                  <MenuItem value="Location">Location</MenuItem>
+                </Select>
+              );
+            }
+            return (
+              <TextField
+                key={key}
+                label={key}
+                value={value}
+                onChange={(e) => handleInputChange(key, e.target.value)}
+                fullWidth
+                size="small"
+                style={{ marginBottom: 12 }}
+              />
+            );
+          })}
+        </Box>
+
+        {/* Attributes Section Based on Group */}
+        {nodeData.group && (
+          <Box style={{ marginTop: 16 }}>
+            <Typography variant="subtitle1" style={{ marginBottom: 8 }}>
+              Attributes
+            </Typography>
+            {getAttributesForGroup(nodeData.group).map((attribute) => (
+              <TextField
+                key={attribute}
+                label={attribute}
+                value={nodeData.attributes?.[attribute] || ""}
+                onChange={(e) => handleAttributeChange(attribute, e.target.value)}
+                fullWidth
+                size="small"
+                multiline
+                rows={3} // Allow input as a paragraph or list
+                style={{ marginBottom: 12 }}
+              />
+            ))}
+          </Box>
+        )}
+
         {/* Action Buttons */}
         <Box style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
           <Button onClick={handleSaveClick} variant="contained" color="primary" size="small">

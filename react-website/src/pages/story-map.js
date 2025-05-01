@@ -166,7 +166,6 @@ function StoryMap() {
   //     id: id,
   //     label: nodeName,
   //     aliases: "",
-  //     attributes: {},
   //     group: "Uncategorized",
   //     hidden: false,
   //     level: 1,
@@ -209,7 +208,6 @@ function StoryMap() {
       id: id,
       label: label,
       aliases: aliases || "",
-      attributes: {},
       group: "Uncategorized",
       hidden: false,
       level: 1,
@@ -452,7 +450,6 @@ function StoryMap() {
       note: node.note || "",
       group: node.group,
       aliases: node.aliases,
-      attributes: node.attributes || { attribute: "None" },
       hidden: false
     }));
     console.log("Final nodes and links: ", finalNodes, flattenedLinks)

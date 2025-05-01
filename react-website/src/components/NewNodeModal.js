@@ -1,20 +1,18 @@
 import { useState, useEffect } from "react";
-import { Modal, Box, Button, TextField, Typography } from "@material-ui/core";
+import { Modal, Box, Button, TextField, Typography, Select, MenuItem } from "@material-ui/core";
 
 import "./modal.css";
 
 const NewNodeModal = ({ isOpen, closeModal, onSave }) => {
   const [name, setName] = useState("");
-  const [group, setGroup] = useState("");
+  const [group, setGroup] = useState("Person"); // Default to "Person"
   const [aliases, setAliases] = useState("");
-  const [attributes, setAttributes] = useState({});
 
   useEffect(() => {
     if (!isOpen) {
       setName("");
-      setGroup("");
+      setGroup("Person"); // Reset to default
       setAliases("");
-      setAttributes({});
     }
   }, [isOpen]);
 
@@ -34,9 +32,8 @@ const NewNodeModal = ({ isOpen, closeModal, onSave }) => {
     const newNode = {
       id,
       label: name.trim(),
-      group: group.trim() || "Uncategorized",
+      group: group, // Use selected group
       aliases: aliases || "",
-      attributes: attributes || {},
       hidden: false,
       level: 1,
     };
@@ -77,14 +74,20 @@ const NewNodeModal = ({ isOpen, closeModal, onSave }) => {
           required
           style={{ marginBottom: 12 }}
         />
-        <TextField
-          label="Group"
+
+        {/* Group Dropdown */}
+        <Select
           value={group}
           onChange={(e) => setGroup(e.target.value)}
           fullWidth
           size="small"
           style={{ marginBottom: 12 }}
-        />
+        >
+          <MenuItem value="Person">Person</MenuItem>
+          <MenuItem value="Organization">Organization</MenuItem>
+          <MenuItem value="Location">Location</MenuItem>
+        </Select>
+
         <TextField
           label="Aliases"
           value={aliases}
