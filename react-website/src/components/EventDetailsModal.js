@@ -1,22 +1,42 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { Modal, Box, Button, TextField, Typography } from "@material-ui/core";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
 import "./modal.css";
 
-const EventDetailsModal = ({ isOpen, closeModal, event, onSave }) => {
+const EventDetailsModal = ({ isOpen, closeModal, event, onSave, setAsBackground }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editableEvent, setEditableEvent] = useState(event || {});
+    const [imageUrl, setImageUrl] = useState(event?.imageUrl || "");
+    const [isGenerating, setIsGenerating] = useState(false);
 
     useEffect(() => {
         if (event) {
             setEditableEvent(event);
+            setImageUrl(event.imageUrl || ""); // Set default image URL
+        } else {
+            setEditableEvent({}); // Reset editableEvent if event is null
+            setImageUrl(""); // Reset image URL
         }
     }, [event]);
 
     const handleEditToggle = () => {
         setIsEditing(!isEditing);
+    };
+
+    const handleGenerateImage = async () => {
+        setIsGenerating(true);
+        try {
+            const response = await axios.post("http://127.0.0.1:5000/images", { description: editableEvent.description });
+            setImageUrl(response.data.image_url);
+            setEditableEvent({ ...editableEvent, imageUrl: response.data.image_url });
+        } catch (error) {
+            console.error("Error generating image:", error);
+        } finally {
+            setIsGenerating(false);
+        }
     };
 
     const handleSave = () => {
@@ -50,28 +70,28 @@ const EventDetailsModal = ({ isOpen, closeModal, event, onSave }) => {
                     Event Details
                 </Typography>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
-          <DatePicker
-            label="Date"
-            value={editableEvent.date}
-            onChange={(newValue) => setEditableEvent({ ...editableEvent, date: newValue })}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                size="small"
-                required
-                disabled={!isEditing}
-                InputProps={{
-                  ...params.InputProps,
-                  style: {
-                    color: "#63666A", // Darker text color
-                  },
-                }}
-                style={{ marginBottom: 24 }}
-              />
-            )}
-          />
-        </LocalizationProvider>
+                    <DatePicker
+                        label="Date"
+                        value={editableEvent.date}
+                        onChange={(newValue) => setEditableEvent({ ...editableEvent, date: newValue })}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                fullWidth
+                                size="small"
+                                required
+                                disabled={!isEditing}
+                                InputProps={{
+                                    ...params.InputProps,
+                                    style: {
+                                        color: "#63666A", // Darker text color
+                                    },
+                                }}
+                                style={{ marginBottom: 24 }}
+                            />
+                        )}
+                    />
+                </LocalizationProvider>
                 <TextField
                     label="Title"
                     value={editableEvent.title || ""}
@@ -102,6 +122,30 @@ const EventDetailsModal = ({ isOpen, closeModal, event, onSave }) => {
                     }}
                     style={{ marginBottom: 12 }}
                 />
+                {imageUrl && (
+                    <div style={{ marginBottom: 16 }}>
+                        <img src={imageUrl} alt="Generated" style={{ width: "100%", borderRadius: 8 }} />
+                    </div>
+                )}
+                {imageUrl && (
+                    <Button
+                        onClick={setAsBackground}
+                        variant="contained"
+                        color="secondary"
+                        style={{ marginBottom: 16 }}
+                    >
+                        Set as Event Background
+                    </Button>
+                )}
+                <Button
+                    onClick={handleGenerateImage}
+                    variant="contained"
+                    color="primary"
+                    disabled={isGenerating}
+                    style={{ marginBottom: 16 }}
+                >
+                    {isGenerating ? "Generating..." : "Generate Image"}
+                </Button>
                 <TextField
                     label="Stage"
                     value={editableEvent.stage || ""}

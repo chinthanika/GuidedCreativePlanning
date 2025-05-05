@@ -245,6 +245,18 @@ function StoryTimeline({ isVertical = false }) {
         };
     }, [timelineRef]);
 
+    const handleSetAsBackground = (eventId, imageUrl) => {
+        const eventRef = ref(database, `stories/${userId}/timeline/${eventId}`);
+        set(eventRef, { ...events.find((event) => event.id === eventId), imageUrl });
+    
+        // Update the local state
+        setEvents((prevEvents) =>
+            prevEvents.map((event) =>
+                event.id === eventId ? { ...event, imageUrl } : event
+            )
+        );
+    };
+
     // Toggle view mode
     const toggleViewMode = () => {
         setViewMode((prevMode) => (prevMode === "linear" ? "freytag" : "linear"));
@@ -410,6 +422,7 @@ function StoryTimeline({ isVertical = false }) {
                             <EventDetailsModal
                                 isOpen={isEventDetailsModalOpen}
                                 closeModal={() => setIsEventDetailsModalOpen(false)}
+                                setasBackground={handleSetAsBackground}
                                 event={selectedEvent}
                                 onSave={(updatedEvent) => {
                                     // Update the event in the state
