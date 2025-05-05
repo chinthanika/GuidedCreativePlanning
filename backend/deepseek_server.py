@@ -6,12 +6,22 @@ import re
 import os
 import openai
 import logging
+import time
 app = Flask(__name__)
 CORS(app)
 
 # Replace with your DeepSeek API endpoint and API key
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/analyze"  # Example endpoint
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")  # Replace with your actual API key
+
+DEEPSEEK_API_KEY = "sk-2a0e1b3c-4d8f-4a5b-ae6f-7c9d0f2b1c3e"  # Replace with your actual API key
+
+# DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")  # Replace with your actual API key
+
+LEONARDO_API_KEY = "b54d28c4-7197-459a-a84c-b96d96698cae"# Replace with your actual API key
+
+# LEONARDO_API_KEY = os.getenv("LEONARDO_API_KEY")  # Replace with your actual API key
+if not LEONARDO_API_KEY:
+    raise ValueError("LEONARDO_API_KEY environment variable is not set")
 
 if not DEEPSEEK_API_KEY:
     raise ValueError("DEEPSEEK_API_KEY environment variable is not set")
@@ -38,6 +48,88 @@ def predict():
         
         # Return the result as JSON
         return jsonify(relations)
+    
+@app.route('/images', methods=['POST'])
+def generate_image():
+    leonardo_auth = "Bearer %s" % LEONARDO_API_KEY
+
+    # Get 'description' from JSON body
+    data = request.json
+    description = data.get('description', '')
+
+    if not description:
+        return jsonify({'error': 'Description is required'}), 400
+
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": leonardo_auth
+    }
+
+    try:
+        # Step 1: Generate the image
+        url = "https://cloud.leonardo.ai/api/rest/v1/generations"
+        payload = {
+            "modelId": "1dd50843-d653-4516-a8e3-f0238ee453ff",
+            "contrast": 3.5,
+            "prompt": description,    #Leonardo Flux model id
+            "num_images": 1,
+            "width": 1472,
+            "height": 832,
+            "ultra": False,
+            "styleUUID": "111dc692-d470-4eec-b791-3475abac4c46",
+            "enhancePrompt": True,
+        }
+
+        response = requests.post(url, json=payload, headers=headers)
+
+        if response.status_code != 200:
+            return jsonify({'error': 'Failed to generate image', 'details': response.text}), 500
+
+        # Step 2: Extract the generationId from the response
+        generation_data = response.json()
+        generation_id = generation_data['sdGenerationJob']['generationId']
+
+        # Step 3: Wait for the image to be generated
+        time.sleep(20)  # Wait for the generation to complete (adjust as needed)
+
+        # Step 4: Retrieve the generated image using the generationId
+        url = f"https://cloud.leonardo.ai/api/rest/v1/generations/{generation_id}"
+        response = requests.get(url, headers=headers)
+
+        if response.status_code != 200:
+            return jsonify({'error': 'Failed to retrieve generated image', 'details': response.text}), 500
+
+        # Step 5: Extract the image URL from the response
+        generation_result = response.json()
+        if "generations_by_pk" in generation_result and "generated_images" in generation_result["generations_by_pk"]:
+            image_url = generation_result["generations_by_pk"]["generated_images"][0]["url"]
+        else:
+            return jsonify({'error': 'Unexpected response structure', 'details': generation_result}), 500
+
+        return jsonify({'image_url': image_url}), 200
+
+    except Exception as e:
+        return jsonify({'error': 'An error occurred', 'details': str(e)}), 500
+    
+    # url = "https://cloud.leonardo.ai/api/rest/v1/init-image"
+
+    # payload = {"extension": "jpg"}
+
+    # response = requests.post(url, json=payload, headers=headers)
+
+    # print(response.status_code)
+
+    # # Upload image via presigned URL
+    # fields = json.loads(response.json()['uploadInitImage']['fields'])
+
+    # url = response.json()['uploadInitImage']['url']
+
+    # image_id = response.json()['uploadInitImage']['id']  # For getting the image later
+
+    # image_file_path = "/workspace/test.jpg"
+    # files = {'file': open(image_file_path, 'rb')}
+
 
 def clean_text(text):
     # Simple text cleaning (remove brackets and their contents)
@@ -98,45 +190,7 @@ def get_relations_with_deepseek(text):
         print("Error:", e)
         deepseek_output = 0
 
-    # print("Processing response from deepseek...")
-    # print (response.choices[0].message.content)
-    # deepseek_output = json.loads(response.choices[0].message.content)
-    # print(deepseek_output)
-
     return deepseek_output
-
-    # """
-    # Send the text to the DeepSeek API for entity and relationship extraction.
-    # """
-    # headers = {
-    #     "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
-    #     "Content-Type": "application/json"
-    # }
-    # payload = {
-    #     "text": text,
-    #     "options": {
-    #         "extract_entities": True,
-    #         "extract_relationships": True,
-    #         "format": "json"  # Request output in JSON format
-    #     }
-    # }
-
-    # try:
-    #     # Make a POST request to the DeepSeek API
-    #     response = requests.post(DEEPSEEK_API_URL, headers=headers, json=payload)
-    #     response.raise_for_status()  # Raise an error for bad status codes
-
-    #     # Parse the response JSON
-    #     deepseek_output = response.json()
-    #     print("DeepSeek Output:", deepseek_output)
-
-    #     # Return the extracted entities and relationships
-    #     return deepseek_output
-
-    # except requests.exceptions.RequestException as e:
-    #     print(f"Error calling DeepSeek API: {e}")
-    #     return {"error": "Failed to call DeepSeek API", "details": str(e)}, 500
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True, threaded=False)
