@@ -53,9 +53,9 @@
 }
 
 .render-btn {
-    background-color: 007bff;
+    background-color: #c93030;
     /* Blue background */
-    color: #000000;
+    color: #fef4f4f7;
     /* White text */
     border: none;
     /* Remove border */
@@ -69,6 +69,7 @@
 
 .render-btn:hover {
     background-color: #dee2e604;
+    color: #000000;
     /* Darker  on hover */
 }
 

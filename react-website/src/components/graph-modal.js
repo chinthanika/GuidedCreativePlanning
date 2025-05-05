@@ -185,6 +185,24 @@ const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, d
           })}
         </Box>
 
+        {/* Color Picker */}
+        <Box style={{ marginTop: 16 }}>
+          <Typography variant="subtitle1" style={{ marginBottom: 8 }}>
+            Node Color
+          </Typography>
+          <input
+            type="color"
+            value={nodeData.color}
+            onChange={(e) => handleInputChange("color", e.target.value)}
+            style={{
+              width: "100%",
+              height: "40px",
+              border: "none",
+              cursor: "pointer",
+            }}
+          />
+        </Box>
+
         {/* Attributes Section Based on Group */}
         {nodeData.group && (
           <Box style={{ marginTop: 16 }}>

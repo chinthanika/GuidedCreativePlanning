@@ -524,7 +524,7 @@ function StoryMap() {
           onClick={() => onValue(graphRef, onGraphData)}
           className="story-map-btn render-btn"
         >
-          RenderGraph
+          Render Graph
 
         </button>
 
