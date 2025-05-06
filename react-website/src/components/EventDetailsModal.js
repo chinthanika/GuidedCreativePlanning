@@ -30,7 +30,7 @@ const EventDetailsModal = ({ isOpen, closeModal, event, onSave, setAsBackground 
         setIsGenerating(true);
         try {
             console.log("Sending request to generate image with description:", editableEvent.description);
-            const response = await axios.post("http://127.0.0.1:5000/images", { description: editableEvent.description });
+            const response = await axios.post('https://guidedcreativeplanning-1.onrender.com/images', { description: editableEvent.description });
             setImageUrl(response.data.image_url);
             setEditableEvent({ ...editableEvent, imageUrl: response.data.image_url });
             console.log("Image generated:", response.data.image_url);
