@@ -16,6 +16,9 @@ const EventDetailsModal = ({ isOpen, closeModal, event, onSave, setAsBackground 
         if (event) {
             setEditableEvent(event);
             setImageUrl(event.imageUrl || ""); // Set default image URL
+        } else {
+            setEditableEvent({ date: "", title: "", description: "", stage: "", isMainEvent: false }); // Provide default values
+            setImageUrl(""); // Reset image URL
         }
     }, [event]);
 
@@ -71,7 +74,7 @@ const EventDetailsModal = ({ isOpen, closeModal, event, onSave, setAsBackground 
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <DatePicker
                         label="Date"
-                        value={editableEvent.date}
+                        value={editableEvent.date ? new Date(editableEvent.date) : null}
                         onChange={(newValue) => setEditableEvent({ ...editableEvent, date: newValue })}
                         renderInput={(params) => (
                             <TextField
@@ -112,7 +115,7 @@ const EventDetailsModal = ({ isOpen, closeModal, event, onSave, setAsBackground 
                     fullWidth
                     size="small"
                     multiline
-                    rows={3}
+                    minRows={3}
                     disabled={!isEditing}
                     InputProps={{
                         style: {
