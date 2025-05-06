@@ -11,13 +11,13 @@ app = Flask(__name__)
 CORS(app)
 
 # Replace with your DeepSeek API endpoint and API key
-DEEPSEEK_API_URL = "https://api.deepseek.com/v1/analyze"  # Example endpoint
+DEEPSEEK_API_URL = "https://api.deepseek.com/v1/analyze"
+
 LEONARDO_API_URL = "https://cloud.leonardo.ai/api/rest/v1/generations"
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")  # Replace with your actual API key
 
 LEONARDO_API_KEY = os.getenv("LEONARDO_API_KEY")  # Replace with your actual API key
-
 if not LEONARDO_API_KEY:
     raise ValueError("LEONARDO_API_KEY environment variable is not set")
 
@@ -67,9 +67,8 @@ def generate_image():
 
     try:
         # Step 1: Generate the image
-        
         payload = {
-            "modelId": "1dd50843-d653-4516-a8e3-f0238ee453ff",
+            "modelId": "de7d3faf-762f-48e0-b3b7-9d0ac3a3fcf3",
             "contrast": 3.5,
             "prompt": description,    #Leonardo Flux model id
             "num_images": 1,
