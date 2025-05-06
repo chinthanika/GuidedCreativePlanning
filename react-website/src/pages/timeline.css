@@ -55,17 +55,37 @@ html, body {
 }
 
 .circle {
+  position: relative;
   width: 50px;
   height: 50px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #000;
   font-size: 12px;
   font-weight: bold;
   cursor: pointer;
   transition: transform 0.2s ease;
+  overflow: hidden; /* Ensure the overlay stays within the circle */
+}
+
+.circle span {
+  position: relative;
+  z-index: 2; /* Ensure the text is above the overlay */
+  color: #FFFFFF; /* White text */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8); /* Black shadow */
+}
+
+.circle.with-background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3); /* Black overlay with 20% opacity */
+  z-index: 1; /* Ensure the overlay is behind the text */
+  border-radius: 50%; /* Match the circle shape */
 }
 
 .circle:hover {

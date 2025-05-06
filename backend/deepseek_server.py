@@ -51,6 +51,7 @@ def predict():
     
 @app.route('/images', methods=['POST'])
 def generate_image():
+    print("Generating image...")
     leonardo_auth = "Bearer %s" % LEONARDO_API_KEY
 
     # Get 'description' from JSON body

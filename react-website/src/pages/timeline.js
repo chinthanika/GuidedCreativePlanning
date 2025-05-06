@@ -19,7 +19,7 @@ import moment from "moment";
 import Draggable from "react-draggable";
 
 import 'firebase/database'; // Import the Firebase Realtime Database
-import { set, ref, onValue, get, push, query, remove } from "firebase/database"; // Import database functions from Firebase
+import { set, ref, onValue, get, push, query, remove, update } from "firebase/database"; // Import database functions from Firebase
 import { useAuthValue } from '../Firebase/AuthContext'; // Import a custom hook for accessing Firebase authentication
 import { database } from '../Firebase/firebase'; // Import the Firebase configuration and initialize the Firebase app
 
@@ -168,17 +168,40 @@ function StoryTimeline({ isVertical = false }) {
     const renderEvents = () => {
         return events.map((event) => (
             <div
-                key={event.index}
+                key={event.id}
                 className={`timeline-event ${event.stage}`}
                 style={{
-                    backgroundColor: stageColours[event.stage],
-                    marginBottom: isVertical ? "20px" : "0", // Add spacing for vertical layout
-                    cursor: isDeleting ? "pointer" : "default", // Change cursor to pointer when deleting
+                    backgroundImage: event.imageUrl ? `url(${event.imageUrl})` : "none",
+                    backgroundColor: event.imageUrl ? "transparent" : stageColours[event.stage],
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    borderRadius: "50%", // Ensure the background fits the circular shape
+                    marginBottom: isVertical ? "20px" : "0",
+                    cursor: isDeleting ? "pointer" : "default",
                 }}
-                onClick={() => handleCircleClick(event, "delete-target")} // Trigger delete logic
+                onClick={() => handleCircleClick(event, "view-details")}
             >
-                <div className="circle">
-                    <span className="event-title">
+                <div
+                    className={`circle ${event.isMainEvent ? "main-event" : ""}
+                    ${event.useImageAsBackground && event.imageUrl ? "with-background" : ""
+                        }`}
+                >
+                    <span
+                        className="event-date"
+                        style={{
+                            color: event.useImageAsBackground && event.imageUrl ? "#FFFFFF" : "#000000", // White text if background image is set
+                        }}
+                    >
+                        {event.date}
+                    </span>
+                    <br />
+                    <span
+                        className="event-title"
+                        style={{
+                            color: event.useImageAsBackground && event.imageUrl ? "#FFFFFF" : "#000000", // White text if background image is set
+                            fontWeight: "bold",
+                        }}
+                    >
                         {event.title}
                     </span>
                     {isDeleting && (
@@ -246,15 +269,25 @@ function StoryTimeline({ isVertical = false }) {
     }, [timelineRef]);
 
     const handleSetAsBackground = (eventId, imageUrl) => {
+        console.log("Setting image as background for event:", eventId, imageUrl);
+
         const eventRef = ref(database, `stories/${userId}/timeline/${eventId}`);
-        set(eventRef, { ...events.find((event) => event.id === eventId), imageUrl });
-    
+        const updatedEvent = {
+            ...events.find((event) => event.id === eventId),
+            imageUrl,
+            useImageAsBackground: true, // Set the flag to true
+        };
+
+        set(eventRef, updatedEvent); // Save to Firebase
+
         // Update the local state
-        setEvents((prevEvents) =>
-            prevEvents.map((event) =>
-                event.id === eventId ? { ...event, imageUrl } : event
-            )
-        );
+        setEvents((prevEvents) => {
+            const updatedEvents = prevEvents.map((event) =>
+                event.id === eventId ? updatedEvent : event
+            );
+            console.log("Updated events:", updatedEvents); // Debug log
+            return updatedEvents;
+        });
     };
 
     // Toggle view mode
@@ -399,12 +432,12 @@ function StoryTimeline({ isVertical = false }) {
 
     const handleCircleClick = (event, target) => {
         if (isDeleting && target === "delete-target") {
-          setEventToDelete(event); // Set the event to delete
-          setShowDeleteModal(true); // Show the delete confirmation modal
+            setEventToDelete(event); // Set the event to delete
+            setShowDeleteModal(true); // Show the delete confirmation modal
         } else {
-          setSelectedEvent(event); // Set the selected event
-          setIsEventDetailsModalOpen(true); // Open the event details modal
-          console.log("Event editing: ", isEventDetailsModalOpen);
+            setSelectedEvent(event); // Set the selected event
+            setIsEventDetailsModalOpen(true); // Open the event details modal
+            console.log("Event editing: ", isEventDetailsModalOpen);
         }
     };
 
@@ -422,7 +455,7 @@ function StoryTimeline({ isVertical = false }) {
                             <EventDetailsModal
                                 isOpen={isEventDetailsModalOpen}
                                 closeModal={() => setIsEventDetailsModalOpen(false)}
-                                setasBackground={handleSetAsBackground}
+                                setAsBackground={(imageUrl) => handleSetAsBackground(selectedEvent.id, imageUrl)}
                                 event={selectedEvent}
                                 onSave={(updatedEvent) => {
                                     // Update the event in the state
@@ -462,7 +495,10 @@ function StoryTimeline({ isVertical = false }) {
                                         key={event.index}
                                         className={`timeline-event ${event.stage}`}
                                         style={{
-                                            backgroundColor: stageColours[event.stage],
+                                            backgroundImage: event.useImageAsBackground && event.imageUrl ? `url(${event.imageUrl})` : "none",
+                                            backgroundColor: event.useImageAsBackground && event.imageUrl ? "transparent" : stageColours[event.stage],
+                                            backgroundSize: "cover",
+                                            backgroundPosition: "center",
                                             marginBottom: isVertical ? "20px" : "0", // Add spacing for vertical layout
                                             cursor: isDeleting ? "pointer" : "default", // Change cursor to pointer when deleting
                                         }}
@@ -535,17 +571,32 @@ function StoryTimeline({ isVertical = false }) {
                                         <li className="items-list" key={event.index}>
                                             <div className="px-4">
                                                 <div
-                                                    className={`circle ${event.isMainEvent ? "main-event" : ""}`}
+                                                    className={`circle ${event.isMainEvent ? "main-event" : ""} ${event.useImageAsBackground && event.imageUrl ? "with-background" : ""}`}
                                                     style={{
-                                                        backgroundColor: "#dee2e6", // Grey for linear mode
-                                                        marginBottom: isVertical ? "20px" : "0", // Add spacing for vertical layout
-                                                        cursor: isDeleting ? "pointer" : "default", // Change cursor to pointer when deleting
+                                                        backgroundImage: event.useImageAsBackground && event.imageUrl ? `url(${event.imageUrl})` : "none",
+                                                        backgroundColor: event.useImageAsBackground && event.imageUrl ? "transparent" : stageColours[event.stage],
+                                                        backgroundSize: "cover",
+                                                        backgroundPosition: "center",
+                                                        borderRadius: "50%", // Ensure the background fits the circular shape
+                                                        marginBottom: isVertical ? "20px" : "0",
+                                                        cursor: isDeleting ? "pointer" : "default",
                                                     }}
                                                     onClick={() => handleCircleClick(event, "view-details")} // Pass the event to handleCircleClick
                                                 >
-                                                    <span className="event-date">{event.date}</span>
+                                                    <span
+                                                        className="event-date"
+                                                        style={{
+                                                            color: event.useImageAsBackground && event.imageUrl ? "#FFFFFF" : "#000000", // White text if background image is set
+                                                        }}>
+                                                        {event.date}
+                                                    </span>
                                                     <br />
-                                                    <span className="event-title" style={{ fontWeight: "bold" }}>
+                                                    <span
+                                                        className="event-title"
+                                                        style={{
+                                                            color: event.useImageAsBackground && event.imageUrl ? "#FFFFFF" : "#000000", // White text if background image is set
+                                                            fontWeight: "bold"
+                                                        }}>
                                                         {event.title}
                                                     </span>
                                                     {isDeleting && (
