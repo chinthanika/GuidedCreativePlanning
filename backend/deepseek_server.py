@@ -12,14 +12,12 @@ CORS(app)
 
 # Replace with your DeepSeek API endpoint and API key
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/analyze"  # Example endpoint
+LEONARDO_API_URL = "https://cloud.leonardo.ai/api/rest/v1/generations"
 
-DEEPSEEK_API_KEY = "sk-2a0e1b3c-4d8f-4a5b-ae6f-7c9d0f2b1c3e"  # Replace with your actual API key
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")  # Replace with your actual API key
 
-# DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")  # Replace with your actual API key
+LEONARDO_API_KEY = os.getenv("LEONARDO_API_KEY")  # Replace with your actual API key
 
-LEONARDO_API_KEY = "b54d28c4-7197-459a-a84c-b96d96698cae"# Replace with your actual API key
-
-# LEONARDO_API_KEY = os.getenv("LEONARDO_API_KEY")  # Replace with your actual API key
 if not LEONARDO_API_KEY:
     raise ValueError("LEONARDO_API_KEY environment variable is not set")
 
@@ -69,7 +67,7 @@ def generate_image():
 
     try:
         # Step 1: Generate the image
-        url = "https://cloud.leonardo.ai/api/rest/v1/generations"
+        
         payload = {
             "modelId": "1dd50843-d653-4516-a8e3-f0238ee453ff",
             "contrast": 3.5,
@@ -82,7 +80,7 @@ def generate_image():
             "enhancePrompt": True,
         }
 
-        response = requests.post(url, json=payload, headers=headers)
+        response = requests.post(LEONARDO_API_URL, json=payload, headers=headers)
 
         if response.status_code != 200:
             return jsonify({'error': 'Failed to generate image', 'details': response.text}), 500
