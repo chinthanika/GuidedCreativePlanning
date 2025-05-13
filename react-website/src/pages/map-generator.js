@@ -76,10 +76,16 @@ function MapGenerator() {
     const summarySnapshot = await get(summaryRef);
     const graphSnapshot = await get(graphRef);
 
-    if (!summarySnapshot.exists()) {
-        set(summaryRef, text);
-    }
-    setText('');
+    if (summarySnapshot.exists()) {
+      // Append the new text to the existing summary with a dashed line separator
+      const existingSummary = summarySnapshot.val();
+      const updatedSummary = `${existingSummary}\n-----------\n${text}`;
+      set(summaryRef, updatedSummary);
+  } else {
+      // Set the new text as the summary if it doesn't exist
+      set(summaryRef, text);
+  }
+  setText('');
 
     const response = await axios.post(url, { text: text });
 

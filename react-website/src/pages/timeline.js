@@ -83,63 +83,22 @@ function StoryTimeline({ isVertical = false }) {
     });
     const [showNewEventForm, setShowNewEventForm] = useState(false);
 
-    const sampleEvents =
-        [
-            {
-                index: 0,
-                date: "02/06/2022",
-                title: "The First Murder",
-                isMainEvent: true,
-                description:
-                    "Tom, a student at X university, is found dead in his room.",
-                stage: stages[0],
-            },
-            {
-                index: 1,
-                date: "05/06/2022",
-                title: "James Enters the Scene",
-                isMainEvent: false,
-                description:
-                    "Tom's parents employ private detective James to find justice for their son.",
-                stage: stages[1],
-            },
-            {
-                index: 2,
-                date: "07/06/2022",
-                title: "Tom's Crime Scene",
-                isMainEvent: false,
-                description:
-                    "James visits the crime scene.",
-                stage: stages[1],
-            },
-            {
-                index: 3,
-                date: "08/06/2022",
-                title: "The Second Murder",
-                isMainEvent: true,
-                description:
-                    "Another student, Lea, is found dead in the kitchens.",
-                stage: stages[2],
-            },
-            {
-                index: 4,
-                date: "09/06/2022",
-                title: "The Murderer is Found",
-                isMainEvent: true,
-                description:
-                    "It's Joe!!!",
-                stage: stages[3],
-            },
-            {
-                index: 5,
-                date: "09/06/2022",
-                title: "The Murderer is Sent to Jail",
-                isMainEvent: true,
-                description:
-                    "Mwahahahahahaha",
-                stage: stages[4],
-            }
-        ];
+    const sampleEvents = [
+        {
+            index: 0,
+            date: "01/01/2023",
+            title: "Read Me for Instructions",
+            isMainEvent: true,
+            description:
+                "Welcome to the Story Timeline! Here's how to use it:\n\n" +
+                "1. Click 'Add Event' to create a new event.\n" +
+                "2. Click on an event to view or edit its details.\n" +
+                "3. Use the 'Delete Events' button to enable delete mode, then click on an event to delete it.\n" +
+                "4. Switch between 'Linear View' and 'Freytag's Pyramid' using the toggle button.\n\n" +
+                "Start building your story timeline now!",
+            stage: stages[0],
+        },
+    ];
 
     const handleShowNewEventModal = () => {
         setIsNewEventModalOpen(true);
