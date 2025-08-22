@@ -12,3 +12,5 @@ build/
 *.sqlite3
 
 .vercel
+
+react-website/src/Firebase/structuredcreativeplanning-firebase-adminsdk-y05ga-29db951c0a.json

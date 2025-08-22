@@ -1,0 +1,118 @@
+{
+  "Category": {
+    "Character": {
+      "Clarity": [
+        {
+          "id": "Character_Clarity_1",
+          "question": "What do you mean when you describe your character as 'strong-willed'?"
+        },
+        {
+          "id": "Character_Clarity_2",
+          "question": "Can you explain in simpler terms how your character’s personality shows in their actions?"
+        },
+        {
+          "id": "Character_Clarity_3",
+          "question": "When you say your character is 'mysterious,' what exactly do you have in mind?"
+        }
+      ],
+      "Accuracy": [
+        {
+          "id": "Character_Accuracy_1",
+          "question": "Does the character’s behavior match how people with similar traits usually act?"
+        },
+        {
+          "id": "Character_Accuracy_2",
+          "question": "Are you basing this character on real experiences or assumptions?"
+        },
+        {
+          "id": "Character_Accuracy_3",
+          "question": "How do you know the detail you’ve given about your character is realistic?"
+        }
+      ],
+      "Precision": [
+        {
+          "id": "Character_Precision_1",
+          "question": "Can you be more specific about what motivates your character?"
+        },
+        {
+          "id": "Character_Precision_2",
+          "question": "Instead of saying 'kind,' what exact actions show your character’s kindness?"
+        },
+        {
+          "id": "Character_Precision_3",
+          "question": "What particular moment best illustrates this character trait?"
+        }
+      ],
+      "Relevance": [
+        {
+          "id": "Character_Relevance_1",
+          "question": "How does this detail about your character connect to the story you’re telling?"
+        },
+        {
+          "id": "Character_Relevance_2",
+          "question": "Why is it important for the reader to know this about your character?"
+        },
+        {
+          "id": "Character_Relevance_3",
+          "question": "Does this trait or backstory affect your plot in a meaningful way?"
+        }
+      ],
+      "Depth": [
+        {
+          "id": "Character_Depth_1",
+          "question": "What fears or vulnerabilities lie beneath your character’s surface traits?"
+        },
+        {
+          "id": "Character_Depth_2",
+          "question": "How might your character’s past shape their decisions?"
+        },
+        {
+          "id": "Character_Depth_3",
+          "question": "What contradictions exist in your character that make them complex?"
+        }
+      ],
+      "Breadth": [
+        {
+          "id": "Character_Breadth_1",
+          "question": "How might other characters in the story see this person differently?"
+        },
+        {
+          "id": "Character_Breadth_2",
+          "question": "If this character were placed in a completely different situation, how might they act?"
+        },
+        {
+          "id": "Character_Breadth_3",
+          "question": "What alternative interpretation of this character could exist?"
+        }
+      ],
+      "Logic": [
+        {
+          "id": "Character_Logic_1",
+          "question": "Do your character’s actions follow logically from their motivations?"
+        },
+        {
+          "id": "Character_Logic_2",
+          "question": "Is there any inconsistency in how your character behaves?"
+        },
+        {
+          "id": "Character_Logic_3",
+          "question": "If your character wants X, is it logical for them to pursue Y?"
+        }
+      ],
+      "Significance": [
+        {
+          "id": "Character_Significance_1",
+          "question": "Why is this character essential to your story’s message or theme?"
+        },
+        {
+          "id": "Character_Significance_2",
+          "question": "What larger idea does this character represent in your story?"
+        },
+        {
+          "id": "Character_Significance_3",
+          "question": "If you removed this detail, how would it change the reader’s understanding of the character?"
+        }
+      ]
+    }
+  }
+}
