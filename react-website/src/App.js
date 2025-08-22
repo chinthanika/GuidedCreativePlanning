@@ -18,6 +18,7 @@ import MapGenerator from './pages/storymap/map-generator';
 import StoryMap from './pages/storymap/story-map';
 import StoryTimeline from './pages/timeline/timeline';
 import StoryEditor from './pages/storyeditor/story';
+import Chatbot from './pages/chatbot/chatbot'; // Import the Chatbot page
   
 function App() {
 
@@ -44,6 +45,7 @@ return (
                 <Route path='/map-generator' element={<MapGenerator/>}/>
                 <Route path='/story-map' element={<StoryMap/>}/>
                 <Route path='/story-timeline' element={<StoryTimeline/>}/>
+                <Route path='/chatbot' element={<Chatbot/>}/>
                 <Route path='/story-editor' element={<StoryEditor/>}/>
                 <Route exact path='/' element={
                     <PrivateRoute>
