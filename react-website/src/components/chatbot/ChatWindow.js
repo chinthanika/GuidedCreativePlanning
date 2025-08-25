@@ -1,112 +1,82 @@
-import React, { useState, useEffect, useRef } from "react";
-
-import { useAuthValue } from '../../Firebase/AuthContext';
+import React, { useState, useEffect } from "react";
 import { database } from '../../Firebase/firebase';
-import { ref, push, set, get, update, serverTimestamp, onValue, query, orderByChild } from "firebase/database";
+import { ref, onValue } from "firebase/database";
+import { sendMessage, sendBotResponse } from '../../services/chatbotAPI';
+import "./chatbot.css";
 
-import "./chatbot.css"; // optional styling
-
-export default function ChatbotWindow() {
-    const { currentUser } = useAuthValue();
+const ChatWindow = ({ uid, sessionID }) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
-    const [chatSessionId, setChatSessionId] = useState(null);
 
-    const messagesEndRef = useRef(null);
-
-    // ✅ Auto-scroll to bottom when new messages arrive
     useEffect(() => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        if (!uid || !sessionID) {
+            console.log("No UID or sessionID provided to ChatWindow.");
+            return;
         }
-    }, [messages]);
 
-    // ✅ Create a new chat session if none exists
-    useEffect(() => {
-        if (!currentUser) return;
-
-        const newChatRef = push(ref(database, `chatSessions/${currentUser.uid}`));
-        const newChatId = newChatRef.key;
-
-        set(newChatRef, {
-            metadata: {
-                title: "New Chat",
-                createdAt: Date.now(),
-                updatedAt: Date.now()
-            },
-            messages: {}
-        });
-
-        setChatSessionId(newChatId);
-
-        // Attach listener to messages
-        const messagesRef = ref(database, `chatSessions/${currentUser.uid}/${newChatId}/messages`);
-        const q = query(messagesRef, orderByChild("timestamp"));
-
-        const unsubscribe = onValue(q, (snapshot) => {
-            const msgs = [];
-            snapshot.forEach((child) => {
-                msgs.push({ id: child.key, ...child.val() });
-            });
-            setMessages(msgs);
+        const messagesRef = ref(database, `chatSessions/${uid}/${sessionID}/messages`);
+        console.log("Listening to Firebase path:", `chatSessions/${uid}/${sessionID}/messages`);
+        const unsubscribe = onValue(messagesRef, (snapshot) => {
+            const data = snapshot.val();
+            console.log("Firebase snapshot data:", data);
+            if (data) {
+                const parsedMessages = Object.entries(data).map(([id, msg]) => ({
+                    id,
+                    ...msg,
+                }));
+                parsedMessages.sort((a, b) => (a.timestamp > b.timestamp ? 1 : -1));
+                console.log("Parsed and sorted messages:", parsedMessages);
+                setMessages(parsedMessages);
+            } else {
+                console.log("No messages found in Firebase.");
+                setMessages([]);
+            }
         });
 
         return () => unsubscribe();
-    }, [currentUser]);
+    }, [uid, sessionID]);
 
-    // ✅ Send message (push to Firebase)
-    const sendMessage = async () => {
-        if (!input.trim() || !chatSessionId) return;
-
-        const messagesRef = ref(database, `chatSessions/${currentUser.uid}/${chatSessionId}/messages`);
-
-        // User message
-        await push(messagesRef, {
-            sender: "user",
-            text: input,
-            timestamp: Date.now()
-        });
-
+    const handleSend = async () => {
+        if (!input.trim()) return;
+        await sendMessage(uid, sessionID, input);
+        const botReply = `Echo: ${input}`;
+        await sendBotResponse(uid, sessionID, botReply);
         setInput("");
-
-        // Temporary mock bot reply
-        setTimeout(async () => {
-            await push(messagesRef, {
-                sender: "bot",
-                text: "Echo: " + input,
-                timestamp: Date.now()
-            });
-        }, 500);
-
-        // Update metadata timestamp
-        const metadataRef = ref(database, `chatSessions/${currentUser.uid}/${chatSessionId}/metadata`);
-        await update(metadataRef, { updatedAt: Date.now() });
     };
 
     return (
-        <div className="chatbot-window">
-            <div className="chat-messages">
+        <div className="flex flex-col h-full border rounded-lg shadow-md p-4 bg-white">
+            <div className="flex-1 overflow-y-auto space-y-2 mb-4">
+                {console.log("Rendering messages:", messages)}
                 {messages.map((msg) => (
                     <div
                         key={msg.id}
-                        className={`message ${msg.sender === "user" ? "user" : "bot"}`}
+                        className={`p-2 rounded-lg max-w-xs ${msg.sender === "user"
+                            ? "bg-gray-200 self-end text-right ml-auto"
+                            : "bg-blue-100 self-start text-left mr-auto"
+                        }`}
                     >
-                        {msg.text}
+                        <p className={msg.sender === "user" ? "text-gray-700" : "text-blue-700"}>{msg.text}</p>
                     </div>
                 ))}
-                <div ref={messagesEndRef} />
             </div>
-
-            <div className="chat-input">
+            <div className="flex space-x-2">
                 <input
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                    className="flex-1 border rounded-lg p-2"
                     placeholder="Type a message..."
                 />
-                <button onClick={sendMessage}>Send</button>
+                <button
+                    onClick={handleSend}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                >
+                    Send
+                </button>
             </div>
         </div>
     );
-}
+};
+
+export default ChatWindow;
