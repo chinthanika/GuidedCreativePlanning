@@ -1,0 +1,37 @@
+{
+    "type": "object",
+    "properties": {
+        "follow_up_bank": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "object",
+                    "properties": {
+                        "type": {"type": "string"},
+                        "questions": {
+                            "type": "object",
+                            "patternProperties": {
+                                "^FU[0-9]{3}$": {
+                                    "type": "object",
+                                    "properties": {
+                                        "prompt": {"type": "string"},
+                                        "example_context": {"type": "string"},
+                                        "tags": {
+                                            "type": "array",
+                                            "items": {"type": "string"}
+                                        },
+                                        "difficulty": {"type": "integer", "minimum": 1, "maximum": 5}
+                                    },
+                                    "required": ["prompt", "tags", "difficulty"]
+                                }
+                            }
+                        }
+                    },
+                    "required": ["type", "questions"]
+                }
+            },
+            "required": ["category"]
+        }
+    },
+    "required": ["follow_up_bank"]
+}

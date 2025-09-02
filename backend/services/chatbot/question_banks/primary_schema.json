@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SocraticQuestion",
+  "description": "Schema for a Socratic questioning bank entry",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the question"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "clarification",
+        "assumption",
+        "evidence",
+        "implication",
+        "alternative",
+        "viewpoint"
+      ],
+      "description": "Type of Socratic question"
+    },
+    "question": {
+      "type": "string",
+      "description": "The Socratic question text"
+    },
+    "example_context": {
+      "type": "string",
+      "description": "Optional example of how the question could be applied in creative writing",
+      "minLength": 5
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional tags (e.g., 'character', 'theme', 'plot')"
+    },
+    "difficulty": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Optional scale of cognitive challenge (1=basic, 5=advanced)"
+    }
+  },
+  "required": ["id", "category", "question"]
+}

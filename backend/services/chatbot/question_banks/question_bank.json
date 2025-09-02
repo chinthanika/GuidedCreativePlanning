@@ -1,0 +1,56 @@
+{
+    "primary": {
+        "id": "SQ001",
+        "category": "assumption",
+        "question": "What assumptions are you making about your character’s motives?",
+        "example_context": "If a student says a villain is 'just evil,' this question prompts them to reflect on underlying motivations.",
+        "tags": [
+            "character",
+            "motivation"
+        ],
+        "difficulty": 3
+    },
+    "follow_up_bank": {
+        "category": {
+            "type": "clarification",
+            "questions": {
+                "FU001": {
+                    "prompt": "Can you explain what you mean by that?",
+                    "example_context": "Student gives vague answer",
+                    "tags": [
+                        "clarity"
+                    ],
+                    "difficulty": 3
+                }
+            }
+        }
+    },
+    "meta_transitions": {
+        "MT001": {
+            "id": "MT001",
+            "scope": "socratic",
+            "transition_type": "angle_to_angle",
+            "from": { "category": "character", "angle": "motivation" },
+            "to": { "category": "character", "angle": "conflict" },
+            "prompt": "How might their motivation create conflicts with others?",
+            "example_context": "Exploring deeper character dynamics",
+            "tags": ["character", "conflict"],
+            "requires_confirmation": false,
+            "priority": 5,
+            "trigger_conditions": [{ "type": "depth_check" }]
+        },
+        "MT002": {
+            "id": "MT002",
+            "scope": "socratic",
+            "transition_type": "category_to_category",
+            "from": { "category": "setting", "angle": "mood" },
+            "to": { "category": "plot", "angle": "tension" },
+            "prompt": "How does the mood of the setting contribute to the plot’s tension?",
+            "example_context": "Linking setting to story development",
+            "tags": ["setting", "plot"],
+            "requires_confirmation": false,
+            "priority": 6,
+            "trigger_conditions": [{ "type": "breadth_check" }]
+        }
+    }
+}
