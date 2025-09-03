@@ -1,6 +1,5 @@
-import { database } from '../Firebase/firebase.js';
+import { database } from "../Firebase/firebaseAdmin.js";
 import { get, set, update, ref, onValue, push, child, remove } from '../Firebase/firebase.js';
-import { useAuthValue } from '../Firebase/firebaseAdmin.js';
 
 
 // const { database } = require("../../react-website/src/Firebase/firebase");
@@ -8,14 +7,14 @@ import { useAuthValue } from '../Firebase/firebaseAdmin.js';
 // const { useAuthValue } = require("../../react-website/src/Firebase/AuthContext");
 
 class StoryProfileManager {
-    constructor() {
-        this.user = useAuthValue();
+    constructor({ uid }) {
+        this.user = uid;
         if (!this.user) {
             throw new Error("User not authenticated");
         }
 
         // Base references
-        this.baseRef = ref(database, `stories/${this.user.uid}/`);
+        this.baseRef = ref(database, `stories/${this.user}/`);
         this.graphRef = child(this.baseRef, "graph");
         this.nodesRef = child(this.graphRef, "nodes");
         this.linksRef = child(this.graphRef, "links");
@@ -52,17 +51,50 @@ class StoryProfileManager {
         return snapshot.exists() ? snapshot.val() : {};
     }
 
-    async getNode(nodeId) {
-        const snapshot = await get(child(this.nodesRef, nodeId));
-        return snapshot.exists() ? snapshot.val() : null;
+    async getNode(entityId) {
+        const nodes = await this.getAllNodes();
+        for (const [key, node] of Object.entries(nodes)) {
+            if (node.id === entityId) {
+                return node;
+            }
+        }
+        return null;
     }
 
-    async setNode(nodeId, data) {
-        return set(child(this.nodesRef, nodeId), data);
+    async upsertNode(entityId, data) {
+        const nodes = await this.getAllNodes();
+        let targetKey = null;
+
+        for (const [key, node] of Object.entries(nodes)) {
+            if (node.id === entityId) {
+                targetKey = key;
+                break;
+            }
+        }
+
+        if (targetKey) {
+            // Merge update
+            const updated = { ...nodes[targetKey], ...data, id: entityId };
+            await set(child(this.nodesRef, targetKey), updated);
+            return updated;
+        } else {
+            // Insert new sequential key
+            const nextKey = (Object.keys(nodes).length).toString();
+            const newNode = { id: entityId, ...data };
+            await set(child(this.nodesRef, nextKey), newNode);
+            return newNode;
+        }
     }
 
-    async updateNode(nodeId, updates) {
-        return update(child(this.nodesRef, nodeId), updates);
+    async deleteNode(entityId) {
+        const nodes = await this.getAllNodes();
+        for (const [key, node] of Object.entries(nodes)) {
+            if (node.id === entityId) {
+                await remove(child(this.nodesRef, key));
+                return true;
+            }
+        }
+        return false;
     }
 
     async deleteNode(nodeId) {
@@ -76,6 +108,61 @@ class StoryProfileManager {
         );
     }
 
+    async resolveNodeByName(name) {
+        const allNodes = await this.getAllNodes();
+
+        for (const [key, node] of Object.entries(allNodes)) {
+            if (!node) continue;
+
+            // Check primary label
+            if (node.label?.toLowerCase() === name.toLowerCase()) {
+                return node;
+            }
+
+            // Check aliases (comma-separated string, "None" if empty)
+            if (node.aliases && node.aliases !== "None") {
+                const aliasList = node.aliases.split(",").map(a => a.trim().toLowerCase());
+                if (aliasList.includes(name.toLowerCase())) {
+                    return node;
+                }
+            }
+        }
+
+        return null; // not found
+    }
+
+    async addAlias(entityId, alias) {
+        const nodes = await this.getAllNodes();
+        let targetKey = null;
+        let targetNode = null;
+
+        for (const [key, node] of Object.entries(nodes)) {
+            if (node.id === entityId) {
+                targetKey = key;
+                targetNode = node;
+                break;
+            }
+        }
+
+        if (!targetKey) throw new Error(`Node with id ${entityId} not found`);
+
+        let aliases = targetNode.aliases || "None";
+        if (aliases === "None") {
+            aliases = alias;
+        } else {
+            const aliasList = aliases.split(",").map(a => a.trim());
+            if (!aliasList.includes(alias)) {
+                aliasList.push(alias);
+            }
+            aliases = aliasList.join(", ");
+        }
+
+        const updated = { ...targetNode, aliases };
+        await set(child(this.nodesRef, targetKey), updated);
+        return updated;
+    }
+
+
     /* =========================
        LINKS (connections between nodes)
     ========================= */
@@ -85,35 +172,148 @@ class StoryProfileManager {
         return snapshot.exists() ? snapshot.val() : {};
     }
 
-    async getLink(linkId) {
-        const snapshot = await get(child(this.linksRef, linkId));
-        if (!snapshot.exists()) return null;
-
-        const link = snapshot.val();
-        const sourceNode = await this.getNode(link.source);
-        const targetNode = await this.getNode(link.target);
-
-        return { ...link, sourceNode, targetNode };
+    // Helper: return [normalizedNode1, normalizedNode2] (sorted)
+    _normalizePair(id1, id2) {
+        return id1 < id2 ? [id1, id2] : [id2, id1];
     }
 
-    async setLink(linkId, data) {
-        return set(child(this.linksRef, linkId), data);
+    // Helper: find the key for a normalized pair (returns null if not found)
+    async _findLinkKeyForPair(n1, n2) {
+        const links = await this.getAllLinks();
+        for (const [key, link] of Object.entries(links)) {
+            // tolerate both storage shapes (node1/node2 or source/target if older)
+            const a = link.node1 ?? link.source;
+            const b = link.node2 ?? link.target;
+            if (!a || !b) continue;
+            const [ln1, ln2] = this._normalizePair(a, b);
+            if (ln1 === n1 && ln2 === n2) {
+                return key;
+            }
+        }
+        return null;
     }
 
-    async updateLink(linkId, updates) {
-        return update(child(this.linksRef, linkId), updates);
+    // Get a link given two node IDs (returns null if none)
+    async getLinkByIds(nodeA, nodeB) {
+        if (!nodeA || !nodeB) return null;
+        const [n1, n2] = this._normalizePair(nodeA, nodeB);
+        const links = await this.getAllLinks();
+        for (const [key, link] of Object.entries(links)) {
+            const a = link.node1 ?? link.source;
+            const b = link.node2 ?? link.target;
+            if (!a || !b) continue;
+            const [ln1, ln2] = this._normalizePair(a, b);
+            if (ln1 === n1 && ln2 === n2) {
+                // attach the key so caller can remove/update by key if needed
+                return { key, ...link };
+            }
+        }
+        return null;
     }
 
-    async deleteLink(linkId) {
-        return remove(child(this.linksRef, linkId));
+    // Upsert by node IDs (node1/node2 normalized). Returns { action: "created"|"updated", key, data }
+    async upsertLinkByIds(node1, node2, type, context = "", allowOverwrite = false) {
+        if (!node1 || !node2) throw new Error("Both node1 and node2 are required");
+        if (!type) throw new Error("Link type is required");
+
+        // Ensure both nodes exist
+        const nodeA = await this.getNode(node1);
+        const nodeB = await this.getNode(node2);
+        if (!nodeA || !nodeB) {
+            throw new Error(`Node(s) not found: ${node1}, ${node2}`);
+        }
+
+        const [n1, n2] = this._normalizePair(node1, node2);
+        const links = await this.getAllLinks();
+
+        // find existing link key (if any)
+        let existingKey = null;
+        for (const [key, link] of Object.entries(links)) {
+            const a = link.node1 ?? link.source;
+            const b = link.node2 ?? link.target;
+            if (!a || !b) continue;
+            const [ln1, ln2] = this._normalizePair(a, b);
+            if (ln1 === n1 && ln2 === n2) {
+                existingKey = key;
+                break;
+            }
+        }
+
+        const payload = {
+            node1: n1,
+            node2: n2,
+            type,
+            context: context ?? ""
+        };
+
+        if (existingKey) {
+            if (!allowOverwrite) {
+                throw new Error(`Link already exists between ${n1} and ${n2}`);
+            }
+            await set(child(this.linksRef, existingKey), payload);
+            return { action: "updated", key: existingKey, data: payload };
+        } else {
+            // sequential key preserving behaviour (next index)
+            const nextKey = Object.keys(links).length.toString();
+            await set(child(this.linksRef, nextKey), payload);
+            return { action: "created", key: nextKey, data: payload };
+        }
     }
 
+    // Upsert by user-provided node names (resolves label/aliases to IDs)
+    async upsertLinkByNames(name1, name2, type, context = "", allowOverwrite = false) {
+        const nodeA = await this.resolveNodeByName(name1);
+        const nodeB = await this.resolveNodeByName(name2);
+        if (!nodeA || !nodeB) {
+            throw new Error(`Node(s) not found by name/alias: ${name1}, ${name2}`);
+        }
+        return this.upsertLinkByIds(nodeA.id, nodeB.id, type, context, allowOverwrite);
+    }
+
+    // Delete link by node IDs (handles both orders). Returns { action, key?, node1, node2 }
+    async deleteLinkByIds(node1, node2) {
+        if (!node1 || !node2) throw new Error("Both node1 and node2 are required");
+        const [n1, n2] = this._normalizePair(node1, node2);
+        const links = await this.getAllLinks();
+
+        const deletedKeys = [];
+        for (const [key, link] of Object.entries(links)) {
+            const a = link.node1 ?? link.source;
+            const b = link.node2 ?? link.target;
+            if (!a || !b) continue;
+            const [ln1, ln2] = this._normalizePair(a, b);
+            if (ln1 === n1 && ln2 === n2) {
+                await remove(child(this.linksRef, key));
+                deletedKeys.push(key);
+            }
+        }
+
+        if (deletedKeys.length) {
+            return { action: "deleted", keys: deletedKeys, node1: n1, node2: n2 };
+        } else {
+            return { action: "not_found", node1: n1, node2: n2 };
+        }
+    }
+
+    // Delete by names (resolves names to IDs then deletes)
+    async deleteLinkByNames(name1, name2) {
+        const nodeA = await this.resolveNodeByName(name1);
+        const nodeB = await this.resolveNodeByName(name2);
+        if (!nodeA || !nodeB) {
+            throw new Error(`Node(s) not found by name/alias: ${name1}, ${name2}`);
+        }
+        return this.deleteLinkByIds(nodeA.id, nodeB.id);
+    }
+
+    // Filter links touching a node (checks both node1 & node2)
     async filterLinksByNode(nodeId) {
         const allLinks = await this.getAllLinks();
         return Object.fromEntries(
-            Object.entries(allLinks).filter(([_, link]) =>
-                link.source === nodeId || link.target === nodeId
-            )
+            Object.entries(allLinks).filter(([_, link]) => {
+                const a = link.node1 ?? link.source;
+                const b = link.node2 ?? link.target;
+                return a === nodeId || b === nodeId;
+            })
         );
     }
 

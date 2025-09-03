@@ -459,63 +459,30 @@ function StoryMap() {
   };
 
   function onGraphData(snapshot) {
-    console.log("Getting snapshot...")
-    // Check if the data exists
-    if (snapshot.exists()) {
-      // Get the graph data from the snapshot
-      const snapshotData = snapshot.val();
-      console.log("Got snapshot: ", snapshotData)
-      console.log(snapshotData.nodes, snapshotData.links)
+  console.log("Getting snapshot...")
+  if (snapshot.exists()) {
+    const snapshotData = snapshot.val();
+    console.log("Got snapshot: ", snapshotData)
 
-      // Assign levels to the nodes and links
-      const nodes_links = assignLevels(snapshotData);
-      console.log("Assigned levels: ", nodes_links)
-      // Filter out hidden nodes
-      const hiddenNodes = data.nodes.filter((node) => !nodes_links.nodes.some((n) => n.id === node.id));
+    const nodes_links = assignLevels(snapshotData);
 
-      // Update the final list of nodes with hidden attribute added
-      const finalNodes = nodes_links.nodes.map((node) => ({
-        ...node,
-        hidden: false, // add hidden property to nodes
-      }));
-      console.log("Final Nodes: ", finalNodes)
+    const finalNodes = nodes_links.nodes.map((node) => ({ ...node, hidden: false }));
+    const finalLinks = nodes_links.links.map((link) => ({
+      type: link.type,
+      source: link.source,
+      target: link.target,
+      context: link.context || "None"
+    }));
 
-      // Update the final list of links
-      const finalLinks = nodes_links.links.map((link) => ({
-        type: link.type,
-        source: link.source,
-        target: link.target,
-        context: link.context || "None"
-      }));
-      if (finalNodes.length > 0 && finalLinks.length > 0) {
-        // Set the graph data, clear the text input and selected node
-        setData({ nodes: finalNodes, links: finalLinks });
-        console.log(data)
-      }
-      else {
-        console.log("Data gone: ", finalNodes, finalLinks)
-      }
+    setData({ nodes: finalNodes, links: finalLinks });
 
-      setTextInput("");
-      setSelectedNode({});
-      setSelectedLink({});
-
-      // Update the hidden property of nodes in the database
-      hiddenNodes.forEach((node) => {
-        const nodeRef = ref(database, `stories/${userId}/graph/nodes/${node.id}`);
-        set(nodeRef, { ...node, hidden: true });
-      });
-
-      // Update the graph data in the database
-      const graphRef = ref(database, `stories/${userId}/graph`);
-      console.log("Updating at onGraphData: ", finalNodes, finalLinks)
-      set(graphRef, { nodes: finalNodes, links: finalLinks });
-    } else {
-      // If no data is available, show a message
-      console.log("No data available.")
-      return;
-    }
+    setTextInput("");
+    setSelectedNode({});
+    setSelectedLink({});
+  } else {
+    console.log("No data available.")
   }
+}
 
   return (
     <div>
