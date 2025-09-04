@@ -87,18 +87,15 @@ class StoryProfileManager {
     }
 
     async deleteNode(entityId) {
+        // Deletes by semantic node.id (not firebase key)
         const nodes = await this.getAllNodes();
         for (const [key, node] of Object.entries(nodes)) {
             if (node.id === entityId) {
                 await remove(child(this.nodesRef, key));
-                return true;
+                return { deleted: true, key, node };
             }
         }
-        return false;
-    }
-
-    async deleteNode(nodeId) {
-        return remove(child(this.nodesRef, nodeId));
+        return { deleted: false, reason: `No node found with id '${entityId}'` };
     }
 
     async filterNodesByGroup(groupType) {
@@ -289,9 +286,9 @@ class StoryProfileManager {
         }
 
         if (deletedKeys.length) {
-            return { action: "deleted", keys: deletedKeys, source: n1, target: n2 };
+            return { deleted: true, keys: deletedKeys, source: n1, target: n2 };
         } else {
-            return { action: "not_found", source: n1, target: n2 };
+            return { deleted: false, reason: `No link found between '${n1}' and '${n2}'` };
         }
     }
 
@@ -306,20 +303,32 @@ class StoryProfileManager {
     }
 
     // Filter links touching a node (checks both source & target)
-    async filterLinksByNode(nodeId) {
-        const allLinks = await this.getAllLinks();
-        return Object.fromEntries(
-            Object.entries(allLinks).filter(([_, link]) => {
-                const a = link.source ?? link.source;
-                const b = link.target ?? link.target;
-                return a === nodeId || b === nodeId;
-            })
-        );
+    async filterLinksByNode(identifier) {
+        // Try to resolve identifier as ID first
+        const node = await this.getNode(identifier) || await this.resolveNodeByName(identifier);
+        if (!node) {
+            throw new Error(`Node not found: ${identifier}`);
+        }
+
+        const links = await this.getAllLinks();
+        const filtered = {};
+
+        for (const [linkId, link] of Object.entries(links)) {
+            if (link.source === node.id || link.target === node.id) {
+                filtered[linkId] = link;
+            }
+        }
+
+        return filtered;
     }
 
     /* =========================
        EVENTS (timeline events)
     ========================= */
+
+    /* =========================
+   EVENTS (timeline events)
+========================= */
 
     async getAllEvents() {
         const snapshot = await get(this.eventsRef);
@@ -331,16 +340,42 @@ class StoryProfileManager {
         return snapshot.exists() ? snapshot.val() : null;
     }
 
-    async setEvent(eventId, data) {
-        return set(child(this.eventsRef, eventId), data);
+    async resolveEventById(eventId) {
+        return this.getEvent(eventId);
     }
 
-    async updateEvent(eventId, updates) {
-        return update(child(this.eventsRef, eventId), updates);
+    async resolveEventByName(title) {
+        const all = await this.getAllEvents();
+        for (const [key, event] of Object.entries(all)) {
+            if (event?.title?.toLowerCase() === title.toLowerCase()) {
+                return { key, ...event };
+            }
+        }
+        return null;
     }
 
-    async deleteEvent(eventId) {
-        return remove(child(this.eventsRef, eventId));
+    async upsertEvent(eventId, data) {
+        const events = await this.getAllEvents();
+        let targetKey = null;
+
+        // find existing by ID
+        for (const [key, ev] of Object.entries(events)) {
+            if (ev.id === eventId) {
+                targetKey = key;
+                break;
+            }
+        }
+
+        if (targetKey) {
+            const updated = { ...events[targetKey], ...data, id: eventId };
+            await set(child(this.eventsRef, targetKey), updated);
+            return updated;
+        } else {
+            const nextKey = Object.keys(events).length.toString();
+            const newEvent = { id: eventId, ...data };
+            await set(child(this.eventsRef, nextKey), newEvent);
+            return newEvent;
+        }
     }
 
     async filterEventsByField(field, value) {
@@ -349,6 +384,29 @@ class StoryProfileManager {
             Object.entries(allEvents).filter(([_, event]) => event[field] === value)
         );
     }
+
+    async deleteEventById(eventId) {
+        const events = await this.getAllEvents();
+        for (const [key, ev] of Object.entries(events)) {
+            if (ev?.id === eventId) {
+                await remove(child(this.eventsRef, key));
+                return { deleted: true, key, event: ev };
+            }
+        }
+        return { deleted: false, reason: `No event found with id '${eventId}'` };
+    }
+
+    async deleteEventByTitle(title) {
+        const allEvents = await this.getAllEvents();
+        for (const [key, event] of Object.entries(allEvents)) {
+            if (event?.title?.toLowerCase() === title.toLowerCase()) {
+                await remove(child(this.eventsRef, key));
+                return { deleted: true, key, event };
+            }
+        }
+        return { deleted: false, reason: `No event found with title '${title}'` };
+    }
+
 
     /* =========================
        STORY TITLE & SUMMARY
