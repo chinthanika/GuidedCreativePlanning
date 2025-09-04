@@ -172,7 +172,7 @@ class StoryProfileManager {
         return snapshot.exists() ? snapshot.val() : {};
     }
 
-    // Helper: return [normalizedNode1, normalizedNode2] (sorted)
+    // Helper: return [normalizedsource, normalizedtarget] (sorted)
     _normalizePair(id1, id2) {
         return id1 < id2 ? [id1, id2] : [id2, id1];
     }
@@ -181,9 +181,9 @@ class StoryProfileManager {
     async _findLinkKeyForPair(n1, n2) {
         const links = await this.getAllLinks();
         for (const [key, link] of Object.entries(links)) {
-            // tolerate both storage shapes (node1/node2 or source/target if older)
-            const a = link.node1 ?? link.source;
-            const b = link.node2 ?? link.target;
+            // tolerate both storage shapes (source/target or source/target if older)
+            const a = link.source ?? link.source;
+            const b = link.target ?? link.target;
             if (!a || !b) continue;
             const [ln1, ln2] = this._normalizePair(a, b);
             if (ln1 === n1 && ln2 === n2) {
@@ -199,8 +199,8 @@ class StoryProfileManager {
         const [n1, n2] = this._normalizePair(nodeA, nodeB);
         const links = await this.getAllLinks();
         for (const [key, link] of Object.entries(links)) {
-            const a = link.node1 ?? link.source;
-            const b = link.node2 ?? link.target;
+            const a = link.source ?? link.source;
+            const b = link.target ?? link.target;
             if (!a || !b) continue;
             const [ln1, ln2] = this._normalizePair(a, b);
             if (ln1 === n1 && ln2 === n2) {
@@ -211,26 +211,26 @@ class StoryProfileManager {
         return null;
     }
 
-    // Upsert by node IDs (node1/node2 normalized). Returns { action: "created"|"updated", key, data }
-    async upsertLinkByIds(node1, node2, type, context = "", allowOverwrite = false) {
-        if (!node1 || !node2) throw new Error("Both node1 and node2 are required");
+    // Upsert by node IDs (source/target normalized). Returns { action: "created"|"updated", key, data }
+    async upsertLinkByIds(source, target, type, context = "", allowOverwrite = false) {
+        if (!source || !target) throw new Error("Both source and target are required");
         if (!type) throw new Error("Link type is required");
 
         // Ensure both nodes exist
-        const nodeA = await this.getNode(node1);
-        const nodeB = await this.getNode(node2);
+        const nodeA = await this.getNode(source);
+        const nodeB = await this.getNode(target);
         if (!nodeA || !nodeB) {
-            throw new Error(`Node(s) not found: ${node1}, ${node2}`);
+            throw new Error(`Node(s) not found: ${source}, ${target}`);
         }
 
-        const [n1, n2] = this._normalizePair(node1, node2);
+        const [n1, n2] = this._normalizePair(source, target);
         const links = await this.getAllLinks();
 
         // find existing link key (if any)
         let existingKey = null;
         for (const [key, link] of Object.entries(links)) {
-            const a = link.node1 ?? link.source;
-            const b = link.node2 ?? link.target;
+            const a = link.source ?? link.source;
+            const b = link.target ?? link.target;
             if (!a || !b) continue;
             const [ln1, ln2] = this._normalizePair(a, b);
             if (ln1 === n1 && ln2 === n2) {
@@ -240,8 +240,8 @@ class StoryProfileManager {
         }
 
         const payload = {
-            node1: n1,
-            node2: n2,
+            source: n1,
+            target: n2,
             type,
             context: context ?? ""
         };
@@ -270,16 +270,16 @@ class StoryProfileManager {
         return this.upsertLinkByIds(nodeA.id, nodeB.id, type, context, allowOverwrite);
     }
 
-    // Delete link by node IDs (handles both orders). Returns { action, key?, node1, node2 }
-    async deleteLinkByIds(node1, node2) {
-        if (!node1 || !node2) throw new Error("Both node1 and node2 are required");
-        const [n1, n2] = this._normalizePair(node1, node2);
+    // Delete link by node IDs (handles both orders). Returns { action, key?, source, target }
+    async deleteLinkByIds(source, target) {
+        if (!source || !target) throw new Error("Both source and target are required");
+        const [n1, n2] = this._normalizePair(source, target);
         const links = await this.getAllLinks();
 
         const deletedKeys = [];
         for (const [key, link] of Object.entries(links)) {
-            const a = link.node1 ?? link.source;
-            const b = link.node2 ?? link.target;
+            const a = link.source ?? link.source;
+            const b = link.target ?? link.target;
             if (!a || !b) continue;
             const [ln1, ln2] = this._normalizePair(a, b);
             if (ln1 === n1 && ln2 === n2) {
@@ -289,9 +289,9 @@ class StoryProfileManager {
         }
 
         if (deletedKeys.length) {
-            return { action: "deleted", keys: deletedKeys, node1: n1, node2: n2 };
+            return { action: "deleted", keys: deletedKeys, source: n1, target: n2 };
         } else {
-            return { action: "not_found", node1: n1, node2: n2 };
+            return { action: "not_found", source: n1, target: n2 };
         }
     }
 
@@ -305,13 +305,13 @@ class StoryProfileManager {
         return this.deleteLinkByIds(nodeA.id, nodeB.id);
     }
 
-    // Filter links touching a node (checks both node1 & node2)
+    // Filter links touching a node (checks both source & target)
     async filterLinksByNode(nodeId) {
         const allLinks = await this.getAllLinks();
         return Object.fromEntries(
             Object.entries(allLinks).filter(([_, link]) => {
-                const a = link.node1 ?? link.source;
-                const b = link.node2 ?? link.target;
+                const a = link.source ?? link.source;
+                const b = link.target ?? link.target;
                 return a === nodeId || b === nodeId;
             })
         );

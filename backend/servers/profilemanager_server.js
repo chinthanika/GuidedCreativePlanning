@@ -58,8 +58,8 @@ app.post("/api/confirm-change", async (req, res) => {
       const allLinks = await pipeline.manager.getAllLinks();
       const dup = Object.values(allLinks).find(
         l =>
-          ((l.node1 === change.newData.node1 && l.node2 === change.newData.node2) ||
-           (l.node1 === change.newData.node2 && l.node2 === change.newData.node1)) &&
+          ((l.source === change.newData.source && l.target === change.newData.target) ||
+           (l.source === change.newData.target && l.target === change.newData.source)) &&
           l.type === change.newData.type
       );
 
@@ -85,14 +85,14 @@ app.post("/api/confirm-change", async (req, res) => {
  */
 app.post("/api/deny-change", async (req, res) => {
   try {
-    const { userId, changeRequest } = req.body;
-    if (!userId || !changeRequest?.changeKey) {
-      return res.status(400).json({ error: "userId and changeRequest.changeKey are required" });
+    const { userId, changeKey } = req.body;
+    if (!userId || !changeKey) {
+      return res.status(400).json({ error: "userId and changeKey are required" });
     }
 
 
     const pipeline = new ConfirmationPipeline({ uid: userId });
-    const denied = await pipeline.deny(changeRequest);
+    const denied = await pipeline.deny(changeKey);
     res.status(200).json(denied);
   } catch (err) {
     res.status(400).json({ error: err.message });

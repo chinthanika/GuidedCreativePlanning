@@ -77,9 +77,10 @@ export default class ConfirmationPipeline {
             const [n1, n2] = this.manager._normalizePair(nodeA.id, nodeB.id);
 
             newData = {
-                ...newData,
-                node1: n1,
-                node2: n2,
+                context: newData.context || "",
+                type: newData.type,
+                source: n1,
+                target: n2,
             };
         }
 
@@ -109,8 +110,8 @@ export default class ConfirmationPipeline {
             switch (entityType) {
                 case "link": {
                     result = await this.manager.upsertLinkByIds(
-                        newData.node1,
-                        newData.node2,
+                        newData.source,
+                        newData.target,
                         newData.type,
                         newData.context,
                         overwrite // pass in user’s choice
@@ -163,9 +164,8 @@ export default class ConfirmationPipeline {
         }
     }
 
-    async deny(changeRequest) {
-        const { changeKey } = changeRequest;
-        if (!changeKey) throw new Error("changeKey is required to deny a change");
+    async deny(changeKey) {
+        if (!changeKey) throw new Error("changeKey is required");
 
         await remove(child(this.pendingRef, changeKey));
         return { denied: true, changeKey };
