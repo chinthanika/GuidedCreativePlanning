@@ -117,7 +117,6 @@ export default class ConfirmationPipeline {
         await this._validateChange(entityType, newData);
 
         if (entityType === "link") {
-            // existing link staging (works fine)
             const nodeA = await this.manager.getNode(newData.node1)
                 || await this.manager.resolveNodeByName(newData.node1);
             const nodeB = await this.manager.getNode(newData.node2)
@@ -143,10 +142,7 @@ export default class ConfirmationPipeline {
         if (entityType === "node-delete") {
             const node = await this.manager.getNode(newData.identifier)
                 || await this.manager.resolveNodeByName(newData.identifier);
-            if (!node) {
-                throw new Error(`Cannot stage node-delete: '${newData.identifier}' not found`);
-            }
-            // normalize to id
+            if (!node) throw new Error(`Cannot stage node-delete: '${newData.identifier}' not found`);
             newData.identifier = node.id;
         }
 
@@ -160,9 +156,7 @@ export default class ConfirmationPipeline {
             }
 
             const link = await this.manager.getLinkByIds(nodeA.id, nodeB.id);
-            if (!link) {
-                throw new Error(`Cannot stage link-delete: no link exists between ${nodeA.id} and ${nodeB.id}`);
-            }
+            if (!link) throw new Error(`Cannot stage link-delete: no link exists between ${nodeA.id} and ${nodeB.id}`);
 
             const [n1, n2] = this.manager._normalizePair(nodeA.id, nodeB.id);
             newData = { node1: n1, node2: n2 };
@@ -171,10 +165,7 @@ export default class ConfirmationPipeline {
         if (entityType === "event-delete") {
             const event = await this.manager.resolveEventById(newData.identifier)
                 || await this.manager.resolveEventByName(newData.identifier);
-            if (!event) {
-                throw new Error(`Cannot stage event-delete: '${newData.identifier}' not found`);
-            }
-            // normalize to event.id
+            if (!event) throw new Error(`Cannot stage event-delete: '${newData.identifier}' not found`);
             newData.identifier = event.id;
         }
 
@@ -186,8 +177,17 @@ export default class ConfirmationPipeline {
 
         await set(changeRef, payload);
 
-        return { changeKey, entityType, entityId, newData };
+        return {
+            status: "staged",
+            changeKey,
+            entityType,
+            entityId: entityId || null,
+            newData,
+            editable: true,
+            nextStep: "Review in pending-changes widget and confirm/deny"
+        };
     }
+
 
     async confirm(changeKey, { overwrite = false } = {}) {
         if (!changeKey) throw new Error("changeKey is required");

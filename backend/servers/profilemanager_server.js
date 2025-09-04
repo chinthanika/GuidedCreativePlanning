@@ -2,15 +2,17 @@
 import express from "express";
 import bodyParser from "body-parser";
 import ConfirmationPipeline from "../services/ConfirmationPipeline.js";
+import cors from "cors";
 
 const app = express();
+
+app.use(cors({ origin: "http://localhost:3000" })); // allow React dev server
 app.use(bodyParser.json());
-
-
 /**
  * Get all nodes (with optional group filter)
  */
 app.get("/api/nodes", async (req, res) => {
+  console.log("Received /api/nodes request with query:", req.query);
   try {
     const { userId, group } = req.query;
     if (!userId) return res.status(400).json({ error: "userId is required" });
@@ -39,6 +41,7 @@ app.get("/api/nodes", async (req, res) => {
  * Get node by ID or name
  */
 app.get("/api/nodes/:identifier", async (req, res) => {
+  console.log("Received /api/nodes/:identifier request with params:", req.params, "and query:", req.query);
   try {
     const { userId } = req.query;
     const { identifier } = req.params;
@@ -59,6 +62,7 @@ app.get("/api/nodes/:identifier", async (req, res) => {
  * Get all links
  */
 app.get("/api/links", async (req, res) => {
+  console.log("Received /api/links request with query:", req.query);
   try {
     const { userId } = req.query;
     if (!userId) return res.status(400).json({ error: "userId is required" });
@@ -75,6 +79,7 @@ app.get("/api/links", async (req, res) => {
  * Get links for a specific node (by ID or name)
  */
 app.get("/api/links/:identifier", async (req, res) => {
+  console.log("Received /api/links/:identifier request with params:", req.params, "and query:", req.query);
   try {
     const { userId } = req.query;
     const { identifier } = req.params;
@@ -93,6 +98,7 @@ app.get("/api/links/:identifier", async (req, res) => {
  * Get all events
  */
 app.get("/api/events", async (req, res) => {
+  console.log("Received /api/events request with query:", req.query);
   try {
     const { userId } = req.query;
     if (!userId) return res.status(400).json({ error: "userId is required" });
@@ -109,6 +115,7 @@ app.get("/api/events", async (req, res) => {
  * Get event by ID or title
  */
 app.get("/api/events/:identifier", async (req, res) => {
+  console.log("Received /api/events/:identifier request with params:", req.params, "and query:", req.query);
   try {
     const { userId } = req.query;
     const { identifier } = req.params;
@@ -130,13 +137,13 @@ app.get("/api/events/:identifier", async (req, res) => {
  * Stage a change
  */
 app.post("/api/stage-change", async (req, res) => {
+  console.log("Received /api/stage-change request with body:", req.body);
   try {
     const { userId, entityType, entityId, newData } = req.body;
     if (!userId || !entityType || !newData) {
       return res.status(400).json({ error: "userId, entityType, and newData are required" });
     }
 
-    // For links, require source, target, and type
     if (entityType === "link") {
       if (!newData.node1 || !newData.node2 || !newData.type) {
         return res.status(400).json({
@@ -147,17 +154,20 @@ app.post("/api/stage-change", async (req, res) => {
 
     const pipeline = new ConfirmationPipeline({ uid: userId });
     const staged = await pipeline.stageChange(entityType, entityId, newData);
-    res.status(200).json(staged);
+
+    res.status(200).json(staged); // ✅ already includes status, editable, nextStep
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
 
+
 /**
  * Confirm a change
  */
 app.post("/api/confirm-change", async (req, res) => {
+  console.log("Received /api/confirm-change request with body:", req.body);
   try {
     const { userId, changeKey } = req.body;
     if (!userId || !changeKey) {
@@ -204,6 +214,7 @@ app.post("/api/confirm-change", async (req, res) => {
  * Deny a change
  */
 app.post("/api/deny-change", async (req, res) => {
+  console.log("Received /api/deny-change request with body:", req.body);
   try {
     const { userId, changeKey } = req.body;
     if (!userId || !changeKey) {
@@ -223,6 +234,7 @@ app.post("/api/deny-change", async (req, res) => {
  * Optional: List pending changes
  */
 app.get("/api/pending-changes", async (req, res) => {
+  console.log("Received /api/pending-changes request with query:", req.query);
   try {
     const { userId } = req.query;
     if (!userId) return res.status(400).json({ error: "userId is required" });

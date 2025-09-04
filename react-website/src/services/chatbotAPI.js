@@ -1,55 +1,69 @@
 import { database } from '../Firebase/firebase';
 import { ref, push, serverTimestamp } from "firebase/database";
 
-// Save a user message to Firebase AND trigger AI response
+// 🔹 Save a user message and trigger AI response
 export const sendMessage = async (uid, sessionID, text) => {
   if (!uid) throw new Error("User not authenticated");
 
   const messagesRef = ref(database, `chatSessions/${uid}/${sessionID}/messages`);
 
-  // 1. Save user message
-  const newMessage = {
+  // Save user message
+  await push(messagesRef, {
     sender: "user",
     text,
     timestamp: serverTimestamp(),
-  };
+  });
 
-  await push(messagesRef, newMessage);
+  // Get AI response
+  const botData = await getAIResponse(uid, text);
 
-  // 2. Call AI API to get bot response
-  const botReply = await getAIResponse(text);
+  // Save bot main message
+  if (botData.chat_message) {
+    await sendBotResponse(uid, sessionID, botData.chat_message);
+  }
 
-  // 3. Save bot response to Firebase
-  await sendBotResponse(uid, sessionID, botReply);
+  // Save additional requests (get_info / query) as separate bot messages
+  if (botData.requests && botData.requests.length > 0) {
+    for (const req of botData.requests) {
+      if (req.message) {
+        await sendBotResponse(uid, sessionID, req.message);
+      }
+    }
+  }
+
+  // Optional: log staging results for debugging
+  if (botData.staging_results && botData.staging_results.length > 0) {
+    console.log("Staging results:", botData.staging_results);
+  }
 };
 
-async function getAIResponse(userMessage) {
+// Call backend AI API
+async function getAIResponse(uid, userMessage) {
   try {
-    const response = await fetch("http://localhost:5001/chat", { // or your deployed API endpoint
+    const response = await fetch("http://10.163.1.202:5000/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: userMessage }),
+      body: JSON.stringify({ message: userMessage, user_id: uid }),
     });
 
     const data = await response.json();
-    return data.reply; // adjust based on your backend structure
+
+    // data structure: { chat_message, requests, staging_results }
+    return data;
   } catch (error) {
     console.error("AI API error:", error);
-    return "Sorry, something went wrong.";
+    return { chat_message: "Sorry, something went wrong.", requests: [], staging_results: [] };
   }
 }
 
-// Save a bot response to Firebase
+// Save a bot message to Firebase
 export const sendBotResponse = async (uid, sessionID, text) => {
   if (!uid) throw new Error("User not authenticated");
 
   const messagesRef = ref(database, `chatSessions/${uid}/${sessionID}/messages`);
-
-  const newMessage = {
+  await push(messagesRef, {
     sender: "bot",
     text,
     timestamp: serverTimestamp(),
-  };
-
-  await push(messagesRef, newMessage);
+  });
 };
