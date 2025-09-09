@@ -1,37 +1,68 @@
 {
-    "type": "object",
-    "properties": {
-        "follow_up_bank": {
-            "type": "object",
-            "properties": {
-                "category": {
-                    "type": "object",
-                    "properties": {
-                        "type": {"type": "string"},
-                        "questions": {
-                            "type": "object",
-                            "patternProperties": {
-                                "^FU[0-9]{3}$": {
-                                    "type": "object",
-                                    "properties": {
-                                        "prompt": {"type": "string"},
-                                        "example_context": {"type": "string"},
-                                        "tags": {
-                                            "type": "array",
-                                            "items": {"type": "string"}
-                                        },
-                                        "difficulty": {"type": "integer", "minimum": 1, "maximum": 5}
-                                    },
-                                    "required": ["prompt", "tags", "difficulty"]
-                                }
-                            }
-                        }
-                    },
-                    "required": ["type", "questions"]
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FollowUpQuestionBank",
+  "description": "Schema for the pool of follow-up questions based on quality standards in Socratic questioning",
+  "type": "object",
+  "properties": {
+    "follow_up_bank": {
+      "type": "array",
+      "description": "List of follow-up categories, each tied to a quality standard",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "clarity",
+              "precision",
+              "accuracy",
+              "relevance",
+              "depth",
+              "breadth"
+            ],
+            "description": "Quality standard category guiding follow-up questioning"
+          },
+          "questions": {
+            "type": "array",
+            "description": "Follow-up questions under this quality standard",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^FU[0-9]{3}$",
+                  "description": "Unique identifier for the follow-up question (e.g., FU001)"
+                },
+                "prompt": {
+                  "type": "string",
+                  "description": "The follow-up question text"
+                },
+                "example_context": {
+                  "type": "string",
+                  "description": "General example of how the follow-up might apply in creative writing",
+                  "minLength": 5
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Optional tags to connect the question with categories or themes"
+                },
+                "difficulty": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 5,
+                  "description": "Cognitive challenge (1=basic, 5=advanced)"
                 }
-            },
-            "required": ["category"]
-        }
-    },
-    "required": ["follow_up_bank"]
+              },
+              "required": ["id", "prompt", "tags", "difficulty"]
+            }
+          }
+        },
+        "required": ["category", "questions"]
+      }
+    }
+  },
+  "required": ["follow_up_bank"]
 }
