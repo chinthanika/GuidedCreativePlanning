@@ -745,8 +745,7 @@
             ]
         }
     ],
-    "follow_up_bank": {
-        "follow_up_bank": [
+        "follow_up": [
             {
                 "category": "clarity",
                 "questions": [
@@ -1266,8 +1265,7 @@
                     }
                 ]
             }
-        ]
-    },
+        ],
     "meta_transitions": {
         "MT001": {
             "id": "MT001",
