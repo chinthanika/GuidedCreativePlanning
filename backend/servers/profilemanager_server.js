@@ -14,28 +14,44 @@ app.use(bodyParser.json());
 app.get("/api/nodes", async (req, res) => {
   console.log("Received /api/nodes request with query:", req.query);
   try {
-    const { userId, group } = req.query;
+    const { userId } = req.query;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
     const pipeline = new ConfirmationPipeline({ uid: userId });
     let nodes = await pipeline.manager.getAllNodes();
+    console.log("Initial nodes count:", Object.keys(nodes).length);
 
-    // Optional filter by group
-    if (group) {
-      const allowedGroups = ["Person", "Organization", "Location", "Uncategorized"];
-      if (!allowedGroups.includes(group)) {
-        return res.status(400).json({ error: `Invalid group. Must be one of: ${allowedGroups.join(", ")}` });
+    // Build filters from query
+    let parsedFilters = {};
+    if (req.query.filters) {
+      try {
+        parsedFilters = JSON.parse(req.query.filters);
+      } catch {
+        return res.status(400).json({ error: "Invalid JSON in filters" });
       }
+    } else {
+      // fallback: treat any extra query params (like label) as filters
+      parsedFilters = { ...req.query };
+      delete parsedFilters.userId;
+    }
+    console.log("Using parsed filters:", parsedFilters);
+
+    // Filter by label if provided
+    if (parsedFilters.label) {
       nodes = Object.fromEntries(
-        Object.entries(nodes).filter(([_, node]) => node.group === group)
+        Object.entries(nodes).filter(([_, node]) => node.label === parsedFilters.label)
       );
+      console.log("Filtered nodes count:", Object.keys(nodes).length);
     }
 
+    console.log("Returning nodes:", Object.keys(nodes));
     res.status(200).json(nodes);
   } catch (err) {
+    console.error("Error in /api/nodes:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 /**
  * Get node by ID or name
@@ -68,9 +84,40 @@ app.get("/api/links", async (req, res) => {
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
     const pipeline = new ConfirmationPipeline({ uid: userId });
-    const links = await pipeline.manager.getAllLinks();
+    let links = await pipeline.manager.getAllLinks();
+    console.log("Initial links count:", Object.keys(links).length);
+
+    // Build filters from query
+    let parsedFilters = {};
+    if (req.query.filters) {
+      try {
+        parsedFilters = JSON.parse(req.query.filters);
+      } catch {
+        return res.status(400).json({ error: "Invalid JSON in filters" });
+      }
+    } else {
+      parsedFilters = { ...req.query };
+      delete parsedFilters.userId;
+    }
+    console.log("Using parsed filters:", parsedFilters);
+
+    if (parsedFilters.node1) {
+      links = Object.fromEntries(
+        Object.entries(links).filter(([_, link]) => link.source === parsedFilters.node1)
+      );
+      console.log("Filtered links count (node1):", Object.keys(links).length);
+    }
+    if (parsedFilters.node2) {
+      links = Object.fromEntries(
+        Object.entries(links).filter(([_, link]) => link.target === parsedFilters.node2)
+      );
+      console.log("Filtered links count (node2):", Object.keys(links).length);
+    }
+
+    console.log("Returning links:", Object.keys(links));
     res.status(200).json(links);
   } catch (err) {
+    console.error("Error in /api/links:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -104,9 +151,34 @@ app.get("/api/events", async (req, res) => {
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
     const pipeline = new ConfirmationPipeline({ uid: userId });
-    const events = await pipeline.manager.getAllEvents();
+    let events = await pipeline.manager.getAllEvents();
+    console.log("Initial events count:", Object.keys(events).length);
+
+    // Build filters from query
+    let parsedFilters = {};
+    if (req.query.filters) {
+      try {
+        parsedFilters = JSON.parse(req.query.filters);
+      } catch {
+        return res.status(400).json({ error: "Invalid JSON in filters" });
+      }
+    } else {
+      parsedFilters = { ...req.query };
+      delete parsedFilters.userId;
+    }
+    console.log("Using parsed filters:", parsedFilters);
+
+    if (parsedFilters.description) {
+      events = Object.fromEntries(
+        Object.entries(events).filter(([_, e]) => e.description?.includes(parsedFilters.description))
+      );
+      console.log("Filtered events count:", Object.keys(events).length);
+    }
+
+    console.log("Returning events:", Object.keys(events));
     res.status(200).json(events);
   } catch (err) {
+    console.error("Error in /api/events:", err);
     res.status(500).json({ error: err.message });
   }
 });

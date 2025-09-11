@@ -85,24 +85,24 @@ const ChatWindow = () => {
                     {messages.map((msg) => (
                         <div
                             key={msg.id}
-                            className={`message-wrapper ${msg.sender === "user" ? "user" : "bot"}`}
+                            className={`message-wrapper ${msg.role === "user" ? "user" : "assistant"}`}
                         >
-                            <div className={`message ${msg.sender}`}>
-                                {msg.sender === "bot" && msg.text.startsWith("<") ? (
+                            <div className={`message ${msg.role}`}>
+                                {msg.role === "assistant" && msg.content.startsWith("<") ? (
                                     // If message starts with HTML, render it
                                     <div
-                                        dangerouslySetInnerHTML={{ __html: msg.text }}
+                                        dangerouslySetInnerHTML={{ __html: msg.content }}
                                     />
                                 ) : (
                                     // Otherwise render as plain text
-                                    <p>{msg.text}</p>
+                                    <p>{msg.content}</p>
                                 )}
                             </div>
                         </div>
                     ))}
                     {loading && (
-                        <div className="message-wrapper bot">
-                            <div className="message bot typing">
+                        <div className="message-wrapper assistant">
+                            <div className="message assistant typing">
                                 <span></span><span></span><span></span>
                             </div>
                         </div>

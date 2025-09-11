@@ -34,11 +34,24 @@ export default class ConfirmationPipeline {
         const nodeB = await this.manager.getNode(data.node2)
             || await this.manager.resolveNodeByName(data.node2);
 
+        // If either node is missing in confirmed nodes, check pending changes
         if (!nodeA || !nodeB) {
-            throw new Error(`Both nodes must exist. Got: node1=${data.node1}, node2=${data.node2}`);
+            const pending = await this.listPending();
+            const pendingNodes = Object.values(pending)
+                .filter(c => c.entityType === "node")
+                .map(c => c.newData);
+
+            const nodeAInPending = !nodeA && pendingNodes.find(n => n.id === data.node1 || n.label === data.node1);
+            const nodeBInPending = !nodeB && pendingNodes.find(n => n.id === data.node2 || n.label === data.node2);
+
+            if (!nodeA && !nodeAInPending) {
+                throw new Error(`Node not found: ${data.node1}`);
+            }
+            if (!nodeB && !nodeBInPending) {
+                throw new Error(`Node not found: ${data.node2}`);
+            }
         }
     }
-
 
     async _validateEvent(data) {
         if (!data.title || !data.date || !data.stage) {
@@ -116,6 +129,26 @@ export default class ConfirmationPipeline {
     async stageChange(entityType, entityId, newData) {
         await this._validateChange(entityType, newData);
 
+        // ===== Prevent duplicate pending changes =====
+        const pending = await this.listPending();
+        const duplicate = Object.values(pending).find(c => {
+            if (c.entityType !== entityType) return false;
+            switch (entityType) {
+                case "node":
+                    return c.newData.label === newData.label && c.newData.group === newData.group;
+                case "link":
+                    const [n1, n2] = this.manager._normalizePair(newData.node1, newData.node2);
+                    const [p1, p2] = this.manager._normalizePair(c.newData.source || c.newData.node1, c.newData.target || c.newData.node2);
+                    return n1 === p1 && n2 === p2 && newData.type === c.newData.type;
+                case "event":
+                    return c.newData.title === newData.title && c.newData.date === newData.date;
+                default:
+                    return false;
+            }
+        });
+        if (duplicate) throw new Error(`A pending ${entityType} with the same data already exists.`);
+
+        // ===== Handle links =====
         if (entityType === "link") {
             const nodeA = await this.manager.getNode(newData.node1)
                 || await this.manager.resolveNodeByName(newData.node1);
@@ -169,6 +202,7 @@ export default class ConfirmationPipeline {
             newData.identifier = event.id;
         }
 
+        // ===== Stage change =====
         const changeKey = Date.now().toString();
         const changeRef = child(this.pendingRef, changeKey);
 
@@ -201,6 +235,14 @@ export default class ConfirmationPipeline {
         try {
             switch (entityType) {
                 case "link": {
+                    const nodeA = await this.manager.getNode(newData.source);
+                    const nodeB = await this.manager.getNode(newData.target);
+                    if (!nodeA || !nodeB) {
+                        throw new Error(
+                            `Cannot confirm link: node(s) not yet confirmed: ${newData.source}, ${newData.target}`
+                        );
+                    }
+
                     result = await this.manager.upsertLinkByIds(
                         newData.source,
                         newData.target,
@@ -281,6 +323,17 @@ export default class ConfirmationPipeline {
 
     async listPending() {
         const snapshot = await get(this.pendingRef);
-        return snapshot.exists() ? snapshot.val() : {};
+        const pending = snapshot.exists() ? snapshot.val() : {};
+
+        const enhanced = {};
+        for (const [key, change] of Object.entries(pending)) {
+            if (change.entityType === "link") {
+                const nodeA = await this.manager.getNode(change.newData.source);
+                const nodeB = await this.manager.getNode(change.newData.target);
+                change.can_confirm = !!nodeA && !!nodeB;
+            }
+            enhanced[key] = change;
+        }
+        return enhanced;
     }
 }

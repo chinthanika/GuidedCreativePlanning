@@ -107,26 +107,52 @@ class StoryProfileManager {
 
     async resolveNodeByName(name) {
         const allNodes = await this.getAllNodes();
+        const lowerName = name.toLowerCase().trim();
 
+        // First pass: exact match on label or alias
         for (const [key, node] of Object.entries(allNodes)) {
             if (!node) continue;
 
-            // Check primary label
-            if (node.label?.toLowerCase() === name.toLowerCase()) {
-                return node;
-            }
+            if (node.label?.toLowerCase() === lowerName) return node;
 
-            // Check aliases (comma-separated string, "None" if empty)
             if (node.aliases && node.aliases !== "None") {
                 const aliasList = node.aliases.split(",").map(a => a.trim().toLowerCase());
-                if (aliasList.includes(name.toLowerCase())) {
-                    return node;
+                if (aliasList.includes(lowerName)) return node;
+            }
+        }
+
+        // Second pass: fuzzy / substring match
+        const candidates = [];
+        for (const [key, node] of Object.entries(allNodes)) {
+            if (!node) continue;
+
+            // check label substring
+            if (node.label?.toLowerCase().includes(lowerName)) candidates.push(node);
+
+            // check aliases substring
+            if (node.aliases && node.aliases !== "None") {
+                const aliasList = node.aliases.split(",").map(a => a.trim().toLowerCase());
+                for (const alias of aliasList) {
+                    if (alias.includes(lowerName)) {
+                        candidates.push(node);
+                        break;
+                    }
                 }
             }
         }
 
-        return null; // not found
+        // Return the closest candidate if any
+        if (candidates.length === 1) return candidates[0];
+
+        // Optionally, return multiple candidates for user confirmation
+        if (candidates.length > 1) {
+            // Here you could return the array for user selection, or pick first as default
+            return candidates[0];
+        }
+
+        return null; // no match
     }
+
 
     async addAlias(entityId, alias) {
         const nodes = await this.getAllNodes();
@@ -143,13 +169,15 @@ class StoryProfileManager {
 
         if (!targetKey) throw new Error(`Node with id ${entityId} not found`);
 
+        const normalizedAlias = alias.trim();
+
         let aliases = targetNode.aliases || "None";
         if (aliases === "None") {
-            aliases = alias;
+            aliases = normalizedAlias;
         } else {
             const aliasList = aliases.split(",").map(a => a.trim());
-            if (!aliasList.includes(alias)) {
-                aliasList.push(alias);
+            if (!aliasList.includes(normalizedAlias)) {
+                aliasList.push(normalizedAlias);
             }
             aliases = aliasList.join(", ");
         }
@@ -158,6 +186,7 @@ class StoryProfileManager {
         await set(child(this.nodesRef, targetKey), updated);
         return updated;
     }
+
 
 
     /* =========================
@@ -261,11 +290,19 @@ class StoryProfileManager {
     async upsertLinkByNames(name1, name2, type, context = "", allowOverwrite = false) {
         const nodeA = await this.resolveNodeByName(name1);
         const nodeB = await this.resolveNodeByName(name2);
-        if (!nodeA || !nodeB) {
-            throw new Error(`Node(s) not found by name/alias: ${name1}, ${name2}`);
+
+        // Handle fuzzy suggestions
+        if (!nodeA) throw new Error(`Node not found for name/alias: '${name1}'`);
+        if (!nodeB) throw new Error(`Node not found for name/alias: '${name2}'`);
+
+        // Prevent linking a node to itself if fuzzy matched the wrong one
+        if (nodeA.id === nodeB.id) {
+            throw new Error(`Cannot create link: '${name1}' and '${name2}' resolved to the same node '${nodeA.label}'`);
         }
+
         return this.upsertLinkByIds(nodeA.id, nodeB.id, type, context, allowOverwrite);
     }
+
 
     // Delete link by node IDs (handles both orders). Returns { action, key?, source, target }
     async deleteLinkByIds(source, target) {

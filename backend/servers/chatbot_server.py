@@ -1,20 +1,32 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
-import json
-import openai  # DeepSeek-compatible client
+import os, json, time, random, hashlib, requests
+import markdown, re
+import openai
 
-import re
-import markdown
+import logging
 
-import hashlib
-import requests
+# Firebase + DTConversationFlowManager
+import firebase_admin
+from firebase_admin import credentials, db
+
+from utils.DTConversationFlowManager import DTConversationFlowManager
 
 app = Flask(__name__)
 CORS(app)
 
+# -------------------- SETUP LOGGING --------------------
+logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')
+logger = logging.getLogger(__name__)
+
+# Initialize Firebase
+cred = credentials.Certificate("../Firebase/structuredcreativeplanning-fdea4acca240.json")
+firebase_admin.initialize_app(cred, {
+    'databaseURL': "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
+})
+
 # DeepSeek API setup
-DEEPSEEK_API_KEY = "sk-2b1e2168cfd34a35937511fa87ac0921"
+DEEPSEEK_API_KEY = "sk-6c4641c0b8404e049912cafc281e04f5"
 if not DEEPSEEK_API_KEY:
     raise ValueError("DEEPSEEK_API_KEY environment variable is not set")
 
@@ -25,8 +37,10 @@ client = openai.OpenAI(
 
 PROFILE_MANAGER_URL = "http://localhost:5001/api"
 
+MAX_DEPTH = 5 # Max recursion for handle_action to avoid infinite loops
+
 SYSTEM_PROMPT = """
-You are DeepSeek, a creative writing assistant that helps users track story entities, relationships, and events. Your main goals are:
+You are DeepSeek, a creative writing assistant that helps users track story entities, relationships, and events. Your main goals:
 
 1. Guide the user in brainstorming and organizing their story.
 2. Track entities (characters, organizations, locations), links (relationships), and events.
@@ -40,26 +54,143 @@ Rules for conversation and actions:
 4. Use only names (and optionally aliases) to reference entities; do not generate IDs — the backend handles IDs.
 5. Respond in JSON using **exact schemas** that match the Profile Manager API.
 
-Actions and schemas:
+Conversation Logic:
 
-1. `respond` — purely conversational. No staging or queries.
+- Step 1: Category Selection
+    - If no category selected or user requests a shift, select a category.
+    - Emit JSON with "meta_transition", type "category_to_category", message explaining choice.
+    - Retrieve initial question from CFM for category.
+
+- Step 2: Evaluate User Response
+    - Evaluate Socratic quality standards.
+    - If all pass:
+        - Select new angle based on Eight Elements of Reasoning.
+        - Emit JSON with "meta_transition", type "angle_to_angle".
+        - You will receive a question or prompt, which you must reword based on the context and conversational tone to pose to user.
+    - If any fail:
+        - Check depth:
+            - If depth-check passes:
+                - Retrieve follow-up question from CFM in same category/angle.
+                - Emit JSON "get_question" or "query" for clarification.
+            - If depth-check fails:
+                - Decide to shift angle or category.
+                - Emit JSON with "meta_transition", type "angle_to_angle" or "category_to_category".
+                - Retrieve new question from CFM as appropriate.
+
+- Step 3: Profile Manager Operations
+    - At any point, if user references or requests info about entities:
+        - Fetch info: emit JSON "get_info" with target and optional filters/entity_id.
+        - Clarify: emit JSON "query" with target and optional filters/entity_id.
+        - Stage change: emit JSON "stage_change" with entityType and newData, if necessary.
+    - When the user wants to explore a character’s relationships:
+      - Automatically fetch all existing links connected to that character.
+      - Provide the user with context about these links before prompting further questions.
+      - Only stage changes after sufficient detail has been discussed with the user, if necessary.
+
+- Step 4: Closure
+    - If conversation cycle exhausted or user signals satisfaction:
+        - Emit JSON "meta_transition", type "closure".
+        - Optionally summarize insights.
+
+REWRITING RULES (mandatory)
+- When you RECEIVE a CFM question object (from get_primary_question or get_follow_up):
+   1. Reword the raw question into a conversational style prompt.
+   2. Always output a "respond" action with the reworded version.
+   3. Ground your rewording in the previous messages and any context already retrieved (via get_info, etc.).
+  4. Provide the JSON action `respond` with `data.message` containing the conversational prompt.
+- Examples:
+  - Raw CFM question: "What kind of past experiences, personal history, or special knowledge do you think influence the choices this character makes?"
+  - Reworded (good): "Got it — you want to talk about Akio. Do you have any background or experiences in mind that shape how he behaves or decides things?"
+
+Eight Elements of Reasoning (for angle selection):
+
+- goals_and_purposes:
+  - Meaning: Focus on what the element (character, plot point, setting, etc.) is trying to achieve in the story.
+  - Use: Identify the function, intent, or role in advancing plot, theme, or character development.
+
+- questions:  
+  - Meaning: Focus on the tension, mystery, or unresolved issues the element introduces.
+  - Use: Reflect on what uncertainty, challenge, or curiosity this part of the story raises.
+
+- information:
+  - Meaning: Focus on observable details, evidence, or facts in the narrative that reveal the element.
+  - Use: Examine dialogue, description, or actions that demonstrate the element’s presence or function.
+
+- inferences_and_conclusions:
+  - Meaning: Focus on the broader ideas, motifs, or themes highlighted by the element.
+  - Use: Connect individual story parts to intellectual, symbolic, or thematic concepts.
+
+- assumptions:
+  - Meaning: Focus on the underlying beliefs, expectations, or conventions that support the element.
+  - Use: Question implicit ideas, narrative habits, or character/world expectations.
+
+- implications_and_consequences:
+  - Meaning: Focus on the potential effects, outcomes, or stakes related to the element.
+  - Use: Consider how the element shapes characters, plot direction, or thematic meaning.
+
+- viewpoints_and_perspectives:
+  - Meaning: Focus on how different characters, narrators, or audiences might perceive or interpret the element.
+  - Use: Explore multiple interpretations or how perception differs depending on perspective.
+
+Quality Standards (for follow-up evaluation and question selection):
+
+- clarity:
+  - Meaning: Ensure the user’s response is understandable, unambiguous, and easy to follow.
+  - Use: Ask the user to elaborate, illustrate, or restate points to confirm understanding.
+
+- precision:
+  - Meaning: Ensure the response provides detailed and specific information.
+  - Use: Ask for concrete details, explicit actions, or specific elements in the story.
+- accuracy:
+  - Meaning: Ensure the response is factually or logically correct within the story world.
+  - Use: Verify that actions, descriptions, or events align with established information.
+
+- relevance:
+  - Meaning: Ensure the response directly addresses the question or story element under discussion.
+  - Use: Check that information contributes meaningfully to plot, character, or theme.
+
+- depth:
+  - Meaning: Ensure the response explores complexities and underlying causes rather than surface-level observations.
+  - Use: Probe for motivations, conflicts, or thematic layers that enrich understanding.
+
+- breadth:
+  - Meaning: Ensure the response considers multiple perspectives or broader narrative contexts.
+  - Use: Ask the user to reflect on alternative viewpoints, interpretations, or contexts.
+
+HISTORY & METADATA (what you'll receive)
+- The caller will attach the last (up to)10 messages as the short-term history. Each message will be JSON with fields like:
+  {
+    "role": "user|assistant",
+    "content": "...",
+    "action": "respond|get_info|get_primary_question|get_follow_up|meta_transition|stage_change|...",
+    "category": "...",            # for assistant messages where relevant
+    "angle": "...",               # for assistant messages where relevant
+    "question_id": "...",         # if that assistant message was a CFM question
+    "follow_up_category": "...",  # if action == follow_up
+    "timestamp": 1234567890,
+    "followUpCount": 0            # optional top-level metadata may be present in the most recent assistant/system messages
+  }
+- Use `followUpCount`, `asked` lists, and recent `question_id` values from history to avoid repetition and to enforce follow-up limits.
+
+SHORT-TERM HISTORY POLICY
+- Default: assume you get 5–10 most recent messages. This range is appropriate: it gives context without overloading prompt size.
+- Before you request a follow-up or primary question from the CFM, check the recent messages:
+  - If `followUpCount` (from metadata) is >= the configured limit, **do not** request another follow-up. Instead return a `meta_transition` suggesting an angle/category change (with `reasoning`).
+  - If a candidate question id appears in the recent `asked` list or recent messages, avoid asking/re-requesting the same question — instead, ask for a different question or suggest a `meta_transition`.
+
+  
+JSON Schemas:
+
+1. respond
 {
   "action": "respond",
   "reasoning": "Optional explanation",
   "data": { "message": "Hello! Who would you like to discuss today?" }
 }
 
-2. `get_info` — fetch data from Profile Manager using GET requests. Map to endpoints exactly:
-
-- Nodes: GET `/api/nodes?userId=<USER_ID>` or `/api/nodes/<NAME>?userId=<USER_ID>`
-- Links: GET `/api/links?userId=<USER_ID>` or `/api/links/<NAME>?userId=<USER_ID>`
-- Events: GET `/api/events?userId=<USER_ID>` or `/api/events/<TITLE>?userId=<USER_ID>`
-- Pending changes: GET `/api/pending-changes?userId=<USER_ID>`
-- Optional filters go inside `payload.filters`
-
-Schema:
+2. get_info / query
 {
-  "action": "get_info",
+  "action": "get_info|query",
   "reasoning": "Explain why this info is needed",
   "data": {
     "requests": [
@@ -73,17 +204,7 @@ Schema:
   }
 }
 
-3. `query` — same as `get_info` but for clarifications. Use same structure.
-
-4. `stage_change` — map to POST `/api/stage-change`. Must include:
-- `userId`: the user's ID
-- `entityType`: "node", "link", or "event"
-- `entityId`: optional; backend generates IDs for new nodes/events, optional for links
-- `newData`: full object to be staged
-
-Important: Always include a `requests` array containing the staged change(s), even if there is only one request.  
-Example response schema:
-
+3. stage_change
 {
   "action": "stage_change",
   "reasoning": "Explain why this action is suggested",
@@ -95,6 +216,36 @@ Example response schema:
         "newData": { ... }
       }
     ]
+  }
+}
+
+4. meta_transition
+{
+  "action": "meta_transition",
+  "reasoning": "Explain why transition is needed",
+  "data": {
+    "type": "angle_to_angle|angle_to_category|category_to_category|confirm_switch|backtrack|closure",
+    "new_category": "category being switched to if applicable",
+    "new_angle": "angle being switched to if applicable (for example no angle already defined)",
+  }
+}
+
+5. get_primary_question (request from CFM for primary question)
+{
+  "action": "get_primary_question",
+  "reasoning": "Ask user the primary question for this category and angle",
+  "data": {
+    "category": "motivation|character|setting|plot|conflict|theme|tone",
+    "angle": "goals_and_purposes|questions|information|inferences_and_conclusions|assumptions|implications_and_consequences|viewpoints_and_perspectives"
+  }
+}
+
+6. get_follow_up (request from CFM for follow-up)
+{
+  "action": "get_follow_up",
+  "reasoning": "Ask user a follow-up question to probe deeper or clarify",
+  "data": {
+    "category": "clarity|precision|accuracy|relevance|depth|breadth",
   }
 }
 
@@ -181,55 +332,49 @@ Examples:
   "newData": { "identifier": "Secret Meeting" }
 }
 
-Behavior guidelines:
+Behavior Guidelines:
 
-- Always return a JSON object matching these schemas.
-- For `get_info` and `query`, the assistant may include `payload.filters` to narrow results.
-- Do not return confirm/deny requests; those are handled separately.
-- Include a helpful `message` field explaining each request to the user.
+- Always return JSON matching the schemas above.
+- Include `reasoning` for every action.
+- Use `get_info` / `query` to fetch any required entity data before staging.
+- Only stage changes when sufficient detail is available.
+- Prioritize conversation and Socratic questioning over immediate staging.
+- Use follow-ups if user response partially fails Socratic standards.
+- Trigger meta-transitions for angle or category shifts, or closure when appropriate.
 """
 
-# -------------------- Utility functions --------------------
+# -------------------- UTILITIES --------------------
 def parse_markdown(md_text, output="text"):
-    """
-    Convert markdown to plain text or HTML.
-    output: "text" for plain text, "html" for HTML
-    """
     if not md_text:
         return ""
-    
     if output == "html":
         return markdown.markdown(md_text)
-    
-    # Simple plain text conversion
-    # - Remove markdown links [text](url) -> text
     text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", md_text)
-    # - Remove bold/italic markers **text** or *text* -> text
     text = re.sub(r"(\*\*|\*|__|_)(.*?)\1", r"\2", text)
-    # - Replace headings #, ##, ### -> text
     text = re.sub(r"#+\s*(.*)", r"\1", text)
-    # - Replace lists - item or * item -> item
     text = re.sub(r"^\s*[-*]\s+", "- ", text, flags=re.MULTILINE)
-    # - Remove excessive newlines
     text = re.sub(r"\n{2,}", "\n", text)
-    
     return text.strip()
 
+def parse_deepseek_json(raw):
+    # Remove triple backticks and optional 'json' label
+    match = re.search(r'```(?:json)?\s*(\{.*\})\s*```', raw, re.DOTALL)
+    if match:
+        clean = match.group(1)
+    else:
+        clean = raw
+    return json.loads(clean)
+
+
+
 def generate_entity_id(name):
-    """Generate a deterministic SHA-256 ID for entities."""
     return hashlib.sha256(name.encode("utf-8")).hexdigest()
 
-
-# -------------------- Helper for get_info / query --------------------
 def fetch_profile_data(req_obj, user_id):
-    """Fetch data from profilemanager_server based on target and optional filters."""
     target = req_obj.get("target")
     payload = req_obj.get("payload", {})
     filters = payload.get("filters", {})
     entity_id = req_obj.get("entity_id")
-
-    url = None
-    params = {"userId": user_id, **filters}
 
     if target == "nodes":
         url = f"{PROFILE_MANAGER_URL}/nodes/{entity_id}" if entity_id else f"{PROFILE_MANAGER_URL}/nodes"
@@ -243,185 +388,295 @@ def fetch_profile_data(req_obj, user_id):
         return {"error": f"Unknown target type: {target}"}
 
     try:
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        return response.json()
+        resp = requests.get(url, params={"userId": user_id, **filters})
+        resp.raise_for_status()
+        data = resp.json()
+        # Treat empty results as "no existing data" instead of error
+        if not data:
+            return {"data": []}  # <-- key change
+        return data
+    except requests.HTTPError as e:
+        if e.response.status_code == 404:
+            # Node/Link/Event not found → return empty
+            return {"data": []}
+        return {"error": str(e)}
     except Exception as e:
         return {"error": str(e)}
 
-# -------------------- Processing functions --------------------
+
+# -------------------- STAGING --------------------
 def process_node_request(req_obj, user_id):
     node = req_obj["newData"]
     node["entity_id"] = generate_entity_id(node["label"])
-    response = requests.post(
-        f"{PROFILE_MANAGER_URL}/stage-change",
-        json={
-            "userId": user_id,
-            "label": node["label"],
-            "entityType": "node",
-            "entityId": node["entity_id"],
-            "newData": node
-        }
-    )
-    return response.json()
-
+    resp = requests.post(f"{PROFILE_MANAGER_URL}/stage-change", json={
+        "userId": user_id,
+        "label": node["label"],
+        "entityType": "node",
+        "entityId": node["entity_id"],
+        "newData": node
+    })
+    return resp.json()
 
 def process_link_request(req_obj, user_id):
     link = req_obj["newData"]
-    print("Processing link:", link)
-    response = requests.post(
-        f"{PROFILE_MANAGER_URL}/stage-change",
-        json={
-            "userId": user_id,
-            "entityType": "link",
-            "entityId": None,  # Links don’t need pre-generated ID
-            "newData": {
-                "node1": link["node1"],
-                "node2": link["node2"],
-                "type": link["type"],
-                "context": link.get("context", "")
-            }
+    resp = requests.post(f"{PROFILE_MANAGER_URL}/stage-change", json={
+        "userId": user_id,
+        "entityType": "link",
+        "entityId": None,
+        "newData": {
+            "node1": link["node1"],
+            "node2": link["node2"],
+            "type": link["type"],
+            "context": link.get("context", "")
         }
-    )
-    return response.json()
-
+    })
+    return resp.json()
 
 def process_event_request(req_obj, user_id):
     event = req_obj["newData"]
     event["entity_id"] = generate_entity_id(event["title"])
-    response = requests.post(
-        f"{PROFILE_MANAGER_URL}/stage-change",
-        json={
-            "userId": user_id,
-            "entityType": "event",
-            "entityId": event["entity_id"],
-            "newData": event
-        }
-    )
-    return response.json()
+    resp = requests.post(f"{PROFILE_MANAGER_URL}/stage-change", json={
+        "userId": user_id,
+        "entityType": "event",
+        "entityId": event["entity_id"],
+        "newData": event
+    })
+    return resp.json()
 
-
-def handle_action(deepseek_response, user_id):
-    print("DeepSeek response:", deepseek_response)
+# -------------------- ACTION HANDLER --------------------
+def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 0):
+    if depth > MAX_DEPTH:
+        return {"chat_message": "Error: recursion depth exceeded", "requests": []}
+    
     action = deepseek_response.get("action")
+    reasoning = deepseek_response.get("reasoning", "")
     requests_list = deepseek_response.get("data", {}).get("requests", [])
+    result = {"chat_message": "", "requests": requests_list, "staging_results": [], "profile_data": []}
 
-    result = {
-        "chat_message": "",
-        "requests": [],
-        "staging_results": [],
-        "profile_data": []  # store results from get_info/query
-    }
+    last_user_msg = recent_msgs[-1]["content"] if recent_msgs else ""
 
     if action == "respond":
-        raw_msg = deepseek_response.get("data", {}).get("message", "")
-        # parse markdown before returning
-        result["chat_message"] = parse_markdown(raw_msg, "html")
-        result["requests"] = requests_list
+        result["chat_message"] = parse_markdown(deepseek_response.get("data", {}).get("message", ""), "html")
+        logger.debug(f"[RESPOND] Message: {result['chat_message']}")
 
     elif action in ["get_info", "query"]:
-        # Fetch data from profile manager
-        result["requests"] = requests_list
-        if requests_list:
-            result["chat_message"] = requests_list[0].get("message", "")
-            for req in requests_list:
-                data = fetch_profile_data(req, user_id)
-                result["profile_data"].append({"request": req, "data": data})
-    elif action == "stage_change":
-        result["chat_message"] = requests_list[0].get("message", "") if requests_list else ""
         for req in requests_list:
-            entity_type = req.get("entityType")  # <-- use entityType here
-            if entity_type == "node":
-                result["staging_results"].append(process_node_request(req, user_id))
-            elif entity_type == "link":
-                result["staging_results"].append(process_link_request(req, user_id))
-            elif entity_type == "event":
-                result["staging_results"].append(process_event_request(req, user_id))
-            else:
-                result["staging_results"].append({"error": f"Unknown entity type: {entity_type}"})
-        
-        return result
+          data = fetch_profile_data(req, user_id)
+          # Normalize missing entity
+          if "error" in data:
+              data = {"data": []}
+          logger.debug(f"[GET_INFO] Request: {req}, Response: {data}")
+          result["profile_data"].append({"request": req, "data": data})
+        logger.debug(f"[GET_INFO] Fetched profile data: {result['profile_data']}")
 
+        # After fetching info, call DeepSeek again with reasoning + data
+        if result["profile_data"]:
+            info_summary = json.dumps(result["profile_data"], indent=2)
+            logger.debug(f"[GET_INFO] Sending info back to DeepSeek: {info_summary}")
+            followup_messages = [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": f"User asked: {last_user_msg}"},
+                {"role": "assistant", "content": f"Your reasoning when requesting this info was: {reasoning}"},
+                {"role": "system", "content": f"Here is the requested info:\n{info_summary}\n\nRespond conversationally based on this."}
+            ]
+            followup_resp = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=followup_messages,
+                stream=False
+            )
+            bot_reply_raw = followup_resp.choices[0].message.content.strip()
+            try:
+                bot_reply_json = parse_deepseek_json(bot_reply_raw)
+            except Exception:
+                bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+            result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1)
+
+    elif action == "stage_change":
+        logger.debug(f"[STAGE_CHANGE] Requests: {requests_list}")
+        staged_summaries = []
+        for req in requests_list:
+            etype = req.get("entityType")
+            if etype == "node":
+                staged_summaries.append(process_node_request(req, user_id))
+            elif etype == "link":
+                staged_summaries.append(process_link_request(req, user_id))
+            elif etype == "event":
+                staged_summaries.append(process_event_request(req, user_id))
+            else:
+                staged_summaries.append({"error": f"Unknown entity type: {etype}"})
+        result["staging_results"] = staged_summaries
+        logger.debug(f"[STAGE_CHANGE] Staged summaries: {staged_summaries}")
+
+        # Feed staging summary back to DeepSeek with reasoning + last user msg
+        staged_text = json.dumps(staged_summaries, indent=2)
+        followup_messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": f"Earlier user message: {last_user_msg}"},
+            {"role": "assistant", "content": f"Reasoning: {reasoning}"},
+            {"role": "system", "content": f"User has made the following staged changes: {staged_text}. Please acknowledge and continue the conversation naturally."}
+        ]
+        followup_resp = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=followup_messages,
+            stream=False
+        )
+        followup_raw = followup_resp.choices[0].message.content.strip()
+        try:
+            bot_reply_json = parse_deepseek_json(followup_raw)
+        except Exception:
+            bot_reply_json = {"action": "respond", "data": {"message": followup_raw}}
+        followup_result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1)
+        result["chat_message"] = followup_result.get("chat_message", "")
+        result["requests"].extend(followup_result.get("requests", []))
+
+    elif action in ["get_primary_question", "get_follow_up", "meta_transition"]:
+        try:
+            if action == "meta_transition":
+                llm_next_question_payload = {
+                    "action": "meta_transition",
+                    "category": deepseek_response["data"].get("new_category"),
+                    "angle": deepseek_response["data"].get("new_angle"),
+                    "data": deepseek_response["data"]
+                }
+            else:
+                llm_next_question_payload = deepseek_response
+
+            logger.debug(f"[CFM] Action: {action}, Payload: {deepseek_response}")
+            next_q = cfm_session.handle_llm_next_question(llm_next_question_payload)
+            cfm_question = next_q.get("prompt")
+            logger.debug(f"[CFM] Next question from CFM: {cfm_question}")
+
+            followup_messages = [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": f"User said: {last_user_msg}"},
+                {"role": "assistant", "content": f"Your reasoning for requesting the meta_transition was: {reasoning} The category and angle have thus changed, now please reword the raw CFM question for the user. Do NOT output meta_transition, get_follow_up, or any other action — only output a [respond] JSON with the reworded question."},
+                {"role": "system", "content": f"Here is a raw CFM question: '{cfm_question}'. Reword it into a conversational style grounded in the reasoning and user context. Always output a respond action."}
+            ]
+            logger.debug(f"[LLM] Follow-up messages: {followup_messages}")
+            followup_resp = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=followup_messages,
+                stream=False
+            )
+            bot_reply_raw = followup_resp.choices[0].message.content.strip()
+            logger.debug(f"[LLM] Raw reworded question: {bot_reply_raw}")
+
+            try:
+                bot_reply_json = parse_deepseek_json(bot_reply_raw)
+            except Exception:
+                bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+                logger.warning(f"[LLM] Failed to parse JSON, fallback to raw message.")
+            result2 = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1)
+            result["chat_message"] = result2.get("chat_message", "")
+
+        except Exception as e:
+            logger.warning(f"[CFM] Error handling CFM question: {e}")
+            result["cfm_error"] = str(e)
+
+    return result
+
+
+# -------------------- CHAT ENDPOINT --------------------
 @app.route("/chat", methods=["POST"])
 def chat():
-    """Chat endpoint for the chatbot window"""
+    data = request.json
+    user_message = data.get("message")
+    user_id = data.get("user_id")
+    session_id = data.get("session_id")  # Optional: reuse existing session
+
+    if not user_message or not user_id:
+        return jsonify({"error": "Message and user_id are required"}), 400
+
+    # ------------------ CFM SESSION ------------------
     try:
-        data = request.json
-        user_message = data.get("message", "")
-        user_id = data.get("user_id")  # Must include user_id
+        cfm_session = None
 
-        if not user_message or not user_id:
-            return jsonify({"error": "Message and user_id are required"}), 400
+        if session_id:
+            # Try to load existing session
+            session_ref = db.reference(f"chatSessions/{user_id}/{session_id}")
+            if session_ref.child("metadata").get():
+                cfm_session = DTConversationFlowManager(user_id, session_id)
+            else:
+                # If the session ID provided doesn't exist, create new
+                cfm_session = DTConversationFlowManager.create_session(user_id)
+                session_id = cfm_session.session_id
+                print(f"[WARN] Provided session_id not found. Created new session: {session_id}")
+        else:
+            # No session_id provided: create new
+            cfm_session = DTConversationFlowManager.create_session(user_id)
+            session_id = cfm_session.session_id
+            print(f"[INFO] No session_id provided. Created new session: {session_id}")
 
-        # Send to DeepSeek
+    except Exception as e:
+        return jsonify({"error": f"Failed to initialize CFM session: {e}"}), 500
+
+    # ------------------ BUILD MESSAGE HISTORY ------------------
+    try:
+        recent_msgs = cfm_session.get_recent_messages(limit=7)
+        deepseek_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+
+        # Add recent messages
+        for msg in recent_msgs:
+            msg_payload = {
+                "content": msg.get("content"),
+                "action": msg.get("action"),
+                "category": msg.get("category"),
+                "angle": msg.get("angle"),
+                "follow_up_category": msg.get("follow_up_category"),
+                "timestamp": msg.get("timestamp")
+            }
+            deepseek_messages.append({
+                "role": msg.get("role", "assistant"),
+                "content": json.dumps(msg_payload)
+            })
+
+        # Add new user message
+        deepseek_messages.append({"role": "user", "content": user_message})
+
+        logger.debug(f"[CHAT] User message: {user_message}, User ID: {user_id}, Session ID: {session_id}")
+        logger.debug(f"[CHAT] Recent messages: {recent_msgs}")
+
+        # Call DeepSeek
         response = client.chat.completions.create(
             model="deepseek-chat",
-            messages=[
-                {
-                    "role": "system",
-                    "content": SYSTEM_PROMPT
-                },
-
-                {"role": "user", "content": user_message}
-            ],
+            messages=deepseek_messages,
             stream=False
         )
         bot_reply_raw = response.choices[0].message.content.strip()
+        logger.debug(f"[DEEPSEEK] Raw response: {bot_reply_raw}")
 
         try:
-            bot_reply_json = json.loads(bot_reply_raw)
+            bot_reply_json = parse_deepseek_json(bot_reply_raw)
+            logger.debug(f"[DEEPSEEK] Parsed JSON: {bot_reply_json}")
         except Exception:
-            bot_reply_json = {
-                "action": "respond",
-                "data": {"requests": [{"message": bot_reply_raw}]}
-            }
-
-        # First pass: handle action
-        result = handle_action(bot_reply_json, user_id)
-        print("Initial handling result:", result)
-        # If action includes get_info/query, fetch data and send back to DeepSeek
-        if bot_reply_json.get("action") in ["get_info", "query"] and result.get("profile_data"):
-            # Compose message including all fetched info
-            info_messages = []
-            for item in result["profile_data"]:
-                req = item["request"]
-                data = item["data"]
-                info_messages.append(f"Fetched {req.get('target')}: {json.dumps(data)}")
-            info_message = "\n".join(info_messages)
-            print("Fetched profile data:", info_message)
-            # Send fetched info back to DeepSeek for reasoning
-            followup_response = client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": SYSTEM_PROMPT
-                    },
-                    {"role": "user", "content": user_message},
-                    {"role": "assistant", "content": json.dumps(bot_reply_json)},
-                    {"role": "system", "content": f"Here is the requested info:\n{info_message}"}
-                ],
-                stream=False
-            )
-            
-            followup_raw = followup_response.choices[0].message.content.strip()
-            print("Follow-up DeepSeek response:", followup_raw)
-            try:
-                bot_reply_json = json.loads(followup_raw)
-            except Exception:
-                bot_reply_json = {
-                    "action": "respond",
-                    "data": {"requests": [{"message": followup_raw}]}
-                }
-
-            # Second pass: handle action again after info injection
-            result = handle_action(bot_reply_json, user_id)
-
-        return jsonify(result), 200
+            bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+            logger.warning("[DEEPSEEK] Failed to parse JSON, using raw message as respond.")
 
     except Exception as e:
-        print("Error:", str(e))
-        return jsonify({"error": "Something went wrong", "details": str(e)}), 500
+        logger.warning(f"[CHAT] DeepSeek API error: {e}")
+        return jsonify({"error": f"DeepSeek API error: {e}"}), 500
 
+    # ------------------ HANDLE ACTION ------------------
+    result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session)
+
+    # ------------------ SAVE ASSISTANT MESSAGE ------------------
+    try:
+        cfm_session.save_message(
+            role="assistant",
+            content=result.get("chat_message", ""),
+            action=bot_reply_json.get("action"),
+            category=bot_reply_json.get("data", {}).get("category"),
+            angle=bot_reply_json.get("data", {}).get("angle"),
+            follow_up_category=bot_reply_json.get("data", {}).get("category"),
+        )
+        logger.debug(f"[CHAT] Saved assistant message to CFM session: {result.get('chat_message', '')}")
+    except Exception as e:
+        logger.warning(f"[CHAT] Failed to save assistant message: {e}")
+
+    result["session_id"] = session_id
+    return jsonify(result), 200
+
+
+# -------------------- RUN SERVER --------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True, threaded=True)

@@ -41,7 +41,7 @@
   justify-content: flex-end;
 }
 
-.message-wrapper.bot {
+.message-wrapper.assistant {
   justify-content: flex-start;
 }
 
@@ -60,7 +60,7 @@
   border-bottom-right-radius: 4px;
 }
 
-.message.bot {
+.message.assistant {
   background: #e5e5ea;
   color: black;
   border-bottom-left-radius: 4px;
@@ -73,7 +73,7 @@
   align-self: flex-end;
 }
 
-.message-wrapper.bot .message {
+.message-wrapper.assistant .message {
   background: #e5e5ea;
   color: black;
   align-self: flex-start;
@@ -111,7 +111,7 @@
 }
 
 /* Typing dots animation */
-.message.bot.typing {
+.message.assistant.typing {
   display: flex;
   gap: 4px;
   padding: 10px 14px;
@@ -120,7 +120,7 @@
   max-width: fit-content;
 }
 
-.message.bot.typing span {
+.message.assistant.typing span {
   width: 6px;
   height: 6px;
   background: #555;
@@ -129,10 +129,10 @@
   animation: blink 1.4s infinite both;
 }
 
-.message.bot.typing span:nth-child(2) {
+.message.assistant.typing span:nth-child(2) {
   animation-delay: 0.2s;
 }
-.message.bot.typing span:nth-child(3) {
+.message.assistant.typing span:nth-child(3) {
   animation-delay: 0.4s;
 }
 
