@@ -39,6 +39,10 @@ PROFILE_MANAGER_URL = "http://localhost:5001/api"
 
 MAX_DEPTH = 5 # Max recursion for handle_action to avoid infinite loops
 
+SUMMARIZE_FETCH_LIMIT = 200   # how many recent messages to fetch at most
+KEEP_LAST_N = 10              # keep the last N messages unchanged
+SUMMARY_TOKEN_TRIM = 4000     # guard: trim input length if necessary (approx chars)
+
 SYSTEM_PROMPT = """
 You are DeepSeek, a creative writing assistant that helps users track story entities, relationships, and events. Your main goals:
 
@@ -178,6 +182,13 @@ SHORT-TERM HISTORY POLICY
   - If `followUpCount` (from metadata) is >= the configured limit, **do not** request another follow-up. Instead return a `meta_transition` suggesting an angle/category change (with `reasoning`).
   - If a candidate question id appears in the recent `asked` list or recent messages, avoid asking/re-requesting the same question — instead, ask for a different question or suggest a `meta_transition`.
 
+  PENDING DUPLICATE HANDLING:
+
+- If the backend returns an error indicating a pending entity already exists (e.g., 
+  "A pending link with the same data already exists"), do NOT attempt to stage again.
+- Acknowledge to the user that the entity is already staged and continue the conversation naturally.
+- Continue with Socratic questioning, meta-transitions, or other actions — never retry the same stage request.
+
   
 JSON Schemas:
 
@@ -248,6 +259,36 @@ JSON Schemas:
     "category": "clarity|precision|accuracy|relevance|depth|breadth",
   }
 }
+
+FILTER RULES (mandatory):
+
+- For nodes (/api/nodes):
+  - Allowed filters: 
+    - "label": string (this is the name of the node)
+    - "group": one of "Person", "Organisation" or "Location"
+  - Example:
+    { "filters": { "label": ["Alice Johnson", "AJ"] } }
+
+- For links (/api/links):
+  - Preferred filter:
+    - "participants": string or array (node name(s)). Automatically resolves to matching links.
+  - Fallback filters (less common):
+    - "node1": string (name)
+    - "node2": string (name)
+  - Example:
+    { "filters": { "participants": ["Alice Johnson", "Bob Smith"] } }
+
+- For events (/api/events):
+  - Allowed filters:
+    - "description": string (substring match)
+  - Example:
+    { "filters": { "description": "battle at the docks" } }
+
+- For pending changes (/api/pending-changes):
+  - No filters allowed.
+  - Example:
+    { "requests": [{ "target": "pending_changes" }] }
+
 
 Examples:
 
@@ -365,8 +406,6 @@ def parse_deepseek_json(raw):
         clean = raw
     return json.loads(clean)
 
-
-
 def generate_entity_id(name):
     return hashlib.sha256(name.encode("utf-8")).hexdigest()
 
@@ -391,18 +430,77 @@ def fetch_profile_data(req_obj, user_id):
         resp = requests.get(url, params={"userId": user_id, **filters})
         resp.raise_for_status()
         data = resp.json()
-        # Treat empty results as "no existing data" instead of error
+
+        # If the profile manager explicitly returned an error, propagate it
+        if isinstance(data, dict) and "error" in data:
+            return {"error": data["error"]}
+
+        # Treat empty results as "no existing data"
         if not data:
-            return {"data": []}  # <-- key change
+            return {"data": []}
+
         return data
+
     except requests.HTTPError as e:
         if e.response.status_code == 404:
-            # Node/Link/Event not found → return empty
+            # Node/Link/Event not found → return empty instead of error
             return {"data": []}
-        return {"error": str(e)}
+        return {"error": f"HTTPError {e.response.status_code}: {e.response.text}"}
     except Exception as e:
         return {"error": str(e)}
+    
+# -------------------- SUMMARIZATION --------------------
+async def summarise_and_store(self, deepseek_client, session_id, unsummarised_msgs):
+    """
+    Summarise unsummarised messages, store the summary, 
+    and mark those messages as summarised.
 
+    Returns:
+        {
+            "new_summary": str,
+            "summaries": [str, ...]   # full list of summaries including new one
+        }
+    """
+    if not unsummarised_msgs:
+        return {"new_summary": "", "summaries": []}
+
+    # Format unsummarised messages for summarisation
+    convo_text = "\n".join(
+        f"{m['role'].capitalize()}: {m['content']}" for m in unsummarised_msgs
+    )
+
+    # Call Deepseek to generate a summary
+    summary_prompt = f"Summarise the following conversation segment:\n\n{convo_text}"
+    logger.debug(f"[SUMMARISE] Prompt: {summary_prompt}")
+    
+    try:
+        resp = await deepseek_client.chat.completions.create(
+            model="deepseek-reasoner",
+            messages=[{"role": "user", "content": summary_prompt}]
+        )
+        summary_text = resp.choices[0].message.content.strip()
+        logger.debug(f"[SUMMARISE] Generated summary: {summary_text}")
+    except Exception as e:
+        logger.debug("[ERROR] summarise_and_store Deepseek call failed:", e)
+        return {"new_summary": "", "summaries": []}
+
+    # --- Store summary in metadata ---
+    self.metadata_ref.child("summaries").push(summary_text)
+
+    # --- Mark unsummarised messages as summarised ---
+    for m in unsummarised_msgs:
+        self.messages_ref.child(m["id"]).update({"summarised": True})
+
+    # --- Fetch updated summaries ---
+    summaries_snapshot = self.metadata_ref.child("summaries").get()
+    summaries = []
+    if summaries_snapshot:
+        summaries = [v for _, v in sorted(summaries_snapshot.items())]
+    logger.debug(f"[SUMMARISE] Total summaries now: {len(summaries)}")
+    return {
+        "new_summary": summary_text,
+        "summaries": summaries
+    }
 
 # -------------------- STAGING --------------------
 def process_node_request(req_obj, user_id):
@@ -461,12 +559,10 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
 
     elif action in ["get_info", "query"]:
         for req in requests_list:
-          data = fetch_profile_data(req, user_id)
-          # Normalize missing entity
-          if "error" in data:
-              data = {"data": []}
-          logger.debug(f"[GET_INFO] Request: {req}, Response: {data}")
-          result["profile_data"].append({"request": req, "data": data})
+            data = fetch_profile_data(req, user_id)
+            logger.debug(f"[GET_INFO] Request: {req}, Response: {data}")
+            result["profile_data"].append({"request": req, "data": data})
+
         logger.debug(f"[GET_INFO] Fetched profile data: {result['profile_data']}")
 
         # After fetching info, call DeepSeek again with reasoning + data
@@ -477,7 +573,7 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": f"User asked: {last_user_msg}"},
                 {"role": "assistant", "content": f"Your reasoning when requesting this info was: {reasoning}"},
-                {"role": "system", "content": f"Here is the requested info:\n{info_summary}\n\nRespond conversationally based on this."}
+                {"role": "system", "content": f"Here is the requested info:\n{info_summary}\n\nIf it is empty, there is no available information. Proceed with this understanding. Respond conversationally based on this."}
             ]
             followup_resp = client.chat.completions.create(
                 model="deepseek-chat",
@@ -513,7 +609,7 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": f"Earlier user message: {last_user_msg}"},
             {"role": "assistant", "content": f"Reasoning: {reasoning}"},
-            {"role": "system", "content": f"User has made the following staged changes: {staged_text}. Please acknowledge and continue the conversation naturally."}
+            {"role": "system", "content": f"The requests you made have been staged: {staged_text}. If they have not been staged, please acknowledge this to the user and continue the conversation naturally. DO NOT try to stage again even if the stage failed."}
         ]
         followup_resp = client.chat.completions.create(
             model="deepseek-chat",
@@ -577,6 +673,7 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
 
 
 # -------------------- CHAT ENDPOINT --------------------
+# -------------------- CHAT ENDPOINT --------------------
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.json
@@ -590,74 +687,88 @@ def chat():
     # ------------------ CFM SESSION ------------------
     try:
         cfm_session = None
-
         if session_id:
-            # Try to load existing session
             session_ref = db.reference(f"chatSessions/{user_id}/{session_id}")
             if session_ref.child("metadata").get():
                 cfm_session = DTConversationFlowManager(user_id, session_id)
             else:
-                # If the session ID provided doesn't exist, create new
                 cfm_session = DTConversationFlowManager.create_session(user_id)
                 session_id = cfm_session.session_id
-                print(f"[WARN] Provided session_id not found. Created new session: {session_id}")
+                print(f"[WARN] Provided session_id not found. Created new: {session_id}")
         else:
-            # No session_id provided: create new
             cfm_session = DTConversationFlowManager.create_session(user_id)
             session_id = cfm_session.session_id
-            print(f"[INFO] No session_id provided. Created new session: {session_id}")
-
+            print(f"[INFO] New session created: {session_id}")
     except Exception as e:
         return jsonify({"error": f"Failed to initialize CFM session: {e}"}), 500
 
-    # ------------------ BUILD MESSAGE HISTORY ------------------
+    # ------------------ SUMMARISATION LOGIC ------------------
     try:
-        recent_msgs = cfm_session.get_recent_messages(limit=7)
+        # Get summaries + unsummarised messages
+        recent = cfm_session.get_recent_messages(limit=10)
+        summaries = recent.get("summaries", [])
+        unsummarised = recent.get("unsummarised", [])
+
+        # Count all unsummarised (for max-out check)
+        all_unsummarised = cfm_session.get_recent_messages(maxed_out=True)["unsummarised"]
+
+        if len(all_unsummarised) > 10:
+            # Time to summarise (on 11th unsummarised message)
+            summary_result = cfm_session.summarise_and_store(
+                deepseek_client=client,
+                session_id=session_id,
+                unsummarised_msgs=all_unsummarised
+            )
+            summaries = summary_result["summaries"]  # overwrite with full list
+            unsummarised = []  # reset context after summarisation
+            logger.debug("[CHAT] Summarisation triggered.")
+
+        # Build DeepSeek messages
         deepseek_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-        # Add recent messages
-        for msg in recent_msgs:
+        # Add all summaries
+        for s in summaries:
+            deepseek_messages.append({"role": "system", "content": s})
+
+        # Add unsummarised (short-term context)
+        for m in unsummarised:
             msg_payload = {
-                "content": msg.get("content"),
-                "action": msg.get("action"),
-                "category": msg.get("category"),
-                "angle": msg.get("angle"),
-                "follow_up_category": msg.get("follow_up_category"),
-                "timestamp": msg.get("timestamp")
+                "content": m.get("content"),
+                "action": m.get("action"),
+                "category": m.get("category"),
+                "angle": m.get("angle"),
+                "follow_up_category": m.get("follow_up_category"),
+                "timestamp": m.get("timestamp")
             }
             deepseek_messages.append({
-                "role": msg.get("role", "assistant"),
+                "role": m.get("role", "assistant"),
                 "content": json.dumps(msg_payload)
             })
 
-        # Add new user message
+        # Add new user message last
         deepseek_messages.append({"role": "user", "content": user_message})
 
-        logger.debug(f"[CHAT] User message: {user_message}, User ID: {user_id}, Session ID: {session_id}")
-        logger.debug(f"[CHAT] Recent messages: {recent_msgs}")
-
-        # Call DeepSeek
+        # ------------------ CALL DEEPSEEK ------------------
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=deepseek_messages,
             stream=False
         )
         bot_reply_raw = response.choices[0].message.content.strip()
-        logger.debug(f"[DEEPSEEK] Raw response: {bot_reply_raw}")
+        logger.debug(f"[DEEPSEEK] Raw: {bot_reply_raw}")
 
         try:
             bot_reply_json = parse_deepseek_json(bot_reply_raw)
-            logger.debug(f"[DEEPSEEK] Parsed JSON: {bot_reply_json}")
         except Exception:
             bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
-            logger.warning("[DEEPSEEK] Failed to parse JSON, using raw message as respond.")
+            logger.warning("[DEEPSEEK] JSON parse failed, fallback to respond.")
 
     except Exception as e:
         logger.warning(f"[CHAT] DeepSeek API error: {e}")
         return jsonify({"error": f"DeepSeek API error: {e}"}), 500
 
     # ------------------ HANDLE ACTION ------------------
-    result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session)
+    result = handle_action(bot_reply_json, user_id, unsummarised, cfm_session)
 
     # ------------------ SAVE ASSISTANT MESSAGE ------------------
     try:
@@ -668,14 +779,13 @@ def chat():
             category=bot_reply_json.get("data", {}).get("category"),
             angle=bot_reply_json.get("data", {}).get("angle"),
             follow_up_category=bot_reply_json.get("data", {}).get("category"),
+            summarised=False
         )
-        logger.debug(f"[CHAT] Saved assistant message to CFM session: {result.get('chat_message', '')}")
     except Exception as e:
         logger.warning(f"[CHAT] Failed to save assistant message: {e}")
 
     result["session_id"] = session_id
     return jsonify(result), 200
-
 
 # -------------------- RUN SERVER --------------------
 if __name__ == "__main__":

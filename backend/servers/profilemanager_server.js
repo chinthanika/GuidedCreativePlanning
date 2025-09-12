@@ -38,8 +38,27 @@ app.get("/api/nodes", async (req, res) => {
 
     // Filter by label if provided
     if (parsedFilters.label) {
+      const wanted = parsedFilters.label;
+      // support querying with array or single string
+      const wantedList = Array.isArray(wanted) ? wanted.map(String) : [String(wanted)];
       nodes = Object.fromEntries(
-        Object.entries(nodes).filter(([_, node]) => node.label === parsedFilters.label)
+        Object.entries(nodes).filter(([_, node]) => {
+          if (!node) return false;
+          for (const w of wantedList) {
+            const lowerW = w.toLowerCase().trim();
+            if (node.label?.toLowerCase() === lowerW) return true;
+            // support aliases as array or comma string
+            const aliases = node.aliases;
+            if (aliases) {
+              if (Array.isArray(aliases)) {
+                if (aliases.map(a => String(a).toLowerCase()).includes(lowerW)) return true;
+              } else if (typeof aliases === "string") {
+                if (aliases.toLowerCase().split(",").map(a => a.trim()).includes(lowerW)) return true;
+              }
+            }
+          }
+          return false;
+        })
       );
       console.log("Filtered nodes count:", Object.keys(nodes).length);
     }
@@ -90,6 +109,21 @@ app.get("/api/links", async (req, res) => {
     // Build filters from query
     let parsedFilters = {};
     if (req.query.filters) {
+      const validFilters = ["participants", "node1", "node2", "nodes"];
+      for (const key of req.query.filters) {
+        if (!validFilters.includes(key)) {
+          return res.status(400).json({
+            error: `Invalid filter: "${key}". Use one of: participants, node1, node2.`
+          });
+        }
+        else {
+          if (key === "nodes") {
+            req.query.participants = req.query.nodes;
+            delete req.query.nodes;
+          }
+        }
+      }
+
       try {
         parsedFilters = JSON.parse(req.query.filters);
       } catch {
@@ -101,21 +135,82 @@ app.get("/api/links", async (req, res) => {
     }
     console.log("Using parsed filters:", parsedFilters);
 
-    if (parsedFilters.node1) {
-      links = Object.fromEntries(
-        Object.entries(links).filter(([_, link]) => link.source === parsedFilters.node1)
-      );
-      console.log("Filtered links count (node1):", Object.keys(links).length);
-    }
-    if (parsedFilters.node2) {
-      links = Object.fromEntries(
-        Object.entries(links).filter(([_, link]) => link.target === parsedFilters.node2)
-      );
-      console.log("Filtered links count (node2):", Object.keys(links).length);
+    if (parsedFilters.node1 && parsedFilters.node2 && parsedFilters.node1 === parsedFilters.node2) {
+      // collapse to just one
+      parsedFilters = { node1: parsedFilters.node1 };
     }
 
-    console.log("Returning links:", Object.keys(links));
-    res.status(200).json(links);
+    // Prefer using 'participants' param for user-friendly filtering (accepts name or id, single or array)
+    if (parsedFilters.participants) {
+      const parts = Array.isArray(parsedFilters.participants) ? parsedFilters.participants : [parsedFilters.participants];
+
+      // For first participant, get its links set; for subsequent participants, intersect
+      let resultSet = null;
+      for (const p of parts) {
+        // use manager.filterLinksByNode which resolves name->id and checks structured source/target
+        try {
+          const pLinks = await pipeline.manager.filterLinksByNode(p);
+          if (resultSet === null) {
+            resultSet = { ...pLinks };
+          } else {
+            // intersect keys
+            const intersect = {};
+            for (const key of Object.keys(resultSet)) {
+              if (key in pLinks) intersect[key] = resultSet[key];
+            }
+            resultSet = intersect;
+          }
+        } catch (e) {
+          // if node not found, treat as empty set
+          resultSet = {};
+        }
+      }
+      links = resultSet || {};
+      console.log("Filtered links count (participants):", Object.keys(links).length);
+    } else {
+      // fallback to node1/node2 by id (still supported)
+      if (parsedFilters.node1) {
+        const n1 = await pipeline.manager.getNode(parsedFilters.node1)
+          || await pipeline.manager.resolveNodeByName(parsedFilters.node1);
+        if (!n1) return res.status(400).json({ error: `Node not found: ${parsedFilters.node1}` });
+
+        links = Object.fromEntries(
+          Object.entries(links).filter(([_, link]) => link.source === n1.id || link.target === n1.id)
+        );
+        console.log("Filtered links count (node1):", Object.keys(links).length);
+      }
+
+      if (parsedFilters.node2) {
+        const n2 = await pipeline.manager.getNode(parsedFilters.node2)
+          || await pipeline.manager.resolveNodeByName(parsedFilters.node2);
+        if (!n2) return res.status(400).json({ error: `Node not found: ${parsedFilters.node2}` });
+
+        links = Object.fromEntries(
+          Object.entries(links).filter(([_, link]) => link.source === n2.id || link.target === n2.id)
+        );
+        console.log("Filtered links count (node2):", Object.keys(links).length);
+      }
+    }
+
+    // Replace IDs with resolved node objects
+    const nodes = await pipeline.manager.getAllNodes();
+    const enrichedLinks = {};
+
+    for (const [linkId, link] of Object.entries(links)) {
+      const sourceNode = nodes[link.source] || await pipeline.manager.getNode(link.source);
+      const targetNode = nodes[link.target] || await pipeline.manager.getNode(link.target);
+      console.log(`Enriching link ${linkId}: source ${link.source} -> ${sourceNode ? sourceNode.label : "NOT FOUND"}, target ${link.target} -> ${targetNode ? targetNode.label : "NOT FOUND"}`);
+      console.log(`Source node details:`, sourceNode);
+      console.log(`Target node details:`, targetNode);
+      enrichedLinks[linkId] = {
+        ...link,
+        source: sourceNode ? { id: sourceNode.id, label: sourceNode.label, group: sourceNode.group, attributes: sourceNode.attributes, aliases: sourceNode.aliases } : link.source,
+        target: targetNode ? { id: targetNode.id, label: targetNode.label, group: targetNode.group, attributes: targetNode.attributes, aliases: targetNode.aliases } : link.target,
+      };
+    }
+
+    console.log("Returning links:", Object.keys(enrichedLinks));
+    res.status(200).json(enrichedLinks);
   } catch (err) {
     console.error("Error in /api/links:", err);
     res.status(500).json({ error: err.message });
@@ -241,41 +336,33 @@ app.post("/api/stage-change", async (req, res) => {
 app.post("/api/confirm-change", async (req, res) => {
   console.log("Received /api/confirm-change request with body:", req.body);
   try {
-    const { userId, changeKey } = req.body;
+    const { userId, changeKey, overwrite } = req.body;
+    console.log("Request body:", userId, changeKey);
     if (!userId || !changeKey) {
       return res.status(400).json({ error: "userId and changeKey are required" });
     }
 
     const pipeline = new ConfirmationPipeline({ uid: userId });
 
-    // Fetch pending change first
-    const pending = await pipeline.listPending();
-    const change = pending?.[changeKey];
-    if (!change) {
-      return res.status(404).json({ error: "Pending change not found" });
-    }
-
-    // 🚨 Special handling for links
-    if (change.entityType === "link") {
-      const allLinks = await pipeline.manager.getAllLinks();
-      const dup = Object.values(allLinks).find(
-        l =>
-          ((l.source === change.newData.source && l.target === change.newData.target) ||
-            (l.source === change.newData.target && l.target === change.newData.source)) &&
-          l.type === change.newData.type
-      );
-
-      if (dup) {
+    try {
+      const confirmed = await pipeline.confirm(changeKey, { overwrite: !!overwrite });
+      console.log("Change confirmed:", confirmed);
+      res.status(200).json(confirmed);
+    } catch (err) {
+      if (err.code === "LINK_EXISTS") {
+        console.warn("Conflict error during confirm:", err);
+        // indicate to frontend that overwrite is needed
         return res.status(409).json({
-          error: "Link already exists between these nodes",
-          duplicate: dup
+          error: err.message,
+          duplicate: err.duplicate,
+          requiresOverwrite: true
         });
       }
+      console.error("Error during confirm:", err);
+      res.status(400).json({ error: err.message });
+      // re-
+      throw err;
     }
-
-    // Otherwise confirm normally
-    const confirmed = await pipeline.confirm(changeKey);
-    res.status(200).json(confirmed);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

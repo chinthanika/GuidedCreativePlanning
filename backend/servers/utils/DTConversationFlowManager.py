@@ -62,7 +62,7 @@ class DTConversationFlowManager:
         updates["updatedAt"] = int(time.time() * 1000)
         self.metadata_ref.update(updates)
 
-    def save_message(self, role: str, content: str, action=None, category=None, angle=None, follow_up_category=None):
+    def save_message(self, role: str, content: str, action=None, category=None, angle=None, follow_up_category=None, summarised=False):
         """Save message with metadata fields for traceability."""
         new_message_ref = self.messages_ref.push()
         new_message_ref.set({
@@ -294,29 +294,39 @@ class DTConversationFlowManager:
         recent_ids = [q["id"] for q in asked[-limit:]]
         return [q for q in pool if q["id"] not in recent_ids]
     
-    def get_recent_messages(self, limit=10):
+    def get_recent_messages(self, limit=10, maxed_out=False):
+        """
+        Return existing summaries + unsummarised messages.
+        If maxed_out=True, return ALL unsummarised messages.
+        """
         try:
+            # --- Fetch summaries ---
+            summaries_snapshot = self.metadata_ref.child("summaries").get()
+            summaries = []
+            if summaries_snapshot:
+                # Firebase .get() returns dict of {push_id: summary_str}
+                summaries = [v for _, v in sorted(summaries_snapshot.items())]
+
+            # --- Fetch messages ---
             snapshot = self.messages_ref.get()
-            print("Snapshot:", snapshot)
             if not snapshot:
-                return []
+                return {"summaries": summaries, "unsummarised": []}
 
-            msgs = sorted(snapshot.values(), key=lambda m: m.get("timestamp", 0))[-limit:]
-            # normalize to OpenAI format
-            return [
-                {
-                    "role": m.get("role", "user"),
-                    "content": m.get("content", m.get("text", "")),
-                    "action": m.get("action"),
-                    "category": m.get("category"),
-                    "angle": m.get("angle"),
-                    "follow_up_category": m.get("follow_up_category"),
-                    "timestamp": m.get("timestamp", 0)
-                }
-                for m in msgs
-            ]
+            msgs = sorted(snapshot.items(), key=lambda kv: kv[1].get("timestamp", 0))
+            unsummarised = []
 
+            for msg_id, m in msgs:
+                if not m.get("summarised"):
+                    unsummarised.append({**m, "id": msg_id})
+
+            if not maxed_out and len(unsummarised) > limit:
+                unsummarised = unsummarised[-limit:]
+
+            return {
+                "summaries": summaries,
+                "unsummarised": unsummarised
+            }
 
         except Exception as e:
             print("[ERROR] get_recent_messages failed:", e)
-            return []
+            return {"summaries": [], "unsummarised": []}

@@ -73,18 +73,29 @@ class StoryProfileManager {
         }
 
         if (targetKey) {
-            // Merge update
-            const updated = { ...nodes[targetKey], ...data, id: entityId };
-            await set(child(this.nodesRef, targetKey), updated);
-            return updated;
+            // Merge update (preserve existing aliases if arrays)
+            const existing = nodes[targetKey] || {};
+            const merged = { ...existing, ...data, id: entityId };
+
+            // If aliases are arrays, ensure we merge unique values
+            if (existing.aliases || data.aliases) {
+                const existingAliases = Array.isArray(existing.aliases) ? existing.aliases : (existing.aliases ? existing.aliases.split(",").map(a => a.trim()) : []);
+                const newAliases = Array.isArray(data.aliases) ? data.aliases : (data.aliases ? data.aliases.split(",").map(a => a.trim()) : []);
+                const combined = Array.from(new Set([...existingAliases, ...newAliases].filter(Boolean)));
+                merged.aliases = combined;
+            }
+
+            await set(child(this.nodesRef, targetKey), merged);
+            return merged;
         } else {
-            // Insert new sequential key
-            const nextKey = (Object.keys(nodes).length).toString();
+            // Create new node with push() to guarantee unique key
             const newNode = { id: entityId, ...data };
-            await set(child(this.nodesRef, nextKey), newNode);
+            const newRef = push(this.nodesRef);
+            await set(child(this.nodesRef, newRef.key), newNode);
             return newNode;
         }
     }
+
 
     async deleteNode(entityId) {
         // Deletes by semantic node.id (not firebase key)
@@ -115,8 +126,15 @@ class StoryProfileManager {
 
             if (node.label?.toLowerCase() === lowerName) return node;
 
-            if (node.aliases && node.aliases !== "None") {
-                const aliasList = node.aliases.split(",").map(a => a.trim().toLowerCase());
+            // support aliases stored as array OR comma-string for backward compatibility
+            const aliasesRaw = node.aliases;
+            if (aliasesRaw) {
+                let aliasList = [];
+                if (Array.isArray(aliasesRaw)) {
+                    aliasList = aliasesRaw.map(a => String(a).toLowerCase().trim());
+                } else if (typeof aliasesRaw === "string") {
+                    aliasList = aliasesRaw.split(",").map(a => a.trim().toLowerCase());
+                }
                 if (aliasList.includes(lowerName)) return node;
             }
         }
@@ -126,12 +144,16 @@ class StoryProfileManager {
         for (const [key, node] of Object.entries(allNodes)) {
             if (!node) continue;
 
-            // check label substring
             if (node.label?.toLowerCase().includes(lowerName)) candidates.push(node);
 
-            // check aliases substring
-            if (node.aliases && node.aliases !== "None") {
-                const aliasList = node.aliases.split(",").map(a => a.trim().toLowerCase());
+            const aliasesRaw = node.aliases;
+            if (aliasesRaw) {
+                let aliasList = [];
+                if (Array.isArray(aliasesRaw)) {
+                    aliasList = aliasesRaw.map(a => String(a).toLowerCase().trim());
+                } else if (typeof aliasesRaw === "string") {
+                    aliasList = aliasesRaw.split(",").map(a => a.trim().toLowerCase());
+                }
                 for (const alias of aliasList) {
                     if (alias.includes(lowerName)) {
                         candidates.push(node);
@@ -141,17 +163,12 @@ class StoryProfileManager {
             }
         }
 
-        // Return the closest candidate if any
         if (candidates.length === 1) return candidates[0];
+        if (candidates.length > 1) return candidates[0]; // keep old behaviour (pick first) — optionally prompt later
 
-        // Optionally, return multiple candidates for user confirmation
-        if (candidates.length > 1) {
-            // Here you could return the array for user selection, or pick first as default
-            return candidates[0];
-        }
-
-        return null; // no match
+        return null;
     }
+
 
 
     async addAlias(entityId, alias) {
@@ -238,6 +255,7 @@ class StoryProfileManager {
     }
 
     // Upsert by node IDs (source/target normalized). Returns { action: "created"|"updated", key, data }
+    // Upsert by node IDs (source/target normalized). Returns { action: "created"|"updated", key, data }
     async upsertLinkByIds(source, target, type, context = "", allowOverwrite = false) {
         if (!source || !target) throw new Error("Both source and target are required");
         if (!type) throw new Error("Link type is required");
@@ -252,11 +270,11 @@ class StoryProfileManager {
         const [n1, n2] = this._normalizePair(source, target);
         const links = await this.getAllLinks();
 
-        // find existing link key (if any)
+        // find existing link key (if any) regardless of type
         let existingKey = null;
         for (const [key, link] of Object.entries(links)) {
-            const a = link.source ?? link.source;
-            const b = link.target ?? link.target;
+            const a = link.source;
+            const b = link.target;
             if (!a || !b) continue;
             const [ln1, ln2] = this._normalizePair(a, b);
             if (ln1 === n1 && ln2 === n2) {
@@ -276,15 +294,17 @@ class StoryProfileManager {
             if (!allowOverwrite) {
                 throw new Error(`Link already exists between ${n1} and ${n2}`);
             }
+            // ✅ overwrite everything with new payload
             await set(child(this.linksRef, existingKey), payload);
             return { action: "updated", key: existingKey, data: payload };
         } else {
-            // sequential key preserving behaviour (next index)
-            const nextKey = Object.keys(links).length.toString();
-            await set(child(this.linksRef, nextKey), payload);
-            return { action: "created", key: nextKey, data: payload };
+            // use push() for unique key
+            const newRef = push(this.linksRef);
+            await set(child(this.linksRef, newRef.key), payload);
+            return { action: "created", key: newRef.key, data: payload };
         }
     }
+
 
     // Upsert by user-provided node names (resolves label/aliases to IDs)
     async upsertLinkByNames(name1, name2, type, context = "", allowOverwrite = false) {
