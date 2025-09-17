@@ -24,8 +24,28 @@ const PendingChanges = ({ userId }) => {
   };
 
   useEffect(() => {
-    fetchPending();
+    if (!userId) return;
+
+    fetchPending(); // initial fetch
+
+    const evtSource = new EventSource(`${API_BASE}/pending-changes/stream`);
+
+    evtSource.addEventListener("pendingUpdate", (e) => {
+      const { userId: updatedUser } = JSON.parse(e.data);
+      if (updatedUser === userId) {
+        fetchPending(); // only refetch for this user
+      }
+    });
+
+    evtSource.onerror = (err) => {
+      console.error("SSE error:", err);
+      evtSource.close();
+    };
+
+    return () => evtSource.close();
   }, [userId]);
+
+
 
   const handleAction = async (changeKey, action) => {
     if (!userId) return;

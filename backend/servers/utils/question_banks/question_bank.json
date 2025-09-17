@@ -140,6 +140,118 @@
             "requires_confirmation": false,
             "priority": 2
         },
+        "ORG001": {
+            "id": "ORG001",
+            "category": "organization",
+            "angle": "goals_and_purposes",
+            "prompt": "What is this organization trying to achieve in the story or world?",
+            "example_context": "Clarify whether the organization seeks power, survival, social change, wealth, knowledge, or another goal.",
+            "tags": [
+                "organization",
+                "purpose",
+                "group"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "ORG002": {
+            "id": "ORG002",
+            "category": "organization",
+            "angle": "questions",
+            "prompt": "What question or problem drives this organization’s actions?",
+            "example_context": "For instance, are they seeking how to expand influence, protect their members, or eliminate a rival?",
+            "tags": [
+                "organization",
+                "question",
+                "conflict"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "ORG003": {
+            "id": "ORG003",
+            "category": "organization",
+            "angle": "information",
+            "prompt": "What past events, traditions, or knowledge shape this organization’s goals?",
+            "example_context": "Think about its founding story, cultural history, or prior conflicts that guide its mission.",
+            "tags": [
+                "organization",
+                "history",
+                "information"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "ORG004": {
+            "id": "ORG004",
+            "category": "organization",
+            "angle": "inferences_and_conclusions",
+            "prompt": "What conclusions has this organization drawn that guide its strategies?",
+            "example_context": "For example, do they believe outsiders are dangerous, or that unity guarantees survival?",
+            "tags": [
+                "organization",
+                "reasoning",
+                "strategy"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "ORG005": {
+            "id": "ORG005",
+            "category": "organization",
+            "angle": "concepts_and_ideas",
+            "prompt": "What core beliefs, values, or ideas shape this organization’s identity?",
+            "example_context": "Consider whether it is guided by justice, ambition, secrecy, loyalty, or faith.",
+            "tags": [
+                "organization",
+                "concepts",
+                "identity"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "ORG006": {
+            "id": "ORG006",
+            "category": "organization",
+            "angle": "assumptions",
+            "prompt": "What assumptions does this organization make about the world, its allies, or its enemies?",
+            "example_context": "For instance, do they assume authority is absolute, rivals are weak, or change is inevitable?",
+            "tags": [
+                "organization",
+                "assumptions",
+                "beliefs"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "ORG007": {
+            "id": "ORG007",
+            "category": "organization",
+            "angle": "implications_and_consequences",
+            "prompt": "What might happen if this organization pursues or abandons its current path?",
+            "example_context": "Consider conflicts, shifts in power, or consequences for members and outsiders.",
+            "tags": [
+                "organization",
+                "consequences",
+                "impact"
+            ],
+            "requires_confirmation": false,
+            "priority": 4
+        },
+        "ORG008": {
+            "id": "ORG008",
+            "category": "organization",
+            "angle": "viewpoints_and_perspectives",
+            "prompt": "How might other groups, characters, or the audience interpret this organization’s actions?",
+            "example_context": "Different perspectives could see them as liberators, oppressors, visionaries, or villains.",
+            "tags": [
+                "organization",
+                "perspective",
+                "interpretation"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
         "SET003": {
             "id": "SET003",
             "category": "setting",

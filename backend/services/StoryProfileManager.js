@@ -73,29 +73,17 @@ class StoryProfileManager {
         }
 
         if (targetKey) {
-            // Merge update (preserve existing aliases if arrays)
             const existing = nodes[targetKey] || {};
             const merged = { ...existing, ...data, id: entityId };
-
-            // If aliases are arrays, ensure we merge unique values
-            if (existing.aliases || data.aliases) {
-                const existingAliases = Array.isArray(existing.aliases) ? existing.aliases : (existing.aliases ? existing.aliases.split(",").map(a => a.trim()) : []);
-                const newAliases = Array.isArray(data.aliases) ? data.aliases : (data.aliases ? data.aliases.split(",").map(a => a.trim()) : []);
-                const combined = Array.from(new Set([...existingAliases, ...newAliases].filter(Boolean)));
-                merged.aliases = combined;
-            }
-
             await set(child(this.nodesRef, targetKey), merged);
             return merged;
         } else {
-            // Create new node with push() to guarantee unique key
+            const nextKey = Object.keys(nodes).length.toString(); // 👈 safe numeric key
             const newNode = { id: entityId, ...data };
-            const newRef = push(this.nodesRef);
-            await set(child(this.nodesRef, newRef.key), newNode);
+            await set(child(this.nodesRef, nextKey), newNode);
             return newNode;
         }
     }
-
 
     async deleteNode(entityId) {
         // Deletes by semantic node.id (not firebase key)
@@ -298,10 +286,11 @@ class StoryProfileManager {
             await set(child(this.linksRef, existingKey), payload);
             return { action: "updated", key: existingKey, data: payload };
         } else {
-            // use push() for unique key
-            const newRef = push(this.linksRef);
-            await set(child(this.linksRef, newRef.key), payload);
-            return { action: "created", key: newRef.key, data: payload };
+            const links = await this.getAllLinks();
+            const nextKey = Object.keys(links).length.toString();
+            await set(child(this.linksRef, nextKey), payload);
+            return { action: "created", key: nextKey, data: payload };
+
         }
     }
 

@@ -82,7 +82,9 @@ const ChatWindow = () => {
             <div className="chatbot-window">
                 {/* Chat messages */}
                 <div className="chat-messages">
-                    {messages.map((msg) => (
+                    {messages
+                    .filter((msg) => msg.visible !== false)
+                    .map((msg) => (
                         <div
                             key={msg.id}
                             className={`message-wrapper ${msg.role === "user" ? "user" : "assistant"}`}

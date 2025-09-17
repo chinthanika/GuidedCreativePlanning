@@ -4,6 +4,9 @@ import json
 from firebase_admin import db
 import os
 
+import logging
+logger = logging.getLogger(__name__)
+
 # Load your question bank JSON once
 BASE_DIR = os.path.dirname(__file__)
 with open(os.path.join(BASE_DIR, "question_banks", "question_bank.json"), "r", encoding="utf-8") as f:
@@ -62,8 +65,13 @@ class DTConversationFlowManager:
         updates["updatedAt"] = int(time.time() * 1000)
         self.metadata_ref.update(updates)
 
-    def save_message(self, role: str, content: str, action=None, category=None, angle=None, follow_up_category=None, summarised=False):
-        """Save message with metadata fields for traceability."""
+    def save_message(self, role: str, content: str, action=None, category=None, angle=None,
+                 follow_up_category=None, summarised=False, visible=True):
+        """Save message with metadata fields for traceability.
+
+        visible: if False, this message should be hidden from the UI but still available
+                to the LLM and internal tooling (stored in Firebase).
+        """
         new_message_ref = self.messages_ref.push()
         new_message_ref.set({
             "role": role,
@@ -72,7 +80,9 @@ class DTConversationFlowManager:
             "category": category,
             "angle": angle,
             "follow_up_category": follow_up_category,
-            "timestamp": int(time.time() * 1000)
+            "timestamp": int(time.time() * 1000),
+            "summarised": summarised,
+            "visible": visible
         })
 
     # ----------- MAIN QUESTION FLOW -----------
@@ -296,9 +306,15 @@ class DTConversationFlowManager:
     
     def get_recent_messages(self, limit=10, maxed_out=False):
         """
-        Return existing summaries + unsummarised messages.
-        If maxed_out=True, return ALL unsummarised messages.
-        """
+            Return existing summaries + unsummarised messages.
+            If maxed_out=True, return ALL unsummarised messages.
+
+
+            Important changes:
+            - Treat messages with missing 'summarised' field as unsummarised (i.e., summarised == False)
+            - Preserve all roles (user, assistant, system)
+            - Return the last `limit` unsummarised messages when maxed_out is False
+            """
         try:
             # --- Fetch summaries ---
             summaries_snapshot = self.metadata_ref.child("summaries").get()
@@ -306,27 +322,84 @@ class DTConversationFlowManager:
             if summaries_snapshot:
                 # Firebase .get() returns dict of {push_id: summary_str}
                 summaries = [v for _, v in sorted(summaries_snapshot.items())]
-
+                
             # --- Fetch messages ---
             snapshot = self.messages_ref.get()
             if not snapshot:
                 return {"summaries": summaries, "unsummarised": []}
 
+
             msgs = sorted(snapshot.items(), key=lambda kv: kv[1].get("timestamp", 0))
             unsummarised = []
 
+
             for msg_id, m in msgs:
-                if not m.get("summarised"):
+                # treat explicit False or missing field as unsummarised
+                if m.get("summarised") is False or m.get("summarised") is None:
+                    # include id to allow marking later
                     unsummarised.append({**m, "id": msg_id})
+
 
             if not maxed_out and len(unsummarised) > limit:
                 unsummarised = unsummarised[-limit:]
+
 
             return {
                 "summaries": summaries,
                 "unsummarised": unsummarised
             }
 
+
         except Exception as e:
-            print("[ERROR] get_recent_messages failed:", e)
+            logger.exception("[ERROR] get_recent_messages failed:")
             return {"summaries": [], "unsummarised": []}
+
+
+    def summarise_and_store(self, deepseek_client, session_id, unsummarised_msgs):
+        try:
+            if not unsummarised_msgs:
+                return {"summaries": self.get_recent_messages(limit=KEEP_LAST_N)["summaries"], "unsummarised": []}
+
+
+            # build the summarisation prompt conservatively
+            summary_prompt = "Summarise these messages:\n" + "\n".join(
+                [f"{m.get('role','unknown')}: {m.get('content','')}" for m in unsummarised_msgs]
+            )
+
+
+            response = deepseek_client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "You are a helpful summariser."},
+                    {"role": "user", "content": summary_prompt},
+                ],
+            )
+
+
+            summary_text = response.choices[0].message["content"]
+
+
+            # store summary
+            self.metadata_ref.child("summaries").push(summary_text)
+
+
+            # mark messages as summarised (only those passed in)
+            for m in unsummarised_msgs:
+                try:
+                    self.messages_ref.child(m["id"]).update({"summarised": True})
+                except Exception:
+                    logger.exception("Failed to mark message summarised")
+
+
+            # return the latest summaries (we'll return last 5 to keep context sized)
+            all_summaries_snapshot = self.metadata_ref.child("summaries").get() or {}
+            all_summaries = [v for _, v in sorted(all_summaries_snapshot.items())]
+            return {
+                "summaries": all_summaries[-5:],
+                "unsummarised": []
+            }
+
+
+        except Exception as e:
+            logger.exception(f"Summarisation error: {e}")
+            return {"summaries": [], "unsummarised": unsummarised_msgs}

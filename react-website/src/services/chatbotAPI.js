@@ -11,13 +11,6 @@ export const sendMessage = async (uid, currentSessionID, text) => {
   const activeSessionID = currentSessionID || sessionID;
   const messagesRef = ref(database, `chatSessions/${uid}/${activeSessionID}/messages`);
 
-  // Save user message
-  await push(messagesRef, {
-    role: "user",
-    content: text,
-    timestamp: serverTimestamp(),
-  });
-
   // Get AI response
   const botData = await getAIResponse(uid, text, activeSessionID);
   console.log("AI response data:", botData);
@@ -27,7 +20,7 @@ export const sendMessage = async (uid, currentSessionID, text) => {
 // Call backend AI API
 async function getAIResponse(uid, userMessage, currentSessionID) {
   try {
-    const response = await fetch("http://10.163.9.130:5001/chat", {
+    const response = await fetch("http://10.163.1.121:5001/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -62,11 +55,4 @@ async function getAIResponse(uid, userMessage, currentSessionID) {
 // Save a bot message to Firebase
 export const sendBotResponse = async (uid, sessionID, text) => {
   if (!uid) throw new Error("User not authenticated");
-
-  const messagesRef = ref(database, `chatSessions/${uid}/${sessionID}/messages`);
-  await push(messagesRef, {
-    role: "assistant",
-    content: text,
-    timestamp: serverTimestamp(),
-  });
 };

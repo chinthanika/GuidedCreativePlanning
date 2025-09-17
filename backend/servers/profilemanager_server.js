@@ -406,6 +406,34 @@ app.get("/api/pending-changes", async (req, res) => {
   }
 });
 
+// --- SSE Support ---
+const clients = [];
+
+app.get("/api/pending-changes/stream", (req, res) => {
+  res.set({
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive"
+  });
+  res.flushHeaders();
+
+  clients.push(res);
+
+  req.on("close", () => {
+    const i = clients.indexOf(res);
+    if (i !== -1) clients.splice(i, 1);
+  });
+});
+
+function broadcastPendingUpdate(userId) {
+  // Each connected client gets notified
+  for (const client of clients) {
+    client.write(`event: pendingUpdate\n`);
+    client.write(`data: ${JSON.stringify({ userId })}\n\n`);
+  }
+}
+
+
 const PORT = 5001;
 app.listen(PORT, () => {
   console.log(`Profile Manager running on port ${PORT}`);

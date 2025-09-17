@@ -18,9 +18,12 @@ export default class ConfirmationPipeline {
         if (!data.label || !data.group) {
             throw new Error("Node must have 'label' and 'group'");
         }
-        const validGroups = ["Person", "Location", "Organization"];
+        const validGroups = ["Person", "Location", "Organization", "Organisation"];
         if (!validGroups.includes(data.group)) {
             throw new Error(`Node group must be one of: ${validGroups.join(", ")}`);
+        }
+        else if (data.group === "Organisation") {
+            data.group = "Organization"; // normalize spelling
         }
     }
 
