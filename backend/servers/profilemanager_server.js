@@ -322,6 +322,9 @@ app.post("/api/stage-change", async (req, res) => {
     const pipeline = new ConfirmationPipeline({ uid: userId });
     const staged = await pipeline.stageChange(entityType, entityId, newData);
 
+    // Broadcast to all connected clients
+    broadcastPendingUpdate(userId);
+
     res.status(200).json(staged); // ✅ already includes status, editable, nextStep
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -358,6 +361,10 @@ app.post("/api/confirm-change", async (req, res) => {
           requiresOverwrite: true
         });
       }
+
+      // Broadcast to all connected clients
+      broadcastPendingUpdate(userId);
+
       console.error("Error during confirm:", err);
       res.status(400).json({ error: err.message });
       // re-
@@ -383,6 +390,10 @@ app.post("/api/deny-change", async (req, res) => {
 
     const pipeline = new ConfirmationPipeline({ uid: userId });
     const denied = await pipeline.deny(changeKey);
+
+    // Broadcast to all connected clients
+    broadcastPendingUpdate(userId);
+
     res.status(200).json(denied);
   } catch (err) {
     res.status(400).json({ error: err.message });

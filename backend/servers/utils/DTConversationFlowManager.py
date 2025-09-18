@@ -376,9 +376,9 @@ class DTConversationFlowManager:
             )
 
 
-            summary_text = response.choices[0].message["content"]
-
-
+            summary_text = response.choices[0].message.content
+            logger.debug(f"Summarisation result: {summary_text}")
+            
             # store summary
             self.metadata_ref.child("summaries").push(summary_text)
 

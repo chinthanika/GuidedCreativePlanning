@@ -5,6 +5,7 @@ import markdown, re
 import openai
 
 import logging
+from logging.handlers import RotatingFileHandler
 
 # Firebase + DTConversationFlowManager
 import firebase_admin
@@ -16,8 +17,24 @@ app = Flask(__name__)
 CORS(app)
 
 # -------------------- SETUP LOGGING --------------------
-logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')
+# Create a logs directory if it doesn't exist
+os.makedirs("logs", exist_ok=True)
+
+log_file = "logs/chat_debug.log"
+rotating_handler = RotatingFileHandler(
+    log_file,
+    mode='a',          # Append to file
+    maxBytes=5*1024*1024,  # 5 MB per file
+    backupCount=3      # Keep last 3 rotated files
+)
+
+# Set log format
+formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+rotating_handler.setFormatter(formatter)
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logger.addHandler(rotating_handler)
 
 # Initialize Firebase
 cred = credentials.Certificate("../Firebase/structuredcreativeplanning-fdea4acca240.json")
@@ -425,13 +442,47 @@ def parse_markdown(md_text, output="text"):
     return text.strip()
 
 def parse_deepseek_json(raw):
-    # Remove triple backticks and optional 'json' label
-    match = re.search(r'```(?:json)?\s*(\{.*\})\s*```', raw, re.DOTALL)
-    if match:
-        clean = match.group(1)
+    """
+    Parse one or more JSON objects from a DeepSeek response.
+    Returns a list of parsed JSON objects.
+    """
+    # Capture all fenced JSON blocks
+    matches = re.findall(r'```(?:json)?\s*(\{.*?\})\s*```', raw, re.DOTALL)
+
+    results = []
+    if matches:
+        for m in matches:
+            try:
+                results.append(json.loads(m))
+            except json.JSONDecodeError as e:
+                # Log or skip malformed blocks
+                print(f"[WARNING] Failed to parse JSON block: {e}")
     else:
-        clean = raw
-    return json.loads(clean)
+        # Fallback: try to parse the whole raw as JSON
+        try:
+            results.append(json.loads(raw))
+        except json.JSONDecodeError:
+            pass
+
+    return results
+
+def normalize_deepseek_response(parsed):
+    """
+    Normalize DeepSeek parser output so handle_action
+    always works with a dict (single action).
+    - If parsed is already a dict, return it.
+    - If parsed is a list with one element, return that element.
+    - If parsed is a list with multiple elements, execute them sequentially
+      by recursively calling handle_action, returning the last result.
+    """
+    if isinstance(parsed, dict):
+        return parsed
+    if isinstance(parsed, list):
+        if len(parsed) == 1:
+            return parsed[0]
+        # If multiple, just return list and let caller loop
+        return parsed
+    return {"action": "respond", "data": {"message": str(parsed)}}
 
 def generate_entity_id(name):
     return hashlib.sha256(name.encode("utf-8")).hexdigest()
@@ -520,6 +571,13 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
     if depth > MAX_DEPTH:
         return {"chat_message": "Error: recursion depth exceeded", "requests": []}
     
+    # Normalize response to single dict if needed
+    if isinstance(deepseek_response, list):
+      result = {}
+      for obj in deepseek_response:
+          result = handle_action(obj, user_id, recent_msgs, cfm_session, depth=depth+1)
+      return result
+
     action = deepseek_response.get("action")
     reasoning = deepseek_response.get("reasoning", "")
     requests_list = deepseek_response.get("data", {}).get("requests", [])
@@ -565,6 +623,7 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
             bot_reply_raw = followup_resp.choices[0].message.content.strip()
             try:
                 bot_reply_json = parse_deepseek_json(bot_reply_raw)
+                bot_reply_json = normalize_deepseek_response(bot_reply_json)  # ensure single dict
                 logger.debug(f"[HANDLE ACTION] [PROFILE DATA] Parsed JSON: {bot_reply_json}")
             except Exception:
                 bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
@@ -582,6 +641,8 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
       logger.debug(f"[STAGE_CHANGE] Requests: {requests_list}")
 
       staged_summaries = []
+      duplicate_detected = False
+
       for req in requests_list:
           etype = req.get("entityType")
           if etype == "node":
@@ -593,29 +654,11 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
           else:
               resp = {"error": f"Unknown entityType {etype}"}
 
-          # ✅ Guard: handle duplicate pending error
+          # Guard: handle duplicate/pending error
           if isinstance(resp, dict) and "error" in resp:
               if "pending" in resp["error"].lower() or "already exists" in resp["error"].lower():
                   logger.debug(f"[STAGE_CHANGE] Duplicate detected: {resp['error']}")
-                  ack_text = (
-                      "That entity is already staged and pending confirmation. "
-                      "I’ll note it and we can continue the conversation."
-                  )
-                  cfm_session.save_message(
-                      "system",
-                      ack_text,
-                      action="stage_skip",
-                      visible=False
-                  )
-                  return {
-                      "chat_message": ack_text,
-                      "requests": [],
-                      "staging_results": [],
-                      "profile_data": [],
-                      "action": "respond",
-                      "reasoning": "Duplicate stage detected, skipping",
-                      "data": {"message": ack_text}
-                  }
+                  duplicate_detected = True
 
           staged_summaries.append(resp)
 
@@ -629,8 +672,55 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
           )
 
       result["staging_results"] = staged_summaries
-      result["chat_message"] = "Got it — I’ve staged those changes. What’s next?"
 
+      # --- Send results back to DeepSeek ---
+      summary = json.dumps(staged_summaries, indent=2)
+      followup_messages = [
+          {"role": "system", "content": SYSTEM_PROMPT},
+          {"role": "assistant", "content": f"Your reasoning when requesting this stage change was: {reasoning}"},
+          {"role": "system", "content":
+              f"Changes staged successfully."
+              f"Proceed conversationally based on this."}
+      ]
+
+      cfm_session.save_message(
+          "system",
+          f"Received staging results:\n{summary}" if summary else "No staging results.",
+          action="got_stage_change",
+          visible=False
+      )
+
+      try:
+          followup_resp = client.chat.completions.create(
+              model="deepseek-chat",
+              messages=followup_messages,
+              stream=False
+          )
+          bot_reply_raw = followup_resp.choices[0].message.content.strip()
+          logger.debug(f"[LLM] Raw staging follow-up: {bot_reply_raw}")
+
+          try:
+              bot_reply_json = parse_deepseek_json(bot_reply_raw)
+              bot_reply_json = normalize_deepseek_response(bot_reply_json)  # ensure single dict
+              logger.debug(f"[HANDLE ACTION] [STAGE_CHANGE] Parsed JSON: {bot_reply_json}")
+          except Exception:
+              bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+              logger.warning("[HANDLE ACTION] [STAGE_CHANGE] JSON parse failed, fallback to respond.")
+
+          followup_result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1)
+
+          # Merge DeepSeek’s follow-up into our result
+          result.update(followup_result)
+
+      except Exception as e:
+          logger.warning(f"[STAGE_CHANGE] Error triggering follow-up: {e}")
+          if duplicate_detected:
+              result["chat_message"] = (
+                  "That entity is already staged and pending confirmation. "
+                  "I’ll note it and we can continue the conversation."
+              )
+          else:
+              result["chat_message"] = "I staged the requested changes. Let’s continue."
 
     elif action in ["get_primary_question", "get_follow_up", "meta_transition"]:
         try:
@@ -666,6 +756,7 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
 
             try:
                 bot_reply_json = parse_deepseek_json(bot_reply_raw)
+                bot_reply_json = normalize_deepseek_response(bot_reply_json)  # ensure single dict
                 logger.debug(f"[HANDLE ACTION] [CFM QUESTION] Parsed JSON: {bot_reply_json}")
             except Exception:
                 bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
@@ -774,7 +865,7 @@ def chat():
         # Guard: ensure the explicit latest user message is last (DeepSeek expects latest at end)
         deepseek_messages.append({"role": "user", "content": user_message})
         logger.debug(f"[CHAT] DeepSeek messages prepared with {len(deepseek_messages)} entries.")
-        print(f"DeepSeek messages: {deepseek_messages}")
+        logger.debug(f"[CHAT] Messages: {deepseek_messages}")
         # ------------------ CALL DEEPSEEK ------------------
         response = client.chat.completions.create(
             model="deepseek-chat",
@@ -786,13 +877,35 @@ def chat():
         logger.debug(f"[DEEPSEEK] Raw: {bot_reply_raw}")
 
         try:
-            bot_reply_json = parse_deepseek_json(bot_reply_raw)
-            logger.debug(f"[DEEPSEEK] Parsed JSON: {bot_reply_json}")
+            bot_reply_json_list = parse_deepseek_json(bot_reply_raw)
+            logger.debug(f"[DEEPSEEK] Parsed JSON list: {bot_reply_json_list}")
+
+            if not bot_reply_json_list:
+                bot_reply_json_list = [{"action": "respond", "data": {"message": bot_reply_raw}}]
+
+            results = []
+            for obj in bot_reply_json_list:
+                if not isinstance(obj, dict):
+                    logger.warning(f"[CHAT] Skipping non-dict object: {obj}")
+                    continue
+                try:
+                    results.append(handle_action(obj, user_id, deepseek_messages, cfm_session))
+                except Exception as e:
+                    logger.warning(f"[CHAT] Error handling action {obj}: {e}")
+
+            # ✅ Only the last result is returned
+            if results:
+                result = results[-1]
+                bot_reply_json = bot_reply_json_list[-1]
+            else:
+                result = {"chat_message": bot_reply_raw, "requests": [], "staging_results": [], "profile_data": []}
+                bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+
         except Exception:
+            result = {"chat_message": bot_reply_raw, "requests": [], "staging_results": [], "profile_data": []}
             bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
             logger.warning("[DEEPSEEK] JSON parse failed, fallback to respond.")
-
-        result = handle_action(bot_reply_json, user_id, deepseek_messages, cfm_session)
+        result =  handle_action(bot_reply_json, user_id, deepseek_messages, cfm_session) if bot_reply_json else None
         logger.debug(f"[CHAT] Final result: {result}")
     except Exception as e:
         logger.warning(f"[CHAT] DeepSeek API error: {e}")
