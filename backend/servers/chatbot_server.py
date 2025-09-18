@@ -565,8 +565,10 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
             bot_reply_raw = followup_resp.choices[0].message.content.strip()
             try:
                 bot_reply_json = parse_deepseek_json(bot_reply_raw)
+                logger.debug(f"[HANDLE ACTION] [PROFILE DATA] Parsed JSON: {bot_reply_json}")
             except Exception:
                 bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+                logger.warning("[HANDLE ACTION] [PROFILE DATA] JSON parse failed, fallback to respond.")
             followup_result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1)
 
             # preserve the assistant message
@@ -664,9 +666,10 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
 
             try:
                 bot_reply_json = parse_deepseek_json(bot_reply_raw)
+                logger.debug(f"[HANDLE ACTION] [CFM QUESTION] Parsed JSON: {bot_reply_json}")
             except Exception:
                 bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
-                logger.warning(f"[LLM] Failed to parse JSON, fallback to raw message.")
+                logger.warning(f"[HANDLE ACTION] [CFM QUESTION] Failed to parse JSON, fallback to raw message.")
             result2 = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1)
             result["chat_message"] = result2.get("chat_message", "")
 
@@ -679,6 +682,8 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
 # -------------------- CHAT ENDPOINT --------------------
 @app.route("/chat", methods=["POST"])
 def chat():
+    result = {"chat_message": "", "requests": [], "staging_results": [], "profile_data": []}  # default
+
     data = request.json
     user_message = data.get("message")
     user_id = data.get("user_id")
@@ -751,47 +756,52 @@ def chat():
 
 
         # Build DeepSeek messages: SYSTEM_PROMPT + summaries (as system) + unsummarised (roles preserved) + the freshly-saved user_message (already part of unsummarised, but ensure last user message is last)
-          deepseek_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+        deepseek_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-          # Add all summaries (each summary stored as plain text) as system messages
-          for s in summaries:
-            deepseek_messages.append({"role": "system", "content": s})
-
-
-          # Add unsummarised messages (most recent KEEP_LAST_N). Ensure we include system messages and preserve original role & content.
-          for m in unsummarised:
-            # If message content is already a JSON payload (your previous implementation packed metadata), prefer raw content when present
-            content = m.get("content")
-            role = m.get("role", "assistant")
-            deepseek_messages.append({"role": role, "content": content})
+        # Add all summaries (each summary stored as plain text) as system messages
+        for s in summaries:
+          deepseek_messages.append({"role": "system", "content": s})
 
 
-          # Guard: ensure the explicit latest user message is last (DeepSeek expects latest at end)
-          deepseek_messages.append({"role": "user", "content": user_message})
+        # Add unsummarised messages (most recent KEEP_LAST_N). Ensure we include system messages and preserve original role & content.
+        for m in unsummarised:
+          # If message content is already a JSON payload (your previous implementation packed metadata), prefer raw content when present
+          content = m.get("content")
+          role = m.get("role", "assistant")
+          deepseek_messages.append({"role": role, "content": content})
 
-          # ------------------ CALL DEEPSEEK ------------------
-          response = client.chat.completions.create(
-              model="deepseek-chat",
-              messages=deepseek_messages,
-              stream=False
-          )
-          bot_reply_raw = response.choices[0].message.content.strip()
-          logger.debug(f"[DEEPSEEK] Raw: {bot_reply_raw}")
 
-          try:
-              bot_reply_json = parse_deepseek_json(bot_reply_raw)
-          except Exception:
-              bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
-              logger.warning("[DEEPSEEK] JSON parse failed, fallback to respond.")
+        # Guard: ensure the explicit latest user message is last (DeepSeek expects latest at end)
+        deepseek_messages.append({"role": "user", "content": user_message})
+        logger.debug(f"[CHAT] DeepSeek messages prepared with {len(deepseek_messages)} entries.")
+        print(f"DeepSeek messages: {deepseek_messages}")
+        # ------------------ CALL DEEPSEEK ------------------
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=deepseek_messages,
+            stream=False
+        )
+        logger.debug(f"[DEEPSEEK] Full response: {response}")
+        bot_reply_raw = response.choices[0].message.content.strip()
+        logger.debug(f"[DEEPSEEK] Raw: {bot_reply_raw}")
 
-          result = handle_action(bot_reply_json, user_id, deepseek_messages, cfm_session)
+        try:
+            bot_reply_json = parse_deepseek_json(bot_reply_raw)
+            logger.debug(f"[DEEPSEEK] Parsed JSON: {bot_reply_json}")
+        except Exception:
+            bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+            logger.warning("[DEEPSEEK] JSON parse failed, fallback to respond.")
 
+        result = handle_action(bot_reply_json, user_id, deepseek_messages, cfm_session)
+        logger.debug(f"[CHAT] Final result: {result}")
     except Exception as e:
         logger.warning(f"[CHAT] DeepSeek API error: {e}")
         return jsonify({"error": f"DeepSeek API error: {e}"}), 500
 
     # ------------------ SAVE ASSISTANT MESSAGE ------------------
     try:
+        logger.debug(f"[CHAT] Saving assistant message: {result.get('chat_message', '')}")
+        logger.debug(f"[CHAT] With metadata: action={bot_reply_json.get('action')}, category={bot_reply_json.get('data', {}).get('category')}, angle={bot_reply_json.get('data', {}).get('angle')}")
         cfm_session.save_message(
             role="assistant",
             content=result.get("chat_message", ""),
@@ -805,7 +815,7 @@ def chat():
     except Exception as e:
         logger.warning(f"[CHAT] Failed to save assistant message: {e}")
 
-    result["session_id"] = session_id
+    result["session_id"] = session_id #line 808
     return jsonify(result), 200
 
 # -------------------- RUN SERVER --------------------
