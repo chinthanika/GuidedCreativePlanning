@@ -20,7 +20,7 @@ export const sendMessage = async (uid, currentSessionID, text) => {
 // Call backend AI API
 async function getAIResponse(uid, userMessage, currentSessionID) {
   try {
-    const response = await fetch("http://10.163.5.92:5001/chat", {
+    const response = await fetch("http://10.163.8.166:5001/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

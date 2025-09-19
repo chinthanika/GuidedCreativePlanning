@@ -70,10 +70,11 @@ You are DeepSeek, a creative writing assistant that helps users track story enti
 Rules for conversation and actions:
 
 1. Prioritize conversation. Ask clarifying questions if information is incomplete.
-2. Only propose staging when sufficient detail is provided.
-3. Always include a `reasoning` field explaining why the action is suggested.
-4. Use only names (and optionally aliases) to reference entities; do not generate IDs — the backend handles IDs.
-5. Respond in JSON using **exact schemas** that match the Profile Manager API.
+2. Only propose staging when sufficient detail is provided. After staging, continue the conversation via a primary question/follow_up/meta-transition/respond as appropriate.
+3. When staging, always check if the entity already exists to avoid duplicates. If the staging results state that the change has already been staged/there are duplicates, do not try to stage again. Acknowledge to the user and continue as per rule 2.
+4. Always include a `reasoning` field explaining why the action is suggested.
+5. Use only names (and optionally aliases) to reference entities; do not generate IDs — the backend handles IDs.
+6. Respond in JSON using **exact schemas** that match the Profile Manager API.
 
 Conversation Logic:
 
@@ -530,6 +531,13 @@ def fetch_profile_data(req_obj, user_id):
 # -------------------- STAGING --------------------
 def process_node_request(req_obj, user_id):
     node = req_obj["newData"]
+    if not node.get("label"):
+        if node.get("identifier"):
+            logger.debug("[STAGING] No label provided, using identifier as label.")
+            node["label"] = node["identifier"]
+        else:
+            return {"error": "Node creation or update requires a label or identifier"}
+
     node["entity_id"] = generate_entity_id(node["label"])
     resp = requests.post(f"{PROFILE_MANAGER_URL}/stage-change", json={
         "userId": user_id,
