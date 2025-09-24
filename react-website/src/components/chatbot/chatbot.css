@@ -136,6 +136,42 @@
   animation-delay: 0.4s;
 }
 
+/* Mode switcher container */
+.mode-switcher {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+  background: #fafafa;
+}
+
+/* Mode buttons */
+.mode-switcher button {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Hover effect */
+.mode-switcher button:hover {
+  background: #f0f0f0;
+}
+
+/* Active button state */
+.mode-switcher button.active {
+  background: #0078ff;
+  color: white;
+  border-color: #0078ff;
+  box-shadow: 0 2px 6px rgba(0, 120, 255, 0.3);
+}
+
+
 @keyframes blink {
   0% { opacity: 0.2; }
   20% { opacity: 1; }

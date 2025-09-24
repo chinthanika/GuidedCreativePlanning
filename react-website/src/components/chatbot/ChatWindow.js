@@ -9,7 +9,7 @@ import "./chatbot.css";
 const ChatWindow = () => {
     const { currentUser } = useAuthValue();
     const uid = currentUser?.uid;
-
+    const [mode, setMode] = useState("brainstorming");
     const [sessionID, setSessionID] = useState(null);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
@@ -71,7 +71,7 @@ const ChatWindow = () => {
         setLoading(true); // Show typing dots immediately
         setInput("");     // Clear input immediately
 
-        await sendMessage(uid, sessionID, input);
+        await sendMessage(uid, sessionID, input, mode);
 
         setLoading(false); // Hide typing dots after bot response is saved
     };
@@ -80,28 +80,43 @@ const ChatWindow = () => {
     return (
         <div className="chatbot-page">
             <div className="chatbot-window">
+                <div className="mode-switcher">
+                    <button
+                        onClick={() => setMode("deepthinking")}
+                        className={mode === "deepthinking" ? "active" : ""}
+                    >
+                        Deepthinking
+                    </button>
+                    <button
+                        onClick={() => setMode("brainstorming")}
+                        className={mode === "brainstorming" ? "active" : ""}
+                    >
+                        Brainstorming
+                    </button>
+                </div>
+
                 {/* Chat messages */}
                 <div className="chat-messages">
                     {messages
-                    .filter((msg) => msg.visible !== false)
-                    .map((msg) => (
-                        <div
-                            key={msg.id}
-                            className={`message-wrapper ${msg.role === "user" ? "user" : "assistant"}`}
-                        >
-                            <div className={`message ${msg.role}`}>
-                                {msg.role === "assistant" && msg.content.startsWith("<") ? (
-                                    // If message starts with HTML, render it
-                                    <div
-                                        dangerouslySetInnerHTML={{ __html: msg.content }}
-                                    />
-                                ) : (
-                                    // Otherwise render as plain text
-                                    <p>{msg.content}</p>
-                                )}
+                        .filter((msg) => msg.visible !== false)
+                        .map((msg) => (
+                            <div
+                                key={msg.id}
+                                className={`message-wrapper ${msg.role === "user" ? "user" : "assistant"}`}
+                            >
+                                <div className={`message ${msg.role}`}>
+                                    {msg.role === "assistant" && msg.content.startsWith("<") ? (
+                                        // If message starts with HTML, render it
+                                        <div
+                                            dangerouslySetInnerHTML={{ __html: msg.content }}
+                                        />
+                                    ) : (
+                                        // Otherwise render as plain text
+                                        <p>{msg.content}</p>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
                     {loading && (
                         <div className="message-wrapper assistant">
                             <div className="message assistant typing">

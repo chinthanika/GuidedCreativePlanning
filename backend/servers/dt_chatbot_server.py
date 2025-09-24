@@ -20,7 +20,7 @@ CORS(app)
 # Create a logs directory if it doesn't exist
 os.makedirs("logs", exist_ok=True)
 
-log_file = "logs/chat_debug.log"
+log_file = "logs/dt_chat_debug.log"
 rotating_handler = RotatingFileHandler(
     log_file,
     mode='a',          # Append to file
@@ -577,14 +577,20 @@ def process_event_request(req_obj, user_id):
 # -------------------- ACTION HANDLER --------------------
 def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 0):
     if depth > MAX_DEPTH:
+        logger.warning("[ACTION] Max recursion depth reached, aborting further handling")
         return {"chat_message": "Error: recursion depth exceeded", "requests": []}
     
+    results = []
+
     # Normalize response to single dict if needed
     if isinstance(deepseek_response, list):
-      result = {}
-      for obj in deepseek_response:
-          result = handle_action(obj, user_id, recent_msgs, cfm_session, depth=depth+1)
-      return result
+        for obj in deepseek_response:
+            results.append(handle_action(obj, user_id, recent_msgs, cfm_session, depth=depth + 1))
+        return results[-1] if results else {}
+    
+    if not isinstance(deepseek_response, dict):
+        logger.error(f"[ACTION] Unexpected deepseek_response type: {type(deepseek_response)}")
+        return {}
 
     action = deepseek_response.get("action")
     reasoning = deepseek_response.get("reasoning", "")
@@ -592,6 +598,8 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
     result = {"chat_message": "", "requests": requests_list, "staging_results": [], "profile_data": []}
 
     last_user_msg = recent_msgs[-1]["content"] if recent_msgs else ""
+
+    result = {}
 
     if action == "respond":
         result["chat_message"] = parse_markdown(deepseek_response.get("data", {}).get("message", ""), "html")
@@ -937,8 +945,9 @@ def chat():
         logger.warning(f"[CHAT] Failed to save assistant message: {e}")
 
     result["session_id"] = session_id #line 808
+    result["mode"] = "deepthinking"
     return jsonify(result), 200
 
 # -------------------- RUN SERVER --------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001, debug=True, threaded=True)
+    app.run(host="0.0.0.0", port=5003, debug=True, threaded=True)

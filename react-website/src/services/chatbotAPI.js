@@ -4,7 +4,7 @@ import { ref, push, serverTimestamp } from "firebase/database";
 let sessionID = null;
 
 //  Save a user message and trigger AI response
-export const sendMessage = async (uid, currentSessionID, text) => {
+export const sendMessage = async (uid, currentSessionID, text, mode = "brainstorming") => {
   if (!uid) throw new Error("User not authenticated");
 
   // Always use the most up-to-date sessionID
@@ -12,15 +12,19 @@ export const sendMessage = async (uid, currentSessionID, text) => {
   const messagesRef = ref(database, `chatSessions/${uid}/${activeSessionID}/messages`);
 
   // Get AI response
-  const botData = await getAIResponse(uid, text, activeSessionID);
+  const botData = await getAIResponse(uid, text, activeSessionID, mode);
   console.log("AI response data:", botData);
 
 };
 
 // Call backend AI API
-async function getAIResponse(uid, userMessage, currentSessionID) {
+async function getAIResponse(uid, userMessage, currentSessionID, mode = "brainstorming") {
   try {
-    const response = await fetch("http://10.163.8.166:5001/chat", {
+    const url = mode === "brainstorming"
+      ? "http://10.163.5.124:5002/chat" // brainstorming backend
+      : "http://10.163.5.124:5003/chat"; // deepthinking backend
+
+    const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

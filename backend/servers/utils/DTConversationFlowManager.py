@@ -3,10 +3,13 @@ import random
 import json
 from firebase_admin import db
 import os
+import requests
+
 
 import logging
 logger = logging.getLogger(__name__)
 
+KEEP_LAST_N = 10 
 # Load your question bank JSON once
 BASE_DIR = os.path.dirname(__file__)
 with open(os.path.join(BASE_DIR, "question_banks", "question_bank.json"), "r", encoding="utf-8") as f:
@@ -15,6 +18,10 @@ with open(os.path.join(BASE_DIR, "question_banks", "question_bank.json"), "r", e
 primary = question_bank.get("primary", {})
 follow_up = question_bank.get("follow_up", {})
 meta_transitions = question_bank.get("meta_transitions", {})
+
+# ------------------ CONFIG ------------------
+SESSION_API_URL = "http://localhost:4000"
+KEEP_LAST_N = 10
 
 
 class DTConversationFlowManager:
@@ -25,24 +32,48 @@ class DTConversationFlowManager:
         if not uid or not session_id:
             raise ValueError("uid and session_id are required")
 
+
         self.uid = uid
         self.session_id = session_id
-        self.session_ref = db.reference(f"chatSessions/{uid}/{session_id}")
-        self.metadata_ref = self.session_ref.child("metadata")
-        self.messages_ref = self.session_ref.child("messages")
+
+
+        # cached metadata for convenience
+        self._metadata_cache = None
+
+
+        # On init try to prime cache — caller will see logged errors if API unreachable
+        try:
+            self._refresh_metadata_cache()
+            logger.debug("[INIT] DT session connected and metadata cached")
+        except Exception as e:
+            logger.exception("[INIT] Failed to prime metadata cache: %s", e)
+
+    # ------------------ HTTP helpers ------------------
+    def _url(self, path: str) -> str:
+        return f"{SESSION_API_URL}{path}"
+
+
+    def _post(self, path: str, payload: dict, timeout: float = 10.0) -> dict:
+        try:
+            r = requests.post(self._url(path), json=payload, timeout=timeout)
+            r.raise_for_status()
+            return r.json()
+        except Exception as e:
+            logger.exception(f"[HTTP POST] {path} failed: {e} | payload={payload}")
+            raise
 
     # ----------- SESSION MGMT -----------
-
     @staticmethod
     def create_session(uid: str):
-        session_ref = db.reference(f"chatSessions/{uid}")
-        new_session_ref = session_ref.push()
-        session_id = new_session_ref.key
+        """Create a session using the same metadata shapes the previous DT code expects.
 
-        initial_metadata = {
-            "createdAt": int(time.time() * 1000),
-            "updatedAt": int(time.time() * 1000),
-            "title": "New Chat",
+
+        Note: if the Session API /session/create endpoint does not accept the
+        nested dt metadata exactly as provided, that may cause data loss. We log
+        a warning in that case (the API will normally echo errors).
+        """
+        shared_meta = {"title": "New Chat"}
+        dt_meta = {
             "currentCategory": None,
             "currentAngle": None,
             "asked": [],
@@ -50,40 +81,98 @@ class DTConversationFlowManager:
             "followUpCount": 0,
         }
 
-        new_session_ref.set({
-            "metadata": initial_metadata,
-            "messages": {}
-        })
+        bs_meta = {
+            "stage": "Clarify",
+            "parentSessionId": None,
+            "hmwQuestions": [],
+            "stageHistory": [],
+            "fluencyScore": "Low",
+            "flexibilityCategories": []
+        }
 
+        payload = {
+            "uid": uid,
+            "metadata_shared": shared_meta,
+            "metadata_dt": dt_meta,
+            "metadata_bs": bs_meta
+        }
+
+
+        res = requests.post(f"{SESSION_API_URL}/session/create", json=payload, timeout=10.0)
+        res.raise_for_status()
+        session_id = res.json().get("sessionID")
+        logger.debug(f"[SESSION CREATE] Created session {session_id} for uid={uid}")
         return DTConversationFlowManager(uid, session_id)
 
+    def _refresh_metadata_cache(self):
+        payload = {"uid": self.uid, "sessionID": self.session_id}
+        res = self._post("/session/get_metadata", payload)
+        metadata = res.get("metadata", {}) if isinstance(res, dict) else {}
+        self._metadata_cache = metadata
+        logger.debug(f"[CACHE] Metadata cache refreshed: keys={list(metadata.keys())}")
+
     def get_metadata(self):
-        snapshot = self.metadata_ref.get()
-        return snapshot if snapshot else None
+        """Return deepthinking metadata (cached if possible)."""
+        # Prefer a fresh read so callers always get the most recent
+        self._refresh_metadata_cache()
+        return self._metadata_cache.get("deepthinking", {}) if self._metadata_cache else {}
 
     def update_metadata(self, updates: dict):
-        updates["updatedAt"] = int(time.time() * 1000)
-        self.metadata_ref.update(updates)
-
-    def save_message(self, role: str, content: str, action=None, category=None, angle=None,
-                 follow_up_category=None, summarised=False, visible=True):
-        """Save message with metadata fields for traceability.
-
-        visible: if False, this message should be hidden from the UI but still available
-                to the LLM and internal tooling (stored in Firebase).
         """
-        new_message_ref = self.messages_ref.push()
-        new_message_ref.set({
+        Update deepthinking metadata via the Session API.
+
+
+        WARNING: session.update_metadata will do a shallow merge on the server
+        depending on the server implementation. If you pass partial nested
+        structures the server may overwrite the whole object. We log a
+        warning so the developer can inspect whether the endpoint preserves
+        nested keys in your deployment.
+        """
+        if not isinstance(updates, dict):
+            raise ValueError("updates must be a dict")
+
+
+        payload = {"uid": self.uid, "sessionID": self.session_id, "updates": updates, "mode": "deepthinking"}
+
+
+        try:
+            self._post("/session/update_metadata", payload)
+        except Exception:
+            logger.exception("Failed to update deepthinking metadata via Session API")
+            raise
+
+
+        # refresh local cache
+        self._refresh_metadata_cache()
+
+
+        # Heuristic warning: if updates contain top-level keys other than those
+        # expected by DT flow, we warn the operator. This helps detect the case
+        # where the Session API might not persist unexpected keys.
+        allowed_top_keys = {"currentCategory", "currentAngle", "asked", "depth", "followUpCount"}
+        if any(k not in allowed_top_keys for k in updates.keys()):
+            logger.debug("[WARNING] update_metadata included keys outside expected DT keys. Ensure Session API preserves unknown keys if that's intentional.")
+
+    def save_message(self, role: str, content: str, **kwargs):
+        """Save a chat message through the session API.
+
+
+        kwargs are passed through to the session save endpoint as "extra"
+        so callers can provide e.g. stage, visible flags.
+        """
+        extra = kwargs.copy() or {}
+        payload = {
+            "uid": self.uid,
+            "sessionID": self.session_id,
             "role": role,
             "content": content,
-            "action": action,
-            "category": category,
-            "angle": angle,
-            "follow_up_category": follow_up_category,
-            "timestamp": int(time.time() * 1000),
-            "summarised": summarised,
-            "visible": visible
-        })
+            "mode": "deepthinking",
+            "extra": extra
+        }
+        res = self._post("/session/save_message", payload)
+        msg_id = res.get("messageID")
+        logger.debug(f"[MESSAGE SAVE] Saved message id={msg_id} role={role}")
+        return msg_id
 
     # ----------- MAIN QUESTION FLOW -----------
 
@@ -305,38 +394,42 @@ class DTConversationFlowManager:
         return [q for q in pool if q["id"] not in recent_ids]
     
     def get_recent_messages(self, limit=10, maxed_out=False):
+        """Return existing summaries + unsummarised messages.
+
+
+        - Treat messages with missing 'summarised' field as unsummarised.
+        - Preserve roles.
+        - Return last `limit` unsummarised messages when maxed_out=False.
+        - Also return the current DT metadata (category/angle) so the LLM can
+        be given the current context in a single payload.
         """
-            Return existing summaries + unsummarised messages.
-            If maxed_out=True, return ALL unsummarised messages.
-
-
-            Important changes:
-            - Treat messages with missing 'summarised' field as unsummarised (i.e., summarised == False)
-            - Preserve all roles (user, assistant, system)
-            - Return the last `limit` unsummarised messages when maxed_out is False
-            """
         try:
-            # --- Fetch summaries ---
-            summaries_snapshot = self.metadata_ref.child("summaries").get()
-            summaries = []
-            if summaries_snapshot:
-                # Firebase .get() returns dict of {push_id: summary_str}
-                summaries = [v for _, v in sorted(summaries_snapshot.items())]
-                
-            # --- Fetch messages ---
-            snapshot = self.messages_ref.get()
-            if not snapshot:
-                return {"summaries": summaries, "unsummarised": []}
+            # --- Fetch summaries & dt metadata ---
+            self._refresh_metadata_cache()
+            md = self._metadata_cache or {}
+            summaries = md.get("shared", {}).get("summaries", {}) or {}
+            summaries_list = [v for _, v in sorted(summaries.items())]
 
 
-            msgs = sorted(snapshot.items(), key=lambda kv: kv[1].get("timestamp", 0))
+            # --- Fetch messages via session API ---
+            payload = {"uid": self.uid, "sessionID": self.session_id}
+            res = self._post("/session/get_messages", payload)
+            messages_snapshot = res.get("messages", {}) or {}
+
+
+            if not messages_snapshot:
+                logger.debug("[MESSAGES FETCH] No messages found")
+                # include DT metadata for convenience
+                dt_meta = md.get("deepthinking", {})
+                return {"summaries": summaries_list, "unsummarised": [], "dt_metadata": dt_meta}
+
+
+            msgs = sorted(messages_snapshot.items(), key=lambda kv: kv[1].get("timestamp", 0))
             unsummarised = []
 
 
             for msg_id, m in msgs:
-                # treat explicit False or missing field as unsummarised
                 if m.get("summarised") is False or m.get("summarised") is None:
-                    # include id to allow marking later
                     unsummarised.append({**m, "id": msg_id})
 
 
@@ -344,15 +437,16 @@ class DTConversationFlowManager:
                 unsummarised = unsummarised[-limit:]
 
 
-            return {
-                "summaries": summaries,
-                "unsummarised": unsummarised
-            }
+            dt_meta = md.get("deepthinking", {})
+            logger.debug(f"[MESSAGES FETCH] Found {len(unsummarised)} unsummarised messages; dt_meta keys={list(dt_meta.keys())}")
+
+
+            return {"summaries": summaries_list, "unsummarised": unsummarised, "dt_metadata": dt_meta}
 
 
         except Exception as e:
-            logger.exception("[ERROR] get_recent_messages failed:")
-            return {"summaries": [], "unsummarised": []}
+            logger.exception("[ERROR] get_recent_messages failed: %s", e)
+            return {"summaries": [], "unsummarised": [], "dt_metadata": {}}
 
 
     def summarise_and_store(self, deepseek_client, session_id, unsummarised_msgs):
