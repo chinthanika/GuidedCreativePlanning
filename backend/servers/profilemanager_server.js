@@ -8,6 +8,45 @@ const app = express();
 
 app.use(cors({ origin: "http://localhost:3000" })); // allow React dev server
 app.use(bodyParser.json());
+
+/**
+ * Get full story profile (profile root + graph + events)
+ */
+app.get("/api/profile", async (req, res) => {
+  console.log("Received /api/profile request with query:", req.query);
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    const manager = pipeline.manager;
+
+    // Gather everything in parallel
+    const [profile, nodes, links, events] = await Promise.all([
+      manager.getProfile(),
+      manager.getAllNodes(),
+      manager.getAllLinks(),
+      manager.getAllEvents()
+    ]);
+
+    const story = {
+      profile: profile || {},
+      graph: {
+        nodes: nodes || {},
+        links: links || {}
+      },
+      events: events || {}
+    };
+
+    console.log("Returning story profile for user:", userId);
+    res.status(200).json(story);
+  } catch (err) {
+    console.error("Error in /api/profile:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 /**
  * Get all nodes (with optional group filter)
  */

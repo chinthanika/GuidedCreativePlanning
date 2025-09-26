@@ -19,7 +19,8 @@ import StoryMap from './pages/storymap/story-map';
 import StoryTimeline from './pages/timeline/timeline';
 import StoryEditor from './pages/storyeditor/story';
 import Chatbot from './pages/chatbot/chatbot'; // Import the Chatbot page
-  
+import NotebookPage from './pages/notebook/notebook';  
+
 function App() {
 
     //These constants will be visible inside AuthProvider
@@ -47,6 +48,7 @@ return (
                 <Route path='/story-timeline' element={<StoryTimeline/>}/>
                 <Route path='/chatbot' element={<Chatbot/>}/>
                 <Route path='/story-editor' element={<StoryEditor/>}/>
+                <Route path='/notebook' element={<NotebookPage/>}/>
                 <Route exact path='/' element={
                     <PrivateRoute>
                     <Profile/>
