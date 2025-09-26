@@ -1,7 +1,25 @@
 import { database } from '../Firebase/firebase';
 import { ref, push, serverTimestamp } from "firebase/database";
+import { useEffect } from 'react';
 
 let sessionID = null;
+
+// Cleanup session on window unload
+function useSessionCleanup(uid, sessionID) {
+  useEffect(() => {
+    const handleUnload = () => {
+      if (uid && sessionID) {
+        navigator.sendBeacon(
+          "http://localhost:4000/session/end",
+          JSON.stringify({ uid, sessionID })
+        );
+      }
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, [uid, sessionID]);
+}
 
 //  Save a user message and trigger AI response
 export const sendMessage = async (uid, currentSessionID, text, mode = "brainstorming") => {
@@ -21,8 +39,8 @@ export const sendMessage = async (uid, currentSessionID, text, mode = "brainstor
 async function getAIResponse(uid, userMessage, currentSessionID, mode = "brainstorming") {
   try {
     const url = mode === "brainstorming"
-      ? "http://10.163.5.124:5002/chat" // brainstorming backend
-      : "http://10.163.5.124:5003/chat"; // deepthinking backend
+      ? "http://10.163.12.87:5002/chat" // brainstorming backend
+      : "http://10.163.12.87:5003/chat"; // deepthinking backend
 
     const response = await fetch(url, {
       method: "POST",

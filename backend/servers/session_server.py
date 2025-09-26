@@ -7,6 +7,8 @@ import openai
 import os
 import logging
 from logging.handlers import RotatingFileHandler
+from apscheduler.schedulers.background import BackgroundScheduler
+
 
 # ---------------- LOGGING SETUP ----------------
 os.makedirs("logs", exist_ok=True)
@@ -58,6 +60,25 @@ def get_session_from_request():
         session = Session(uid, session_id)
     return session, None
 
+# ---------------- SCHEDULER ----------------
+def summarise_active_sessions():
+    logger.info("Running scheduled summarisation job for all active sessions")
+    active_sessions = Session.get_all_active_sessions()
+
+    for session in active_sessions:
+        try:
+            summary = session.summarise(client, min_messages=10)
+            if summary:
+                logger.debug(f"Summary created for {session.session_id}: {summary[:60]}...")
+        except Exception as e:
+            logger.error(f"Failed auto-summarising session {session.session_id}: {e}")
+
+# Start scheduler
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=summarise_active_sessions, trigger="interval", minutes=5)
+scheduler.start()
+
+
 # ---------------- ENDPOINTS ----------------
 
 @app.before_request
@@ -84,7 +105,31 @@ def create_session():
         data.get("metadata_bs")
     )
     logger.info(f"Created new session: uid={uid}, sessionID={session.session_id}")
+    
+    # Start a job for this session that runs every 5 minutes
+    job_id = f"summarise_{uid}_{session.session_id}"
+    scheduler.add_job(
+        func=summarise_active_sessions,
+        trigger="interval",
+        minutes=5,
+        id=job_id,
+        replace_existing=True
+    )
+    
     return jsonify({"sessionID": session.session_id})
+
+@app.route("/session/end", methods=["POST"])
+def end_session():
+    session, err = get_session_from_request()
+    if err:
+        logger.error(f"End session failed: {err}")
+        return jsonify({"error": err}), 400
+    
+    session.update_metadata({"ended": True, "endedAt": time.time()}, mode="shared")
+    session.end(session.uid, session.session_id)
+    logger.info(f"Session ended: {session.session_id}")
+    return jsonify({"success": True})
+
 
 @app.route("/session/switch_mode", methods=["POST"])
 def switch_mode():
@@ -151,7 +196,21 @@ def get_messages():
     logger.debug(f"Fetched {len(messages)} messages for session={session.session_id}")
     return jsonify({"messages": messages})
 
-# ---------------- CPS-SPECIFIC ----------------
+@app.route("/session/summarise", methods=["POST"])
+def summarise_session():
+    session, err = get_session_from_request()
+    if err:
+        logger.error(f"Summarise failed: {err}")
+        return jsonify({"error": err}), 400
+
+    try:
+        summary = session.summarise(client, min_messages=1)  # allow manual summarisation for any messages
+    except Exception:
+        return jsonify({"error": "summarisation failed"}), 500
+
+    return jsonify({"success": True, "summary": summary})
+
+# ---------------- BS-SPECIFIC ----------------
 
 @app.route("/cps/add_idea", methods=["POST"])
 def add_idea():
