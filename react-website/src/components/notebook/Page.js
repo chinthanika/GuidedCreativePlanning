@@ -1,19 +1,8 @@
-import React, { forwardRef } from "react";
-
-const Page = forwardRef(({ title, children }, ref) => {
+export default function Page({ title, children }) {
   return (
-    <div
-      ref={ref}
-      className="relative p-10 bg-amber-50 shadow-inner h-full w-full font-serif"
-    >
-      {title && (
-        <div className="text-center mb-8 border-b border-gray-400 pb-2">
-          <h1 className="text-2xl font-bold tracking-wide">{title}</h1>
-        </div>
-      )}
-      <div className="prose max-w-none">{children}</div>
+    <div className="p-6 w-full h-full flex flex-col">
+      {title && <h1 className="text-xl font-bold mb-4">{title}</h1>}
+      <div className="flex-1 overflow-y-auto">{children}</div>
     </div>
   );
-});
-
-export default Page;
+}

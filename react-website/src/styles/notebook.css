@@ -1,19 +1,103 @@
-/* Book container */
-.notebook-book {
-  background: #fdfcf7;
-  box-shadow: 0 4px 30px rgba(0,0,0,0.2);
-  border: 1px solid #e0dcd2;
+/* Container */
+.notebook-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f4f1ea; /* soft parchment background */
   font-family: "Georgia", serif;
+  color: #2c2c2c;
+  overflow:visible;
 }
 
-/* Generic page styling */
-.notebook-page {
+/* Navigation arrows */
+.notebook-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 2rem;
+  color: #5a381e;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s, transform 0.2s;
+  z-index: 20;
+}
+
+.notebook-arrow:hover {
+  color: #7b4b1d;
+  transform: translateY(-50%) scale(1.15);
+}
+
+.notebook-arrow.left {
+  left: -2.2rem; /* outside book, but close */
+}
+
+.notebook-arrow.right {
+  right: -2.2rem; /* outside book, but close */
+}
+
+/* Page number centered at the bottom */
+.notebook-page-number {
+  position: absolute;
+  bottom: 0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.85rem;
+  color: #7b7b7b;
+}
+
+/* Book frame */
+.notebook-book {
+  position: relative;
+  width: 800px;
+  height: 600px;
+  background: #fdfcf7;
+  border: 1px solid #e0dcd2;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+  overflow: visible; /* keep arrows outside book, content inside */
+}
+
+/* Viewport locks the animation area */
+.notebook-viewport {
+  position: relative;
+  width: 100%;
   height: 100%;
-  background: #fffef9;
-  background-image: linear-gradient(to bottom, transparent 95%, rgba(0,0,0,0.05) 96%);
-  background-size: 100% 1.75rem;
+  overflow: hidden; /* 👈 constrain sliding pages */
+}
+
+/* Each page is full screen inside viewport */
+.notebook-page {
+  position: absolute; /* so slides stack */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; /* 👈 no shrink based on content */
   padding: 2rem;
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+  background: #fffefb;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.05);
+  overflow-y: auto; /* scroll internally if content overflows */
+  box-sizing: border-box;
+}
+
+
+/* Generic page */
+.notebook-page {
+  width: 100%;
+  height: 100%;
+  background: #fffefb;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 👈 prevent content from leaking during slide */
+}
+
+/* Inner content area with padding */
+.notebook-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
 }
 
 /* Titles */
@@ -21,24 +105,27 @@
   font-size: 1.8rem;
   font-weight: 700;
   margin-bottom: 1rem;
-  color: #2b2b2b;
+  color: #3b2f2f;
   text-align: center;
+  border-bottom: 1px solid #d8d3c4;
+  padding-bottom: 0.5rem;
 }
 
-/* Table of Contents */
-.notebook-toc button {
-  font-size: 1.1rem;
-  padding: 0.5rem 1rem;
-  margin: 0.2rem 0;
-  border-radius: 4px;
+/* Table of contents */
+.notebook-toc li {
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
   transition: background 0.2s;
 }
 
-.notebook-toc button:hover {
+.notebook-toc li:hover {
   background: #f1eadd;
+  border-radius: 4px;
 }
 
-/* List of entities */
+/* Entity list */
 .notebook-list li {
   padding: 0.3rem 0.6rem;
   font-size: 1.05rem;
@@ -52,11 +139,32 @@
 }
 
 /* Entity detail */
-.notebook-detail p {
-  margin: 0.5rem 0;
+.notebook-detail {
   font-size: 1rem;
-  line-height: 1.4;
+  line-height: 1.5;
 }
+
 .notebook-detail strong {
-  color: #7b4b1d;
+  color: #5a381e;
+}
+
+/* Back button */
+.notebook-back {
+  display: inline-block;
+  margin-bottom: 1rem;
+  padding: 0.4rem 0.8rem;
+  background: #f1eadd;
+  border: 1px solid #d8d3c4;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.notebook-back:hover {
+  background: #e8dfcf;
+}
+
+.notebook-back:active {
+  transform: scale(0.97);
 }

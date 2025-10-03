@@ -1,3 +1,5 @@
+import { transformProfileData } from "../utils/transformData";
+
 export async function getNotebookData(uid) {
     console.log("Fetching notebook data for UID:", uid);
     if (!uid) {
@@ -12,7 +14,9 @@ export async function getNotebookData(uid) {
     if (!res.ok) {
         throw new Error(`Failed to fetch profile: ${res.status}`);
     }
-    const data = await res.json(); // 👈 actually parse JSON
-    console.log("Notebook data response:", data); // 👈 now you'll see real data
-    return data;
+    const data = await res.json(); // actually parse JSON
+    
+    const transformedData = transformProfileData(data); // transform the raw data
+    console.log("Transformed data:", transformedData); // 👈 now you'll see real data
+    return transformedData;
 }
