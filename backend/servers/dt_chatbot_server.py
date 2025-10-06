@@ -7,6 +7,8 @@ import openai
 import logging
 from logging.handlers import RotatingFileHandler
 
+import threading, traceback
+
 # Firebase + DTConversationFlowManager
 import firebase_admin
 from firebase_admin import credentials, db
@@ -217,7 +219,7 @@ JSON Schemas:
   "data": { "message": "Hello! Who would you like to discuss today?" }
 }
 
-2. get_info / query
+2. get_info / query (NEVER output just get_info/stage_change without a respond action. The user must always get a conversational message.)
 {
   "action": "get_info|query",
   "reasoning": "Explain why this info is needed",
@@ -404,6 +406,37 @@ Behavior Guidelines:
 
 # -------------------- UTILITIES --------------------
 
+from firebase_admin import db
+
+def background_handle_action(actions, user_id, deepseek_messages, cfm_session):
+    """Run heavy background updates asynchronously and report status to Firebase."""
+    task_ref = db.reference(f"backgroundTasks/{user_id}")
+    task_id = str(int(time.time()))  # simple unique ID based on timestamp
+
+    try:
+        # --- Mark as processing ---
+        task_ref.child(task_id).set({
+            "status": "processing",
+            "startedAt": time.time(),
+        })
+
+        # --- Do the actual work ---
+        for act in actions:
+            handle_action(act, user_id, deepseek_messages, cfm_session)
+        # --- Mark as done ---
+        task_ref.child(task_id).update({
+            "status": "done",
+            "finishedAt": time.time(),
+        })
+
+    except Exception as e:
+        logger.error(f"[THREAD] handle_action crashed: {e}\n{traceback.format_exc()}")
+        task_ref.child(task_id).update({
+            "status": "error",
+            "error": str(e),
+            "finishedAt": time.time(),
+        })
+
 def append_system_message(history_msgs, content):
     """
     history_msgs: list of dicts with at least keys 'role' and 'content'
@@ -580,30 +613,55 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
         logger.warning("[ACTION] Max recursion depth reached, aborting further handling")
         return {"chat_message": "Error: recursion depth exceeded", "requests": []}
     
-    results = []
-
     # Normalize response to single dict if needed
     if isinstance(deepseek_response, list):
+        results = []
         for obj in deepseek_response:
             results.append(handle_action(obj, user_id, recent_msgs, cfm_session, depth=depth + 1))
-        return results[-1] if results else {}
+        # Merge all results
+        merged = {"chat_message": "", "requests": [], "staging_results": [], "profile_data": []}
+        for r in results:
+            if r.get("chat_message"):
+                merged["chat_message"] += r["chat_message"] + "\n"
+            merged["requests"].extend(r.get("requests", []))
+            merged["staging_results"].extend(r.get("staging_results", []))
+            merged["profile_data"].extend(r.get("profile_data", []))
+        return merged
     
     if not isinstance(deepseek_response, dict):
         logger.error(f"[ACTION] Unexpected deepseek_response type: {type(deepseek_response)}")
-        return {}
+        return {"chat_message": "", "requests": [], "staging_results": [], "profile_data": []}
 
     action = deepseek_response.get("action")
     reasoning = deepseek_response.get("reasoning", "")
     requests_list = deepseek_response.get("data", {}).get("requests", [])
-    result = {"chat_message": "", "requests": requests_list, "staging_results": [], "profile_data": []}
+    
+    # INITIALIZE result with all required keys
+    result = {
+        "chat_message": "",
+        "requests": requests_list,
+        "staging_results": [],
+        "profile_data": []
+    }
 
     last_user_msg = recent_msgs[-1]["content"] if recent_msgs else ""
 
-    result = {}
-
     if action == "respond":
-        result["chat_message"] = parse_markdown(deepseek_response.get("data", {}).get("message", ""), "html")
-        logger.debug(f"[RESPOND] Message: {result['chat_message']}")
+        message_html = parse_markdown(deepseek_response.get("data", {}).get("message", ""), "html")
+        result["chat_message"] = message_html
+        logger.debug(f"[RESPOND] Message: {message_html}")
+
+        # 🔹 Save assistant response to session (Firebase)
+        try:
+            cfm_session.save_message(
+                "assistant",
+                message_html,
+                action="respond",
+                visible=True
+            )
+            logger.debug("[RESPOND] Message successfully saved to Firebase session")
+        except Exception as e:
+            logger.error(f"[RESPOND] Failed to save assistant message: {e}")
 
     elif action in ["get_info", "query"]:
         for req in requests_list:
@@ -789,12 +847,11 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth = 
 # -------------------- CHAT ENDPOINT --------------------
 @app.route("/chat", methods=["POST"])
 def chat():
-    result = {"chat_message": "", "requests": [], "staging_results": [], "profile_data": []}  # default
-
+    logger.info(f"[CHAT] Incoming request: {request.json}")
     data = request.json
     user_message = data.get("message")
     user_id = data.get("user_id")
-    session_id = data.get("session_id")  # Optional: reuse existing session
+    session_id = data.get("session_id")
 
     if not user_message or not user_id:
         return jsonify({"error": "Message and user_id are required"}), 400
@@ -817,136 +874,105 @@ def chat():
     except Exception as e:
         return jsonify({"error": f"Failed to initialize CFM session: {e}"}), 500
 
-    # ------------------ IMMEDIATELY SAVE INCOMING USER MESSAGE ------------------
-    # This ensures user messages have the summarised flag and appear in recent history.
+    # ------------------ SAVE USER MESSAGE ------------------
     try:
-      cfm_session.save_message(
-        role="user",
-        content=user_message,
-        action=None,
-        category=None,
-        angle=None,
-        follow_up_category=None,
-        summarised=False,
-        visible=True
-      )
+        cfm_session.save_message(
+            role="user",
+            content=user_message,
+            summarised=False,
+            visible=True
+        )
     except Exception as e:
-      logger.warning(f"Failed to save incoming user message: {e}")
+        logger.warning(f"Failed to save incoming user message: {e}")
 
-    # ------------------ SUMMARISATION LOGIC ------------------
+    # ------------------ SUMMARISATION ------------------
     try:
-        # Get summaries + unsummarised messages
         recent = cfm_session.get_recent_messages(limit=KEEP_LAST_N)
         summaries = recent.get("summaries", [])
         unsummarised = recent.get("unsummarised", [])
-
-        # Count all unsummarised (for max-out check)
         all_unsummarised = cfm_session.get_recent_messages(maxed_out=True)["unsummarised"]
 
         if len(all_unsummarised) > KEEP_LAST_N:
-          # Choose the older chunk to summarise: everything except the last KEEP_LAST_N
-          to_summarise = all_unsummarised[:-KEEP_LAST_N]
-          logger.debug(f"Summarising {len(to_summarise)} older messages")
-          summary_result = cfm_session.summarise_and_store(
-            deepseek_client=client,
-            session_id=session_id,
-            unsummarised_msgs=to_summarise
-          )
+            to_summarise = all_unsummarised[:-KEEP_LAST_N]
+            logger.debug(f"Summarising {len(to_summarise)} older messages")
+            summary_result = cfm_session.summarise_and_store(
+                deepseek_client=client,
+                session_id=session_id,
+                unsummarised_msgs=to_summarise
+            )
+            summaries = summary_result.get("summaries", summaries)
+            recent_refetch = cfm_session.get_recent_messages(limit=KEEP_LAST_N)
+            unsummarised = recent_refetch.get("unsummarised", [])
 
-          # Merge new summaries with the existing summaries list
-          summaries = summary_result.get("summaries", summaries)
-          
-          # Recompute unsummarised to be only the most recent KEEP_LAST_N
-          recent_refetch = cfm_session.get_recent_messages(limit=KEEP_LAST_N)
-          unsummarised = recent_refetch.get("unsummarised", [])
-          logger.debug("[CHAT] Summarisation triggered and recent unsummarised refreshed.")
-
-
-        # Build DeepSeek messages: SYSTEM_PROMPT + summaries (as system) + unsummarised (roles preserved) + the freshly-saved user_message (already part of unsummarised, but ensure last user message is last)
+        # Build DeepSeek messages
         deepseek_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-
-        # Add all summaries (each summary stored as plain text) as system messages
         for s in summaries:
-          deepseek_messages.append({"role": "system", "content": s})
-
-
-        # Add unsummarised messages (most recent KEEP_LAST_N). Ensure we include system messages and preserve original role & content.
+            deepseek_messages.append({"role": "system", "content": s})
         for m in unsummarised:
-          # If message content is already a JSON payload (your previous implementation packed metadata), prefer raw content when present
-          content = m.get("content")
-          role = m.get("role", "assistant")
-          deepseek_messages.append({"role": role, "content": content})
-
-
-        # Guard: ensure the explicit latest user message is last (DeepSeek expects latest at end)
+            deepseek_messages.append({"role": m.get("role", "assistant"), "content": m.get("content")})
         deepseek_messages.append({"role": "user", "content": user_message})
-        logger.debug(f"[CHAT] DeepSeek messages prepared with {len(deepseek_messages)} entries.")
-        logger.debug(f"[CHAT] Messages: {deepseek_messages}")
+
         # ------------------ CALL DEEPSEEK ------------------
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=deepseek_messages,
             stream=False
         )
-        logger.debug(f"[DEEPSEEK] Full response: {response}")
         bot_reply_raw = response.choices[0].message.content.strip()
-        logger.debug(f"[DEEPSEEK] Raw: {bot_reply_raw}")
 
-        try:
-            bot_reply_json_list = parse_deepseek_json(bot_reply_raw)
-            logger.debug(f"[DEEPSEEK] Parsed JSON list: {bot_reply_json_list}")
-
-            if not bot_reply_json_list:
-                bot_reply_json_list = [{"action": "respond", "data": {"message": bot_reply_raw}}]
-
-            results = []
-            for obj in bot_reply_json_list:
-                if not isinstance(obj, dict):
-                    logger.warning(f"[CHAT] Skipping non-dict object: {obj}")
-                    continue
-                try:
-                    results.append(handle_action(obj, user_id, deepseek_messages, cfm_session))
-                except Exception as e:
-                    logger.warning(f"[CHAT] Error handling action {obj}: {e}")
-
-            # ✅ Only the last result is returned
-            if results:
-                result = results[-1]
-                bot_reply_json = bot_reply_json_list[-1]
+        # ------------------ PARSE RESPONSE ------------------
+        parsed = parse_deepseek_json(bot_reply_raw)
+        bot_reply_json_list = parsed or [{"action": "respond", "data": {"message": bot_reply_raw}}]
+        
+        # Extract ONLY the respond action for instant return
+        chat_message = None
+        for obj in bot_reply_json_list:
+            if isinstance(obj, dict) and obj.get("action") == "respond":
+                chat_message = parse_markdown(obj.get("data", {}).get("message", ""), "html")
+                break
+        
+        if not chat_message:
+            # If the bot output looks like JSON, replace it with a safe system message
+            if bot_reply_raw.strip().startswith("{") or bot_reply_raw.strip().startswith("["):
+                chat_message = "Let me check that for you..."
             else:
-                result = {"chat_message": bot_reply_raw, "requests": [], "staging_results": [], "profile_data": []}
-                bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+              # If no respond found, use raw
+                chat_message = bot_reply_raw
 
-        except Exception:
-            result = {"chat_message": bot_reply_raw, "requests": [], "staging_results": [], "profile_data": []}
-            bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
-            logger.warning("[DEEPSEEK] JSON parse failed, fallback to respond.")
-        result =  handle_action(bot_reply_json, user_id, deepseek_messages, cfm_session) if bot_reply_json else None
-        logger.debug(f"[CHAT] Final result: {result}")
+        # ------------------ SAVE ASSISTANT MESSAGE ------------------
+        try:
+            cfm_session.save_message(
+                role="assistant",
+                content=chat_message,
+                summarised=False,
+                visible=True
+            )
+        except Exception as e:
+            logger.warning(f"Failed to save assistant message: {e}")
+
+        # ------------------ RETURN IMMEDIATELY ------------------
+        result = {
+            "chat_message": chat_message,
+            "session_id": session_id,
+            "mode": "deepthinking",
+            "background_processing": True  # Signal to frontend
+        }
+
+        # ------------------ START BACKGROUND THREAD ------------------
+        # Process all non-respond actions in 
+        non_respond_actions = [obj for obj in bot_reply_json_list if obj.get("action") != "respond"]
+        if non_respond_actions:
+          threading.Thread(
+              target=background_handle_action,
+              args=(non_respond_actions, user_id, deepseek_messages, cfm_session),
+              daemon=True
+          ).start()
+
+        return jsonify(result), 200
+
     except Exception as e:
-        logger.warning(f"[CHAT] DeepSeek API error: {e}")
+        logger.exception(f"[CHAT] Error: {e}")
         return jsonify({"error": f"DeepSeek API error: {e}"}), 500
-
-    # ------------------ SAVE ASSISTANT MESSAGE ------------------
-    try:
-        logger.debug(f"[CHAT] Saving assistant message: {result.get('chat_message', '')}")
-        logger.debug(f"[CHAT] With metadata: action={bot_reply_json.get('action')}, category={bot_reply_json.get('data', {}).get('category')}, angle={bot_reply_json.get('data', {}).get('angle')}")
-        cfm_session.save_message(
-            role="assistant",
-            content=result.get("chat_message", ""),
-            action=bot_reply_json.get("action"),
-            category=bot_reply_json.get("data", {}).get("category"),
-            angle=bot_reply_json.get("data", {}).get("angle"),
-            follow_up_category=bot_reply_json.get("data", {}).get("category"),
-            summarised=False,
-            visible=True
-        )
-    except Exception as e:
-        logger.warning(f"[CHAT] Failed to save assistant message: {e}")
-
-    result["session_id"] = session_id #line 808
-    result["mode"] = "deepthinking"
-    return jsonify(result), 200
 
 # -------------------- RUN SERVER --------------------
 if __name__ == "__main__":

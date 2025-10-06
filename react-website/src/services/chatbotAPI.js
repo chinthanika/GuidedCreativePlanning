@@ -1,46 +1,31 @@
 import { database } from '../Firebase/firebase';
-import { ref, push, serverTimestamp } from "firebase/database";
-import { useEffect } from 'react';
+import { ref, push } from "firebase/database";
 
 let sessionID = null;
 
-// Cleanup session on window unload
-function useSessionCleanup(uid, sessionID) {
-  useEffect(() => {
-    const handleUnload = () => {
-      if (uid && sessionID) {
-        navigator.sendBeacon(
-          "http://localhost:4000/session/end",
-          JSON.stringify({ uid, sessionID })
-        );
-      }
-    };
-
-    window.addEventListener("beforeunload", handleUnload);
-    return () => window.removeEventListener("beforeunload", handleUnload);
-  }, [uid, sessionID]);
-}
-
-//  Save a user message and trigger AI response
+// Send message and get instant response
 export const sendMessage = async (uid, currentSessionID, text, mode = "brainstorming") => {
   if (!uid) throw new Error("User not authenticated");
 
-  // Always use the most up-to-date sessionID
   const activeSessionID = currentSessionID || sessionID;
-  const messagesRef = ref(database, `chatSessions/${uid}/${activeSessionID}/messages`);
 
-  // Get AI response
+  // Call backend
   const botData = await getAIResponse(uid, text, activeSessionID, mode);
-  console.log("AI response data:", botData);
 
+  // Save session ID for future calls
+  if (botData.session_id) {
+    sessionID = botData.session_id;
+  }
+
+  return botData;
 };
 
 // Call backend AI API
 async function getAIResponse(uid, userMessage, currentSessionID, mode = "brainstorming") {
   try {
     const url = mode === "brainstorming"
-      ? "http://10.163.12.87:5002/chat" // brainstorming backend
-      : "http://10.163.12.87:5003/chat"; // deepthinking backend
+      ? "http://10.163.12.87:5002/chat"
+      : "http://127.0.0.1:5003/chat";
 
     const response = await fetch(url, {
       method: "POST",
@@ -52,29 +37,23 @@ async function getAIResponse(uid, userMessage, currentSessionID, mode = "brainst
       }),
     });
 
-    const data = await response.json();
-
-    // Save session ID globally for future calls
-    if (data.session_id) {
-      sessionID = data.session_id;
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
     }
 
-    console.log("Active sessionID:", sessionID);
+    const data = await response.json();
+
     return {
       chat_message: data.chat_message || null,
-      requests: data.requests || [],
-      staging_results: data.staging_results || [],
-      profile_data: data.profile_data || null,
-      session_id: data.session_id,  // 🔹 always return for frontend
+      background_processing: data.background_processing || false,
+      session_id: data.session_id,
+      mode: data.mode
     };
   } catch (error) {
     console.error("AI API error:", error);
-    return { chat_message: "Sorry, something went wrong.", requests: [], staging_results: [] };
+    return { 
+      chat_message: "Sorry, something went wrong.", 
+      background_processing: false 
+    };
   }
 }
-
-
-// Save a bot message to Firebase
-export const sendBotResponse = async (uid, sessionID, text) => {
-  if (!uid) throw new Error("User not authenticated");
-};
