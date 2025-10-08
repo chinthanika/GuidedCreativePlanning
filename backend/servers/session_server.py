@@ -210,6 +210,28 @@ def summarise_session():
 
     return jsonify({"success": True, "summary": summary})
 
+@app.route("/session/mark_messages_summarised", methods=["POST"])
+def mark_messages_summarised():
+    """Mark multiple messages as summarised."""
+    data = request.json
+    uid = data.get("uid")
+    session_id = data.get("sessionID")
+    message_ids = data.get("messageIDs", [])
+    
+    if not uid or not session_id or not message_ids:
+        return jsonify({"error": "uid, sessionID, and messageIDs required"}), 400
+    
+    try:
+        session = Session(uid, session_id)
+        for msg_id in message_ids:
+            session.messages_ref.child(msg_id).update({"summarised": True})
+        
+        logger.info(f"Marked {len(message_ids)} messages as summarised for session {session_id}")
+        return jsonify({"success": True, "marked": len(message_ids)})
+    except Exception as e:
+        logger.error(f"Failed to mark messages summarised: {e}")
+        return jsonify({"error": str(e)}), 500
+
 # ---------------- BS-SPECIFIC ----------------
 
 @app.route("/cps/add_idea", methods=["POST"])

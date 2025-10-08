@@ -4,10 +4,13 @@ import bodyParser from "body-parser";
 import ConfirmationPipeline from "../services/ConfirmationPipeline.js";
 import cors from "cors";
 
+import pmCache from "../servers/utils/ProfileManagerCache.js";
+
 const app = express();
 
 app.use(cors({ origin: "http://localhost:3000" })); // allow React dev server
 app.use(bodyParser.json());
+
 /**
  * Get all nodes (with optional group filter)
  */
@@ -322,6 +325,8 @@ app.post("/api/stage-change", async (req, res) => {
     const pipeline = new ConfirmationPipeline({ uid: userId });
     const staged = await pipeline.stageChange(entityType, entityId, newData);
 
+    pmCache.invalidateAll(userId);
+
     // Broadcast to all connected clients
     broadcastPendingUpdate(userId);
 
@@ -349,6 +354,12 @@ app.post("/api/confirm-change", async (req, res) => {
 
     try {
       const confirmed = await pipeline.confirm(changeKey, { overwrite: !!overwrite });
+      
+      pmCache.invalidateAll(userId);
+
+      // Broadcast to all connected clients
+      broadcastPendingUpdate(userId);
+      
       console.log("Change confirmed:", confirmed);
       res.status(200).json(confirmed);
     } catch (err) {
@@ -391,6 +402,8 @@ app.post("/api/deny-change", async (req, res) => {
     const pipeline = new ConfirmationPipeline({ uid: userId });
     const denied = await pipeline.deny(changeKey);
 
+    pmCache.invalidateAll(userId);
+
     // Broadcast to all connected clients
     broadcastPendingUpdate(userId);
 
@@ -417,6 +430,205 @@ app.get("/api/pending-changes", async (req, res) => {
   }
 });
 
+// ============ BATCH ENDPOINT ============
+/**
+ * POST /api/batch
+ * Body: {
+ *   userId: string,
+ *   requests: [
+ *     { target: "nodes", filters: { label: "Akio" } },
+ *     { target: "links", filters: { participants: ["Akio", "Phagousa"] } },
+ *     { target: "events" }
+ *   ]
+ * }
+ * 
+ * Returns: { results: [{data: ...}, {data: ...}, ...] }
+ */
+app.post("/api/batch", async (req, res) => {
+  const batchStart = Date.now();
+  console.log("=== BATCH REQUEST START ===");
+  console.log("Body:", JSON.stringify(req.body, null, 2));
+  
+  try {
+    const { userId, requests } = req.body;
+    
+    // Validation
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+    
+    if (!Array.isArray(requests)) {
+      return res.status(400).json({ error: "requests must be an array" });
+    }
+    
+    if (requests.length === 0) {
+      return res.status(400).json({ error: "requests array cannot be empty" });
+    }
+    
+    if (requests.length > 10) {
+      return res.status(400).json({ error: "Maximum 10 requests per batch" });
+    }
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    const results = [];
+
+    // Process each request
+    for (let i = 0; i < requests.length; i++) {
+      const r = requests[i];
+      const reqStart = Date.now();
+      
+      console.log(`[BATCH ${i+1}/${requests.length}] Processing:`, r);
+      
+      try {
+        const target = r.target;
+        const filters = r.filters || {};
+        
+        // ============ NODES ============
+        if (target === "nodes") {
+          let nodes = await getCachedNodes(userId, pipeline);
+          
+          // Apply filters
+          if (filters.label) {
+            const wanted = Array.isArray(filters.label) ? filters.label : [filters.label];
+            nodes = Object.fromEntries(
+              Object.entries(nodes).filter(([_, node]) => {
+                if (!node) return false;
+                for (const w of wanted) {
+                  const lowerW = String(w).toLowerCase().trim();
+                  if (node.label?.toLowerCase() === lowerW) return true;
+                  
+                  // Check aliases
+                  const aliases = node.aliases;
+                  if (aliases) {
+                    if (Array.isArray(aliases)) {
+                      if (aliases.map(a => String(a).toLowerCase()).includes(lowerW)) return true;
+                    } else if (typeof aliases === "string") {
+                      if (aliases.toLowerCase().split(",").map(a => a.trim()).includes(lowerW)) return true;
+                    }
+                  }
+                }
+                return false;
+              })
+            );
+          }
+          
+          const reqTime = Date.now() - reqStart;
+          console.log(`[BATCH ${i+1}] Nodes returned: ${Object.keys(nodes).length} in ${reqTime}ms`);
+          results.push({ data: nodes });
+        }
+        
+        // ============ LINKS ============
+        else if (target === "links") {
+          let links = await getCachedLinks(userId, pipeline);
+          let nodes = null; // Only fetch if needed
+          
+          // Apply filters
+          if (filters.participants) {
+            const parts = Array.isArray(filters.participants) ? filters.participants : [filters.participants];
+            
+            let resultSet = null;
+            for (const p of parts) {
+              try {
+                const pLinks = await pipeline.manager.filterLinksByNode(p);
+                if (resultSet === null) {
+                  resultSet = { ...pLinks };
+                } else {
+                  // Intersect
+                  const intersect = {};
+                  for (const key of Object.keys(resultSet)) {
+                    if (key in pLinks) intersect[key] = resultSet[key];
+                  }
+                  resultSet = intersect;
+                }
+              } catch (e) {
+                resultSet = {};
+              }
+            }
+            links = resultSet || {};
+          }
+          
+          // Enrich links with node data
+          if (!nodes) nodes = await getCachedNodes(userId, pipeline);
+          
+          const enrichedLinks = {};
+          for (const [linkId, link] of Object.entries(links)) {
+            const sourceNode = nodes[link.source];
+            const targetNode = nodes[link.target];
+            
+            enrichedLinks[linkId] = {
+              ...link,
+              source: sourceNode ? {
+                id: sourceNode.id,
+                label: sourceNode.label,
+                group: sourceNode.group,
+                attributes: sourceNode.attributes,
+                aliases: sourceNode.aliases
+              } : link.source,
+              target: targetNode ? {
+                id: targetNode.id,
+                label: targetNode.label,
+                group: targetNode.group,
+                attributes: targetNode.attributes,
+                aliases: targetNode.aliases
+              } : link.target
+            };
+          }
+          
+          const reqTime = Date.now() - reqStart;
+          console.log(`[BATCH ${i+1}] Links returned: ${Object.keys(enrichedLinks).length} in ${reqTime}ms`);
+          results.push({ data: enrichedLinks });
+        }
+        
+        // ============ EVENTS ============
+        else if (target === "events") {
+          let events = await getCachedEvents(userId, pipeline);
+          
+          // Apply filters
+          if (filters.description) {
+            events = Object.fromEntries(
+              Object.entries(events).filter(([_, e]) => 
+                e.description?.includes(filters.description)
+              )
+            );
+          }
+          
+          const reqTime = Date.now() - reqStart;
+          console.log(`[BATCH ${i+1}] Events returned: ${Object.keys(events).length} in ${reqTime}ms`);
+          results.push({ data: events });
+        }
+        
+        // ============ PENDING CHANGES ============
+        else if (target === "pending_changes") {
+          const pending = await pipeline.listPending();
+          const reqTime = Date.now() - reqStart;
+          console.log(`[BATCH ${i+1}] Pending changes returned: ${Object.keys(pending).length} in ${reqTime}ms`);
+          results.push({ data: pending });
+        }
+        
+        // ============ UNKNOWN TARGET ============
+        else {
+          results.push({ error: `Unknown target: ${target}` });
+        }
+        
+      } catch (err) {
+        console.error(`[BATCH ${i+1}] Error:`, err);
+        results.push({ error: err.message });
+      }
+    }
+
+    const batchTime = Date.now() - batchStart;
+    console.log(`=== BATCH REQUEST COMPLETE in ${batchTime}ms ===`);
+    
+    res.status(200).json({ results, batchTime });
+    
+  } catch (err) {
+    const batchTime = Date.now() - batchStart;
+    console.error(`=== BATCH REQUEST FAILED after ${batchTime}ms ===`, err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // --- SSE Support ---
 const clients = [];
 
@@ -436,12 +648,63 @@ app.get("/api/pending-changes/stream", (req, res) => {
   });
 });
 
+// ============ CACHE STATS ENDPOINT ============
+app.get("/api/cache-stats", (req, res) => {
+  const stats = pmCache.getStats();
+  res.status(200).json(stats);
+});
+
 function broadcastPendingUpdate(userId) {
   // Each connected client gets notified
   for (const client of clients) {
     client.write(`event: pendingUpdate\n`);
     client.write(`data: ${JSON.stringify({ userId })}\n\n`);
   }
+}
+
+// ============ HELPER: Get cached or fetch nodes ============
+async function getCachedNodes(userId, pipeline) {
+  let nodes = pmCache.getNodes(userId);
+  
+  if (!nodes) {
+    const fetchStart = Date.now();
+    nodes = await pipeline.manager.getAllNodes();
+    const fetchTime = Date.now() - fetchStart;
+    console.log(`[TIMING] Firebase nodes fetch took ${fetchTime}ms`);
+    pmCache.setNodes(userId, nodes);
+  }
+  
+  return nodes;
+}
+
+// ============ HELPER: Get cached or fetch links ============
+async function getCachedLinks(userId, pipeline) {
+  let links = pmCache.getLinks(userId);
+  
+  if (!links) {
+    const fetchStart = Date.now();
+    links = await pipeline.manager.getAllLinks();
+    const fetchTime = Date.now() - fetchStart;
+    console.log(`[TIMING] Firebase links fetch took ${fetchTime}ms`);
+    pmCache.setLinks(userId, links);
+  }
+  
+  return links;
+}
+
+// ============ HELPER: Get cached or fetch events ============
+async function getCachedEvents(userId, pipeline) {
+  let events = pmCache.getEvents(userId);
+  
+  if (!events) {
+    const fetchStart = Date.now();
+    events = await pipeline.manager.getAllEvents();
+    const fetchTime = Date.now() - fetchStart;
+    console.log(`[TIMING] Firebase events fetch took ${fetchTime}ms`);
+    pmCache.setEvents(userId, events);
+  }
+  
+  return events;
 }
 
 

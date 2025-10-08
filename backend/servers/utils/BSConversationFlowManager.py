@@ -4,6 +4,12 @@ import random
 import os
 import requests
 
+from utils.cache import (
+    metadata_cache, summaries_cache, cache_stats,
+    metadata_lock, summaries_lock,
+    invalidate_metadata, invalidate_summaries
+)
+
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -76,25 +82,39 @@ class BSConversationFlowManager:
 
     # ------------------ SESSION MGMT ------------------
     @staticmethod
-    def create_session(uid: str, parent_session_id: str = None):
-        logger.debug(f"[SESSION CREATE] Creating new session for UID={uid}, parent={parent_session_id}")
+    def create_session(uid: str):
+        shared_meta = {"title": "New Chat"}
+        dt_meta = {
+            "currentCategory": None,
+            "currentAngle": None,
+            "asked": [],
+            "depth": 0,
+            "followUpCount": 0,
+        }
+        bs_meta = {
+            "stage": "Clarify",
+            "parentSessionId": None,
+            "hmwQuestions": [],
+            "stageHistory": [],
+            "fluencyScore": "Low",
+            "flexibilityCategories": []
+        }
+
         payload = {
             "uid": uid,
-            "metadata_shared": {
-                "parentSessionId": parent_session_id
-            }
+            "metadata_shared": shared_meta,
+            "metadata_dt": dt_meta,
+            "metadata_bs": bs_meta
         }
+
         res = requests.post(f"{SESSION_API_URL}/session/create", json=payload, timeout=10.0)
-        try:
-            res.raise_for_status()
-        except Exception:
-            logger.exception("[SESSION CREATE] Session create failed: %s | resp=%s", res.text, res.status_code)
-            raise
+        res.raise_for_status()
         session_id = res.json().get("sessionID")
-        logger.debug(f"[SESSION CREATE] Session created with ID={session_id}")
+        logger.debug(f"[SESSION CREATE] Created session {session_id} for uid={uid}")
         return BSConversationFlowManager(uid, session_id)
 
     def _refresh_metadata_cache(self):
+        """Internal refresh without cache checking."""
         payload = {"uid": self.uid, "sessionID": self.session_id}
         res = self._post("/session/get_metadata", payload)
         metadata = res.get("metadata", {}) if isinstance(res, dict) else {}
@@ -109,37 +129,87 @@ class BSConversationFlowManager:
         logger.debug(f"[CACHE] Ideas cache refreshed: count={len(ideas)}")
 
     def get_metadata(self):
-        logger.debug("[METADATA] Fetching metadata from Session API")
+        """Thread-safe cached metadata retrieval."""
+        cache_key = f"dt:{self.uid}:{self.session_id}"
+        
+        with metadata_lock:
+            if cache_key in metadata_cache:
+                cache_stats["metadata_hits"] += 1
+                logger.debug(f"[CACHE HIT] Metadata for {cache_key}")
+                return metadata_cache[cache_key].get("deepthinking", {})
+        
+        # Cache miss
+        cache_stats["metadata_misses"] += 1
+        logger.debug(f"[CACHE MISS] Fetching metadata for {cache_key}")
+        
+        fetch_start = time.time()
         payload = {"uid": self.uid, "sessionID": self.session_id}
         res = self._post("/session/get_metadata", payload)
+        fetch_time = time.time() - fetch_start
+        logger.info(f"[TIMING] Metadata fetch took {fetch_time:.3f}s")
+        
         metadata = res.get("metadata", {}) if isinstance(res, dict) else {}
-        logger.debug(f"[METADATA] Retrieved: {metadata}")
-        self._metadata_cache = metadata
-        return metadata if metadata else {}
+        
+        with metadata_lock:
+            metadata_cache[cache_key] = metadata
+            self._metadata_cache = metadata
+        
+        return metadata.get("brainstorming", {}) if metadata else {}
 
     def update_metadata(self, updates: dict):
-        updates["updatedAt"] = int(time.time() * 1000)
-        logger.debug(f"[METADATA UPDATE] Updating metadata via Session API: {updates}")
-        payload = {"uid": self.uid, "sessionID": self.session_id, "updates": updates, "mode": "shared"}
-        res = self._post("/session/update_metadata", payload)
-        logger.debug("[METADATA UPDATE] Update complete: %s", res)
-        # refresh cache
+        """Update with cache invalidation."""
+        if not isinstance(updates, dict):
+            raise ValueError("updates must be a dict")
+
+        payload = {
+            "uid": self.uid,
+            "sessionID": self.session_id,
+            "updates": updates,
+            "mode": "deepthinking"
+        }
+
+        try:
+            self._post("/session/update_metadata", payload)
+        except Exception:
+            logger.exception("Failed to update deepthinking metadata via Session API")
+            raise
+
+        # Invalidate cache
+        cache_key = f"dt:{self.uid}:{self.session_id}"
+        invalidate_metadata(cache_key)
+        logger.debug(f"[CACHE INVALIDATE] Cleared metadata cache for {cache_key}")
+
+        # Refresh local cache
         self._refresh_metadata_cache()
 
-    def save_message(self, role: str, content: str, stage=None, visible=True):
-        logger.debug(f"[MESSAGE SAVE] Saving message role={role}, stage={stage}, visible={visible}")
+    def save_message(self, role: str, content: str, stage=None, visible=True, summarised=False, action=None):
+        """Save message asynchronously."""
+        logger.debug(f"[MESSAGE SAVE] Queueing message role={role}, stage={stage}")
+        
         payload = {
             "uid": self.uid,
             "sessionID": self.session_id,
             "role": role,
             "content": content,
             "mode": "brainstorming",
-            "extra": {"stage": stage, "visible": visible}
+            "extra": {
+                "stage": stage, 
+                "visible": visible, 
+                "summarised": summarised, 
+                "action": action}
         }
-        res = self._post("/session/save_message", payload)
-        msg_id = res.get("messageID")
-        logger.debug(f"[MESSAGE SAVE] Message saved with ID={msg_id}")
-        return msg_id
+        
+        import threading
+        def save_async():
+            try:
+                res = self._post("/session/save_message", payload)
+                msg_id = res.get("messageID")
+                logger.debug(f"[MESSAGE SAVE] Message saved with ID={msg_id}")
+            except Exception as e:
+                logger.error(f"[MESSAGE SAVE] Failed: {e}")
+        
+        threading.Thread(target=save_async, daemon=True).start()
+        return None
 
     # ----------- HMW MGMT -----------
     def add_hmw_question(self, question: str):
@@ -418,22 +488,40 @@ class BSConversationFlowManager:
 
     # ----------- MESSAGES & SUMMARISATION -----------
     def get_recent_messages(self, limit=10, maxed_out=False):
-        logger.debug(f"[MESSAGES FETCH] Fetching recent messages, limit={limit}, maxed_out={maxed_out}")
+        """Return existing summaries (cached) + unsummarised messages."""
+        cache_key = f"summaries:{self.uid}:{self.session_id}"
+        
         try:
-            md = self.get_metadata()
-            summaries = md.get("shared", {}).get("summaries", {}) or {}
-            summaries_list = [v for _, v in sorted(summaries.items())] if isinstance(summaries, dict) else summaries
+            # Try to get summaries from cache
+            if cache_key in summaries_cache and not maxed_out:
+                cache_stats["summaries_hits"] += 1
+                cached_data = summaries_cache[cache_key]
+                logger.debug(f"[CACHE HIT] Summaries for {cache_key}")
+            else:
+                cache_stats["summaries_misses"] += 1
+                logger.debug(f"[CACHE MISS] Fetching summaries for {cache_key}")
+                
+                # Fetch fresh summaries
+                self._refresh_metadata_cache()
+                md = self._metadata_cache or {}
+                summaries = md.get("shared", {}).get("summaries", {}) or {}
+                summaries_list = [v for _, v in sorted(summaries.items())]
+                
+                cached_data = {"summaries": summaries_list}
+                summaries_cache[cache_key] = cached_data
 
+            # Always fetch fresh unsummarised messages (these change frequently)
             payload = {"uid": self.uid, "sessionID": self.session_id}
             res = self._post("/session/get_messages", payload)
             messages_snapshot = res.get("messages", {}) or {}
 
             if not messages_snapshot:
-                logger.debug("[MESSAGES FETCH] No messages found")
-                return {"summaries": summaries_list, "unsummarised": [], "metrics": self._compute_idea_metrics()}
+                dt_meta = self.get_metadata()
+                return {"summaries": cached_data["summaries"], "unsummarised": [], "dt_metadata": dt_meta}
 
             msgs = sorted(messages_snapshot.items(), key=lambda kv: kv[1].get("timestamp", 0))
             unsummarised = []
+
             for msg_id, m in msgs:
                 if m.get("summarised") is False or m.get("summarised") is None:
                     unsummarised.append({**m, "id": msg_id})
@@ -441,15 +529,14 @@ class BSConversationFlowManager:
             if not maxed_out and len(unsummarised) > limit:
                 unsummarised = unsummarised[-limit:]
 
-            metrics = self._compute_idea_metrics()
-            logger.debug(f"[MESSAGES FETCH] Found {len(unsummarised)} unsummarised messages with metrics {metrics}")
-
-            return {"summaries": summaries_list, "unsummarised": unsummarised, "metrics": metrics}
+            dt_meta = self.get_metadata()
+            
+            return {"summaries": cached_data["summaries"], "unsummarised": unsummarised, "dt_metadata": dt_meta}
 
         except Exception as e:
             logger.exception("[ERROR] get_recent_messages failed: %s", e)
-            return {"summaries": [], "unsummarised": [], "metrics": {}}
-
+            return {"summaries": [], "unsummarised": [], "dt_metadata": {}}
+        
     def summarise_and_store(self, deepseek_client, session_id, unsummarised_msgs):
         logger.debug(f"[SUMMARISATION] Summarising {len(unsummarised_msgs)} messages")
         try:

@@ -24,8 +24,8 @@ export const sendMessage = async (uid, currentSessionID, text, mode = "brainstor
 async function getAIResponse(uid, userMessage, currentSessionID, mode = "brainstorming") {
   try {
     const url = mode === "brainstorming"
-      ? "http://10.163.12.87:5002/chat"
-      : "http://127.0.0.1:5003/chat";
+      ? "http://10.163.10.109:5002/chat"
+      : "http://10.163.10.109:5003/chat";
 
     const response = await fetch(url, {
       method: "POST",

@@ -14,7 +14,7 @@ const ChatWindow = () => {
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
-
+    const [backgroundStatus, setBackgroundStatus] = useState(null);
 
     const messagesEndRef = useRef(null);
 
@@ -22,7 +22,7 @@ const ChatWindow = () => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
-    }, [messages]);
+    }, [messages, backgroundStatus]);
 
     // Listen for background task completion
     useEffect(() => {
@@ -31,31 +31,47 @@ const ChatWindow = () => {
         const taskRef = ref(database, `backgroundTasks/${uid}`);
         const unsubscribe = onValue(taskRef, (snapshot) => {
             const tasks = snapshot.val();
-            if (!tasks) return;
+            if (!tasks) {
+                setBackgroundStatus(null);
+                return;
+            }
 
-            const taskArray = Object.values(tasks);
-            const latestTask = taskArray[taskArray.length - 1];
-            if (!latestTask) return;
+            const taskArray = Object.entries(tasks).map(([id, t]) => ({
+                id,
+                ...t,
+                updatedAt: Number(t.updatedAt || 0),
+            }));
 
-            if (latestTask.status === "error") {
-                setMessages(prev => [
-                    ...prev,
-                    {
-                        id: Date.now(),
-                        role: "system",
-                        content: "Background update failed.",
-                        timestamp: Date.now(),
-                        visible: true
-                    }
-                ]);
+            const latestTask = taskArray.sort((a, b) => b.updatedAt - a.updatedAt)[0];
+            if (!latestTask) {
+                setBackgroundStatus(null);
+                return;
+            }
+
+            console.log("Latest background task:", latestTask);
+
+            // Update status display
+            if (latestTask.status === "processing") {
+                setBackgroundStatus({
+                    message: latestTask.message || "Processing...",
+                    type: "processing"
+                });
+            } else if (latestTask.status === "done") {
+                // Clear status after a brief delay
+                setTimeout(() => setBackgroundStatus(null), 2000);
+            } else if (latestTask.status === "error") {
+                setBackgroundStatus({
+                    message: "Something went wrong. Please try again.",
+                    type: "error"
+                });
+                setTimeout(() => setBackgroundStatus(null), 5000);
             }
         });
 
         return () => unsubscribe();
     }, [uid]);
 
-
-    // Listen for changes in Firebase
+    // Listen for changes in Firebase messages
     useEffect(() => {
         if (!uid) return;
         if (!sessionID) {
@@ -96,81 +112,45 @@ const ChatWindow = () => {
 
     // Handle sending a message
     const handleSend = async () => {
-        if (input.trim() === "") return;
+        if (input.trim() === "" || loading) return;
 
         const userText = input.trim();
         setInput("");
-
-        // Add user message to local state immediately
-        const userMsgId = Date.now();
-        setMessages(prev => [
-            ...prev,
-            { id: userMsgId, role: "user", content: userText, timestamp: Date.now(), visible: true }
-        ]);
 
         // Show typing indicator
         setLoading(true);
 
         try {
-            // Call backend - should return in <500ms
+            // Call backend
             const botData = await sendMessage(uid, sessionID, userText, mode);
-
-            // Hide typing indicator
-            setLoading(false);
-
-            // Show instant chat response
-            if (botData?.chat_message) {
-                setMessages(prev => [
-                    ...prev,
-                    {
-                        id: Date.now(),
-                        role: "assistant",
-                        content: botData.chat_message,
-                        timestamp: Date.now(),
-                        visible: true
-                    }
-                ]);
-            }
-
-            // If background processing, show spinner
-            if (botData?.background_processing) {
-                const processingMsgId = Date.now() + 1;
-                setMessages(prev => [
-                    ...prev,
-                    {
-                        id: processingMsgId,
-                        role: "system",
-                        content: "Processing profile updates…",
-                        timestamp: Date.now(),
-                        visible: true,
-                        temp: true // Mark as temporary
-                    }
-                ]);
-
-                // Remove processing message after 3 seconds
-                setTimeout(() => {
-                    setMessages(prev => prev.filter(msg => msg.id !== processingMsgId));
-                }, 3000);
-            }
 
             // Update session ID if new
             if (botData?.session_id && botData.session_id !== sessionID) {
                 setSessionID(botData.session_id);
             }
 
+            // If no immediate chat message but background work is happening
+            if (!botData?.chat_message && botData?.background_processing) {
+                setBackgroundStatus({
+                    message: "Processing your request...",
+                    type: "processing"
+                });
+            }
+
+            // Hide typing indicator
+            setLoading(false);
+
         } catch (error) {
             setLoading(false);
             console.error("Send error:", error);
-            setMessages(prev => [
-                ...prev,
-                {
-                    id: Date.now(),
-                    role: "system",
-                    content: "Failed to send message. Please try again.",
-                    timestamp: Date.now(),
-                    visible: true
-                }
-            ]);
+
+            // Show error message
+            setBackgroundStatus({
+                message: "Failed to send message. Please try again.",
+                type: "error"
+            });
+            
+            setTimeout(() => setBackgroundStatus(null), 5000);
         }
     };
 
@@ -203,21 +183,30 @@ const ChatWindow = () => {
                             >
                                 <div className={`message ${msg.role}`}>
                                     {msg.role === "assistant" && msg.content.startsWith("<") ? (
-                                        // If message starts with HTML, render it
                                         <div
                                             dangerouslySetInnerHTML={{ __html: msg.content }}
                                         />
                                     ) : (
-                                        // Otherwise render as plain text
                                         <p>{msg.content}</p>
                                     )}
                                 </div>
                             </div>
                         ))}
+                    
+                    {/* Loading indicator */}
                     {loading && (
                         <div className="message-wrapper assistant">
                             <div className="message assistant typing">
                                 <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Background status */}
+                    {backgroundStatus && !loading && (
+                        <div className="message-wrapper system">
+                            <div className={`message system ${backgroundStatus.type}`}>
+                                <p>{backgroundStatus.message}</p>
                             </div>
                         </div>
                     )}
@@ -231,10 +220,13 @@ const ChatWindow = () => {
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                        onKeyDown={(e) => e.key === "Enter" && !loading && handleSend()}
                         placeholder="Type a message..."
+                        disabled={loading}
                     />
-                    <button onClick={handleSend}>Send</button>
+                    <button onClick={handleSend} disabled={loading}>
+                        {loading ? "..." : "Send"}
+                    </button>
                 </div>
             </div>
         </div>

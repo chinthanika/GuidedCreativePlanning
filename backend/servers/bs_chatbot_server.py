@@ -1,10 +1,19 @@
-from flask import Flask, request, jsonify
+from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
 import os, json, time, hashlib, requests
 import markdown, re
 import openai
+import queue
+
 import logging
 from logging.handlers import RotatingFileHandler
+
+from utils.cache import get_cache_stats
+
+import threading, traceback
+
+import firebase_admin
+from firebase_admin import credentials, db
 
 from utils.BSConversationFlowManager import BSConversationFlowManager
 
@@ -43,7 +52,7 @@ KEEP_LAST_N = 5  # how many summaries to keep for context
 
 PROFILE_MANAGER_URL = "http://localhost:5001/api"
 
-SYSTEM_PROMPT = """
+SYSTEM_PROMPT = SYSTEM_PROMPT = """
 You are DeepSeek, a creative writing assistant that helps users track story entities, relationships, and events, and guide students through Creative Problem Solving (CPS) cycles for story planning.
 
 Main goals:
@@ -579,6 +588,85 @@ Remember: You are a scaffold, a reflective guide and a CPS facilitator. You prom
 
 
 # -------------------- UTILITIES --------------------
+
+def background_handle_action(actions, user_id, deepseek_messages, cfm_session):
+    """
+    Run heavy background updates asynchronously and report status to Firebase.
+    
+    CRITICAL: This should NEVER handle 'respond' actions - those must be in main thread.
+    """
+    thread_start = time.time()
+    task_ref = db.reference(f"backgroundTasks/{user_id}")
+    task_id = str(int(time.time() * 1000))  # Use milliseconds for uniqueness
+
+    def update_status(status, message):
+        """Update Firebase with current task status."""
+        try:
+            db.reference(f"backgroundTasks/{user_id}/{task_id}").update({
+                "status": status,
+                "message": message,
+                "updatedAt": time.time()
+            })
+            logger.debug(f"[THREAD] Status update: {status} - {message}")
+        except Exception as e:
+            logger.error(f"[THREAD] Failed to update status: {e}")
+
+    # Validate no respond actions snuck in
+    respond_count = sum(1 for act in actions if isinstance(act, dict) and act.get("action") == "respond")
+    if respond_count > 0:
+        logger.error(f"[THREAD] CRITICAL: {respond_count} respond actions found in background thread! This should never happen.")
+        update_status("error", "Internal error: respond action in background thread")
+        return
+
+    try:
+        update_status("processing", f"Starting background task with {len(actions)} actions...")
+        logger.info(f"[THREAD] Background thread started with {len(actions)} actions")
+
+        # Process each action
+        for i, act in enumerate(actions):
+            action_name = act.get("action", "unknown") if isinstance(act, dict) else "unknown"
+            logger.debug(f"[THREAD] Processing action {i+1}/{len(actions)}: {action_name}")
+            
+            action_start = time.time()
+            try:
+                handle_action(
+                    act, 
+                    user_id, 
+                    deepseek_messages, 
+                    cfm_session,
+                    update_status=update_status
+                )
+                action_time = time.time() - action_start
+                logger.info(f"[THREAD] Completed action {action_name} in {action_time:.3f}s")
+            except Exception as e:
+                logger.error(f"[THREAD] Action {action_name} failed: {e}\n{traceback.format_exc()}")
+                update_status("error", f"Action {action_name} failed: {str(e)}")
+                # Continue processing other actions
+                continue
+        
+        update_status("done", f"All {len(actions)} actions processed successfully")
+
+        # Mark as done in Firebase
+        task_ref.child(task_id).update({
+            "status": "done",
+            "finishedAt": time.time(),
+            "actionCount": len(actions)
+        })
+        
+        thread_time = time.time() - thread_start
+        logger.info(f"[THREAD] Background thread completed in {thread_time:.3f}s")
+
+    except Exception as e:
+        thread_time = time.time() - thread_start
+        logger.error(f"[THREAD] Background thread crashed after {thread_time:.3f}s: {e}\n{traceback.format_exc()}")
+        update_status("error", f"Error: {e}")
+        task_ref.child(task_id).update({
+            "status": "error",
+            "error": str(e),
+            "finishedAt": time.time(),
+        })
+
+
 def parse_markdown(md_text, output="text"):
     logger.debug(f"Parsing markdown. Output format: {output}")
     if not md_text:
@@ -674,6 +762,92 @@ def generate_entity_id(name):
     logger.debug(f"Generating entity ID for: {name}")
     return hashlib.sha256(name.encode("utf-8")).hexdigest()
 
+def fetch_profile_data_batch(requests_list, user_id):
+    """
+    Fetch multiple profile requests in a single batch call.
+    Falls back to sequential if batch fails.
+    """
+    if not requests_list:
+        return []
+    
+    logger.debug(f"[BATCH] Attempting batch fetch for {len(requests_list)} requests")
+    batch_start = time.time()
+    
+    try:
+        # Attempt batch request
+        batch_payload = {
+            "userId": user_id,
+            "requests": requests_list
+        }
+        
+        response = requests.post(
+            f"{PROFILE_MANAGER_URL}/batch",
+            json=batch_payload,
+            timeout=15.0  # Longer timeout for batch
+        )
+        response.raise_for_status()
+        
+        batch_data = response.json()
+        batch_time = time.time() - batch_start
+        logger.info(f"[TIMING] Batch fetch took {batch_time:.3f}s for {len(requests_list)} requests")
+        
+        # Parse results
+        results = batch_data.get("results", [])
+        
+        if len(results) != len(requests_list):
+            logger.warning(f"[BATCH] Result count mismatch: expected {len(requests_list)}, got {len(results)}")
+        
+        # Build response in same format as sequential
+        profile_data = []
+        for i, req in enumerate(requests_list):
+            if i < len(results):
+                result = results[i]
+                profile_data.append({
+                    "request": req,
+                    "data": result.get("data") if "data" in result else {"error": result.get("error")}
+                })
+            else:
+                profile_data.append({
+                    "request": req,
+                    "data": {"error": "No result returned"}
+                })
+        
+        return profile_data
+        
+    except requests.Timeout:
+        logger.warning(f"[BATCH] Batch request timed out after {time.time() - batch_start:.3f}s, falling back to sequential")
+        return fetch_profile_data_sequential(requests_list, user_id)
+        
+    except requests.HTTPError as e:
+        logger.warning(f"[BATCH] Batch request failed with HTTP {e.response.status_code}, falling back to sequential")
+        return fetch_profile_data_sequential(requests_list, user_id)
+        
+    except Exception as e:
+        logger.exception(f"[BATCH] Batch request failed: {e}, falling back to sequential")
+        return fetch_profile_data_sequential(requests_list, user_id)
+
+
+def fetch_profile_data_sequential(requests_list, user_id):
+    """
+    Fallback: fetch profile requests sequentially (original behavior).
+    """
+    logger.debug(f"[SEQUENTIAL] Fetching {len(requests_list)} requests sequentially")
+    sequential_start = time.time()
+    
+    profile_data = []
+    for req in requests_list:
+        try:
+            data = fetch_profile_data(req, user_id)  # Original single-request function
+            profile_data.append({"request": req, "data": data})
+        except Exception as e:
+            logger.error(f"[SEQUENTIAL] Request failed: {e}")
+            profile_data.append({"request": req, "data": {"error": str(e)}})
+    
+    sequential_time = time.time() - sequential_start
+    logger.info(f"[TIMING] Sequential fetch took {sequential_time:.3f}s for {len(requests_list)} requests")
+    
+    return profile_data
+
 def fetch_profile_data(req_obj, user_id):
     logger.debug(f"Fetching profile data for user {user_id} with request: {req_obj}")
     target = req_obj.get("target")
@@ -713,11 +887,6 @@ def fetch_profile_data(req_obj, user_id):
     except Exception as e:
         logger.exception(f"Unexpected error fetching profile data: {e}")
         return {"error": str(e)}
-
-import json
-import requests
-from flask import Flask, request, jsonify
-import logging
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -784,9 +953,11 @@ def process_event_request(req_obj, user_id):
     return resp.json()
 
 
-# -------------------- ACTION HANDLER --------------------
-def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0):
-    logger.debug(f"[ACTION] handle_action called with response: {deepseek_response}, depth: {depth}")
+# -------------------- ACTION HANDLER BRAINSTORMING --------------------
+def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0, update_status=None):
+    """Recursively handle DeepSeek actions."""
+    action_start = time.time()
+    logger.debug(f"[ACTION] handle_action called at depth={depth}")
 
     if depth > MAX_DEPTH:
         logger.debug("[ACTION] Maximum recursion depth exceeded")
@@ -807,179 +978,241 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0)
         action = resp.get("action")
         reasoning = resp.get("reasoning", "")
         data = resp.get("data", {}) or {}
+
         if action == "respond":
+            logger.debug(f"[ACTION] Processing respond action with data: {data}")
             msg = parse_markdown(data.get("message", ""), "html")
             if msg.strip():
-                cfm_session.save_message("assistant", msg, stage=data.get("stage"))
+                # Get current stage
+                current_stage = cfm_session.get_stage()
+                
+                # Save with stage metadata
+                cfm_session.save_message(
+                    "assistant", 
+                    msg, 
+                    stage=current_stage,
+                    visible=True
+                )
                 combined_result["chat_message"] += msg + "\n"
-                logger.debug(f"[ACTION] Responding with: {msg}")           
-        
-
+                logger.debug(f"[ACTION] Responding with: {msg}, stage={current_stage}")
+            
     for resp in responses:
         action = resp.get("action")
-        if action != "respond":
-          reasoning = resp.get("reasoning", "")
-          data = resp.get("data", {}) or {}
-          requests_list = data.get("requests", [])
-          last_user_msg = recent_msgs[-1]["content"] if recent_msgs else ""
+        if action == "respond":
+            continue  # already handled
 
-          logger.debug(f"[ACTION] Processing action: {action}, Data: {data}")
+        reasoning = resp.get("reasoning", "")
+        data = resp.get("data", {}) or {}
+        requests_list = data.get("requests", [])
+        last_user_msg = recent_msgs[-1]["content"] if recent_msgs else ""
+
+        logger.debug(f"[ACTION] Processing action: {action}, Data: {data}")
 
           # -------------------------
           # Core conversational actions
           # -------------------------
 
-          if action == "log_stage":
-              to_stage = data.get("stage")
-              if to_stage:
-                  cfm_session.update_metadata({"stage": to_stage})
-                  logger.debug(f"[ACTION] Stage updated to {to_stage} (reasoning: {reasoning})")
+        if action == "log_stage":
+            if update_status:
+                update_status("processing", f"Logging stage: {data.get('stage')}")
+            to_stage = data.get("stage")
+            if to_stage:
+                cfm_session.update_metadata({"stage": to_stage})
+                logger.debug(f"[ACTION] Stage updated to {to_stage} (reasoning: {reasoning})")
 
-          # -------------------------
-          # CPS-specific actions
-          # -------------------------
-          elif action == "add_hmw":
-              q = data.get("hmwQuestion")
-              if q:
-                  cfm_session.add_hmw_question(q)
-                  logger.debug(f"[ACTION] Added HMW: {q}")
+        # -------------------------
+        # CPS-specific actions
+        # -------------------------
+        elif action == "add_hmw":
+            if update_status:
+                update_status("processing", "Adding new HMW question")
+            q = data.get("hmwQuestion")
+            if q:
+                cfm_session.add_hmw_question(q)
+                logger.debug(f"[ACTION] Added HMW: {q}")
 
-          elif action == "log_idea":
-              idea_text = data.get("idea")
-              evals = data.get("evaluations", {})
-              if idea_text:
-                  cfm_session.log_idea(idea_text, evals)
-                  logger.debug(f"[ACTION] Logged idea: {idea_text}, Evaluations: {evals}")
+        elif action == "log_idea":
+            if update_status:
+                update_status("processing", "Logging new idea")
+            idea_text = data.get("idea")
+            evals = data.get("evaluations", {})
+            if idea_text:
+                cfm_session.log_idea(idea_text, evals)
+                logger.debug(f"[ACTION] Logged idea: {idea_text}, Evaluations: {evals}")
 
-          elif action == "evaluate_idea":
-              idea_id = data.get("ideaId")
-              evals = data.get("evaluations", {})
-              if idea_id and evals:
-                  eval_result = cfm_session.evaluate_idea(idea_id, evals)
-                  combined_result["profile_data"].append(eval_result)
-                  logger.debug(f"[ACTION] Evaluated idea {idea_id}: {eval_result}")
-              else:
-                  logger.debug("[ACTION] Missing ideaId or evaluations for evaluation")
+        elif action == "evaluate_idea":
+            if update_status:
+                update_status("processing", "Evaluating idea")
+            idea_id = data.get("ideaId")
+            evals = data.get("evaluations", {})
+            if idea_id and evals:
+                eval_result = cfm_session.evaluate_idea(idea_id, evals)
+                combined_result["profile_data"].append(eval_result)
+                logger.debug(f"[ACTION] Evaluated idea {idea_id}: {eval_result}")
+            else:
+                logger.debug("[ACTION] Missing ideaId or evaluations for evaluation")
 
-          elif action == "refine_idea":
-              source_ids = data.get("sourceIdeaIds", [])
-              new_idea = data.get("newIdea", {})
-              if source_ids and new_idea:
-                  refine_result = cfm_session.refine_idea(source_ids, new_idea)
-                  combined_result["profile_data"].append(refine_result)
-                  logger.debug(f"[ACTION] Refined idea result: {refine_result}")
-              else:
-                  logger.debug("[ACTION] Missing sourceIds or newIdea for refinement")
+        elif action == "refine_idea":
+            if update_status:
+                update_status("processing", "Refining idea")
+            source_ids = data.get("sourceIdeaIds", [])
+            new_idea = data.get("newIdea", {})
+            if source_ids and new_idea:
+                refine_result = cfm_session.refine_idea(source_ids, new_idea)
+                combined_result["profile_data"].append(refine_result)
+                logger.debug(f"[ACTION] Refined idea result: {refine_result}")
+            else:
+                logger.debug("[ACTION] Missing sourceIds or newIdea for refinement")
 
-          elif action == "switch_stage":
-              to_stage = data.get("toStage")
-              if to_stage:
-                  cfm_session.update_metadata({"stage": to_stage})
-                  logger.debug(f"[ACTION] Stage switched to {to_stage}")
-          
-          elif action == "check_progress":
-              result = cfm_session.check_stage_progress()
-              logger.debug(f"[ACTION] Check Progress | {reasoning}")
-              logger.debug(f"[ACTION] Progress Result: {result}")
+        elif action == "switch_stage":
+            if update_status:
+              update_status("processing", "Switching stage")
+            to_stage = data.get("toStage")
+            if to_stage:
+                cfm_session.update_metadata({"stage": to_stage})
+                logger.debug(f"[ACTION] Stage switched to {to_stage}")
+        
+        elif action == "check_progress":
+            if update_status:
+                update_status("processing", "Checking stage progress")
+            result = cfm_session.check_stage_progress()
+            logger.debug(f"[ACTION] Check Progress | {reasoning}")
+            logger.debug(f"[ACTION] Progress Result: {result}")
 
-              # Always update metadata if stage is ready
-              if result.get("ready"):
-                  suggested = result.get("suggestedNext")
-                  if suggested:
-                      cfm_session.update_metadata({"stage": suggested})
-                      logger.debug(f"[ACTION] Stage advanced to {suggested}")
+            # Always update metadata if stage is ready
+            if result.get("ready"):
+                suggested = result.get("suggestedNext")
+                if suggested:
+                    cfm_session.update_metadata({"stage": suggested})
+                    logger.debug(f"[ACTION] Stage advanced to {suggested}")
 
-              # Build follow-up messages for DeepSeek (like get_info does)
-              followup_messages = [
-                  {"role": "system", "content": SYSTEM_PROMPT},
-                  {"role": "user", "content": f"User asked: {last_user_msg}"},
-                  {"role": "assistant", "content": f"Your reasoning was: {reasoning}"},
-                  {"role": "system", "content": f"Stage check result: {json.dumps(result)}"}
-              ]
+            # Build follow-up messages for DeepSeek (like get_info does)
+            followup_messages = [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": f"User asked: {last_user_msg}"},
+                {"role": "assistant", "content": f"Your reasoning was: {reasoning}"},
+                {"role": "system", "content": f"Stage check result: {json.dumps(result)}"}
+            ]
 
-              followup_resp = client.chat.completions.create(
-                  model="deepseek-chat", messages=followup_messages, stream=False
-              )
-              bot_reply_raw = followup_resp.choices[0].message.content.strip()
-              logger.debug(f"[ACTION] DeepSeek follow-up raw reply: {bot_reply_raw}")
+            followup_start = time.time()
+            followup_resp = client.chat.completions.create(
+                model="deepseek-chat", messages=followup_messages, stream=False
+            )
 
-              try:
-                  bot_reply_json = parse_deepseek_json(bot_reply_raw)
-                  bot_reply_json = normalize_deepseek_response(bot_reply_json)
-              except Exception as e:
-                  logger.warning(f"[ACTION] Failed to parse DeepSeek JSON: {e}")
-                  bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+            followup_time = time.time() - followup_start
+            logger.info(f"[TIMING] Follow-up DeepSeek call took {followup_time:.3f}s")
+            
+            bot_reply_raw = followup_resp.choices[0].message.content.strip()
+            logger.debug(f"[ACTION] DeepSeek follow-up raw reply: {bot_reply_raw}")
 
-              combined_result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1)
+            try:
+                bot_reply_json = parse_deepseek_json(bot_reply_raw)
+                bot_reply_json = normalize_deepseek_response(bot_reply_json)
+            except Exception as e:
+                logger.warning(f"[ACTION] Failed to parse DeepSeek JSON: {e}")
+                bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+
+            combined_result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1)
 
 
-          # -------------------------
-          # Profile Manager actions
-          # -------------------------
-          elif action in ["get_info", "query"]:
-              for req in requests_list:
-                  profile_data = fetch_profile_data(req, user_id)
-                  combined_result["profile_data"].append({"request": req, "data": profile_data})
-                  logger.debug(f"[ACTION] Fetched profile data for request: {req}, Result: {profile_data}")
+        # -------------------------
+        # Profile Manager actions
+        # -------------------------
+        elif action in ["get_info", "query"]:
+            if update_status:
+              update_status("processing", "Retrieving information from story database...")
+            
+            info_start = time.time()
 
-              if combined_result["profile_data"]:
-                  info_summary = json.dumps(combined_result["profile_data"], indent=2)
-                  followup_messages = [
-                      {"role": "system", "content": SYSTEM_PROMPT},
-                      {"role": "user", "content": f"User asked: {last_user_msg}"},
-                      {"role": "assistant", "content": f"Your reasoning was: {reasoning}"},
-                      {"role": "system", "content": f"Here is the requested info:\n{info_summary}"}
-                  ]
-                  followup_resp = client.chat.completions.create(
-                      model="deepseek-chat", messages=followup_messages, stream=False
-                  )
-                  bot_reply_raw = followup_resp.choices[0].message.content.strip()
-                  logger.debug(f"[ACTION] DeepSeek follow-up raw reply: {bot_reply_raw}")
+            if len(requests_list) > 1:
+                # Batch for multiple requests
+                profile_data_list = fetch_profile_data_batch(requests_list, user_id)
+                combined_result["profile_data"] = profile_data_list
+                logger.debug(f"[GET_INFO] Batch fetched {len(profile_data_list)} results")
+            else:
+                # Single request fallback
+                for req in requests_list:
+                    data = fetch_profile_data(req, user_id)
+                    combined_result["profile_data"].append({"request": req, "data": data})
+                    logger.debug(f"[GET_INFO] Single fetch: {req}")
+            
+            info_time = time.time() - info_start
+            logger.info(f"[TIMING] Profile data fetch took {info_time:.3f}s for {len(requests_list)} requests")
+            
+            if combined_result["profile_data"]:
+                info_summary = json.dumps(combined_result["profile_data"], indent=2)
+                followup_messages = [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": f"User asked: {last_user_msg}"},
+                    {"role": "assistant", "content": f"Your reasoning was: {reasoning}"},
+                    {"role": "system", "content": f"Here is the requested info:\n{info_summary}"}
+                ]
 
-                  try:
-                      bot_reply_json = parse_deepseek_json(bot_reply_raw)
-                      bot_reply_json = normalize_deepseek_response(bot_reply_json)
-                  except Exception as e:
-                      logger.warning(f"[ACTION] Failed to parse DeepSeek JSON: {e}")
-                      bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+                followup_start = time.time()
+                followup_resp = client.chat.completions.create(
+                    model="deepseek-chat", messages=followup_messages, stream=False
+                )
 
-                  combined_result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1)
+                followup_time = time.time() - followup_start
+                logger.info(f"[TIMING] Follow-up DeepSeek call took {followup_time:.3f}s")
+                
+                bot_reply_raw = followup_resp.choices[0].message.content.strip()
+                logger.debug(f"[ACTION] DeepSeek follow-up raw reply: {bot_reply_raw}")
 
-          elif action == "stage_change":
-              staged_summaries = []
-              for req in requests_list:
-                  etype = req.get("entityType")
-                  if etype == "node":
-                      resp = process_node_request(req, user_id)
-                  elif etype == "link":
-                      resp = process_link_request(req, user_id)
-                  elif etype == "event":
-                      resp = process_event_request(req, user_id)
-                  else:
-                      resp = {"error": f"Unknown entityType {etype}"}
-                  staged_summaries.append(resp)
+                try:
+                    bot_reply_json = parse_deepseek_json(bot_reply_raw)
+                    bot_reply_json = normalize_deepseek_response(bot_reply_json)
+                except Exception as e:
+                    logger.warning(f"[ACTION] Failed to parse DeepSeek JSON: {e}")
+                    bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
 
-              for s in staged_summaries:
-                  cfm_session.save_message("system", f"STAGING RESULT: {json.dumps(s)}",
-                                          action="stage_result", visible=False)
+                combined_result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1)
 
-              combined_result["staging_results"] = staged_summaries
-              logger.debug(f"[ACTION] Completed stage_change, summaries: {staged_summaries}")
+        elif action == "stage_change":
+            if update_status:
+              update_status("processing", "Staging changes to story database...")
+            
+            staging_start = time.time()
+            staged_summaries = []
+            for req in requests_list:
+                etype = req.get("entityType")
+                if etype == "node":
+                    resp = process_node_request(req, user_id)
+                elif etype == "link":
+                    resp = process_link_request(req, user_id)
+                elif etype == "event":
+                    resp = process_event_request(req, user_id)
+                else:
+                    resp = {"error": f"Unknown entityType {etype}"}
+                staged_summaries.append(resp)
 
-          else:
-              logger.debug(f"[ACTION] Unknown action encountered: {action}")
+            staging_time = time.time() - staging_start
+            logger.info(f"[TIMING] Staging operations took {staging_time:.3f}s")
 
+            for s in staged_summaries:
+                cfm_session.save_message("system", f"STAGING RESULT: {json.dumps(s)}",
+                                        action="stage_result", visible=False)
+
+            combined_result["staging_results"] = staged_summaries
+            logger.debug(f"[ACTION] Completed stage_change, summaries: {staged_summaries}")
+
+        else:
+            logger.debug(f"[ACTION] Unknown action encountered: {action}")
+
+    action_time = time.time() - action_start
+    logger.info(f"[TIMING] handle_action completed in {action_time:.3f}s at depth={depth}")
+    
     return combined_result
 
 # -------------------- CHAT ENDPOINT --------------------
 @app.route("/chat", methods=["POST"])
 def chat():
+    request_start = time.time()  # START TIMING
     logger.debug("[CHAT] /chat endpoint called")
     data = request.json
     user_message = data.get("message")
     user_id = data.get("user_id")
     session_id = data.get("session_id")
-    result = {"chat_message": "", "profile_data": [], "staging_results": []}
 
     if not user_message or not user_id:
         logger.warning("[CHAT] Missing message or user_id")
@@ -987,6 +1220,7 @@ def chat():
 
     # ------------------ INIT BS SESSION ------------------
     try:
+        session_init_start = time.time()
         if session_id:
             try:
                 cfm_session = BSConversationFlowManager(user_id, session_id)
@@ -997,8 +1231,10 @@ def chat():
         else:
             cfm_session = BSConversationFlowManager.create_session(user_id)
             session_id = cfm_session.session_id
-            user_id = cfm_session.uid
             logger.info(f"[INFO] New session created: {session_id}")
+        
+        session_init_time = time.time() - session_init_start
+        logger.info(f"[TIMING] Session init took {session_init_time:.3f}s")
     except Exception as e:
         logger.exception(f"Failed to initialize BS session: {e}")
         return jsonify({"error": f"Failed to initialize BS session: {e}"}), 500
@@ -1016,80 +1252,168 @@ def chat():
 
     # ------------------ SUMMARISATION ------------------
     try:
+        summary_start = time.time()
         recent = cfm_session.get_recent_messages(limit=KEEP_LAST_N)
         all_unsummarised = cfm_session.get_recent_messages(maxed_out=True)["unsummarised"]
 
-        if len(all_unsummarised) > KEEP_LAST_N:
+        summary_time = time.time() - summary_start
+        logger.info(f"[TIMING] Summary fetch took {summary_time:.3f}s")
+
+        # Only summarize if we have 10+ unsummarised messages
+        if len(all_unsummarised) > KEEP_LAST_N + 10: 
             to_summarise = all_unsummarised[:-KEEP_LAST_N]
             logger.debug(f"Summarising {len(to_summarise)} older messages")
-            cfm_session.summarise_and_store(
-                deepseek_client=client,
-                session_id=session_id,
-                unsummarised_msgs=to_summarise
-            )
+            
+            # Move summarization to background thread
+            threading.Thread(
+                target=lambda: cfm_session.summarise_and_store(
+                    deepseek_client=client,
+                    session_id=session_id,
+                    unsummarised_msgs=to_summarise
+                ),
+                daemon=True
+            ).start()
+            logger.debug("[SUMMARISATION] Started background summarization thread")
+        
         recent_msgs = cfm_session.get_recent_messages(limit=10)["unsummarised"]
+    
     except Exception as e:
         logger.warning(f"Failed during summarisation: {e}")
         recent_msgs = []
 
     # ------------------ DEEPSEEK CALL ------------------
     deepseek_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-
-    # append recent messages properly
     for m in recent_msgs:
         deepseek_messages.append({
             "role": m["role"], 
             "content": m["content"]
         })
-
-    # finally, add the new user message
     deepseek_messages.append({"role": "user", "content": user_message})
     
     try:
+        llm_start = time.time()
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=deepseek_messages,
             stream=False
         )
+
+        llm_duration = time.time() - llm_start
+        logger.info(f"[TIMING] DeepSeek API call took {llm_duration:.3f}s")
+        
         bot_reply_raw = response.choices[0].message.content.strip()
         logger.debug(f"[CHAT] DeepSeek raw response: {bot_reply_raw}")
 
+        parse_start = time.time()
         bot_reply_json_list = parse_deepseek_json(bot_reply_raw) or [
             {"action": "respond", "data": {"message": bot_reply_raw}}
         ]
 
-        # Always normalize: DeepSeek must provide respond + mutations
+        # Normalize
         bot_reply_json = normalize_deepseek_response(bot_reply_json_list)
+        
+        parse_time = time.time() - parse_start
+        logger.info(f"[TIMING] Response parsing took {parse_time:.3f}s")
 
-        results = []
+        # CRITICAL FIX: Separate respond from non-respond
+        respond_actions = []
+        non_respond_actions = []
+        
+        # Handle both list and single dict
+        actions_list = bot_reply_json if isinstance(bot_reply_json, list) else [bot_reply_json]
+        
+        for obj in actions_list:
+            if isinstance(obj, dict):
+                if obj.get("action") == "respond":
+                    respond_actions.append(obj)
+                else:
+                    non_respond_actions.append(obj)
+        
+        logger.info(f"[CHAT] Found {len(respond_actions)} respond actions, {len(non_respond_actions)} background actions")
+
+        # Extract ONLY respond action for immediate return
         chat_message = None
-        # ------------------ HANDLE ACTION ------------------
+        for obj in respond_actions:
+            msg = obj.get("data", {}).get("message", "")
+            if msg:
+                chat_message = parse_markdown(msg, "html")
+                break
+        
+        # Fallback if no respond
+        if not chat_message:
+            stripped = bot_reply_raw.strip()
+            if not (stripped.startswith("{") or stripped.startswith("[")):
+                chat_message = parse_markdown(bot_reply_raw, "html")
+            else:
+                chat_message = None
+                logger.info("[CHAT] No respond action, background will handle")
+
+        # ------------------ SAVE ASSISTANT MESSAGE ------------------
         try:
-            result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session)
-            chat_message = result.get("chat_message")
-            results = [result]
+            if chat_message:
+                cfm_session.save_message(
+                    role="assistant",
+                    content=chat_message,
+                    stage=cfm_session.get_stage(),
+                    visible=True
+                )
         except Exception as e:
-            logger.error(f"[CHAT] Error handling DeepSeek actions: {e}")
-            chat_message = "(Error handling DeepSeek actions)"
-            results = []
+            logger.warning(f"Failed to save assistant message: {e}")
 
-        # Decide what to return to frontend
-        return jsonify({
-            "chat_message": chat_message,   # only last respond (or None)
-            "profile_data": results         # full list of backend effects
-        })
+        # ------------------ RETURN IMMEDIATELY ------------------
+        total_time = time.time() - request_start
+        logger.info(f"[TIMING] Total request time: {total_time:.3f}s")
+        
+        result = {
+            "chat_message": chat_message,
+            "session_id": session_id,
+            "mode": "brainstorming",
+            "background_processing": len(non_respond_actions) > 0
+        }
 
+        # ------------------ BACKGROUND THREAD ------------------
+        if non_respond_actions:
+            logger.debug(f"[CHAT] Spawning background thread for {len(non_respond_actions)} actions")
+            threading.Thread(
+              target=background_handle_action,
+              args=(non_respond_actions, user_id, recent_msgs, cfm_session),
+              daemon=True
+            ).start()
+            logger.debug("[CHAT] Background thread started")
+        else:
+            logger.info("[CHAT] No background actions to process")
+
+        return jsonify(result), 200
 
     except Exception as e:
-        logger.exception(f"[CHAT] DeepSeek API error: {e}")
-        result = {"chat_message": str(e), "profile_data": [], "staging_results": []}
+        total_time = time.time() - request_start
+        logger.exception(f"[CHAT] DeepSeek API error after {total_time:.3f}s: {e}")
+        return jsonify({"error": f"DeepSeek API error: {e}"}), 500
+    
+@app.route("/debug/cache-stats", methods=["GET"])
+def debug_cache_stats():
+    stats = get_cache_stats()
+    return jsonify(stats), 200
 
-    results["session_id"] = session_id
-    results["mode"] = "brainstorming"
-    logger.debug(f"[CHAT] Returning result: {result}")
-    return jsonify(result), 200
+@app.route("/stream/<user_id>")
+def stream_updates(user_id):
+    def event_stream():
+        q = queue.Queue()
 
+        # Listen to Firebase backgroundTasks updates
+        ref = db.reference(f"backgroundTasks/{user_id}")
 
+        listener = ref.listen(lambda event: q.put(event.data))
+
+        try:
+            while True:
+                data = q.get()
+                if data:
+                    yield f"data: {json.dumps(data)}\n\n"
+        except GeneratorExit:
+            listener.close()
+
+    return Response(event_stream(), mimetype="text/event-stream")
 
 # -------------------- RUN SERVER --------------------
 if __name__ == "__main__":
