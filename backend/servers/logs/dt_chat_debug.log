@@ -3357,3 +3357,1189 @@ He begins as someone seeking identity beyond his family name, and through encoun
 2025-10-08 15:33:58,572 [INFO] [CHAT] Found 1 respond actions, 0 background actions
 2025-10-08 15:33:58,574 [INFO] [TIMING] Total request time: 22.019s
 2025-10-08 15:33:58,575 [INFO] [CHAT] No background actions to process
+2025-10-09 11:50:57,221 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'What have I said about my character Akio?', 'session_id': None}
+2025-10-09 11:51:02,540 [INFO] [INFO] New session created: -Ob64ychQguzaNk7B5gK
+2025-10-09 11:51:02,541 [INFO] [TIMING] Session init took 5.320s
+2025-10-09 11:51:14,430 [INFO] [TIMING] Summary fetch took 11.887s
+2025-10-09 11:51:21,013 [INFO] [TIMING] DeepSeek API call took 6.582s
+2025-10-09 11:51:21,013 [INFO] [LLM] Raw response: {
+  "action": "get_info",
+  "reasoning": "The user is asking for a summary of what they've previously said about their character Akio. I need to fetch all existing information about this character from the profile manager to provide a comprehensive response.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio"]
+          }
+        },
+        "message": "Retrieving all existing information about the character Akio to provide the user with a summary of what they've previously shared."
+      }
+    ]
+  }
+}
+2025-10-09 11:51:21,014 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 11:51:21,014 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 11:51:21,014 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 11:51:21,014 [INFO] [TIMING] Total request time: 23.795s
+2025-10-09 11:51:21,015 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 11:51:21,022 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': "I want to talk about Akio's motivations.", 'session_id': '-Ob64ychQguzaNk7B5gK'}
+2025-10-09 11:51:21,757 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 11:51:21,757 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 11:51:21,758 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-09 11:51:21,758 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 11:51:22,301 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-09 11:51:22,301 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Retrieving all existing information about the character Akio to provide the user with a summary of what they've previously shared."}]
+2025-10-09 11:51:24,093 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Retrieving all existing information about the character Akio to provide the user with a summary of what they've previously shared."}
+2025-10-09 11:51:24,093 [INFO] [TIMING] Profile data fetch took 1.792s for 1 requests
+2025-10-09 11:51:24,788 [INFO] [TIMING] Session init took 3.765s
+2025-10-09 11:51:31,795 [INFO] [TIMING] Summary fetch took 7.005s
+2025-10-09 11:51:36,722 [INFO] [TIMING] Follow-up DeepSeek call took 12.628s
+2025-10-09 11:51:36,727 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'respond', 'reasoning': "The user is asking for a summary of what they've previously shared about their character Akio. I retrieved all existing information about Akio from the profile manager and will now provide a comprehensive summary based on the stored data.", 'data': {'message': "Here's what you've told me about Akio so far:\n\n**Basic Details:**\n- Full name: Futaba Akio (also goes by Akio Futaba or just Akio)\n- Age: Young\n- Family: From the Futaba family\n- Hair color: Blue\n- Occupation: Aspiring artist\n\n**Personality & Interests:**\n- Personality: Polite, nervous, but passionate about art\n- Interests: Comics and art\n- Initial state: Confused and uncertain, seeking identity beyond his family name\n\n**Character Arc & Motivations:**\n- Motivations: Love of art, desire to transcend his family name and make something of himself\n- Character development: Starts confused and uncertain, but grows through encounters with others into someone who wants to use art to make a difference in the world\n\nIs there anything you'd like to add or clarify about Akio, or would you like to explore a particular aspect of his character further?"}}
+2025-10-09 11:51:36,727 [INFO] [TIMING] Response parsing took 0.006s
+2025-10-09 11:51:36,727 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-09 11:51:36,732 [DEBUG] [RESPOND] Message: <p>Here's what you've told me about Akio so far:</p>
+<p><strong>Basic Details:</strong>
+- Full name: Futaba Akio (also goes by Akio Futaba or just Akio)
+- Age: Young
+- Family: From the Futaba family
+- Hair color: Blue
+- Occupation: Aspiring artist</p>
+<p><strong>Personality &amp; Interests:</strong>
+- Personality: Polite, nervous, but passionate about art
+- Interests: Comics and art
+- Initial state: Confused and uncertain, seeking identity beyond his family name</p>
+<p><strong>Character Arc &amp; Motivations:</strong>
+- Motivations: Love of art, desire to transcend his family name and make something of himself
+- Character development: Starts confused and uncertain, but grows through encounters with others into someone who wants to use art to make a difference in the world</p>
+<p>Is there anything you'd like to add or clarify about Akio, or would you like to explore a particular aspect of his character further?</p>
+2025-10-09 11:51:36,732 [DEBUG] [RESPOND] Message successfully saved to Firebase session
+2025-10-09 11:51:36,732 [INFO] [TIMING] handle_action completed in 0.004s at depth=1
+2025-10-09 11:51:36,732 [INFO] [TIMING] handle_action completed in 14.973s at depth=0
+2025-10-09 11:51:36,732 [INFO] [THREAD] Completed action get_info in 14.973s
+2025-10-09 11:51:37,017 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 11:51:37,305 [INFO] [THREAD] Background thread completed in 16.289s
+2025-10-09 11:51:41,779 [INFO] [TIMING] DeepSeek API call took 9.984s
+2025-10-09 11:51:41,780 [INFO] [LLM] Raw response: {
+  "action": "meta_transition",
+  "reasoning": "User wants to discuss Akio's motivations, which falls under the 'motivation' category. Since no angle is specified, I'll transition to this category to begin the conversation.",
+  "data": {
+    "type": "category_to_category",
+    "new_category": "motivation"
+  }
+}
+2025-10-09 11:51:41,780 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 11:51:41,780 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 11:51:41,780 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 11:51:41,781 [INFO] [TIMING] Total request time: 20.759s
+2025-10-09 11:51:41,781 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 11:51:41,808 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': "I'm not too sure about him... I feel like he is a very confused individual, perhaps due to his youth.", 'session_id': '-Ob64ychQguzaNk7B5gK'}
+2025-10-09 11:51:42,072 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 11:51:42,072 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 11:51:42,073 [DEBUG] [THREAD] Processing action 1/1: meta_transition
+2025-10-09 11:51:42,073 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 11:51:42,073 [INFO] [TIMING] handle_action completed in 0.000s at depth=0
+2025-10-09 11:51:42,074 [INFO] [THREAD] Completed action meta_transition in 0.001s
+2025-10-09 11:51:42,348 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 11:51:42,620 [INFO] [THREAD] Background thread completed in 0.839s
+2025-10-09 11:51:44,418 [INFO] [TIMING] Session init took 2.609s
+2025-10-09 11:51:53,676 [INFO] [TIMING] Summary fetch took 9.257s
+2025-10-09 11:51:59,863 [INFO] [TIMING] DeepSeek API call took 6.186s
+2025-10-09 11:51:59,863 [INFO] [LLM] Raw response: {
+  "action": "get_primary_question",
+  "reasoning": "The user expressed uncertainty about Akio, specifically noting his confusion due to youth. This suggests we should explore his motivations more deeply, starting with the 'goals_and_purposes' angle to understand what he's trying to achieve despite his confusion.",
+  "data": {
+    "category": "motivation",
+    "angle": "goals_and_purposes"
+  }
+}
+2025-10-09 11:51:59,876 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 11:51:59,876 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 11:51:59,876 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 11:51:59,877 [INFO] [TIMING] Total request time: 18.069s
+2025-10-09 11:51:59,877 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 11:52:00,157 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 11:52:00,167 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 11:52:00,167 [DEBUG] [THREAD] Processing action 1/1: get_primary_question
+2025-10-09 11:52:00,167 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 11:52:00,168 [INFO] [TIMING] handle_action completed in 0.001s at depth=0
+2025-10-09 11:52:00,168 [INFO] [THREAD] Completed action get_primary_question in 0.001s
+2025-10-09 11:52:00,468 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 11:52:00,991 [INFO] [THREAD] Background thread completed in 1.113s
+2025-10-09 11:53:28,332 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'Hello!', 'session_id': None}
+2025-10-09 11:53:33,522 [INFO] [INFO] New session created: -Ob65YVarPsEFRACL7qU
+2025-10-09 11:53:33,522 [INFO] [TIMING] Session init took 5.189s
+2025-10-09 11:53:45,141 [INFO] [TIMING] Summary fetch took 11.618s
+2025-10-09 11:53:50,548 [INFO] [TIMING] DeepSeek API call took 5.407s
+2025-10-09 11:53:50,549 [INFO] [LLM] Raw response: {
+  "action": "respond",
+  "reasoning": "Starting a new conversation to help with story development. Need to determine which story element category the user wants to focus on first.",
+  "data": {
+    "message": "Hello! I'm excited to help you develop your story. To get started, which aspect would you like to explore first? We could dive into characters, plot, setting, conflict, themes, or any other story element that's on your mind."
+  }
+}
+2025-10-09 11:53:50,549 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 11:53:50,549 [INFO] [CHAT] Found 1 respond actions, 0 background actions
+2025-10-09 11:53:50,551 [INFO] [TIMING] Total request time: 22.219s
+2025-10-09 11:53:50,551 [INFO] [CHAT] No background actions to process
+2025-10-09 11:54:51,901 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'Tell me about Akio and Phagousa', 'session_id': None}
+2025-10-09 11:54:57,053 [INFO] [INFO] New session created: -Ob65ru6xOcDSkJzLR4c
+2025-10-09 11:54:57,054 [INFO] [TIMING] Session init took 5.152s
+2025-10-09 11:55:08,722 [INFO] [TIMING] Summary fetch took 11.667s
+2025-10-09 11:55:15,298 [INFO] [TIMING] DeepSeek API call took 6.576s
+2025-10-09 11:55:15,298 [INFO] [LLM] Raw response: {
+  "action": "query",
+  "reasoning": "The user is asking about Akio and Phagousa, which could be characters, locations, or other entities. I need to fetch information about these entities to understand what we're discussing and provide relevant context.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio", "Phagousa"]
+          }
+        },
+        "message": "Looking up information about Akio and Phagousa to understand what we're discussing"
+      }
+    ]
+  }
+}
+2025-10-09 11:55:15,298 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 11:55:15,301 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 11:55:15,301 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 11:55:15,301 [INFO] [TIMING] Total request time: 23.400s
+2025-10-09 11:55:15,301 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 11:55:15,922 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 11:55:15,923 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 11:55:15,923 [DEBUG] [THREAD] Processing action 1/1: query
+2025-10-09 11:55:15,924 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 11:55:16,210 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-09 11:55:16,210 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio', 'Phagousa']}}, 'message': "Looking up information about Akio and Phagousa to understand what we're discussing"}]
+2025-10-09 11:55:16,479 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': ['Akio', 'Phagousa']}}, 'message': "Looking up information about Akio and Phagousa to understand what we're discussing"}
+2025-10-09 11:55:16,480 [INFO] [TIMING] Profile data fetch took 0.271s for 1 requests
+2025-10-09 11:55:27,986 [INFO] [TIMING] Follow-up DeepSeek call took 11.505s
+2025-10-09 11:55:27,987 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'respond', 'reasoning': 'The user asked about Akio and Phagousa. I retrieved their information and can now provide a summary of what we know about these characters.', 'data': {'message': 'Great! Let me tell you what we know about these two characters:\n\n**Akio** (also known as Futaba Akio or Akio Futaba) is a young aspiring artist with blue hair who comes from the Futaba family. He starts out confused and uncertain about his identity, but grows through his encounters with others into someone who wants to use art to make a difference in the world. He\'s polite, nervous, but passionate about art and comics, and he\'s motivated by his love of art and a desire to transcend his family name.\n\n**Phagousa** (also called "Water Lady") is a Titan of Oceans - she seems to be a more mythical or powerful being compared to Akio. We don\'t have as much detailed information about her personality or motivations yet.\n\nWould you like to explore one of these characters in more depth, or discuss how they might interact in your story?'}}
+2025-10-09 11:55:27,987 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 11:55:27,987 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-09 11:55:27,989 [DEBUG] [RESPOND] Message: <p>Great! Let me tell you what we know about these two characters:</p>
+<p><strong>Akio</strong> (also known as Futaba Akio or Akio Futaba) is a young aspiring artist with blue hair who comes from the Futaba family. He starts out confused and uncertain about his identity, but grows through his encounters with others into someone who wants to use art to make a difference in the world. He's polite, nervous, but passionate about art and comics, and he's motivated by his love of art and a desire to transcend his family name.</p>
+<p><strong>Phagousa</strong> (also called "Water Lady") is a Titan of Oceans - she seems to be a more mythical or powerful being compared to Akio. We don't have as much detailed information about her personality or motivations yet.</p>
+<p>Would you like to explore one of these characters in more depth, or discuss how they might interact in your story?</p>
+2025-10-09 11:55:27,991 [DEBUG] [RESPOND] Message successfully saved to Firebase session
+2025-10-09 11:55:27,991 [INFO] [TIMING] handle_action completed in 0.003s at depth=1
+2025-10-09 11:55:27,991 [INFO] [TIMING] handle_action completed in 12.066s at depth=0
+2025-10-09 11:55:27,993 [INFO] [THREAD] Completed action query in 12.069s
+2025-10-09 11:55:28,259 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 11:55:28,533 [INFO] [THREAD] Background thread completed in 13.233s
+2025-10-09 12:50:29,985 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'What have I said about my character Akio?', 'session_id': None}
+2025-10-09 12:50:35,163 [INFO] [INFO] New session created: -Ob6Iapn689GVfgZbxAT
+2025-10-09 12:50:35,164 [INFO] [TIMING] Session init took 5.178s
+2025-10-09 12:50:46,763 [INFO] [TIMING] Summary fetch took 11.596s
+2025-10-09 12:50:52,933 [INFO] [TIMING] DeepSeek API call took 6.169s
+2025-10-09 12:50:52,935 [INFO] [LLM] Raw response: {
+  "action": "get_info",
+  "reasoning": "The user is asking about what they've previously said about their character Akio. I need to retrieve all existing information about this character from the system to provide a comprehensive summary.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio"]
+          }
+        },
+        "message": "Retrieving all information about the character Akio to summarize what's been established so far"
+      }
+    ]
+  }
+}
+2025-10-09 12:50:52,935 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 12:50:52,937 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 12:50:52,937 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 12:50:52,937 [INFO] [TIMING] Total request time: 22.952s
+2025-10-09 12:50:52,937 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 12:50:52,953 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': "I want to talk about Akio's motivations.", 'session_id': '-Ob6Iapn689GVfgZbxAT'}
+2025-10-09 12:50:53,664 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 12:50:53,664 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 12:50:53,667 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-09 12:50:53,668 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 12:50:53,923 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-09 12:50:53,924 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Retrieving all information about the character Akio to summarize what's been established so far"}]
+2025-10-09 12:50:54,300 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Retrieving all information about the character Akio to summarize what's been established so far"}
+2025-10-09 12:50:54,301 [INFO] [TIMING] Profile data fetch took 0.375s for 1 requests
+2025-10-09 12:50:55,990 [INFO] [TIMING] Session init took 3.037s
+2025-10-09 12:51:02,940 [INFO] [TIMING] Summary fetch took 6.947s
+2025-10-09 12:51:05,797 [INFO] [TIMING] Follow-up DeepSeek call took 11.496s
+2025-10-09 12:51:05,798 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'respond', 'reasoning': "The user asked for a summary of what they've said about Akio. I retrieved the existing character data to provide a comprehensive overview of all established details.", 'data': {'message': "Here's what you've told me about Akio so far:\n\n**Basic Details:**\n- Full name: Futaba Akio (also goes by Akio Futaba or just Akio)\n- Young man with blue hair\n- From the Futaba family\n- Aspiring artist who loves comics and art\n\n**Personality & State:**\n- Polite but nervous demeanor\n- Passionate about art\n- Starts the story confused and uncertain about his identity\n- Seeking to establish himself beyond just his family name\n\n**Character Arc:**\n- Begins confused and uncertain\n- Grows through encounters with others\n- Develops into someone who wants to use art to make a difference in the world\n- Motivated by love of art and desire to transcend his family name\n\nThis gives us a solid foundation! Would you like to explore any particular aspect of Akio's character in more depth, or should we move on to another character or story element?"}}
+2025-10-09 12:51:05,800 [INFO] [TIMING] Response parsing took 0.001s
+2025-10-09 12:51:05,801 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-09 12:51:05,809 [DEBUG] [RESPOND] Message: <p>Here's what you've told me about Akio so far:</p>
+<p><strong>Basic Details:</strong>
+- Full name: Futaba Akio (also goes by Akio Futaba or just Akio)
+- Young man with blue hair
+- From the Futaba family
+- Aspiring artist who loves comics and art</p>
+<p><strong>Personality &amp; State:</strong>
+- Polite but nervous demeanor
+- Passionate about art
+- Starts the story confused and uncertain about his identity
+- Seeking to establish himself beyond just his family name</p>
+<p><strong>Character Arc:</strong>
+- Begins confused and uncertain
+- Grows through encounters with others
+- Develops into someone who wants to use art to make a difference in the world
+- Motivated by love of art and desire to transcend his family name</p>
+<p>This gives us a solid foundation! Would you like to explore any particular aspect of Akio's character in more depth, or should we move on to another character or story element?</p>
+2025-10-09 12:51:05,812 [DEBUG] [RESPOND] Message successfully saved to Firebase session
+2025-10-09 12:51:05,814 [INFO] [TIMING] handle_action completed in 0.013s at depth=1
+2025-10-09 12:51:05,819 [INFO] [TIMING] handle_action completed in 12.151s at depth=0
+2025-10-09 12:51:05,820 [INFO] [THREAD] Completed action get_info in 12.152s
+2025-10-09 12:51:06,071 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 12:51:06,350 [INFO] [THREAD] Background thread completed in 13.409s
+2025-10-09 12:51:08,738 [INFO] [TIMING] DeepSeek API call took 5.797s
+2025-10-09 12:51:08,739 [INFO] [LLM] Raw response: {
+  "action": "get_info",
+  "reasoning": "The user wants to know what they've previously said about their character Akio and discuss motivations. I need to retrieve existing information about Akio to provide context for the conversation.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio"]
+          }
+        },
+        "message": "Looking up existing information about Akio to understand what we've discussed so far"
+      }
+    ]
+  }
+}
+2025-10-09 12:51:08,741 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 12:51:08,741 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 12:51:08,742 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 12:51:08,743 [INFO] [TIMING] Total request time: 15.790s
+2025-10-09 12:51:08,745 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 12:51:09,004 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 12:51:09,005 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 12:51:09,006 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-09 12:51:09,007 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 12:51:09,276 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-09 12:51:09,277 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Looking up existing information about Akio to understand what we've discussed so far"}]
+2025-10-09 12:51:09,600 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Looking up existing information about Akio to understand what we've discussed so far"}
+2025-10-09 12:51:09,600 [INFO] [TIMING] Profile data fetch took 0.322s for 1 requests
+2025-10-09 12:51:15,722 [INFO] [TIMING] Follow-up DeepSeek call took 6.121s
+2025-10-09 12:51:15,725 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'get_primary_question', 'reasoning': "The user wants to discuss Akio's motivations, which is a character category topic. We have existing information about Akio from previous conversations, including his motivations being 'love of art, desire to transcend family name and make something of himself.' This provides a solid foundation to explore motivations through the goals_and_purposes angle, which focuses on what the character is trying to achieve.", 'data': {'category': 'character', 'angle': 'goals_and_purposes'}}
+2025-10-09 12:51:15,726 [INFO] [TIMING] Response parsing took 0.001s
+2025-10-09 12:51:15,726 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-09 12:51:15,727 [INFO] [TIMING] handle_action completed in 0.001s at depth=1
+2025-10-09 12:51:15,728 [INFO] [TIMING] handle_action completed in 6.721s at depth=0
+2025-10-09 12:51:15,729 [INFO] [THREAD] Completed action get_info in 6.722s
+2025-10-09 12:51:15,985 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 12:51:16,236 [INFO] [THREAD] Background thread completed in 7.490s
+2025-10-09 12:52:33,909 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'What have I said about my character Akio?', 'session_id': None}
+2025-10-09 12:52:39,055 [INFO] [INFO] New session created: -Ob6J457Ul0cUaP1ikS6
+2025-10-09 12:52:39,056 [INFO] [TIMING] Session init took 5.145s
+2025-10-09 12:52:50,639 [INFO] [TIMING] Summary fetch took 11.578s
+2025-10-09 12:52:57,113 [INFO] [TIMING] DeepSeek API call took 6.474s
+2025-10-09 12:52:57,113 [INFO] [LLM] Raw response: {
+  "action": "get_info",
+  "reasoning": "The user is asking for a summary of what they've previously mentioned about their character Akio. Fetching existing node information will help provide context before continuing the conversation.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio"]
+          }
+        },
+        "message": "Retrieving all existing information about the character Akio to provide context for the user's question"
+      }
+    ]
+  }
+}
+2025-10-09 12:52:57,116 [INFO] [TIMING] Response parsing took 0.003s
+2025-10-09 12:52:57,116 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 12:52:57,118 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 12:52:57,118 [INFO] [TIMING] Total request time: 23.208s
+2025-10-09 12:52:57,119 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 12:52:57,139 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': "I want to talk about Akio's motivations.", 'session_id': '-Ob6J457Ul0cUaP1ikS6'}
+2025-10-09 12:52:57,788 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 12:52:57,789 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 12:52:57,790 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-09 12:52:57,790 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 12:52:58,051 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-09 12:52:58,052 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Retrieving all existing information about the character Akio to provide context for the user's question"}]
+2025-10-09 12:52:58,308 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Retrieving all existing information about the character Akio to provide context for the user's question"}
+2025-10-09 12:52:58,309 [INFO] [TIMING] Profile data fetch took 0.256s for 1 requests
+2025-10-09 12:53:00,150 [INFO] [TIMING] Session init took 3.010s
+2025-10-09 12:53:07,074 [INFO] [TIMING] Summary fetch took 6.921s
+2025-10-09 12:53:07,244 [INFO] [TIMING] Follow-up DeepSeek call took 8.934s
+2025-10-09 12:53:07,246 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'respond', 'reasoning': "The user asked for a summary of what they've said about Akio. I retrieved the existing character information to provide a comprehensive overview before continuing the conversation.", 'data': {'message': "Based on what you've told me about Akio so far, here's what I understand:\n\nAkio is a young aspiring artist from the Futaba family, with blue hair and a polite but nervous personality. He's passionate about comics and art, and his main motivation is to transcend his family name and make something of himself through his artistic talents. He starts out confused and uncertain about his identity, but grows through encounters with others into someone who wants to use art to make a difference in the world.\n\nWhat aspect of Akio would you like to explore further? We could dive deeper into his artistic passions, his family background, his growth journey, or how he interacts with other characters in your story."}}
+2025-10-09 12:53:07,246 [INFO] [TIMING] Response parsing took 0.001s
+2025-10-09 12:53:07,247 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-09 12:53:07,253 [DEBUG] [RESPOND] Message: <p>Based on what you've told me about Akio so far, here's what I understand:</p>
+<p>Akio is a young aspiring artist from the Futaba family, with blue hair and a polite but nervous personality. He's passionate about comics and art, and his main motivation is to transcend his family name and make something of himself through his artistic talents. He starts out confused and uncertain about his identity, but grows through encounters with others into someone who wants to use art to make a difference in the world.</p>
+<p>What aspect of Akio would you like to explore further? We could dive deeper into his artistic passions, his family background, his growth journey, or how he interacts with other characters in your story.</p>
+2025-10-09 12:53:07,255 [DEBUG] [RESPOND] Message successfully saved to Firebase session
+2025-10-09 12:53:07,256 [INFO] [TIMING] handle_action completed in 0.009s at depth=1
+2025-10-09 12:53:07,259 [INFO] [TIMING] handle_action completed in 9.469s at depth=0
+2025-10-09 12:53:07,261 [INFO] [THREAD] Completed action get_info in 9.470s
+2025-10-09 12:53:07,519 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 12:53:07,790 [INFO] [THREAD] Background thread completed in 10.671s
+2025-10-09 12:53:13,680 [INFO] [TIMING] DeepSeek API call took 6.605s
+2025-10-09 12:53:13,681 [INFO] [LLM] Raw response: {
+  "action": "get_info",
+  "reasoning": "The user wants to recall what they've previously said about Akio and discuss his motivations. I need to fetch existing information about Akio to provide context before proceeding with the motivation discussion.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio"]
+          }
+        },
+        "message": "Looking up existing information about Akio to refresh our context before discussing motivations"
+      }
+    ]
+  }
+}
+2025-10-09 12:53:13,682 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 12:53:13,683 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 12:53:13,684 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 12:53:13,684 [INFO] [TIMING] Total request time: 16.546s
+2025-10-09 12:53:13,685 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 12:53:13,974 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 12:53:13,975 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 12:53:13,977 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-09 12:53:13,978 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 12:53:14,240 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-09 12:53:14,241 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': 'Looking up existing information about Akio to refresh our context before discussing motivations'}]
+2025-10-09 12:53:14,516 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': 'Looking up existing information about Akio to refresh our context before discussing motivations'}
+2025-10-09 12:53:14,518 [INFO] [TIMING] Profile data fetch took 0.275s for 1 requests
+2025-10-09 12:53:19,655 [INFO] [TIMING] Follow-up DeepSeek call took 5.136s
+2025-10-09 12:53:19,656 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'get_primary_question', 'reasoning': "The user wants to discuss Akio's motivations, which is a character category topic. We have existing information about Akio from the database, so we can proceed with a structured exploration of his motivations using the goals_and_purposes angle to understand what drives him.", 'data': {'category': 'character', 'angle': 'goals_and_purposes'}}
+2025-10-09 12:53:19,657 [INFO] [TIMING] Response parsing took 0.001s
+2025-10-09 12:53:19,658 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-09 12:53:19,660 [INFO] [TIMING] handle_action completed in 0.002s at depth=1
+2025-10-09 12:53:19,660 [INFO] [TIMING] handle_action completed in 5.682s at depth=0
+2025-10-09 12:53:19,661 [INFO] [THREAD] Completed action get_info in 5.683s
+2025-10-09 12:53:20,172 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 12:53:20,434 [INFO] [THREAD] Background thread completed in 6.730s
+2025-10-09 12:54:50,983 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'What have I said about my character Akio?', 'session_id': None}
+2025-10-09 12:54:56,132 [INFO] [INFO] New session created: -Ob6JaYv4-73E1wbw69Q
+2025-10-09 12:54:56,132 [INFO] [TIMING] Session init took 5.146s
+2025-10-09 12:55:08,007 [INFO] [TIMING] Summary fetch took 11.871s
+2025-10-09 12:55:14,039 [INFO] [TIMING] DeepSeek API call took 6.032s
+2025-10-09 12:55:14,040 [INFO] [LLM] Raw response: {
+  "action": "get_info",
+  "reasoning": "The user is asking about what they've previously said about their character Akio. I need to fetch all existing information about Akio from the story database to provide a comprehensive summary.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio"]
+          }
+        },
+        "message": "Retrieving all stored information about the character Akio to summarize what you've previously shared."
+      }
+    ]
+  }
+}
+2025-10-09 12:55:14,042 [INFO] [TIMING] Response parsing took 0.001s
+2025-10-09 12:55:14,043 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 12:55:14,044 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 12:55:14,045 [INFO] [TIMING] Total request time: 23.062s
+2025-10-09 12:55:14,046 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 12:55:14,066 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': "I want to talk about Akio's motivations.", 'session_id': '-Ob6JaYv4-73E1wbw69Q'}
+2025-10-09 12:55:14,803 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 12:55:14,804 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 12:55:14,805 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-09 12:55:14,806 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 12:55:15,060 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-09 12:55:15,061 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Retrieving all stored information about the character Akio to summarize what you've previously shared."}]
+2025-10-09 12:55:15,340 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Retrieving all stored information about the character Akio to summarize what you've previously shared."}
+2025-10-09 12:55:15,341 [INFO] [TIMING] Profile data fetch took 0.279s for 1 requests
+2025-10-09 12:55:17,100 [INFO] [TIMING] Session init took 3.034s
+2025-10-09 12:55:24,090 [INFO] [TIMING] Summary fetch took 6.987s
+2025-10-09 12:55:26,814 [INFO] [TIMING] Follow-up DeepSeek call took 11.472s
+2025-10-09 12:55:26,816 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'respond', 'reasoning': "The user asked for a summary of what they've said about Akio. I retrieved the stored information about this character and will now present it conversationally.", 'data': {'message': "Here's what you've shared about Akio so far:\n\n**Basic Details:**\n- Full name: Futaba Akio (also goes by Akio Futaba or just Akio)\n- Young aspiring artist with blue hair\n- Comes from the Futaba family\n- Personality: polite, nervous, but passionate about art\n\n**Character Journey:**\nHe starts out confused and uncertain about his identity, feeling overshadowed by his family name. Through his story, he grows and develops into someone who wants to use his art to make a real difference in the world.\n\n**Interests & Motivations:**\n- Loves comics and art\n- Driven by his passion for art and a desire to transcend his family legacy\n- Wants to create something meaningful that's truly his own\n\nIs there any particular aspect of Akio you'd like to explore more deeply, or would you like to add to any of these details?"}}
+2025-10-09 12:55:26,817 [INFO] [TIMING] Response parsing took 0.002s
+2025-10-09 12:55:26,818 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-09 12:55:26,830 [DEBUG] [RESPOND] Message: <p>Here's what you've shared about Akio so far:</p>
+<p><strong>Basic Details:</strong>
+- Full name: Futaba Akio (also goes by Akio Futaba or just Akio)
+- Young aspiring artist with blue hair
+- Comes from the Futaba family
+- Personality: polite, nervous, but passionate about art</p>
+<p><strong>Character Journey:</strong>
+He starts out confused and uncertain about his identity, feeling overshadowed by his family name. Through his story, he grows and develops into someone who wants to use his art to make a real difference in the world.</p>
+<p><strong>Interests &amp; Motivations:</strong>
+- Loves comics and art
+- Driven by his passion for art and a desire to transcend his family legacy
+- Wants to create something meaningful that's truly his own</p>
+<p>Is there any particular aspect of Akio you'd like to explore more deeply, or would you like to add to any of these details?</p>
+2025-10-09 12:55:27,130 [DEBUG] [RESPOND] Message successfully saved to Firebase session
+2025-10-09 12:55:27,132 [INFO] [TIMING] handle_action completed in 0.315s at depth=1
+2025-10-09 12:55:27,134 [INFO] [TIMING] handle_action completed in 12.329s at depth=0
+2025-10-09 12:55:27,135 [INFO] [THREAD] Completed action get_info in 12.330s
+2025-10-09 12:55:27,415 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 12:55:27,682 [INFO] [THREAD] Background thread completed in 13.634s
+2025-10-09 12:55:30,018 [INFO] [TIMING] DeepSeek API call took 5.926s
+2025-10-09 12:55:30,020 [INFO] [LLM] Raw response: {
+  "action": "meta_transition",
+  "reasoning": "User wants to discuss Akio's motivations, which falls under the 'motivation' category. Since no angle is specified, I'll transition to this category to begin the conversation.",
+  "data": {
+    "type": "category_to_category",
+    "new_category": "motivation"
+  }
+}
+2025-10-09 12:55:30,021 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 12:55:30,022 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 12:55:30,023 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 12:55:30,024 [INFO] [TIMING] Total request time: 15.959s
+2025-10-09 12:55:30,025 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 12:55:30,064 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': "I'm not too sure about him... I feel like he is a very confused individual, perhaps due to his youth.", 'session_id': '-Ob6JaYv4-73E1wbw69Q'}
+2025-10-09 12:55:30,339 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 12:55:30,347 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 12:55:30,348 [DEBUG] [THREAD] Processing action 1/1: meta_transition
+2025-10-09 12:55:30,351 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 12:55:30,352 [INFO] [TIMING] handle_action completed in 0.001s at depth=0
+2025-10-09 12:55:30,353 [INFO] [THREAD] Completed action meta_transition in 0.002s
+2025-10-09 12:55:30,617 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 12:55:30,891 [INFO] [THREAD] Background thread completed in 0.851s
+2025-10-09 12:55:32,662 [INFO] [TIMING] Session init took 2.594s
+2025-10-09 12:55:41,943 [INFO] [TIMING] Summary fetch took 9.279s
+2025-10-09 12:55:47,430 [INFO] [TIMING] DeepSeek API call took 5.486s
+2025-10-09 12:55:47,431 [INFO] [LLM] Raw response: {
+  "action": "get_primary_question",
+  "reasoning": "The user expressed uncertainty about Akio's character and specifically mentioned wanting to discuss motivations. They've identified confusion as a key trait, likely stemming from his youth. This suggests we should explore his motivations through the 'questions' angle, focusing on the uncertainties and tensions in his character development.",
+  "data": {
+    "category": "motivation",
+    "angle": "questions"
+  }
+}
+2025-10-09 12:55:47,432 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 12:55:47,434 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 12:55:47,435 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 12:55:47,435 [INFO] [TIMING] Total request time: 17.371s
+2025-10-09 12:55:47,437 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 12:55:47,694 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 12:55:47,695 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 12:55:47,696 [DEBUG] [THREAD] Processing action 1/1: get_primary_question
+2025-10-09 12:55:47,697 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 12:55:47,698 [INFO] [TIMING] handle_action completed in 0.001s at depth=0
+2025-10-09 12:55:47,699 [INFO] [THREAD] Completed action get_primary_question in 0.002s
+2025-10-09 12:55:47,953 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 12:55:48,210 [INFO] [THREAD] Background thread completed in 0.772s
+2025-10-09 12:57:15,459 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'Hello!', 'session_id': None}
+2025-10-09 12:57:20,628 [INFO] [INFO] New session created: -Ob6K8pDvzezfjHiNUgr
+2025-10-09 12:57:20,629 [INFO] [TIMING] Session init took 5.169s
+2025-10-09 12:57:32,217 [INFO] [TIMING] Summary fetch took 11.585s
+2025-10-09 12:57:36,744 [INFO] [TIMING] DeepSeek API call took 4.527s
+2025-10-09 12:57:36,746 [INFO] [LLM] Raw response: {
+  "action": "meta_transition",
+  "reasoning": "Starting a new conversation, need to select an initial category to begin brainstorming",
+  "data": {
+    "type": "category_to_category",
+    "new_category": "character",
+    "message": "Let's start by exploring your story's characters! This is often a great place to begin building your narrative world."
+  }
+}
+2025-10-09 12:57:36,746 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 12:57:36,746 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 12:57:36,748 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 12:57:36,748 [INFO] [TIMING] Total request time: 21.290s
+2025-10-09 12:57:36,750 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 12:57:37,322 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 12:57:37,323 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 12:57:37,324 [DEBUG] [THREAD] Processing action 1/1: meta_transition
+2025-10-09 12:57:37,325 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 12:57:37,326 [INFO] [TIMING] handle_action completed in 0.001s at depth=0
+2025-10-09 12:57:37,327 [INFO] [THREAD] Completed action meta_transition in 0.002s
+2025-10-09 12:57:37,595 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 12:57:37,851 [INFO] [THREAD] Background thread completed in 1.101s
+2025-10-09 12:58:34,633 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'Tell me about Akio and Phagousa', 'session_id': None}
+2025-10-09 12:58:39,788 [INFO] [INFO] New session created: -Ob6KS9AwG5YZkd6emqK
+2025-10-09 12:58:39,789 [INFO] [TIMING] Session init took 5.157s
+2025-10-09 12:58:51,402 [INFO] [TIMING] Summary fetch took 11.611s
+2025-10-09 12:59:00,370 [INFO] [TIMING] DeepSeek API call took 8.966s
+2025-10-09 12:59:00,371 [INFO] [LLM] Raw response: {
+  "action": "get_info",
+  "reasoning": "The user is asking about Akio and Phagousa, which suggests these are existing entities in their story. I need to fetch information about these characters to understand who they are and their relationships before proceeding with the conversation.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio", "Phagousa"]
+          }
+        },
+        "message": "I'm retrieving information about Akio and Phagousa to understand their roles in your story."
+      },
+      {
+        "target": "links",
+        "payload": {
+          "filters": {
+            "participants": ["Akio", "Phagousa"]
+          }
+        },
+        "message": "I'm also checking if there are any existing relationships between Akio and Phagousa."
+      }
+    ]
+  }
+}
+2025-10-09 12:59:00,372 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 12:59:00,373 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 12:59:00,374 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 12:59:00,375 [INFO] [TIMING] Total request time: 25.742s
+2025-10-09 12:59:00,376 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 12:59:00,975 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 12:59:00,976 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 12:59:00,977 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-09 12:59:00,978 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 12:59:01,236 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-09 12:59:01,240 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio', 'Phagousa']}}, 'message': "I'm retrieving information about Akio and Phagousa to understand their roles in your story."}, {'target': 'links', 'payload': {'filters': {'participants': ['Akio', 'Phagousa']}}, 'message': "I'm also checking if there are any existing relationships between Akio and Phagousa."}]
+2025-10-09 12:59:01,240 [DEBUG] [BATCH] Attempting batch fetch for 2 requests
+2025-10-09 12:59:01,273 [INFO] [TIMING] Batch fetch took 0.031s for 2 requests
+2025-10-09 12:59:01,275 [DEBUG] [GET_INFO] Batch fetched 2 results
+2025-10-09 12:59:01,277 [INFO] [TIMING] Profile data fetch took 0.037s for 2 requests
+2025-10-09 12:59:13,336 [INFO] [TIMING] Follow-up DeepSeek call took 12.052s
+2025-10-09 12:59:13,337 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'respond', 'reasoning': "The user asked about Akio and Phagousa. I've retrieved their information and found they exist as characters with established attributes and a friendship relationship. I'll summarize what I found and ask if they want to explore any specific aspect of these characters or their relationship.", 'data': {'message': 'I found both Akio and Phagousa in your story! \n\n**Akio** is a young aspiring artist from the Futaba family with blue hair. He\'s described as polite, nervous, but passionate about art and comics. He\'s on a journey to find his identity beyond his family name and wants to use art to make a difference in the world.\n\n**Phagousa** is known as the "Water Lady" and is a Titan of Oceans. She appears to be a powerful mythological figure in your world.\n\nInterestingly, they have a **friendship relationship** established between them. Would you like to explore more about their friendship dynamic, or focus on developing either character further?'}}
+2025-10-09 12:59:13,338 [INFO] [TIMING] Response parsing took 0.001s
+2025-10-09 12:59:13,339 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-09 12:59:13,344 [DEBUG] [RESPOND] Message: <p>I found both Akio and Phagousa in your story! </p>
+<p><strong>Akio</strong> is a young aspiring artist from the Futaba family with blue hair. He's described as polite, nervous, but passionate about art and comics. He's on a journey to find his identity beyond his family name and wants to use art to make a difference in the world.</p>
+<p><strong>Phagousa</strong> is known as the "Water Lady" and is a Titan of Oceans. She appears to be a powerful mythological figure in your world.</p>
+<p>Interestingly, they have a <strong>friendship relationship</strong> established between them. Would you like to explore more about their friendship dynamic, or focus on developing either character further?</p>
+2025-10-09 12:59:13,351 [DEBUG] [RESPOND] Message successfully saved to Firebase session
+2025-10-09 12:59:13,352 [INFO] [TIMING] handle_action completed in 0.013s at depth=1
+2025-10-09 12:59:13,357 [INFO] [TIMING] handle_action completed in 12.379s at depth=0
+2025-10-09 12:59:13,358 [INFO] [THREAD] Completed action get_info in 12.380s
+2025-10-09 12:59:13,615 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 12:59:13,874 [INFO] [THREAD] Background thread completed in 13.494s
+2025-10-09 13:15:03,721 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'What have I said about my character Akio?', 'session_id': None}
+2025-10-09 13:15:08,891 [INFO] [INFO] New session created: -Ob6ODcLGTuuaBrafzEm
+2025-10-09 13:15:08,892 [INFO] [TIMING] Session init took 5.169s
+2025-10-09 13:15:19,686 [INFO] [TIMING] Summary fetch took 10.792s
+2025-10-09 13:15:25,898 [INFO] [TIMING] DeepSeek API call took 6.211s
+2025-10-09 13:15:25,900 [INFO] [LLM] Raw response: {
+  "action": "get_info",
+  "reasoning": "The user is asking what they've previously said about their character Akio. I need to fetch all existing information about this character from the system to provide a comprehensive summary.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio"]
+          }
+        },
+        "message": "Retrieving all stored information about the character Akio to summarize what the user has previously shared"
+      }
+    ]
+  }
+}
+2025-10-09 13:15:25,902 [INFO] [TIMING] Response parsing took 0.001s
+2025-10-09 13:15:25,902 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 13:15:25,903 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 13:15:25,904 [INFO] [TIMING] Total request time: 22.184s
+2025-10-09 13:15:25,904 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 13:15:25,935 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': "I want to talk about Akio's motivations.", 'session_id': '-Ob6ODcLGTuuaBrafzEm'}
+2025-10-09 13:15:26,595 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 13:15:26,597 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 13:15:26,598 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-09 13:15:26,600 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 13:15:26,882 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-09 13:15:26,883 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': 'Retrieving all stored information about the character Akio to summarize what the user has previously shared'}]
+2025-10-09 13:15:27,300 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': 'Retrieving all stored information about the character Akio to summarize what the user has previously shared'}
+2025-10-09 13:15:27,303 [INFO] [TIMING] Profile data fetch took 0.419s for 1 requests
+2025-10-09 13:15:28,655 [INFO] [TIMING] Session init took 2.719s
+2025-10-09 13:15:35,698 [INFO] [TIMING] Summary fetch took 7.041s
+2025-10-09 13:15:39,186 [INFO] [TIMING] Follow-up DeepSeek call took 11.881s
+2025-10-09 13:15:39,187 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'respond', 'reasoning': "The user asked for a summary of what they've previously shared about Akio. I retrieved the stored information about this character from the system and will now provide a conversational summary.", 'data': {'message': "Here's what you've told me about Akio so far:\n\n**Basic Details:**\n- Full name: Futaba Akio (also goes by Akio Futaba or just Akio)\n- Age: Young\n- Family: From the Futaba family\n- Appearance: Has blue hair\n- Personality: Polite, nervous, but passionate about art\n\n**Background & Interests:**\n- Occupation: Aspiring artist\n- Interests: Comics and art\n- Initial State: Young, confused, and seeking identity beyond his family name\n- Motivations: Love of art, desire to transcend his family name and make something of himself\n\n**Character Arc:**\nStarts confused and uncertain, but grows through encounters with others into someone who wants to use art to make a difference in the world.\n\nIs there any particular aspect of Akio you'd like to explore further? Maybe his artistic style, specific challenges he faces, or how his family background affects his creative journey?"}}
+2025-10-09 13:15:39,188 [INFO] [TIMING] Response parsing took 0.001s
+2025-10-09 13:15:39,189 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-09 13:15:39,205 [DEBUG] [RESPOND] Message: <p>Here's what you've told me about Akio so far:</p>
+<p><strong>Basic Details:</strong>
+- Full name: Futaba Akio (also goes by Akio Futaba or just Akio)
+- Age: Young
+- Family: From the Futaba family
+- Appearance: Has blue hair
+- Personality: Polite, nervous, but passionate about art</p>
+<p><strong>Background &amp; Interests:</strong>
+- Occupation: Aspiring artist
+- Interests: Comics and art
+- Initial State: Young, confused, and seeking identity beyond his family name
+- Motivations: Love of art, desire to transcend his family name and make something of himself</p>
+<p><strong>Character Arc:</strong>
+Starts confused and uncertain, but grows through encounters with others into someone who wants to use art to make a difference in the world.</p>
+<p>Is there any particular aspect of Akio you'd like to explore further? Maybe his artistic style, specific challenges he faces, or how his family background affects his creative journey?</p>
+2025-10-09 13:15:39,209 [DEBUG] [RESPOND] Message successfully saved to Firebase session
+2025-10-09 13:15:39,211 [INFO] [TIMING] handle_action completed in 0.022s at depth=1
+2025-10-09 13:15:39,211 [INFO] [TIMING] handle_action completed in 12.611s at depth=0
+2025-10-09 13:15:39,215 [INFO] [THREAD] Completed action get_info in 12.615s
+2025-10-09 13:15:39,478 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 13:15:39,730 [INFO] [THREAD] Background thread completed in 13.823s
+2025-10-09 13:15:42,486 [INFO] [TIMING] DeepSeek API call took 6.787s
+2025-10-09 13:15:42,486 [INFO] [LLM] Raw response: {
+  "action": "get_info",
+  "reasoning": "The user wants to recall what they've previously said about Akio and discuss his motivations. I need to fetch existing information about Akio to provide context and avoid duplication.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio"]
+          }
+        },
+        "message": "Retrieving existing information about Akio to understand what's already been established about this character."
+      }
+    ]
+  }
+}
+2025-10-09 13:15:42,486 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 13:15:42,486 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 13:15:42,486 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 13:15:42,486 [INFO] [TIMING] Total request time: 16.551s
+2025-10-09 13:15:42,486 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 13:15:42,518 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': "I'm not too sure about him... I feel like he is a very confused individual, perhaps due to his youth.", 'session_id': '-Ob6ODcLGTuuaBrafzEm'}
+2025-10-09 13:15:42,774 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 13:15:42,782 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 13:15:42,783 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-09 13:15:42,786 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 13:15:43,046 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-09 13:15:43,046 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Retrieving existing information about Akio to understand what's already been established about this character."}]
+2025-10-09 13:15:43,324 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Retrieving existing information about Akio to understand what's already been established about this character."}
+2025-10-09 13:15:43,326 [INFO] [TIMING] Profile data fetch took 0.271s for 1 requests
+2025-10-09 13:15:45,108 [INFO] [TIMING] Session init took 2.590s
+2025-10-09 13:15:52,225 [INFO] [TIMING] Follow-up DeepSeek call took 8.898s
+2025-10-09 13:15:52,226 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'respond', 'reasoning': "The user wants to discuss Akio's motivations. I have retrieved the existing information about Akio, which shows his motivations are already defined as 'love of art, desire to transcend family name and make something of himself'. Since we have sufficient detail about his motivations, I should explore this topic more deeply using Socratic questioning to help the user develop this aspect further.", 'data': {'message': "Great! I can see you've already established that Akio is motivated by his love of art and a desire to transcend his family name to make something of himself. That's a compelling foundation for a character. To dig deeper into what drives him, what specific experiences or moments in his life solidified this desire to break free from his family's expectations and pursue art?"}}
+2025-10-09 13:15:52,227 [INFO] [TIMING] Response parsing took 0.001s
+2025-10-09 13:15:52,228 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-09 13:15:52,229 [DEBUG] [RESPOND] Message: <p>Great! I can see you've already established that Akio is motivated by his love of art and a desire to transcend his family name to make something of himself. That's a compelling foundation for a character. To dig deeper into what drives him, what specific experiences or moments in his life solidified this desire to break free from his family's expectations and pursue art?</p>
+2025-10-09 13:15:52,232 [DEBUG] [RESPOND] Message successfully saved to Firebase session
+2025-10-09 13:15:52,233 [INFO] [TIMING] handle_action completed in 0.005s at depth=1
+2025-10-09 13:15:52,236 [INFO] [TIMING] handle_action completed in 9.450s at depth=0
+2025-10-09 13:15:52,237 [INFO] [THREAD] Completed action get_info in 9.451s
+2025-10-09 13:15:52,494 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 13:15:52,760 [INFO] [THREAD] Background thread completed in 10.264s
+2025-10-09 13:15:53,881 [INFO] [TIMING] Summary fetch took 8.770s
+2025-10-09 13:16:01,701 [INFO] [TIMING] DeepSeek API call took 7.820s
+2025-10-09 13:16:01,702 [INFO] [LLM] Raw response: ```json
+{
+  "action": "get_info",
+  "reasoning": "The user is expressing uncertainty about Akio's character, specifically mentioning his confusion and youth. I need to check what's already been recorded about Akio to build on existing information and avoid asking redundant questions.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "filters": {
+          "label": ["Akio"]
+        },
+        "message": "Checking existing information about Akio to understand what's already been established about his character and confusion"
+      }
+    ]
+  }
+}
+```
+2025-10-09 13:16:01,703 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 13:16:01,704 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 13:16:01,709 [INFO] [TIMING] Total request time: 19.193s
+2025-10-09 13:16:01,709 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 13:16:01,972 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 13:16:01,973 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 13:16:01,974 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-09 13:16:01,975 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 13:16:02,250 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-09 13:16:02,251 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'filters': {'label': ['Akio']}, 'message': "Checking existing information about Akio to understand what's already been established about his character and confusion"}]
+2025-10-09 13:16:02,518 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'filters': {'label': ['Akio']}, 'message': "Checking existing information about Akio to understand what's already been established about his character and confusion"}
+2025-10-09 13:16:02,519 [INFO] [TIMING] Profile data fetch took 0.267s for 1 requests
+2025-10-09 13:16:09,031 [INFO] [TIMING] Follow-up DeepSeek call took 6.509s
+2025-10-09 13:16:09,032 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'get_primary_question', 'reasoning': "The user has identified Akio's confusion and youth as key characteristics. Since we have existing information about Akio's background and motivations, I want to explore this confusion more deeply using the 'questions' angle to understand what uncertainties or internal conflicts drive his character.", 'data': {'category': 'character', 'angle': 'questions'}}
+2025-10-09 13:16:09,034 [INFO] [TIMING] Response parsing took 0.002s
+2025-10-09 13:16:09,035 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-09 13:16:09,036 [INFO] [TIMING] handle_action completed in 0.000s at depth=1
+2025-10-09 13:16:09,037 [INFO] [TIMING] handle_action completed in 7.062s at depth=0
+2025-10-09 13:16:09,038 [INFO] [THREAD] Completed action get_info in 7.063s
+2025-10-09 13:16:09,296 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 13:16:09,557 [INFO] [THREAD] Background thread completed in 7.844s
+2025-10-09 13:17:24,708 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'Hello!', 'session_id': None}
+2025-10-09 13:17:29,839 [INFO] [INFO] New session created: -Ob6Ol1WL64T9nOXeDvI
+2025-10-09 13:17:29,840 [INFO] [TIMING] Session init took 5.130s
+2025-10-09 13:17:40,672 [INFO] [TIMING] Summary fetch took 10.829s
+2025-10-09 13:17:46,331 [INFO] [TIMING] DeepSeek API call took 5.652s
+2025-10-09 13:17:46,331 [INFO] [LLM] Raw response: {
+  "action": "respond",
+  "reasoning": "Starting a new conversation to help with story development",
+  "data": {
+    "message": "Hello! I'm DeepSeek, your creative writing assistant. I'm here to help you brainstorm and organize your story - tracking characters, relationships, locations, and plot events. What story would you like to work on today?"
+  }
+}
+2025-10-09 13:17:46,331 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 13:17:46,334 [INFO] [CHAT] Found 1 respond actions, 0 background actions
+2025-10-09 13:17:46,337 [INFO] [TIMING] Total request time: 21.629s
+2025-10-09 13:17:46,339 [INFO] [CHAT] No background actions to process
+2025-10-09 13:18:42,433 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'Tell me about Akio and Phagousa', 'session_id': None}
+2025-10-09 13:18:47,636 [INFO] [INFO] New session created: -Ob6P30fV43azGGp98_O
+2025-10-09 13:18:47,637 [INFO] [TIMING] Session init took 5.203s
+2025-10-09 13:18:58,433 [INFO] [TIMING] Summary fetch took 10.795s
+2025-10-09 13:19:07,647 [INFO] [TIMING] DeepSeek API call took 9.213s
+2025-10-09 13:19:07,647 [INFO] [LLM] Raw response: {
+  "action": "get_info",
+  "reasoning": "The user is asking about Akio and Phagousa, so I need to fetch information about these entities to understand who they are and their relationship before proceeding with the conversation.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio", "Phagousa"]
+          }
+        },
+        "message": "Looking up information about Akio and Phagousa to understand their roles and relationship in your story"
+      },
+      {
+        "target": "links",
+        "payload": {
+          "filters": {
+            "participants": ["Akio", "Phagousa"]
+          }
+        },
+        "message": "Checking if there are any existing relationships between Akio and Phagousa"
+      }
+    ]
+  }
+}
+2025-10-09 13:19:07,647 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 13:19:07,651 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 13:19:07,651 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 13:19:07,651 [INFO] [TIMING] Total request time: 25.218s
+2025-10-09 13:19:07,651 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 13:19:08,217 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 13:19:08,217 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 13:19:08,217 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-09 13:19:08,217 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 13:19:08,483 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-09 13:19:08,483 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio', 'Phagousa']}}, 'message': 'Looking up information about Akio and Phagousa to understand their roles and relationship in your story'}, {'target': 'links', 'payload': {'filters': {'participants': ['Akio', 'Phagousa']}}, 'message': 'Checking if there are any existing relationships between Akio and Phagousa'}]
+2025-10-09 13:19:08,483 [DEBUG] [BATCH] Attempting batch fetch for 2 requests
+2025-10-09 13:19:08,505 [INFO] [TIMING] Batch fetch took 0.021s for 2 requests
+2025-10-09 13:19:08,506 [DEBUG] [GET_INFO] Batch fetched 2 results
+2025-10-09 13:19:08,506 [INFO] [TIMING] Profile data fetch took 0.022s for 2 requests
+2025-10-09 13:19:19,955 [INFO] [TIMING] Follow-up DeepSeek call took 11.448s
+2025-10-09 13:19:19,959 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'respond', 'reasoning': 'The user asked about Akio and Phagousa. I found both characters in the database and can provide information about their attributes and existing relationship.', 'data': {'message': 'I found both Akio and Phagousa in your story! Here\'s what I know about them:\n\n**Akio** (also known as Futaba Akio or Akio Futaba) is a young aspiring artist with blue hair who comes from the Futaba family. He\'s polite, nervous, but passionate about art and comics. His character arc involves starting out confused and uncertain, then growing through encounters with others to become someone who wants to use art to make a difference in the world.\n\n**Phagousa** (also called "Water Lady") is a Titan of Oceans - she has a powerful backstory as a titan. \n\nInterestingly, they already have a friendship relationship established in your story! What would you like to explore about these two characters or their connection?'}}
+2025-10-09 13:19:19,959 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 13:19:19,961 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-09 13:19:19,963 [DEBUG] [RESPOND] Message: <p>I found both Akio and Phagousa in your story! Here's what I know about them:</p>
+<p><strong>Akio</strong> (also known as Futaba Akio or Akio Futaba) is a young aspiring artist with blue hair who comes from the Futaba family. He's polite, nervous, but passionate about art and comics. His character arc involves starting out confused and uncertain, then growing through encounters with others to become someone who wants to use art to make a difference in the world.</p>
+<p><strong>Phagousa</strong> (also called "Water Lady") is a Titan of Oceans - she has a powerful backstory as a titan. </p>
+<p>Interestingly, they already have a friendship relationship established in your story! What would you like to explore about these two characters or their connection?</p>
+2025-10-09 13:19:19,966 [DEBUG] [RESPOND] Message successfully saved to Firebase session
+2025-10-09 13:19:19,966 [INFO] [TIMING] handle_action completed in 0.005s at depth=1
+2025-10-09 13:19:19,971 [INFO] [TIMING] handle_action completed in 11.754s at depth=0
+2025-10-09 13:19:19,971 [INFO] [THREAD] Completed action get_info in 11.754s
+2025-10-09 13:19:20,225 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 13:19:20,490 [INFO] [THREAD] Background thread completed in 12.835s
+2025-10-09 18:08:32,995 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'What have I said about my character Akio?', 'session_id': None}
+2025-10-09 18:08:38,163 [INFO] [INFO] New session created: -Ob7ROaDMxttJPfKAQpw
+2025-10-09 18:08:38,164 [INFO] [TIMING] Session init took 5.168s
+2025-10-09 18:08:48,995 [INFO] [TIMING] Summary fetch took 10.830s
+2025-10-09 18:08:55,315 [INFO] [TIMING] DeepSeek API call took 6.319s
+2025-10-09 18:08:55,316 [INFO] [LLM] Raw response: {
+  "action": "query",
+  "reasoning": "The user is asking about what they've previously said about their character Akio. I need to fetch all existing information about Akio from the profile manager to provide a comprehensive summary.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio"]
+          }
+        },
+        "message": "Looking up all information about the character Akio to summarize what's been established so far"
+      }
+    ]
+  }
+}
+2025-10-09 18:08:55,318 [INFO] [TIMING] Response parsing took 0.001s
+2025-10-09 18:08:55,319 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 18:08:55,319 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 18:08:55,320 [INFO] [TIMING] Total request time: 22.327s
+2025-10-09 18:08:55,321 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 18:08:55,355 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': "I want to talk about Akio's motivations.", 'session_id': '-Ob7ROaDMxttJPfKAQpw'}
+2025-10-09 18:08:56,154 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 18:08:56,155 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 18:08:56,156 [DEBUG] [THREAD] Processing action 1/1: query
+2025-10-09 18:08:56,157 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 18:08:56,410 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-09 18:08:56,411 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Looking up all information about the character Akio to summarize what's been established so far"}]
+2025-10-09 18:08:56,901 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Looking up all information about the character Akio to summarize what's been established so far"}
+2025-10-09 18:08:56,902 [INFO] [TIMING] Profile data fetch took 0.490s for 1 requests
+2025-10-09 18:08:58,185 [INFO] [TIMING] Session init took 2.829s
+2025-10-09 18:09:04,856 [INFO] [TIMING] Summary fetch took 6.666s
+2025-10-09 18:09:07,969 [INFO] [TIMING] Follow-up DeepSeek call took 11.066s
+2025-10-09 18:09:07,969 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'respond', 'reasoning': "The user asked for a summary of what they've said about Akio. I retrieved all existing information about this character from the profile manager to provide a comprehensive overview.", 'data': {'message': "Here's what you've established about Akio so far:\n\n**Basic Details:**\n- Full name: Futaba Akio (also goes by Akio Futaba or just Akio)\n- Young aspiring artist with blue hair\n- Comes from the Futaba family\n- Personality: polite, nervous, but passionate about art\n\n**Character Arc & Motivation:**\n- Starts confused and uncertain about his identity\n- Wants to transcend his family name and make something of himself\n- Has a deep love for art and comics\n- Grows through encounters with others into someone who wants to use art to make a difference in the world\n\nThis gives us a solid foundation for Akio's character! Would you like to explore any particular aspect of his story further - maybe his artistic influences, specific challenges he faces with his family name, or how he plans to use art to make that difference?"}}
+2025-10-09 18:09:07,969 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 18:09:07,969 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-09 18:09:07,984 [DEBUG] [RESPOND] Message: <p>Here's what you've established about Akio so far:</p>
+<p><strong>Basic Details:</strong>
+- Full name: Futaba Akio (also goes by Akio Futaba or just Akio)
+- Young aspiring artist with blue hair
+- Comes from the Futaba family
+- Personality: polite, nervous, but passionate about art</p>
+<p><strong>Character Arc &amp; Motivation:</strong>
+- Starts confused and uncertain about his identity
+- Wants to transcend his family name and make something of himself
+- Has a deep love for art and comics
+- Grows through encounters with others into someone who wants to use art to make a difference in the world</p>
+<p>This gives us a solid foundation for Akio's character! Would you like to explore any particular aspect of his story further - maybe his artistic influences, specific challenges he faces with his family name, or how he plans to use art to make that difference?</p>
+2025-10-09 18:09:07,984 [DEBUG] [RESPOND] Message successfully saved to Firebase session
+2025-10-09 18:09:07,984 [INFO] [TIMING] handle_action completed in 0.016s at depth=1
+2025-10-09 18:09:07,984 [INFO] [TIMING] handle_action completed in 11.827s at depth=0
+2025-10-09 18:09:07,984 [INFO] [THREAD] Completed action query in 11.827s
+2025-10-09 18:09:08,264 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 18:09:08,507 [INFO] [THREAD] Background thread completed in 13.184s
+2025-10-09 18:09:10,722 [INFO] [TIMING] DeepSeek API call took 5.865s
+2025-10-09 18:09:10,723 [INFO] [LLM] Raw response: {
+  "action": "get_info",
+  "reasoning": "The user wants to recall what they've previously said about their character Akio, so I need to fetch existing information about this character from the system.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio"]
+          }
+        },
+        "message": "Retrieving existing information about the character Akio to provide context for discussing motivations"
+      }
+    ]
+  }
+}
+2025-10-09 18:09:10,724 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 18:09:10,725 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 18:09:10,726 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 18:09:10,726 [INFO] [TIMING] Total request time: 15.371s
+2025-10-09 18:09:10,727 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 18:09:10,738 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': "I'm not too sure about him... I feel like he is a very confused individual, perhaps due to his youth.", 'session_id': '-Ob7ROaDMxttJPfKAQpw'}
+2025-10-09 18:09:10,994 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 18:09:10,996 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 18:09:10,997 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-09 18:09:10,998 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 18:09:11,251 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-09 18:09:11,252 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': 'Retrieving existing information about the character Akio to provide context for discussing motivations'}]
+2025-10-09 18:09:11,515 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': 'Retrieving existing information about the character Akio to provide context for discussing motivations'}
+2025-10-09 18:09:11,516 [INFO] [TIMING] Profile data fetch took 0.263s for 1 requests
+2025-10-09 18:09:13,321 [INFO] [TIMING] Session init took 2.582s
+2025-10-09 18:09:16,333 [INFO] [TIMING] Follow-up DeepSeek call took 4.818s
+2025-10-09 18:09:16,333 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'get_primary_question', 'reasoning': "The user wants to discuss Akio's motivations, which is clearly a character category topic. I need to start with a primary question about motivations to explore this systematically.", 'data': {'category': 'character', 'angle': 'goals_and_purposes'}}
+2025-10-09 18:09:16,341 [INFO] [TIMING] Response parsing took 0.008s
+2025-10-09 18:09:16,341 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-09 18:09:16,341 [INFO] [TIMING] handle_action completed in 0.000s at depth=1
+2025-10-09 18:09:16,341 [INFO] [TIMING] handle_action completed in 5.343s at depth=0
+2025-10-09 18:09:16,341 [INFO] [THREAD] Completed action get_info in 5.343s
+2025-10-09 18:09:16,585 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 18:09:16,845 [INFO] [THREAD] Background thread completed in 6.116s
+2025-10-09 18:09:22,083 [INFO] [TIMING] Summary fetch took 8.762s
+2025-10-09 18:09:27,594 [INFO] [TIMING] DeepSeek API call took 5.510s
+2025-10-09 18:09:27,595 [INFO] [LLM] Raw response: {
+  "action": "get_primary_question",
+  "reasoning": "The user expressed uncertainty about Akio's characterization, specifically noting his confusion and youth. This suggests we should explore his motivations more deeply, focusing on the 'goals_and_purposes' angle to understand what drives his confusion and what he's ultimately trying to achieve.",
+  "data": {
+    "category": "motivation",
+    "angle": "goals_and_purposes"
+  }
+}
+2025-10-09 18:09:27,596 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 18:09:27,597 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 18:09:27,599 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 18:09:27,600 [INFO] [TIMING] Total request time: 16.862s
+2025-10-09 18:09:27,601 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 18:09:27,976 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 18:09:27,977 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 18:09:27,978 [DEBUG] [THREAD] Processing action 1/1: get_primary_question
+2025-10-09 18:09:27,979 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 18:09:27,980 [INFO] [TIMING] handle_action completed in 0.001s at depth=0
+2025-10-09 18:09:27,981 [INFO] [THREAD] Completed action get_primary_question in 0.002s
+2025-10-09 18:09:28,513 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 18:09:29,026 [INFO] [THREAD] Background thread completed in 1.424s
+2025-10-09 18:10:48,004 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'Hello!', 'session_id': None}
+2025-10-09 18:10:53,152 [INFO] [INFO] New session created: -Ob7RuYXtJh70qa3ngZv
+2025-10-09 18:10:53,152 [INFO] [TIMING] Session init took 5.148s
+2025-10-09 18:11:04,032 [INFO] [TIMING] Summary fetch took 10.876s
+2025-10-09 18:11:09,710 [INFO] [TIMING] DeepSeek API call took 5.677s
+2025-10-09 18:11:09,710 [INFO] [LLM] Raw response: {
+  "action": "respond",
+  "reasoning": "Starting a new conversation to help with creative writing and story development",
+  "data": {
+    "message": "Hello! I'm DeepSeek, your creative writing assistant. I'm here to help you brainstorm and organize your story - tracking characters, relationships, locations, and plot events. What would you like to work on today? We could explore character motivations, plot development, world-building, or any other aspect of your story."
+  }
+}
+2025-10-09 18:11:09,711 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 18:11:09,713 [INFO] [CHAT] Found 1 respond actions, 0 background actions
+2025-10-09 18:11:09,716 [INFO] [TIMING] Total request time: 21.713s
+2025-10-09 18:11:09,716 [INFO] [CHAT] No background actions to process
+2025-10-09 18:12:07,055 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'Tell me about Akio and Phagousa', 'session_id': None}
+2025-10-09 18:12:12,259 [INFO] [INFO] New session created: -Ob7SCrQYt_n-fasJHu0
+2025-10-09 18:12:12,259 [INFO] [TIMING] Session init took 5.204s
+2025-10-09 18:12:23,105 [INFO] [TIMING] Summary fetch took 10.843s
+2025-10-09 18:12:29,736 [INFO] [TIMING] DeepSeek API call took 6.629s
+2025-10-09 18:12:29,737 [INFO] [LLM] Raw response: {
+  "action": "get_info",
+  "reasoning": "User is asking about Akio and Phagousa, so I need to retrieve information about these entities to understand what we're working with before proceeding with the conversation.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio", "Phagousa"]
+          }
+        },
+        "message": "Retrieving information about Akio and Phagousa to understand what we're working with"
+      }
+    ]
+  }
+}
+2025-10-09 18:12:29,738 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 18:12:29,739 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-09 18:12:29,740 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-09 18:12:29,741 [INFO] [TIMING] Total request time: 22.686s
+2025-10-09 18:12:29,741 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-09 18:12:30,489 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-09 18:12:30,490 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-09 18:12:30,492 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-09 18:12:30,493 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-09 18:12:30,793 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-09 18:12:30,794 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio', 'Phagousa']}}, 'message': "Retrieving information about Akio and Phagousa to understand what we're working with"}]
+2025-10-09 18:12:31,120 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': ['Akio', 'Phagousa']}}, 'message': "Retrieving information about Akio and Phagousa to understand what we're working with"}
+2025-10-09 18:12:31,121 [INFO] [TIMING] Profile data fetch took 0.326s for 1 requests
+2025-10-09 18:12:42,375 [INFO] [TIMING] Follow-up DeepSeek call took 11.254s
+2025-10-09 18:12:42,375 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'respond', 'reasoning': "The user asked about Akio and Phagousa, so I'm providing the information retrieved about these characters to establish our current knowledge before exploring further.", 'data': {'message': 'Great! Let me tell you what I know about these characters:\n\n**Akio** (also known as Futaba Akio or Akio Futaba) is a young aspiring artist with blue hair. He starts out confused and uncertain about his identity, wanting to move beyond his family name and make something of himself through art. He\'s polite, nervous, but passionate about comics and art. His character arc involves growing through encounters with others into someone who wants to use art to make a difference in the world.\n\n**Phagousa** (also called "Water Lady") is identified as a Titan of Oceans, though I don\'t have much detail about her current role or attributes beyond that mythological background.\n\nWhat aspect of these characters would you like to explore further? Are you thinking about their potential relationship, their individual development, or how they might interact in your story?'}}
+2025-10-09 18:12:42,375 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 18:12:42,375 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-09 18:12:42,380 [DEBUG] [RESPOND] Message: <p>Great! Let me tell you what I know about these characters:</p>
+<p><strong>Akio</strong> (also known as Futaba Akio or Akio Futaba) is a young aspiring artist with blue hair. He starts out confused and uncertain about his identity, wanting to move beyond his family name and make something of himself through art. He's polite, nervous, but passionate about comics and art. His character arc involves growing through encounters with others into someone who wants to use art to make a difference in the world.</p>
+<p><strong>Phagousa</strong> (also called "Water Lady") is identified as a Titan of Oceans, though I don't have much detail about her current role or attributes beyond that mythological background.</p>
+<p>What aspect of these characters would you like to explore further? Are you thinking about their potential relationship, their individual development, or how they might interact in your story?</p>
+2025-10-09 18:12:42,382 [DEBUG] [RESPOND] Message successfully saved to Firebase session
+2025-10-09 18:12:42,384 [INFO] [TIMING] handle_action completed in 0.009s at depth=1
+2025-10-09 18:12:42,386 [INFO] [TIMING] handle_action completed in 11.893s at depth=0
+2025-10-09 18:12:42,386 [INFO] [THREAD] Completed action get_info in 11.893s
+2025-10-09 18:12:42,651 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-09 18:12:42,913 [INFO] [THREAD] Background thread completed in 13.170s
+2025-10-10 12:16:40,888 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'What have I said about my character Akio?', 'session_id': None}
+2025-10-10 12:16:46,338 [INFO] [INFO] New session created: -ObBKSGztVAiVs6q7H-V
+2025-10-10 12:16:46,340 [INFO] [TIMING] Session init took 5.452s
+2025-10-10 12:16:57,545 [INFO] [TIMING] Summary fetch took 11.203s
+2025-10-10 12:17:04,669 [INFO] [TIMING] DeepSeek API call took 7.124s
+2025-10-10 12:17:04,670 [INFO] [LLM] Raw response: {
+  "action": "get_info",
+  "reasoning": "The user is asking about what they've previously said about their character Akio. I need to fetch all existing information about this character to provide a comprehensive summary.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio"]
+          }
+        },
+        "message": "Retrieving all stored information about the character Akio to summarize what the user has previously shared"
+      }
+    ]
+  }
+}
+2025-10-10 12:17:04,672 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-10 12:17:04,673 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-10 12:17:04,674 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-10 12:17:04,674 [INFO] [TIMING] Total request time: 23.788s
+2025-10-10 12:17:04,676 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-10 12:17:04,704 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': "I want to talk about Akio's motivations.", 'session_id': '-ObBKSGztVAiVs6q7H-V'}
+2025-10-10 12:17:05,384 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-10 12:17:05,386 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-10 12:17:05,389 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-10 12:17:05,390 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-10 12:17:05,674 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-10 12:17:05,676 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': 'Retrieving all stored information about the character Akio to summarize what the user has previously shared'}]
+2025-10-10 12:17:07,590 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': 'Retrieving all stored information about the character Akio to summarize what the user has previously shared'}
+2025-10-10 12:17:07,592 [INFO] [TIMING] Profile data fetch took 1.917s for 1 requests
+2025-10-10 12:17:07,686 [INFO] [TIMING] Session init took 2.981s
+2025-10-10 12:17:14,764 [INFO] [TIMING] Summary fetch took 7.075s
+2025-10-10 12:17:19,902 [INFO] [TIMING] Follow-up DeepSeek call took 12.309s
+2025-10-10 12:17:19,904 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'respond', 'reasoning': "The user asked for a summary of what they've previously shared about Akio. I retrieved all existing information about this character from the database and will present it in a conversational, organized way.", 'data': {'message': "Here's what you've shared about Akio so far:\n\n**Basic Details:**\n- Full name: Futaba Akio (also goes by Akio Futaba or just Akio)\n- Age: Young\n- Family: From the Futaba family\n- Appearance: Has blue hair\n- Occupation: Aspiring artist\n\n**Personality & Traits:**\n- Polite and nervous demeanor\n- Passionate about art and comics\n- Starts the story confused and uncertain about his identity\n- On a journey to find himself beyond just being part of the Futaba family\n\n**Character Arc:**\nHe begins as someone seeking identity and grows through encounters with others into someone who wants to use his art to make a difference in the world.\n\n**Motivations:**\nDriven by his love of art and a desire to transcend his family name to make something meaningful of himself.\n\nIs there any particular aspect of Akio you'd like to explore further, or would you like to add more details to any of these areas?"}}
+2025-10-10 12:17:19,905 [INFO] [TIMING] Response parsing took 0.001s
+2025-10-10 12:17:19,907 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-10 12:17:19,916 [DEBUG] [RESPOND] Message: <p>Here's what you've shared about Akio so far:</p>
+<p><strong>Basic Details:</strong>
+- Full name: Futaba Akio (also goes by Akio Futaba or just Akio)
+- Age: Young
+- Family: From the Futaba family
+- Appearance: Has blue hair
+- Occupation: Aspiring artist</p>
+<p><strong>Personality &amp; Traits:</strong>
+- Polite and nervous demeanor
+- Passionate about art and comics
+- Starts the story confused and uncertain about his identity
+- On a journey to find himself beyond just being part of the Futaba family</p>
+<p><strong>Character Arc:</strong>
+He begins as someone seeking identity and grows through encounters with others into someone who wants to use his art to make a difference in the world.</p>
+<p><strong>Motivations:</strong>
+Driven by his love of art and a desire to transcend his family name to make something meaningful of himself.</p>
+<p>Is there any particular aspect of Akio you'd like to explore further, or would you like to add more details to any of these areas?</p>
+2025-10-10 12:17:19,918 [DEBUG] [RESPOND] Message successfully saved to Firebase session
+2025-10-10 12:17:19,918 [INFO] [TIMING] handle_action completed in 0.010s at depth=1
+2025-10-10 12:17:19,922 [INFO] [TIMING] handle_action completed in 14.533s at depth=0
+2025-10-10 12:17:19,922 [INFO] [THREAD] Completed action get_info in 14.533s
+2025-10-10 12:17:20,204 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-10 12:17:20,465 [INFO] [THREAD] Background thread completed in 15.789s
+2025-10-10 12:17:22,821 [INFO] [TIMING] DeepSeek API call took 8.056s
+2025-10-10 12:17:22,821 [INFO] [LLM] Raw response: {
+  "action": "get_info",
+  "reasoning": "The user wants to know what they've previously said about their character Akio and specifically discuss his motivations. I need to retrieve all existing information about Akio to provide context before proceeding with the motivation discussion.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio"]
+          }
+        },
+        "message": "Retrieving all existing information about character Akio to provide context for the motivation discussion"
+      }
+    ]
+  }
+}
+2025-10-10 12:17:22,821 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-10 12:17:22,821 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-10 12:17:22,825 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-10 12:17:22,825 [INFO] [TIMING] Total request time: 18.120s
+2025-10-10 12:17:22,827 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-10 12:17:22,840 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': "I'm not too sure about him... I feel like he is a very confused individual, perhaps due to his youth.", 'session_id': '-ObBKSGztVAiVs6q7H-V'}
+2025-10-10 12:17:23,092 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-10 12:17:23,092 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-10 12:17:23,093 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-10 12:17:23,094 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-10 12:17:23,364 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-10 12:17:23,365 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': 'Retrieving all existing information about character Akio to provide context for the motivation discussion'}]
+2025-10-10 12:17:23,620 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': 'Retrieving all existing information about character Akio to provide context for the motivation discussion'}
+2025-10-10 12:17:23,621 [INFO] [TIMING] Profile data fetch took 0.254s for 1 requests
+2025-10-10 12:17:25,471 [INFO] [TIMING] Session init took 2.630s
+2025-10-10 12:17:31,661 [INFO] [TIMING] Follow-up DeepSeek call took 8.039s
+2025-10-10 12:17:31,664 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'respond', 'reasoning': "The user wants to discuss Akio's motivations. I have retrieved existing information about Akio which shows he has motivations related to art and transcending his family name. This provides a solid foundation for a deeper motivation discussion.", 'data': {'message': "Great! I can see you've already established that Akio is motivated by his love of art and a desire to transcend his family name to make something of himself. That's a wonderful starting point for exploring his motivations more deeply. Let's dig into what specifically drives him - what kind of art does he create, and what does 'making something of himself' actually mean to him?"}}
+2025-10-10 12:17:31,664 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-10 12:17:31,664 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-10 12:17:31,668 [DEBUG] [RESPOND] Message: <p>Great! I can see you've already established that Akio is motivated by his love of art and a desire to transcend his family name to make something of himself. That's a wonderful starting point for exploring his motivations more deeply. Let's dig into what specifically drives him - what kind of art does he create, and what does 'making something of himself' actually mean to him?</p>
+2025-10-10 12:17:31,668 [DEBUG] [RESPOND] Message successfully saved to Firebase session
+2025-10-10 12:17:31,668 [INFO] [TIMING] handle_action completed in 0.005s at depth=1
+2025-10-10 12:17:31,678 [INFO] [TIMING] handle_action completed in 8.583s at depth=0
+2025-10-10 12:17:31,678 [INFO] [THREAD] Completed action get_info in 8.583s
+2025-10-10 12:17:31,939 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-10 12:17:32,194 [INFO] [THREAD] Background thread completed in 9.366s
+2025-10-10 12:17:34,502 [INFO] [TIMING] Summary fetch took 9.027s
+2025-10-10 12:17:38,872 [INFO] [TIMING] DeepSeek API call took 4.368s
+2025-10-10 12:17:38,876 [INFO] [LLM] Raw response: {
+  "action": "get_primary_question",
+  "reasoning": "The user expresses uncertainty about Akio, specifically noting his confusion due to youth. This suggests we should explore his motivations more deeply, focusing on the 'questions' angle to examine what uncertainties or internal conflicts drive his confusion.",
+  "data": {
+    "category": "motivation",
+    "angle": "questions"
+  }
+}
+2025-10-10 12:17:38,876 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-10 12:17:38,876 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-10 12:17:38,878 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-10 12:17:38,878 [INFO] [TIMING] Total request time: 16.038s
+2025-10-10 12:17:38,881 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-10 12:17:39,138 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-10 12:17:39,139 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-10 12:17:39,139 [DEBUG] [THREAD] Processing action 1/1: get_primary_question
+2025-10-10 12:17:39,142 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-10 12:17:39,142 [INFO] [TIMING] handle_action completed in 0.000s at depth=0
+2025-10-10 12:17:39,144 [INFO] [THREAD] Completed action get_primary_question in 0.002s
+2025-10-10 12:17:39,400 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-10 12:17:39,659 [INFO] [THREAD] Background thread completed in 0.777s
+2025-10-10 12:19:04,803 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'Hello!', 'session_id': None}
+2025-10-10 12:19:09,977 [INFO] [INFO] New session created: -ObBL-PYcsLiVplZEFb7
+2025-10-10 12:19:09,977 [INFO] [TIMING] Session init took 5.172s
+2025-10-10 12:19:21,016 [INFO] [TIMING] Summary fetch took 11.036s
+2025-10-10 12:19:24,929 [INFO] [TIMING] DeepSeek API call took 3.912s
+2025-10-10 12:19:24,931 [INFO] [LLM] Raw response: {
+  "action": "meta_transition",
+  "reasoning": "Starting a new conversation, need to select an initial category to begin the Socratic questioning process.",
+  "data": {
+    "type": "category_to_category",
+    "new_category": "character"
+  }
+}
+2025-10-10 12:19:24,932 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-10 12:19:24,933 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-10 12:19:24,933 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-10 12:19:24,935 [INFO] [TIMING] Total request time: 20.132s
+2025-10-10 12:19:24,935 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-10 12:19:25,498 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-10 12:19:25,500 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-10 12:19:25,500 [DEBUG] [THREAD] Processing action 1/1: meta_transition
+2025-10-10 12:19:25,502 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-10 12:19:25,502 [INFO] [TIMING] handle_action completed in 0.000s at depth=0
+2025-10-10 12:19:25,504 [INFO] [THREAD] Completed action meta_transition in 0.002s
+2025-10-10 12:19:25,762 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-10 12:19:26,027 [INFO] [THREAD] Background thread completed in 1.088s
+2025-10-10 12:20:21,784 [INFO] [CHAT] Incoming request: {'user_id': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'message': 'Tell me about Akio and Phagousa', 'session_id': None}
+2025-10-10 12:20:26,965 [INFO] [INFO] New session created: -ObBLICJyr7HcNXknSYg
+2025-10-10 12:20:26,965 [INFO] [TIMING] Session init took 5.180s
+2025-10-10 12:20:38,021 [INFO] [TIMING] Summary fetch took 11.052s
+2025-10-10 12:20:44,207 [INFO] [TIMING] DeepSeek API call took 6.187s
+2025-10-10 12:20:44,208 [INFO] [LLM] Raw response: {
+  "action": "get_info",
+  "reasoning": "The user is asking about two characters - Akio and Phagousa. I need to fetch information about these entities to understand what's already known about them before providing a response.",
+  "data": {
+    "requests": [
+      {
+        "target": "nodes",
+        "payload": {
+          "filters": {
+            "label": ["Akio", "Phagousa"]
+          }
+        },
+        "message": "Retrieving information about Akio and Phagousa to understand what we already know about these characters"
+      }
+    ]
+  }
+}
+2025-10-10 12:20:44,209 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-10 12:20:44,210 [INFO] [CHAT] Found 0 respond actions, 1 background actions
+2025-10-10 12:20:44,212 [INFO] [CHAT] No respond action found, background processing will handle
+2025-10-10 12:20:44,212 [INFO] [TIMING] Total request time: 22.429s
+2025-10-10 12:20:44,213 [INFO] [CHAT] Spawning background thread for 1 actions
+2025-10-10 12:20:44,792 [DEBUG] [THREAD] Status update: processing - Starting background task with 1 actions...
+2025-10-10 12:20:44,792 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-10 12:20:44,793 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-10 12:20:44,794 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-10 12:20:45,045 [DEBUG] [THREAD] Status update: processing - Retrieving information from story database....
+2025-10-10 12:20:45,046 [DEBUG] [GET_INFO] Requests: [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio', 'Phagousa']}}, 'message': 'Retrieving information about Akio and Phagousa to understand what we already know about these characters'}]
+2025-10-10 12:20:45,317 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': ['Akio', 'Phagousa']}}, 'message': 'Retrieving information about Akio and Phagousa to understand what we already know about these characters'}
+2025-10-10 12:20:45,318 [INFO] [TIMING] Profile data fetch took 0.271s for 1 requests
+2025-10-10 12:20:55,846 [INFO] [TIMING] Follow-up DeepSeek call took 10.527s
+2025-10-10 12:20:55,848 [DEBUG] [HANDLE ACTION] [PROFILE DATA] Parsed JSON: {'action': 'respond', 'reasoning': "The user asked about Akio and Phagousa. I retrieved their existing information and can now provide a summary of what's known about these characters.", 'data': {'message': 'Of course! Let me share what I know about these two characters:\n\n**Akio** (also known as Futaba Akio or Akio Futaba) is a young aspiring artist with blue hair. He comes from the Futaba family and starts out as confused and uncertain about his identity beyond his family name. He\'s polite and nervous, but passionate about art, comics, and creating something meaningful. His character arc involves growing through encounters with others to become someone who wants to use art to make a difference in the world.\n\n**Phagousa** (also called "Water Lady") is described as the Titan of Oceans. She seems to be a more mythical or powerful figure compared to Akio.\n\nWhat aspect of these characters would you like to explore further? Are you interested in their individual backgrounds, how they might interact, or something specific about their roles in your story?'}}
+2025-10-10 12:20:55,849 [INFO] [TIMING] Response parsing took 0.002s
+2025-10-10 12:20:55,850 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-10 12:20:55,854 [DEBUG] [RESPOND] Message: <p>Of course! Let me share what I know about these two characters:</p>
+<p><strong>Akio</strong> (also known as Futaba Akio or Akio Futaba) is a young aspiring artist with blue hair. He comes from the Futaba family and starts out as confused and uncertain about his identity beyond his family name. He's polite and nervous, but passionate about art, comics, and creating something meaningful. His character arc involves growing through encounters with others to become someone who wants to use art to make a difference in the world.</p>
+<p><strong>Phagousa</strong> (also called "Water Lady") is described as the Titan of Oceans. She seems to be a more mythical or powerful figure compared to Akio.</p>
+<p>What aspect of these characters would you like to explore further? Are you interested in their individual backgrounds, how they might interact, or something specific about their roles in your story?</p>
+2025-10-10 12:20:55,857 [DEBUG] [RESPOND] Message successfully saved to Firebase session
+2025-10-10 12:20:55,858 [INFO] [TIMING] handle_action completed in 0.009s at depth=1
+2025-10-10 12:20:55,860 [INFO] [TIMING] handle_action completed in 11.066s at depth=0
+2025-10-10 12:20:55,864 [INFO] [THREAD] Completed action get_info in 11.070s
+2025-10-10 12:20:56,132 [DEBUG] [THREAD] Status update: done - All 1 actions processed successfully
+2025-10-10 12:20:56,386 [INFO] [THREAD] Background thread completed in 12.172s

@@ -6,9 +6,12 @@ import time
 import openai
 import os
 import logging
+import threading
 from logging.handlers import RotatingFileHandler
 from apscheduler.schedulers.background import BackgroundScheduler
 
+
+from utils.Session import Session
 
 # ---------------- LOGGING SETUP ----------------
 os.makedirs("logs", exist_ok=True)
@@ -44,9 +47,12 @@ client = openai.OpenAI(
 app = Flask(__name__)
 CORS(app)
 
-from utils.Session import Session  # Session class
-
 # ---------------- UTIL ----------------
+
+_summarisation_lock = threading.Lock()
+_last_summarisation_time = 0
+
+
 def get_session_from_request():
     uid = request.json.get("uid")
     session_id = request.json.get("sessionID")
@@ -62,17 +68,47 @@ def get_session_from_request():
 
 # ---------------- SCHEDULER ----------------
 def summarise_active_sessions():
-    logger.info("Running scheduled summarisation job for all active sessions")
-    active_sessions = Session.get_all_active_sessions()
-
-    for session in active_sessions:
-        try:
-            summary = session.summarise(client, min_messages=10)
-            if summary:
-                logger.debug(f"Summary created for {session.session_id}: {summary[:60]}...")
-        except Exception as e:
-            logger.error(f"Failed auto-summarising session {session.session_id}: {e}")
-
+    """Run summarisation with concurrency protection."""
+    global _last_summarisation_time
+    
+    # Prevent concurrent execution
+    if not _summarisation_lock.acquire(blocking=False):
+        logger.warning("[SessionAPI] Skipping - summarisation already running")
+        return
+    
+    try:
+        # Prevent running too frequently (debounce)
+        now = time.time()
+        if now - _last_summarisation_time < 240:  # 4 minutes minimum gap
+            logger.info("[SessionAPI] Skipping - ran recently")
+            return
+        
+        _last_summarisation_time = now
+        logger.info("[SessionAPI] Running scheduled summarisation job for all active sessions")
+        
+        active_sessions = Session.get_all_active_sessions()
+        logger.info(f"[SessionAPI] Found {len(active_sessions)} active sessions")
+        
+        for session in active_sessions:
+            try:
+                # Check message count BEFORE fetching
+                messages = session.messages_ref.get() or {}
+                unsummarised_count = sum(1 for m in messages.values() if not m.get("summarised"))
+                
+                if unsummarised_count < 10:
+                    logger.debug(f"Session {session.session_id} has only {unsummarised_count} unsummarised messages, skipping")
+                    continue
+                
+                summary = session.summarise(client, min_messages=10)
+                if summary:
+                    logger.info(f"Summary created for {session.session_id}: {len(summary)} chars")
+                    
+            except Exception as e:
+                logger.error(f"Failed auto-summarising session {session.session_id}: {e}")
+    
+    finally:
+        _summarisation_lock.release()
+        
 # Start scheduler
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=summarise_active_sessions, trigger="interval", minutes=5)
@@ -105,16 +141,6 @@ def create_session():
         data.get("metadata_bs")
     )
     logger.info(f"Created new session: uid={uid}, sessionID={session.session_id}")
-    
-    # Start a job for this session that runs every 5 minutes
-    job_id = f"summarise_{uid}_{session.session_id}"
-    scheduler.add_job(
-        func=summarise_active_sessions,
-        trigger="interval",
-        minutes=5,
-        id=job_id,
-        replace_existing=True
-    )
     
     return jsonify({"sessionID": session.session_id})
 

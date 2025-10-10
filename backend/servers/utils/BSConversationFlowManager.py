@@ -130,13 +130,13 @@ class BSConversationFlowManager:
 
     def get_metadata(self):
         """Thread-safe cached metadata retrieval."""
-        cache_key = f"dt:{self.uid}:{self.session_id}"
+        cache_key = f"bs:{self.uid}:{self.session_id}"
         
         with metadata_lock:
             if cache_key in metadata_cache:
                 cache_stats["metadata_hits"] += 1
                 logger.debug(f"[CACHE HIT] Metadata for {cache_key}")
-                return metadata_cache[cache_key].get("deepthinking", {})
+                return metadata_cache[cache_key].get("brainstorming", {})
         
         # Cache miss
         cache_stats["metadata_misses"] += 1
@@ -165,13 +165,13 @@ class BSConversationFlowManager:
             "uid": self.uid,
             "sessionID": self.session_id,
             "updates": updates,
-            "mode": "deepthinking"
+            "mode": "brainstorming"
         }
 
         try:
             self._post("/session/update_metadata", payload)
         except Exception:
-            logger.exception("Failed to update deepthinking metadata via Session API")
+            logger.exception("Failed to update brainstorming metadata via Session API")
             raise
 
         # Invalidate cache
@@ -247,6 +247,20 @@ class BSConversationFlowManager:
         self.update_idea_metrics()
         return idea_id
 
+    def get_all_ideas(self):
+        """
+        Fetch all ideas for this session.
+        Uses cached ideas if available, otherwise refreshes from Session API.
+        """
+        logger.debug("[IDEAS] Fetching all ideas")
+        
+        # Use cached ideas if available
+        if self._ideas_cache is None:
+            self._refresh_ideas_cache()
+        
+        return self._ideas_cache or {}
+
+
     def attach_evaluations(self, idea_id: str, evaluations: dict):
         """
         Attach multiple evaluations to an idea.
@@ -304,8 +318,9 @@ class BSConversationFlowManager:
     # ----------- STAGE MGMT -----------
     def get_stage(self):
         logger.debug("[STAGE] Fetching current stage via metadata")
-        metadata = self.get_metadata().get("brainstorming", {})
+        metadata = self.get_metadata()
         stage = metadata.get("stage", "Clarify")
+
         logger.debug(f"[STAGE] Current stage: {stage}")
         return stage
 

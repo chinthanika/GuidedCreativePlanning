@@ -1,5 +1,40 @@
 import time
 from firebase_admin import db
+import logging
+from logging.handlers import RotatingFileHandler
+import os
+
+_session_metadata_cache = {}
+_session_cache_ttl = {}
+CACHE_TTL = 5  # 5 seconds
+
+# ---------------- LOGGING SETUP ----------------
+os.makedirs("logs", exist_ok=True)
+log_file = "logs/session_api_debug.log"
+rotating_handler = RotatingFileHandler(
+    log_file, mode='a', maxBytes=5*1024*1024, backupCount=3, encoding=None, delay=0
+)
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
+    handlers=[rotating_handler, logging.StreamHandler()]
+)
+logger = logging.getLogger("SessionAPI")
+
+def _get_cache_key(uid, session_id, mode=None):
+    """Generate cache key for session metadata."""
+    if mode:
+        return f"session:{uid}:{session_id}:{mode}"
+    return f"session:{uid}:{session_id}:full"
+
+def _invalidate_session_cache(uid, session_id):
+    """Invalidate all cache entries for this session."""
+    prefix = f"session:{uid}:{session_id}:"
+    keys_to_delete = [k for k in _session_metadata_cache.keys() if k.startswith(prefix)]
+    for key in keys_to_delete:
+        del _session_metadata_cache[key]
+        _session_cache_ttl.pop(key, None)
 
 class Session:
     def __init__(self, uid: str, session_id: str):
@@ -51,13 +86,24 @@ class Session:
     def get_all_active_sessions(cls):
         """
         Returns a list of Session instances for all active sessions across all users.
+        Only returns sessions with recent activity.
         """
         root_ref = db.reference("chatSessions/activeSessions")
         all_active = root_ref.get() or {}
 
         active_sessions = []
+        now = time.time() * 1000
+        
         for uid, sessions in all_active.items():
-            for session_id in sessions.keys():
+            for session_id, session_data in sessions.items():
+                # Skip sessions older than 24 hours
+                started_at = session_data.get("startedAt", 0)
+                age_hours = (now - started_at) / (1000 * 60 * 60)
+                
+                if age_hours > 24:
+                    logger.debug(f"Skipping old session {session_id} (age: {age_hours:.1f}h)")
+                    continue
+                
                 active_sessions.append(cls(uid, session_id))
 
         return active_sessions
@@ -72,20 +118,44 @@ class Session:
 
 
     def get_metadata(self, mode: str = None):
-        """
-        Get metadata. If mode is None, return full dict.
-        """
+        cache_key = _get_cache_key(self.uid, self.session_id, mode)
+        now = time.time()
+        
+        # Check cache with shorter TTL
+        if cache_key in _session_metadata_cache:
+            cache_age = now - _session_cache_ttl.get(cache_key, 0)
+            if cache_age < CACHE_TTL:
+                logger.debug(f"[SESSION CACHE HIT] {cache_key} (age: {cache_age:.1f}s)")
+                return _session_metadata_cache[cache_key]
+            else:
+                logger.debug(f"[SESSION CACHE EXPIRED] {cache_key} (age: {cache_age:.1f}s)")
+        
+        # Cache miss - fetch from Firebase
+        fetch_start = time.time()
         metadata = self.metadata_ref.get() or {}
+        fetch_time = time.time() - fetch_start
+        
+        logger.debug(f"[SESSION CACHE MISS] Fetched metadata in {fetch_time:.3f}s")
+        
+        # Store in cache
         if mode:
-            return metadata.get(mode, {})
-        return metadata
+            result = metadata.get(mode, {})
+        else:
+            result = metadata
+        
+        _session_metadata_cache[cache_key] = result
+        _session_cache_ttl[cache_key] = now
+        
+        return result
 
     def update_metadata(self, updates: dict, mode: str = "shared"):
-        """
-        Update metadata for shared/deepthinking/brainstorming.
-        """
-        updates["updatedAt"] = int(time.time() * 1000)
-        self.metadata_ref.child(mode).update(updates)
+         updates["updatedAt"] = int(time.time() * 1000)
+         self.metadata_ref.child(mode).update(updates)
+
+         # Invalidate cache for this session
+         _invalidate_session_cache(self.uid, self.session_id)
+         print(f"[SESSION CACHE INVALIDATE] Cleared cache for {self.uid}/{self.session_id}")
+
 
     def switch_mode(self, mode: str):
         """

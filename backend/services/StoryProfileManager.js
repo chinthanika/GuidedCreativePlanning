@@ -19,6 +19,7 @@ class StoryProfileManager {
         this.nodesRef = child(this.graphRef, "nodes");
         this.linksRef = child(this.graphRef, "links");
         this.eventsRef = child(this.baseRef, "timeline"); // ✅ events live in "timeline"
+        this.worldBuildingRef = child(this.baseRef, "worldBuilding");
     }
 
     /* =========================
@@ -369,10 +370,6 @@ class StoryProfileManager {
     }
 
     /* =========================
-       EVENTS (timeline events)
-    ========================= */
-
-    /* =========================
    EVENTS (timeline events)
 ========================= */
 
@@ -453,6 +450,86 @@ class StoryProfileManager {
         return { deleted: false, reason: `No event found with title '${title}'` };
     }
 
+    /* =========================
+       WORLD-BUILDING (hierarchical data)
+    ========================= */
+
+    async getAllWorldBuilding() {
+        const snapshot = await get(this.worldBuildingRef);
+        return snapshot.exists() ? snapshot.val() : {};
+    }
+
+    async getWorldBuildingCategory(category) {
+        const snapshot = await get(child(this.worldBuildingRef, category));
+        return snapshot.exists() ? snapshot.val() : {};
+    }
+
+    async getWorldBuildingItem(category, itemId) {
+        const items = await this.getWorldBuildingCategory(category);
+        for (const [key, item] of Object.entries(items)) {
+            if (item?.id === itemId) {
+                return { key, ...item };
+            }
+        }
+        return null;
+    }
+
+    async resolveWorldBuildingItemByName(category, name) {
+        const items = await this.getWorldBuildingCategory(category);
+        const lowerName = name.toLowerCase().trim();
+
+        for (const [key, item] of Object.entries(items)) {
+            if (item?.name?.toLowerCase() === lowerName) {
+                return { key, ...item };
+            }
+        }
+
+        return null;
+    }
+
+    async upsertWorldBuildingItem(category, itemId, data) {
+        const items = await this.getWorldBuildingCategory(category);
+        let targetKey = null;
+
+        for (const [key, item] of Object.entries(items)) {
+            if (item?.id === itemId) {
+                targetKey = key;
+                break;
+            }
+        }
+
+        const payload = { id: itemId, ...data };
+
+        if (targetKey) {
+            const existing = items[targetKey] || {};
+            const merged = { ...existing, ...payload };
+            await set(child(this.worldBuildingRef, `${category}/${targetKey}`), merged);
+            return merged;
+        } else {
+            const nextKey = Object.keys(items).length.toString();
+            await set(child(this.worldBuildingRef, `${category}/${nextKey}`), payload);
+            return payload;
+        }
+    }
+
+    async deleteWorldBuildingItem(category, itemId) {
+        const items = await this.getWorldBuildingCategory(category);
+        for (const [key, item] of Object.entries(items)) {
+            if (item?.id === itemId) {
+                await remove(child(this.worldBuildingRef, `${category}/${key}`));
+                return { deleted: true, key, item };
+            }
+        }
+        return { deleted: false, reason: `No item found with id '${itemId}' in category '${category}'` };
+    }
+
+    async filterWorldBuildingByParent(category, parentId) {
+        const items = await this.getWorldBuildingCategory(category);
+        return Object.fromEntries(
+            Object.entries(items).filter(([_, item]) => item?.parentId === parentId)
+        );
+    }
+
 
     /* =========================
        STORY TITLE & SUMMARY
@@ -508,6 +585,11 @@ class StoryProfileManager {
     async diffEvent(eventId, newData) {
         const oldData = await this.getEvent(eventId);
         return this._diffObjects(oldData, newData);
+    }
+
+    async diffWorldBuildingItem(category, itemId, newData) {
+        const oldData = await this.getWorldBuildingItem(category, itemId);
+        return this._diffObjects(oldData?.key ? { ...oldData, key: undefined } : null, newData);
     }
 }
 

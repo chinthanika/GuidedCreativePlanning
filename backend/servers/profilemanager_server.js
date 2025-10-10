@@ -4,25 +4,42 @@ import bodyParser from "body-parser";
 import ConfirmationPipeline from "../services/ConfirmationPipeline.js";
 import cors from "cors";
 
+import logger from "./logger.js";
+import { requestLogger } from "./loggerMiddleware.js";
+
 import pmCache from "../servers/utils/ProfileManagerCache.js";
 
 const app = express();
 
 app.use(cors({ origin: "http://localhost:3000" })); // allow React dev server
 app.use(bodyParser.json());
+app.use(express.json());
+app.use(requestLogger);
+
+function logTimingStart(route) {
+  const start = Date.now();
+  const startTime = new Date().toISOString();
+  logger.info(`[START] ${route} at ${startTime}`);
+  return () => {
+    const end = Date.now();
+    const endTime = new Date().toISOString();
+    logger.info(`[END] ${route} at ${endTime} (duration: ${end - start}ms)`);
+  };
+}
 
 /**
  * Get all nodes (with optional group filter)
  */
 app.get("/api/nodes", async (req, res) => {
-  console.log("Received /api/nodes request with query:", req.query);
+  const endLog = logTimingStart("/api/nodes");
+
   try {
     const { userId } = req.query;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
     const pipeline = new ConfirmationPipeline({ uid: userId });
     let nodes = await pipeline.manager.getAllNodes();
-    console.log("Initial nodes count:", Object.keys(nodes).length);
+    logger.info(`[DATA] Nodes fetched: ${Object.keys(nodes).length}`);
 
     // Build filters from query
     let parsedFilters = {};
@@ -37,7 +54,7 @@ app.get("/api/nodes", async (req, res) => {
       parsedFilters = { ...req.query };
       delete parsedFilters.userId;
     }
-    console.log("Using parsed filters:", parsedFilters);
+    logger.info(`[DATA] Using parsed filters: ${JSON.stringify(parsedFilters)}`);
 
     // Filter by label if provided
     if (parsedFilters.label) {
@@ -63,13 +80,14 @@ app.get("/api/nodes", async (req, res) => {
           return false;
         })
       );
-      console.log("Filtered nodes count:", Object.keys(nodes).length);
+      logger.info(`[DATA] Filtered nodes count (label): ${Object.keys(nodes).length}`);
     }
 
-    console.log("Returning nodes:", Object.keys(nodes));
+    logger.info(`[DATA] Returning nodes: ${Object.keys(nodes)}`);
     res.status(200).json(nodes);
   } catch (err) {
-    console.error("Error in /api/nodes:", err);
+    logger.error(`[ERROR] /api/nodes: ${err}`);
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -79,7 +97,7 @@ app.get("/api/nodes", async (req, res) => {
  * Get node by ID or name
  */
 app.get("/api/nodes/:identifier", async (req, res) => {
-  console.log("Received /api/nodes/:identifier request with params:", req.params, "and query:", req.query);
+  logger.info(`[REQUEST] /api/nodes/:identifier request with params: ${JSON.stringify(req.params)}, query: ${JSON.stringify(req.query)}`);
   try {
     const { userId } = req.query;
     const { identifier } = req.params;
@@ -100,14 +118,14 @@ app.get("/api/nodes/:identifier", async (req, res) => {
  * Get all links
  */
 app.get("/api/links", async (req, res) => {
-  console.log("Received /api/links request with query:", req.query);
+  logger.info(`[REQUEST] /api/links request with query: ${JSON.stringify(req.query)}`);
   try {
     const { userId } = req.query;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
     const pipeline = new ConfirmationPipeline({ uid: userId });
     let links = await pipeline.manager.getAllLinks();
-    console.log("Initial links count:", Object.keys(links).length);
+    logger.info(`[DATA] Initial links count: ${Object.keys(links).length}`);
 
     // Build filters from query
     let parsedFilters = {};
@@ -136,7 +154,7 @@ app.get("/api/links", async (req, res) => {
       parsedFilters = { ...req.query };
       delete parsedFilters.userId;
     }
-    console.log("Using parsed filters:", parsedFilters);
+    logger.info(`[DATA] Using parsed filters: ${JSON.stringify(parsedFilters)}`);
 
     if (parsedFilters.node1 && parsedFilters.node2 && parsedFilters.node1 === parsedFilters.node2) {
       // collapse to just one
@@ -169,8 +187,9 @@ app.get("/api/links", async (req, res) => {
         }
       }
       links = resultSet || {};
-      console.log("Filtered links count (participants):", Object.keys(links).length);
-    } else {
+      logger.info(`[DATA] Filtered links count (participants): ${Object.keys(links).length}`);
+    }
+    else {
       // fallback to node1/node2 by id (still supported)
       if (parsedFilters.node1) {
         const n1 = await pipeline.manager.getNode(parsedFilters.node1)
@@ -180,7 +199,8 @@ app.get("/api/links", async (req, res) => {
         links = Object.fromEntries(
           Object.entries(links).filter(([_, link]) => link.source === n1.id || link.target === n1.id)
         );
-        console.log("Filtered links count (node1):", Object.keys(links).length);
+        logger.info(`[DATA] Filtered links count (node1): ${Object.keys(links).length}`);
+
       }
 
       if (parsedFilters.node2) {
@@ -202,9 +222,9 @@ app.get("/api/links", async (req, res) => {
     for (const [linkId, link] of Object.entries(links)) {
       const sourceNode = nodes[link.source] || await pipeline.manager.getNode(link.source);
       const targetNode = nodes[link.target] || await pipeline.manager.getNode(link.target);
-      console.log(`Enriching link ${linkId}: source ${link.source} -> ${sourceNode ? sourceNode.label : "NOT FOUND"}, target ${link.target} -> ${targetNode ? targetNode.label : "NOT FOUND"}`);
-      console.log(`Source node details:`, sourceNode);
-      console.log(`Target node details:`, targetNode);
+      logger.info(`[DATA] Enriching link ${linkId}: source ${link.source} -> ${sourceNode ? sourceNode.label : "NOT FOUND"}, target ${link.target} -> ${targetNode ? targetNode.label : "NOT FOUND"}`);
+      logger.debug(`[DATA] Source node details: ${JSON.stringify(sourceNode)}`);
+      logger.debug(`[DATA] Target node details: ${JSON.stringify(targetNode)}`);
       enrichedLinks[linkId] = {
         ...link,
         source: sourceNode ? { id: sourceNode.id, label: sourceNode.label, group: sourceNode.group, attributes: sourceNode.attributes, aliases: sourceNode.aliases } : link.source,
@@ -212,10 +232,10 @@ app.get("/api/links", async (req, res) => {
       };
     }
 
-    console.log("Returning links:", Object.keys(enrichedLinks));
+    logger.info(`[DATA] Returning links: ${Object.keys(enrichedLinks)}`);
     res.status(200).json(enrichedLinks);
   } catch (err) {
-    console.error("Error in /api/links:", err);
+    logger.error(`[ERROR] Error in /api/links: ${err}`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -224,7 +244,7 @@ app.get("/api/links", async (req, res) => {
  * Get links for a specific node (by ID or name)
  */
 app.get("/api/links/:identifier", async (req, res) => {
-  console.log("Received /api/links/:identifier request with params:", req.params, "and query:", req.query);
+  logger.info(`[REQUEST] /api/links/:identifier request with params: ${JSON.stringify(req.params)}, query: ${JSON.stringify(req.query)}`);
   try {
     const { userId } = req.query;
     const { identifier } = req.params;
@@ -243,15 +263,14 @@ app.get("/api/links/:identifier", async (req, res) => {
  * Get all events
  */
 app.get("/api/events", async (req, res) => {
-  console.log("Received /api/events request with query:", req.query);
+  logger.info
   try {
     const { userId } = req.query;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
     const pipeline = new ConfirmationPipeline({ uid: userId });
     let events = await pipeline.manager.getAllEvents();
-    console.log("Initial events count:", Object.keys(events).length);
-
+    logger.info(`[DATA] Events fetched: ${Object.keys(events).length}`);
     // Build filters from query
     let parsedFilters = {};
     if (req.query.filters) {
@@ -264,19 +283,19 @@ app.get("/api/events", async (req, res) => {
       parsedFilters = { ...req.query };
       delete parsedFilters.userId;
     }
-    console.log("Using parsed filters:", parsedFilters);
+    logger.info(`[DATA] Using parsed filters: ${JSON.stringify(parsedFilters)}`);
 
     if (parsedFilters.description) {
       events = Object.fromEntries(
         Object.entries(events).filter(([_, e]) => e.description?.includes(parsedFilters.description))
       );
-      console.log("Filtered events count:", Object.keys(events).length);
+      logger.info(`[DATA] Filtered events count (description): ${Object.keys(events).length}`);
     }
 
-    console.log("Returning events:", Object.keys(events));
+    logger.info(`[DATA] Returning events: ${Object.keys(events)}`);
     res.status(200).json(events);
   } catch (err) {
-    console.error("Error in /api/events:", err);
+    logger.error(`[ERROR] /api/events: ${err}`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -285,7 +304,7 @@ app.get("/api/events", async (req, res) => {
  * Get event by ID or title
  */
 app.get("/api/events/:identifier", async (req, res) => {
-  console.log("Received /api/events/:identifier request with params:", req.params, "and query:", req.query);
+  logger.info(`[REQUEST] /api/events/:identifier request with params: ${JSON.stringify(req.params)}, query: ${JSON.stringify(req.query)}`);
   try {
     const { userId } = req.query;
     const { identifier } = req.params;
@@ -302,11 +321,170 @@ app.get("/api/events/:identifier", async (req, res) => {
   }
 });
 
+/**
+ * Get all world-building data
+ */
+app.get("/api/worldbuilding", async (req, res) => {
+  const endLog = logTimingStart("/api/worldbuilding");
+
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    const worldBuilding = await pipeline.manager.getAllWorldBuilding();
+
+    logger.info(`[DATA] World-building data fetched: ${Object.keys(worldBuilding).length} categories`);
+
+    res.status(200).json(worldBuilding);
+    endLog();
+  } catch (err) {
+    logger.error(`[ERROR] /api/worldbuilding: ${err}`);
+    res.status(500).json({ error: err.message });
+    endLog();
+  }
+});
+
+/**
+ * Get all items in a specific world-building category
+ * Example: GET /api/worldbuilding/magicSystems?userId=abc123
+ */
+app.get("/api/worldbuilding/:category", async (req, res) => {
+  const endLog = logTimingStart(`/api/worldbuilding/:category`);
+  logger.info(`[REQUEST] /api/worldbuilding/:category request with params: ${JSON.stringify(req.params)}, query: ${JSON.stringify(req.query)}`);
+
+  try {
+    const { userId } = req.query;
+    const { category } = req.params;
+
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+
+    const validCategories = ["magicSystems", "cultures", "locations", "technology", "history", "organizations"];
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({
+        error: `Invalid category: ${category}. Must be one of: ${validCategories.join(", ")}`
+      });
+    }
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    let items = await pipeline.manager.getWorldBuildingCategory(category);
+
+    logger.info(`[DATA] Items fetched in category '${category}': ${Object.keys(items).length}`);
+
+    // Optional filtering by parentId
+    if (req.query.parentId !== undefined) {
+      const parentId = req.query.parentId === "null" ? null : req.query.parentId;
+      items = Object.fromEntries(
+        Object.entries(items).filter(([_, item]) => item?.parentId === parentId)
+      );
+      logger.info(`[DATA] Filtered by parentId '${parentId}': ${Object.keys(items).length} items`);
+    }
+
+    // Optional filtering by name (fuzzy search)
+    if (req.query.name) {
+      const searchName = req.query.name.toLowerCase();
+      items = Object.fromEntries(
+        Object.entries(items).filter(([_, item]) =>
+          item?.name?.toLowerCase().includes(searchName)
+        )
+      );
+      logger.info(`[DATA] Filtered by name '${req.query.name}': ${Object.keys(items).length} items`);
+    }
+
+    logger.info(`[DATA] Returning world-building items: ${Object.keys(items)}`);
+    res.status(200).json(items);
+    endLog();
+  } catch (err) {
+    logger.error(`[ERROR] /api/worldbuilding/:category: ${err}`);
+    res.status(500).json({ error: err.message });
+    endLog();
+  }
+});
+
+/**
+ * Get a specific world-building item by ID or name
+ * Example: GET /api/worldbuilding/magicSystems/magic_001?userId=abc123
+ */
+app.get("/api/worldbuilding/:category/:identifier", async (req, res) => {
+  logger.info(`[REQUEST] /api/worldbuilding/:category/:identifier request with params: ${JSON.stringify(req.params)}, query: ${JSON.stringify(req.query)}`);
+
+  try {
+    const { userId } = req.query;
+    const { category, identifier } = req.params;
+
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+
+    const validCategories = ["magicSystems", "cultures", "locations", "technology", "history", "organizations"];
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({
+        error: `Invalid category: ${category}. Must be one of: ${validCategories.join(", ")}`
+      });
+    }
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+
+    // Try by ID first, then by name
+    let item = await pipeline.manager.getWorldBuildingItem(category, identifier);
+    if (!item) {
+      item = await pipeline.manager.resolveWorldBuildingItemByName(category, identifier);
+    }
+
+    if (!item) {
+      return res.status(404).json({
+        error: `Item not found in category '${category}' with identifier: ${identifier}`
+      });
+    }
+
+    res.status(200).json(item);
+  } catch (err) {
+    logger.error(`[ERROR] /api/worldbuilding/:category/:identifier: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Get children of a specific world-building item
+ * Example: GET /api/worldbuilding/magicSystems/magic_001/children?userId=abc123
+ */
+app.get("/api/worldbuilding/:category/:identifier/children", async (req, res) => {
+  logger.info(`[REQUEST] /api/worldbuilding/:category/:identifier/children request with params: ${JSON.stringify(req.params)}, query: ${JSON.stringify(req.query)}`);
+
+  try {
+    const { userId } = req.query;
+    const { category, identifier } = req.params;
+
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+
+    // Get parent item to verify it exists
+    let parent = await pipeline.manager.getWorldBuildingItem(category, identifier);
+    if (!parent) {
+      parent = await pipeline.manager.resolveWorldBuildingItemByName(category, identifier);
+    }
+
+    if (!parent) {
+      return res.status(404).json({
+        error: `Parent item not found in category '${category}' with identifier: ${identifier}`
+      });
+    }
+
+    // Get all children
+    const children = await pipeline.manager.filterWorldBuildingByParent(category, parent.id);
+
+    logger.info(`[DATA] Children found for '${identifier}': ${Object.keys(children).length}`);
+    res.status(200).json(children);
+  } catch (err) {
+    logger.error(`[ERROR] /api/worldbuilding/:category/:identifier/children: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 /**
  * Stage a change
  */
 app.post("/api/stage-change", async (req, res) => {
+  logger.info(`[REQUEST] /api/stage-change request with body: ${JSON.stringify(req.body)}`);
   console.log("Received /api/stage-change request with body:", req.body);
   try {
     const { userId, entityType, entityId, newData } = req.body;
@@ -327,6 +505,12 @@ app.post("/api/stage-change", async (req, res) => {
 
     pmCache.invalidateAll(userId);
 
+    if (entityType.startsWith("worldBuilding-")) {
+      const category = entityType.replace("worldBuilding-", "");
+      pmCache.invalidate(userId, `worldbuilding_${category}`);
+    }
+
+
     // Broadcast to all connected clients
     broadcastPendingUpdate(userId);
 
@@ -342,7 +526,7 @@ app.post("/api/stage-change", async (req, res) => {
  * Confirm a change
  */
 app.post("/api/confirm-change", async (req, res) => {
-  console.log("Received /api/confirm-change request with body:", req.body);
+  logger.info(`[REQUEST] /api/confirm-change request with body: ${JSON.stringify(req.body)}`);
   try {
     const { userId, changeKey, overwrite } = req.body;
     console.log("Request body:", userId, changeKey);
@@ -354,12 +538,17 @@ app.post("/api/confirm-change", async (req, res) => {
 
     try {
       const confirmed = await pipeline.confirm(changeKey, { overwrite: !!overwrite });
-      
+
       pmCache.invalidateAll(userId);
+
+      if (entityType.startsWith("worldBuilding-")) {
+        const category = entityType.replace("worldBuilding-", "");
+        pmCache.invalidate(userId, `worldbuilding_${category}`);
+      }
 
       // Broadcast to all connected clients
       broadcastPendingUpdate(userId);
-      
+
       console.log("Change confirmed:", confirmed);
       res.status(200).json(confirmed);
     } catch (err) {
@@ -448,23 +637,23 @@ app.post("/api/batch", async (req, res) => {
   const batchStart = Date.now();
   console.log("=== BATCH REQUEST START ===");
   console.log("Body:", JSON.stringify(req.body, null, 2));
-  
+
   try {
     const { userId, requests } = req.body;
-    
+
     // Validation
     if (!userId) {
       return res.status(400).json({ error: "userId is required" });
     }
-    
+
     if (!Array.isArray(requests)) {
       return res.status(400).json({ error: "requests must be an array" });
     }
-    
+
     if (requests.length === 0) {
       return res.status(400).json({ error: "requests array cannot be empty" });
     }
-    
+
     if (requests.length > 10) {
       return res.status(400).json({ error: "Maximum 10 requests per batch" });
     }
@@ -476,17 +665,17 @@ app.post("/api/batch", async (req, res) => {
     for (let i = 0; i < requests.length; i++) {
       const r = requests[i];
       const reqStart = Date.now();
-      
-      console.log(`[BATCH ${i+1}/${requests.length}] Processing:`, r);
-      
+
+      console.log(`[BATCH ${i + 1}/${requests.length}] Processing:`, r);
+
       try {
         const target = r.target;
         const filters = r.filters || {};
-        
+
         // ============ NODES ============
         if (target === "nodes") {
           let nodes = await getCachedNodes(userId, pipeline);
-          
+
           // Apply filters
           if (filters.label) {
             const wanted = Array.isArray(filters.label) ? filters.label : [filters.label];
@@ -496,7 +685,7 @@ app.post("/api/batch", async (req, res) => {
                 for (const w of wanted) {
                   const lowerW = String(w).toLowerCase().trim();
                   if (node.label?.toLowerCase() === lowerW) return true;
-                  
+
                   // Check aliases
                   const aliases = node.aliases;
                   if (aliases) {
@@ -511,21 +700,21 @@ app.post("/api/batch", async (req, res) => {
               })
             );
           }
-          
+
           const reqTime = Date.now() - reqStart;
-          console.log(`[BATCH ${i+1}] Nodes returned: ${Object.keys(nodes).length} in ${reqTime}ms`);
+          console.log(`[BATCH ${i + 1}] Nodes returned: ${Object.keys(nodes).length} in ${reqTime}ms`);
           results.push({ data: nodes });
         }
-        
+
         // ============ LINKS ============
         else if (target === "links") {
           let links = await getCachedLinks(userId, pipeline);
           let nodes = null; // Only fetch if needed
-          
+
           // Apply filters
           if (filters.participants) {
             const parts = Array.isArray(filters.participants) ? filters.participants : [filters.participants];
-            
+
             let resultSet = null;
             for (const p of parts) {
               try {
@@ -546,15 +735,15 @@ app.post("/api/batch", async (req, res) => {
             }
             links = resultSet || {};
           }
-          
+
           // Enrich links with node data
           if (!nodes) nodes = await getCachedNodes(userId, pipeline);
-          
+
           const enrichedLinks = {};
           for (const [linkId, link] of Object.entries(links)) {
             const sourceNode = nodes[link.source];
             const targetNode = nodes[link.target];
-            
+
             enrichedLinks[linkId] = {
               ...link,
               source: sourceNode ? {
@@ -573,54 +762,92 @@ app.post("/api/batch", async (req, res) => {
               } : link.target
             };
           }
-          
+
           const reqTime = Date.now() - reqStart;
-          console.log(`[BATCH ${i+1}] Links returned: ${Object.keys(enrichedLinks).length} in ${reqTime}ms`);
+          console.log(`[BATCH ${i + 1}] Links returned: ${Object.keys(enrichedLinks).length} in ${reqTime}ms`);
           results.push({ data: enrichedLinks });
         }
-        
+        else if (target === "worldbuilding") {
+          const category = filters.category;
+
+          if (!category) {
+            results.push({ error: "worldbuilding requests require 'category' filter" });
+            continue;
+          }
+
+          const validCategories = ["magicSystems", "cultures", "locations", "technology", "history", "organizations"];
+          if (!validCategories.includes(category)) {
+            results.push({ error: `Invalid category: ${category}` });
+            continue;
+          }
+
+          let items = await getCachedWorldBuilding(userId, pipeline, category);
+
+          // Apply parentId filter if provided
+          if (filters.parentId !== undefined) {
+            const parentId = filters.parentId === "null" ? null : filters.parentId;
+            items = Object.fromEntries(
+              Object.entries(items).filter(([_, item]) => item?.parentId === parentId)
+            );
+          }
+
+          // Apply name filter if provided
+          if (filters.name) {
+            const searchName = filters.name.toLowerCase();
+            items = Object.fromEntries(
+              Object.entries(items).filter(([_, item]) =>
+                item?.name?.toLowerCase().includes(searchName)
+              )
+            );
+          }
+
+          const reqTime = Date.now() - reqStart;
+          console.log(`[BATCH ${i + 1}] World-building '${category}' returned: ${Object.keys(items).length} in ${reqTime}ms`);
+          results.push({ data: items });
+        }
+
         // ============ EVENTS ============
         else if (target === "events") {
           let events = await getCachedEvents(userId, pipeline);
-          
+
           // Apply filters
           if (filters.description) {
             events = Object.fromEntries(
-              Object.entries(events).filter(([_, e]) => 
+              Object.entries(events).filter(([_, e]) =>
                 e.description?.includes(filters.description)
               )
             );
           }
-          
+
           const reqTime = Date.now() - reqStart;
-          console.log(`[BATCH ${i+1}] Events returned: ${Object.keys(events).length} in ${reqTime}ms`);
+          console.log(`[BATCH ${i + 1}] Events returned: ${Object.keys(events).length} in ${reqTime}ms`);
           results.push({ data: events });
         }
-        
+
         // ============ PENDING CHANGES ============
         else if (target === "pending_changes") {
           const pending = await pipeline.listPending();
           const reqTime = Date.now() - reqStart;
-          console.log(`[BATCH ${i+1}] Pending changes returned: ${Object.keys(pending).length} in ${reqTime}ms`);
+          console.log(`[BATCH ${i + 1}] Pending changes returned: ${Object.keys(pending).length} in ${reqTime}ms`);
           results.push({ data: pending });
         }
-        
+
         // ============ UNKNOWN TARGET ============
         else {
           results.push({ error: `Unknown target: ${target}` });
         }
-        
+
       } catch (err) {
-        console.error(`[BATCH ${i+1}] Error:`, err);
+        console.error(`[BATCH ${i + 1}] Error:`, err);
         results.push({ error: err.message });
       }
     }
 
     const batchTime = Date.now() - batchStart;
     console.log(`=== BATCH REQUEST COMPLETE in ${batchTime}ms ===`);
-    
+
     res.status(200).json({ results, batchTime });
-    
+
   } catch (err) {
     const batchTime = Date.now() - batchStart;
     console.error(`=== BATCH REQUEST FAILED after ${batchTime}ms ===`, err);
@@ -665,7 +892,7 @@ function broadcastPendingUpdate(userId) {
 // ============ HELPER: Get cached or fetch nodes ============
 async function getCachedNodes(userId, pipeline) {
   let nodes = pmCache.getNodes(userId);
-  
+
   if (!nodes) {
     const fetchStart = Date.now();
     nodes = await pipeline.manager.getAllNodes();
@@ -673,14 +900,14 @@ async function getCachedNodes(userId, pipeline) {
     console.log(`[TIMING] Firebase nodes fetch took ${fetchTime}ms`);
     pmCache.setNodes(userId, nodes);
   }
-  
+
   return nodes;
 }
 
 // ============ HELPER: Get cached or fetch links ============
 async function getCachedLinks(userId, pipeline) {
   let links = pmCache.getLinks(userId);
-  
+
   if (!links) {
     const fetchStart = Date.now();
     links = await pipeline.manager.getAllLinks();
@@ -688,14 +915,14 @@ async function getCachedLinks(userId, pipeline) {
     console.log(`[TIMING] Firebase links fetch took ${fetchTime}ms`);
     pmCache.setLinks(userId, links);
   }
-  
+
   return links;
 }
 
 // ============ HELPER: Get cached or fetch events ============
 async function getCachedEvents(userId, pipeline) {
   let events = pmCache.getEvents(userId);
-  
+
   if (!events) {
     const fetchStart = Date.now();
     events = await pipeline.manager.getAllEvents();
@@ -703,8 +930,23 @@ async function getCachedEvents(userId, pipeline) {
     console.log(`[TIMING] Firebase events fetch took ${fetchTime}ms`);
     pmCache.setEvents(userId, events);
   }
-  
+
   return events;
+}
+
+async function getCachedWorldBuilding(userId, pipeline, category) {
+  const cacheKey = `worldbuilding_${category}`;
+  let items = pmCache.get(userId, cacheKey);
+
+  if (!items) {
+    const fetchStart = Date.now();
+    items = await pipeline.manager.getWorldBuildingCategory(category);
+    const fetchTime = Date.now() - fetchStart;
+    console.log(`[TIMING] Firebase world-building '${category}' fetch took ${fetchTime}ms`);
+    pmCache.set(userId, cacheKey, items);
+  }
+
+  return items;
 }
 
 

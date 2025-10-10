@@ -6362,3 +6362,1003 @@ His confusion isn't a sign of a poorly conceived char...
 2025-10-08 17:01:38,532 [DEBUG] Markdown parsed to HTML.
 2025-10-08 17:01:40,886 [INFO] [TIMING] Total request time: 41.775s
 2025-10-08 17:01:40,888 [INFO] [CHAT] No background actions to process
+2025-10-09 11:48:08,157 [INFO] Flask app initialized, logging set up.
+2025-10-09 11:48:08,158 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-09 11:48:08,212 [INFO] DeepSeek client initialized.
+2025-10-09 11:48:08,214 [DEBUG] [SERVER] Starting Flask server
+2025-10-09 11:48:09,842 [INFO] Flask app initialized, logging set up.
+2025-10-09 11:48:09,842 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-09 11:48:09,901 [INFO] DeepSeek client initialized.
+2025-10-09 11:48:09,903 [DEBUG] [SERVER] Starting Flask server
+2025-10-09 11:50:16,314 [INFO] Flask app initialized, logging set up.
+2025-10-09 11:50:16,315 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-09 11:50:16,402 [INFO] DeepSeek client initialized.
+2025-10-09 11:50:16,404 [DEBUG] [SERVER] Starting Flask server
+2025-10-09 11:51:59,966 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 11:52:07,513 [INFO] [INFO] New session created: -Ob65CvQaeuoskAXeDlM
+2025-10-09 11:52:07,513 [INFO] [TIMING] Session init took 7.547s
+2025-10-09 11:52:19,449 [INFO] [TIMING] Summary fetch took 9.342s
+2025-10-09 11:52:34,507 [INFO] [TIMING] DeepSeek API call took 12.323s
+2025-10-09 11:52:34,508 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "get_info",
+    "reasoning": "User is asking about their character Akio. I need to fetch any existing information about this character from the Profile Manager to provide a comprehensive summary.",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "payload": {
+            "filters": {
+              "label": ["Akio"]
+            }
+          },
+          "message": "Looking for character node named Akio"
+        },
+        {
+          "target": "links",
+          "payload": {
+            "filters": {
+              "participants": ["Akio"]
+            }
+          },
+          "message": "Looking for relationships involving Akio"
+        },
+        {
+          "target": "events",
+          "payload": {
+            "filters": {
+              "description": "Akio"
+            }
+          },
+          "message": "Looking for events involving Akio"
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "While fetching the information about Akio, I'll acknowledge the request and let the user know I'm gathering what we have recorded.",
+    "data": {
+      "message": "I'm looking up everything we have recorded about your character Akio. Let me check his details, relationships, and any events he's involved in."
+    }
+  }
+]
+2025-10-09 11:52:34,508 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "get_info",
+    "reasoning": "User is asking about their character Akio. I need to fetch any existing information about this character from the Profile Manager to provide a comprehensive summary.",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+         ...
+2025-10-09 11:52:34,509 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-09 11:52:34,510 [DEBUG] Normalizing DeepSeek response: [{'action': 'get_info', 'reasoning': 'User is asking about their character Akio. I need to fetch any existing information about this character from the Profile Manager to provide a comprehensive summary.', 'data': {'requests': [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': 'Looking for character node named Akio'}, {'target': 'links', 'payload': {'filters': {'participants': ['Akio']}}, 'message': 'Looking for relationships involving Akio'}, {'target': 'events', 'payload': {'filters': {'description': 'Akio'}}, 'message': 'Looking for events involving Akio'}]}}, {'action': 'respond', 'reasoning': "While fetching the information about Akio, I'll acknowledge the request and let the user know I'm gathering what we have recorded.", 'data': {'message': "I'm looking up everything we have recorded about your character Akio. Let me check his details, relationships, and any events he's involved in."}}]
+2025-10-09 11:52:34,510 [INFO] [TIMING] Response parsing took 0.002s
+2025-10-09 11:52:34,511 [INFO] [CHAT] Found 1 respond actions, 1 background actions
+2025-10-09 11:52:34,511 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 11:52:34,514 [DEBUG] Markdown parsed to HTML.
+2025-10-09 11:52:34,516 [INFO] [TIMING] Total request time: 34.550s
+2025-10-09 11:52:34,517 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-09 11:52:34,519 [DEBUG] [CHAT] Background thread started
+2025-10-09 11:52:34,537 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 11:52:39,200 [INFO] [TIMING] Session init took 4.663s
+2025-10-09 11:52:48,527 [INFO] [TIMING] Summary fetch took 9.324s
+2025-10-09 11:53:01,732 [INFO] [TIMING] DeepSeek API call took 10.858s
+2025-10-09 11:53:01,737 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "get_info",
+    "reasoning": "Need to retrieve existing information about Akio to understand his current characterization before discussing motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "payload": {
+            "filters": {
+              "label": ["Akio"]
+            }
+          },
+          "message": "Retrieving Akio's character details to understand his current attributes and context"
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "Acknowledging the user's interest in exploring Akio's motivations while waiting for character data",
+    "data": {
+      "message": "Great! Let's explore Akio's motivations. I'm pulling up everything we know about him first. While I do that, could you tell me what initially sparked your interest in developing his motivations? Are there any specific aspects of his character you'd like to focus on?"
+    }
+  }
+]
+2025-10-09 11:53:01,737 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "get_info",
+    "reasoning": "Need to retrieve existing information about Akio to understand his current characterization before discussing motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "payload": {
+            "filters": {
+     ...
+2025-10-09 11:53:01,737 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-09 11:53:01,737 [DEBUG] Normalizing DeepSeek response: [{'action': 'get_info', 'reasoning': 'Need to retrieve existing information about Akio to understand his current characterization before discussing motivations', 'data': {'requests': [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Retrieving Akio's character details to understand his current attributes and context"}]}}, {'action': 'respond', 'reasoning': "Acknowledging the user's interest in exploring Akio's motivations while waiting for character data", 'data': {'message': "Great! Let's explore Akio's motivations. I'm pulling up everything we know about him first. While I do that, could you tell me what initially sparked your interest in developing his motivations? Are there any specific aspects of his character you'd like to focus on?"}}]
+2025-10-09 11:53:01,737 [INFO] [TIMING] Response parsing took 0.000s
+2025-10-09 11:53:01,737 [INFO] [CHAT] Found 1 respond actions, 1 background actions
+2025-10-09 11:53:01,737 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 11:53:01,737 [DEBUG] Markdown parsed to HTML.
+2025-10-09 11:53:01,744 [INFO] [TIMING] Total request time: 27.207s
+2025-10-09 11:53:01,745 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-09 11:53:01,747 [DEBUG] [CHAT] Background thread started
+2025-10-09 11:53:01,754 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 11:53:06,392 [INFO] [TIMING] Session init took 4.638s
+2025-10-09 11:53:13,381 [INFO] [TIMING] Summary fetch took 6.986s
+2025-10-09 11:53:25,939 [INFO] [TIMING] DeepSeek API call took 10.256s
+2025-10-09 11:53:25,940 [DEBUG] [CHAT] DeepSeek raw response: ```json
+[
+  {
+    "action": "get_info",
+    "reasoning": "Need to retrieve existing information about Akio to understand his current characterization before exploring motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "filters": {
+            "label": ["Akio"]
+          },
+          "message": "Looking for existing character details about Akio"
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "Acknowledging the character's confusion and youth as a starting point for motivation exploration",
+    "data": {
+      "message": "That's an interesting starting point - a confused young character. Youthful confusion can create powerful internal conflicts and motivations. Let me see what we already know about Akio, then we can explore what might be driving his confusion. What kind of situations tend to make him feel most uncertain or lost?"
+    }
+  }
+]
+```
+2025-10-09 11:53:25,941 [DEBUG] Parsing DeepSeek raw response:
+```json
+[
+  {
+    "action": "get_info",
+    "reasoning": "Need to retrieve existing information about Akio to understand his current characterization before exploring motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "filters": {
+            "label": ["...
+2025-10-09 11:53:25,941 [DEBUG] Found 1 JSON block(s) in fenced code format.
+2025-10-09 11:53:25,942 [DEBUG] Parsed JSON block: [{'action': 'get_info', 'reasoning': 'Need to retrieve existing information about Akio to understand his current characterization before exploring motivations', 'data': {'requests': [{'target': 'nodes', 'filters': {'label': ['Akio']}, 'message': 'Looking for existing character details about Akio'}]}}, {'action': 'respond', 'reasoning': "Acknowledging the character's confusion and youth as a starting point for motivation exploration", 'data': {'message': "That's an interesting starting point - a confused young character. Youthful confusion can create powerful internal conflicts and motivations. Let me see what we already know about Akio, then we can explore what might be driving his confusion. What kind of situations tend to make him feel most uncertain or lost?"}}]
+2025-10-09 11:53:25,942 [DEBUG] Normalizing DeepSeek response: [{'action': 'get_info', 'reasoning': 'Need to retrieve existing information about Akio to understand his current characterization before exploring motivations', 'data': {'requests': [{'target': 'nodes', 'filters': {'label': ['Akio']}, 'message': 'Looking for existing character details about Akio'}]}}, {'action': 'respond', 'reasoning': "Acknowledging the character's confusion and youth as a starting point for motivation exploration", 'data': {'message': "That's an interesting starting point - a confused young character. Youthful confusion can create powerful internal conflicts and motivations. Let me see what we already know about Akio, then we can explore what might be driving his confusion. What kind of situations tend to make him feel most uncertain or lost?"}}]
+2025-10-09 11:53:25,942 [INFO] [TIMING] Response parsing took 0.001s
+2025-10-09 11:53:25,944 [INFO] [CHAT] Found 1 respond actions, 1 background actions
+2025-10-09 11:53:25,944 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 11:53:25,946 [DEBUG] Markdown parsed to HTML.
+2025-10-09 11:53:28,279 [INFO] [TIMING] Total request time: 26.525s
+2025-10-09 11:53:28,279 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-09 11:53:28,281 [DEBUG] [CHAT] Background thread started
+2025-10-09 11:53:50,635 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 11:53:58,098 [INFO] [INFO] New session created: -Ob65cweYBxgEAORykff
+2025-10-09 11:53:58,098 [INFO] [TIMING] Session init took 7.463s
+2025-10-09 11:54:10,234 [INFO] [TIMING] Summary fetch took 9.817s
+2025-10-09 11:54:17,755 [INFO] [TIMING] DeepSeek API call took 5.160s
+2025-10-09 11:54:17,756 [DEBUG] [CHAT] DeepSeek raw response: ```json
+{
+  "action": "respond",
+  "reasoning": "User has initiated a creative writing session. I should welcome them and ask about their story focus to begin the CPS process.",
+  "data": {
+    "message": "Hello! I'm excited to help you with your creative writing project. To get started, could you tell me what story you're working on or what aspect you'd like to brainstorm today?"
+  }
+}
+```
+2025-10-09 11:54:17,757 [DEBUG] Parsing DeepSeek raw response:
+```json
+{
+  "action": "respond",
+  "reasoning": "User has initiated a creative writing session. I should welcome them and ask about their story focus to begin the CPS process.",
+  "data": {
+    "message": "Hello! I'm excited to help you with your creative writing project. To get started, could you t...
+2025-10-09 11:54:17,757 [DEBUG] Found 1 JSON block(s) in fenced code format.
+2025-10-09 11:54:17,758 [DEBUG] Parsed JSON block: {'action': 'respond', 'reasoning': 'User has initiated a creative writing session. I should welcome them and ask about their story focus to begin the CPS process.', 'data': {'message': "Hello! I'm excited to help you with your creative writing project. To get started, could you tell me what story you're working on or what aspect you'd like to brainstorm today?"}}
+2025-10-09 11:54:17,758 [DEBUG] Normalizing DeepSeek response: [{'action': 'respond', 'reasoning': 'User has initiated a creative writing session. I should welcome them and ask about their story focus to begin the CPS process.', 'data': {'message': "Hello! I'm excited to help you with your creative writing project. To get started, could you tell me what story you're working on or what aspect you'd like to brainstorm today?"}}]
+2025-10-09 11:54:17,759 [INFO] [TIMING] Response parsing took 0.002s
+2025-10-09 11:54:17,759 [INFO] [CHAT] Found 1 respond actions, 0 background actions
+2025-10-09 11:54:17,759 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 11:54:17,760 [DEBUG] Markdown parsed to HTML.
+2025-10-09 11:54:17,762 [INFO] [TIMING] Total request time: 27.127s
+2025-10-09 11:54:17,762 [INFO] [CHAT] No background actions to process
+2025-10-09 12:50:09,230 [INFO] Flask app initialized, logging set up.
+2025-10-09 12:50:09,231 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-09 12:50:09,423 [INFO] DeepSeek client initialized.
+2025-10-09 12:50:09,427 [DEBUG] [SERVER] Starting Flask server
+2025-10-09 12:51:30,019 [INFO] Flask app initialized, logging set up.
+2025-10-09 12:51:30,019 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-09 12:51:30,141 [INFO] DeepSeek client initialized.
+2025-10-09 12:51:30,144 [DEBUG] [SERVER] Starting Flask server
+2025-10-09 12:52:14,306 [INFO] Flask app initialized, logging set up.
+2025-10-09 12:52:14,307 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-09 12:52:14,436 [INFO] DeepSeek client initialized.
+2025-10-09 12:52:14,440 [DEBUG] [SERVER] Starting Flask server
+2025-10-09 12:54:31,309 [INFO] Flask app initialized, logging set up.
+2025-10-09 12:54:31,311 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-09 12:54:31,436 [INFO] DeepSeek client initialized.
+2025-10-09 12:54:31,441 [DEBUG] [SERVER] Starting Flask server
+2025-10-09 12:55:48,282 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 12:55:56,154 [INFO] [INFO] New session created: -Ob6JocU-nqHXc42PWQU
+2025-10-09 12:55:56,155 [INFO] [TIMING] Session init took 7.870s
+2025-10-09 12:56:08,311 [INFO] [TIMING] Summary fetch took 9.818s
+2025-10-09 12:56:19,761 [INFO] [TIMING] DeepSeek API call took 9.153s
+2025-10-09 12:56:19,763 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "get_info",
+    "reasoning": "User is asking about their character Akio. I need to fetch existing information about this character from the Profile Manager to provide a comprehensive summary.",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "payload": {
+            "filters": {
+              "label": ["Akio"]
+            }
+          },
+          "message": "Looking for character node named Akio"
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "While fetching the character data, I'll acknowledge the request and let the user know I'm retrieving their information about Akio.",
+    "data": {
+      "message": "I'm looking up everything you've told me about Akio so far. Let me pull up his character details, relationships, and any events he's been involved in."
+    }
+  }
+]
+2025-10-09 12:56:19,765 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "get_info",
+    "reasoning": "User is asking about their character Akio. I need to fetch existing information about this character from the Profile Manager to provide a comprehensive summary.",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "pa...
+2025-10-09 12:56:19,767 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-09 12:56:19,768 [DEBUG] Normalizing DeepSeek response: [{'action': 'get_info', 'reasoning': 'User is asking about their character Akio. I need to fetch existing information about this character from the Profile Manager to provide a comprehensive summary.', 'data': {'requests': [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': 'Looking for character node named Akio'}]}}, {'action': 'respond', 'reasoning': "While fetching the character data, I'll acknowledge the request and let the user know I'm retrieving their information about Akio.", 'data': {'message': "I'm looking up everything you've told me about Akio so far. Let me pull up his character details, relationships, and any events he's been involved in."}}]
+2025-10-09 12:56:19,770 [INFO] [TIMING] Response parsing took 0.005s
+2025-10-09 12:56:19,771 [INFO] [CHAT] Found 1 respond actions, 1 background actions
+2025-10-09 12:56:19,772 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 12:56:19,781 [DEBUG] Markdown parsed to HTML.
+2025-10-09 12:56:19,788 [INFO] [TIMING] Total request time: 31.507s
+2025-10-09 12:56:19,790 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-09 12:56:19,795 [DEBUG] [CHAT] Background thread started
+2025-10-09 12:56:19,812 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 12:56:24,438 [INFO] [TIMING] Session init took 4.623s
+2025-10-09 12:56:33,914 [INFO] [TIMING] Summary fetch took 9.469s
+2025-10-09 12:56:48,502 [INFO] [TIMING] DeepSeek API call took 12.270s
+2025-10-09 12:56:48,504 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "get_info",
+    "reasoning": "Need to retrieve existing information about Akio to understand his current characterization before discussing motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "payload": {
+            "filters": {
+              "label": ["Akio"]
+            }
+          },
+          "message": "Fetching Akio's character details to build on existing foundation"
+        },
+        {
+          "target": "links",
+          "payload": {
+            "filters": {
+              "participants": ["Akio"]
+            }
+          },
+          "message": "Getting Akio's relationships to understand context for motivations"
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "While retrieving existing data, starting the conversation about motivations with a clarifying question",
+    "data": {
+      "message": "Great! Let's explore Akio's motivations. To help us dig deeper, what kind of story are we working with? Is this a personal journey, a quest for power, a search for truth, or something else entirely? Understanding the broader context will help us uncover what truly drives him."
+    }
+  }
+]
+2025-10-09 12:56:48,507 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "get_info",
+    "reasoning": "Need to retrieve existing information about Akio to understand his current characterization before discussing motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "payload": {
+            "filters": {
+     ...
+2025-10-09 12:56:48,508 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-09 12:56:48,510 [DEBUG] Normalizing DeepSeek response: [{'action': 'get_info', 'reasoning': 'Need to retrieve existing information about Akio to understand his current characterization before discussing motivations', 'data': {'requests': [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Fetching Akio's character details to build on existing foundation"}, {'target': 'links', 'payload': {'filters': {'participants': ['Akio']}}, 'message': "Getting Akio's relationships to understand context for motivations"}]}}, {'action': 'respond', 'reasoning': 'While retrieving existing data, starting the conversation about motivations with a clarifying question', 'data': {'message': "Great! Let's explore Akio's motivations. To help us dig deeper, what kind of story are we working with? Is this a personal journey, a quest for power, a search for truth, or something else entirely? Understanding the broader context will help us uncover what truly drives him."}}]
+2025-10-09 12:56:48,511 [INFO] [TIMING] Response parsing took 0.003s
+2025-10-09 12:56:48,514 [INFO] [CHAT] Found 1 respond actions, 1 background actions
+2025-10-09 12:56:48,515 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 12:56:48,517 [DEBUG] Markdown parsed to HTML.
+2025-10-09 12:56:48,542 [INFO] [TIMING] Total request time: 28.731s
+2025-10-09 12:56:48,543 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-09 12:56:48,757 [DEBUG] [CHAT] Background thread started
+2025-10-09 12:56:48,770 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 12:56:53,373 [INFO] [TIMING] Session init took 4.602s
+2025-10-09 12:57:01,170 [INFO] [TIMING] Summary fetch took 7.790s
+2025-10-09 12:57:12,963 [INFO] [TIMING] DeepSeek API call took 9.482s
+2025-10-09 12:57:12,967 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "get_info",
+    "reasoning": "Need to check what information we already have about Akio to build upon his motivations and confusion",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "filters": {
+            "label": ["Akio"]
+          },
+          "message": "Retrieving existing information about Akio to understand his current characterization"
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "Acknowledging Akio's confusion and youth while preparing to explore his motivations through CPS framing",
+    "data": {
+      "message": "That's an interesting starting point - a confused young character often has the most compelling internal conflicts. Let's explore what might be causing Akio's confusion. Is he torn between different expectations? Family duties vs personal desires? Traditional values vs modern ambitions? What kind of pressures might be contributing to his uncertainty?"
+    }
+  }
+]
+2025-10-09 12:57:12,967 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "get_info",
+    "reasoning": "Need to check what information we already have about Akio to build upon his motivations and confusion",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "filters": {
+            "label": ["Akio"]
+          },
+       ...
+2025-10-09 12:57:12,971 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-09 12:57:12,973 [DEBUG] Normalizing DeepSeek response: [{'action': 'get_info', 'reasoning': 'Need to check what information we already have about Akio to build upon his motivations and confusion', 'data': {'requests': [{'target': 'nodes', 'filters': {'label': ['Akio']}, 'message': 'Retrieving existing information about Akio to understand his current characterization'}]}}, {'action': 'respond', 'reasoning': "Acknowledging Akio's confusion and youth while preparing to explore his motivations through CPS framing", 'data': {'message': "That's an interesting starting point - a confused young character often has the most compelling internal conflicts. Let's explore what might be causing Akio's confusion. Is he torn between different expectations? Family duties vs personal desires? Traditional values vs modern ambitions? What kind of pressures might be contributing to his uncertainty?"}}]
+2025-10-09 12:57:12,974 [INFO] [TIMING] Response parsing took 0.007s
+2025-10-09 12:57:12,974 [INFO] [CHAT] Found 1 respond actions, 1 background actions
+2025-10-09 12:57:12,975 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 12:57:12,975 [DEBUG] Markdown parsed to HTML.
+2025-10-09 12:57:15,303 [INFO] [TIMING] Total request time: 26.534s
+2025-10-09 12:57:15,305 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-09 12:57:15,309 [DEBUG] [CHAT] Background thread started
+2025-10-09 12:57:36,921 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 12:57:44,370 [INFO] [INFO] New session created: -Ob6KE3SaG0WK9y9JE9v
+2025-10-09 12:57:44,372 [INFO] [TIMING] Session init took 7.451s
+2025-10-09 12:57:55,987 [INFO] [TIMING] Summary fetch took 9.282s
+2025-10-09 12:58:04,171 [INFO] [TIMING] DeepSeek API call took 5.882s
+2025-10-09 12:58:04,172 [DEBUG] [CHAT] DeepSeek raw response: ```json
+{
+  "action": "respond",
+  "reasoning": "User has initiated a creative writing session. Need to determine if they want to work on story planning using CPS or discuss existing story entities.",
+  "data": {
+    "message": "Hello! Welcome to your creative writing assistant. Are you looking to brainstorm new story ideas using creative problem solving, or would you like to discuss and develop existing characters, locations, or plot points in your story?"
+  }
+}
+```
+2025-10-09 12:58:04,174 [DEBUG] Parsing DeepSeek raw response:
+```json
+{
+  "action": "respond",
+  "reasoning": "User has initiated a creative writing session. Need to determine if they want to work on story planning using CPS or discuss existing story entities.",
+  "data": {
+    "message": "Hello! Welcome to your creative writing assistant. Are you looking to b...
+2025-10-09 12:58:04,175 [DEBUG] Found 1 JSON block(s) in fenced code format.
+2025-10-09 12:58:04,176 [DEBUG] Parsed JSON block: {'action': 'respond', 'reasoning': 'User has initiated a creative writing session. Need to determine if they want to work on story planning using CPS or discuss existing story entities.', 'data': {'message': 'Hello! Welcome to your creative writing assistant. Are you looking to brainstorm new story ideas using creative problem solving, or would you like to discuss and develop existing characters, locations, or plot points in your story?'}}
+2025-10-09 12:58:04,178 [DEBUG] Normalizing DeepSeek response: [{'action': 'respond', 'reasoning': 'User has initiated a creative writing session. Need to determine if they want to work on story planning using CPS or discuss existing story entities.', 'data': {'message': 'Hello! Welcome to your creative writing assistant. Are you looking to brainstorm new story ideas using creative problem solving, or would you like to discuss and develop existing characters, locations, or plot points in your story?'}}]
+2025-10-09 12:58:04,179 [INFO] [TIMING] Response parsing took 0.005s
+2025-10-09 12:58:04,180 [INFO] [CHAT] Found 1 respond actions, 0 background actions
+2025-10-09 12:58:04,181 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 12:58:04,183 [DEBUG] Markdown parsed to HTML.
+2025-10-09 12:58:04,190 [INFO] [TIMING] Total request time: 27.270s
+2025-10-09 12:58:04,193 [INFO] [CHAT] No background actions to process
+2025-10-09 13:06:42,030 [INFO] Flask app initialized, logging set up.
+2025-10-09 13:06:42,031 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-09 13:06:42,212 [INFO] DeepSeek client initialized.
+2025-10-09 13:06:42,216 [DEBUG] [SERVER] Starting Flask server
+2025-10-09 13:10:35,633 [INFO] Flask app initialized, logging set up.
+2025-10-09 13:10:35,637 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-09 13:10:35,789 [INFO] DeepSeek client initialized.
+2025-10-09 13:10:35,794 [DEBUG] [SERVER] Starting Flask server
+2025-10-09 13:10:47,537 [INFO] Flask app initialized, logging set up.
+2025-10-09 13:10:47,538 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-09 13:10:47,675 [INFO] DeepSeek client initialized.
+2025-10-09 13:10:47,681 [DEBUG] [SERVER] Starting Flask server
+2025-10-09 13:13:41,021 [INFO] Flask app initialized, logging set up.
+2025-10-09 13:13:41,022 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-09 13:13:41,132 [INFO] DeepSeek client initialized.
+2025-10-09 13:13:41,137 [DEBUG] [SERVER] Starting Flask server
+2025-10-09 13:14:35,201 [INFO] Flask app initialized, logging set up.
+2025-10-09 13:14:35,202 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-09 13:14:35,322 [INFO] DeepSeek client initialized.
+2025-10-09 13:14:35,325 [DEBUG] [SERVER] Starting Flask server
+2025-10-09 13:16:01,806 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 13:16:09,350 [INFO] [INFO] New session created: -Ob6ORnl280-ZyT55l2H
+2025-10-09 13:16:09,352 [INFO] [TIMING] Session init took 7.544s
+2025-10-09 13:16:20,210 [INFO] [TIMING] Summary fetch took 8.825s
+2025-10-09 13:16:31,597 [INFO] [TIMING] DeepSeek API call took 9.050s
+2025-10-09 13:16:31,598 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "get_info",
+    "reasoning": "User is asking about what information has been recorded about their character Akio. I need to fetch existing node data to provide a comprehensive answer.",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "filters": {
+            "label": ["Akio"]
+          },
+          "message": "Retrieving all recorded information about the character Akio"
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "Acknowledging the request while fetching the information",
+    "data": {
+      "message": "I'll look up everything we've recorded about Akio so far. Let me check what details we have about this character."
+    }
+  }
+]
+2025-10-09 13:16:31,610 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "get_info",
+    "reasoning": "User is asking about what information has been recorded about their character Akio. I need to fetch existing node data to provide a comprehensive answer.",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "filters": ...
+2025-10-09 13:16:31,612 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-09 13:16:31,613 [DEBUG] Normalizing DeepSeek response: [{'action': 'get_info', 'reasoning': 'User is asking about what information has been recorded about their character Akio. I need to fetch existing node data to provide a comprehensive answer.', 'data': {'requests': [{'target': 'nodes', 'filters': {'label': ['Akio']}, 'message': 'Retrieving all recorded information about the character Akio'}]}}, {'action': 'respond', 'reasoning': 'Acknowledging the request while fetching the information', 'data': {'message': "I'll look up everything we've recorded about Akio so far. Let me check what details we have about this character."}}]
+2025-10-09 13:16:31,614 [INFO] [TIMING] Response parsing took 0.005s
+2025-10-09 13:16:31,615 [INFO] [CHAT] Found 1 respond actions, 1 background actions
+2025-10-09 13:16:31,617 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 13:16:31,624 [DEBUG] Markdown parsed to HTML.
+2025-10-09 13:16:31,630 [INFO] [TIMING] Total request time: 29.824s
+2025-10-09 13:16:31,631 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-09 13:16:31,637 [DEBUG] [CHAT] Background thread started
+2025-10-09 13:16:31,651 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 13:16:36,910 [INFO] [TIMING] Session init took 5.256s
+2025-10-09 13:16:45,988 [INFO] [TIMING] Summary fetch took 9.072s
+2025-10-09 13:16:57,910 [INFO] [TIMING] DeepSeek API call took 9.575s
+2025-10-09 13:16:57,911 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "get_info",
+    "reasoning": "Need to retrieve existing information about Akio to understand what we already know before discussing motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "filters": {
+            "label": ["Akio"]
+          },
+          "message": "Looking for existing character details about Akio"
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "Acknowledge the user's interest in exploring Akio's motivations while we fetch existing character data",
+    "data": {
+      "message": "Great! Let's explore Akio's motivations. First, let me check what we already know about Akio from our previous conversations. What specifically about Akio's motivations interests you most - are you thinking about their core drives, conflicting desires, or what pushes them toward certain actions in the story?"
+    }
+  }
+]
+2025-10-09 13:16:57,913 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "get_info",
+    "reasoning": "Need to retrieve existing information about Akio to understand what we already know before discussing motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "filters": {
+            "label": ["Akio"]
+        ...
+2025-10-09 13:16:57,914 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-09 13:16:57,916 [DEBUG] Normalizing DeepSeek response: [{'action': 'get_info', 'reasoning': 'Need to retrieve existing information about Akio to understand what we already know before discussing motivations', 'data': {'requests': [{'target': 'nodes', 'filters': {'label': ['Akio']}, 'message': 'Looking for existing character details about Akio'}]}}, {'action': 'respond', 'reasoning': "Acknowledge the user's interest in exploring Akio's motivations while we fetch existing character data", 'data': {'message': "Great! Let's explore Akio's motivations. First, let me check what we already know about Akio from our previous conversations. What specifically about Akio's motivations interests you most - are you thinking about their core drives, conflicting desires, or what pushes them toward certain actions in the story?"}}]
+2025-10-09 13:16:57,917 [INFO] [TIMING] Response parsing took 0.004s
+2025-10-09 13:16:57,918 [INFO] [CHAT] Found 1 respond actions, 1 background actions
+2025-10-09 13:16:57,919 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 13:16:57,920 [DEBUG] Markdown parsed to HTML.
+2025-10-09 13:16:57,927 [INFO] [TIMING] Total request time: 26.276s
+2025-10-09 13:16:57,928 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-09 13:16:57,933 [DEBUG] [CHAT] Background thread started
+2025-10-09 13:16:57,946 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 13:17:02,338 [INFO] [TIMING] Session init took 4.390s
+2025-10-09 13:17:09,051 [INFO] [TIMING] Summary fetch took 6.708s
+2025-10-09 13:17:22,302 [INFO] [TIMING] DeepSeek API call took 10.906s
+2025-10-09 13:17:22,304 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "get_info",
+    "reasoning": "Need to check what existing information we have about Akio to understand his current characterization before discussing motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "filters": {
+            "label": ["Akio"]
+          },
+          "message": "Looking up existing details about Akio to build on his motivations"
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "Acknowledging the user's insight about Akio's confusion and youth while waiting for character details",
+    "data": {
+      "message": "That's an interesting insight - a confused young character can be very compelling. The uncertainty you're describing could actually be a great foundation for his motivations. Let me see what we already know about Akio, then we can explore what might be causing this confusion. What kind of situations tend to make Akio feel most uncertain or conflicted?"
+    }
+  }
+]
+2025-10-09 13:17:22,306 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "get_info",
+    "reasoning": "Need to check what existing information we have about Akio to understand his current characterization before discussing motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "filters": {
+            "label":...
+2025-10-09 13:17:22,306 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-09 13:17:22,309 [DEBUG] Normalizing DeepSeek response: [{'action': 'get_info', 'reasoning': 'Need to check what existing information we have about Akio to understand his current characterization before discussing motivations', 'data': {'requests': [{'target': 'nodes', 'filters': {'label': ['Akio']}, 'message': 'Looking up existing details about Akio to build on his motivations'}]}}, {'action': 'respond', 'reasoning': "Acknowledging the user's insight about Akio's confusion and youth while waiting for character details", 'data': {'message': "That's an interesting insight - a confused young character can be very compelling. The uncertainty you're describing could actually be a great foundation for his motivations. Let me see what we already know about Akio, then we can explore what might be causing this confusion. What kind of situations tend to make Akio feel most uncertain or conflicted?"}}]
+2025-10-09 13:17:22,310 [INFO] [TIMING] Response parsing took 0.004s
+2025-10-09 13:17:22,311 [INFO] [CHAT] Found 1 respond actions, 1 background actions
+2025-10-09 13:17:22,312 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 13:17:22,314 [DEBUG] Markdown parsed to HTML.
+2025-10-09 13:17:24,621 [INFO] [TIMING] Total request time: 26.674s
+2025-10-09 13:17:24,623 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-09 13:17:24,627 [DEBUG] [CHAT] Background thread started
+2025-10-09 13:17:46,440 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 13:17:53,923 [INFO] [INFO] New session created: -Ob6OqLN-4d3HwNK6Om0
+2025-10-09 13:17:53,925 [INFO] [TIMING] Session init took 7.483s
+2025-10-09 13:18:04,759 [INFO] [TIMING] Summary fetch took 8.772s
+2025-10-09 13:18:12,649 [INFO] [TIMING] DeepSeek API call took 5.584s
+2025-10-09 13:18:12,650 [DEBUG] [CHAT] DeepSeek raw response: ```json
+{
+  "action": "respond",
+  "reasoning": "User has initiated a conversation. Need to understand what kind of creative problem solving or story planning they'd like to work on.",
+  "data": {
+    "message": "Hello! I'm here to help you with creative problem solving and story planning. Are you working on a specific story, character, or creative challenge you'd like to explore together?"
+  }
+}
+```
+2025-10-09 13:18:12,651 [DEBUG] Parsing DeepSeek raw response:
+```json
+{
+  "action": "respond",
+  "reasoning": "User has initiated a conversation. Need to understand what kind of creative problem solving or story planning they'd like to work on.",
+  "data": {
+    "message": "Hello! I'm here to help you with creative problem solving and story planning. Are you w...
+2025-10-09 13:18:12,652 [DEBUG] Found 1 JSON block(s) in fenced code format.
+2025-10-09 13:18:12,653 [DEBUG] Parsed JSON block: {'action': 'respond', 'reasoning': "User has initiated a conversation. Need to understand what kind of creative problem solving or story planning they'd like to work on.", 'data': {'message': "Hello! I'm here to help you with creative problem solving and story planning. Are you working on a specific story, character, or creative challenge you'd like to explore together?"}}
+2025-10-09 13:18:12,655 [DEBUG] Normalizing DeepSeek response: [{'action': 'respond', 'reasoning': "User has initiated a conversation. Need to understand what kind of creative problem solving or story planning they'd like to work on.", 'data': {'message': "Hello! I'm here to help you with creative problem solving and story planning. Are you working on a specific story, character, or creative challenge you'd like to explore together?"}}]
+2025-10-09 13:18:12,655 [INFO] [TIMING] Response parsing took 0.004s
+2025-10-09 13:18:12,657 [INFO] [CHAT] Found 1 respond actions, 0 background actions
+2025-10-09 13:18:12,658 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 13:18:12,661 [DEBUG] Markdown parsed to HTML.
+2025-10-09 13:18:12,667 [INFO] [TIMING] Total request time: 26.227s
+2025-10-09 13:18:12,668 [INFO] [CHAT] No background actions to process
+2025-10-09 18:08:05,642 [INFO] Flask app initialized, logging set up.
+2025-10-09 18:08:05,645 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-09 18:08:05,850 [INFO] DeepSeek client initialized.
+2025-10-09 18:08:05,857 [DEBUG] [SERVER] Starting Flask server
+2025-10-09 18:09:27,738 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 18:09:35,189 [INFO] [INFO] New session created: -Ob7RaxcFwliB36JfOFX
+2025-10-09 18:09:35,190 [INFO] [TIMING] Session init took 7.450s
+2025-10-09 18:09:46,029 [INFO] [TIMING] Summary fetch took 8.787s
+2025-10-09 18:09:57,606 [INFO] [TIMING] DeepSeek API call took 9.268s
+2025-10-09 18:09:57,607 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "get_info",
+    "reasoning": "The user is asking about their character Akio, so I need to fetch any existing information about this character from the Profile Manager to provide a complete summary.",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "payload": {
+            "filters": {
+              "label": ["Akio"]
+            }
+          },
+          "message": "Retrieving all information about the character Akio to summarize what's been established"
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "Acknowledging the request while the system fetches the information",
+    "data": {
+      "message": "I'll pull up everything we've discussed about Akio so far. Let me check what details we have recorded about this character."
+    }
+  }
+]
+2025-10-09 18:09:57,609 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "get_info",
+    "reasoning": "The user is asking about their character Akio, so I need to fetch any existing information about this character from the Profile Manager to provide a complete summary.",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+       ...
+2025-10-09 18:09:57,611 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-09 18:09:57,612 [DEBUG] Normalizing DeepSeek response: [{'action': 'get_info', 'reasoning': 'The user is asking about their character Akio, so I need to fetch any existing information about this character from the Profile Manager to provide a complete summary.', 'data': {'requests': [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': "Retrieving all information about the character Akio to summarize what's been established"}]}}, {'action': 'respond', 'reasoning': 'Acknowledging the request while the system fetches the information', 'data': {'message': "I'll pull up everything we've discussed about Akio so far. Let me check what details we have recorded about this character."}}]
+2025-10-09 18:09:57,613 [INFO] [TIMING] Response parsing took 0.004s
+2025-10-09 18:09:57,614 [INFO] [CHAT] Found 1 respond actions, 1 background actions
+2025-10-09 18:09:57,616 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 18:09:57,621 [DEBUG] Markdown parsed to HTML.
+2025-10-09 18:09:57,627 [INFO] [TIMING] Total request time: 29.889s
+2025-10-09 18:09:57,628 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-09 18:09:57,632 [DEBUG] [CHAT] Background thread started
+2025-10-09 18:09:57,646 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 18:10:02,127 [INFO] [TIMING] Session init took 4.479s
+2025-10-09 18:10:11,228 [INFO] [TIMING] Summary fetch took 9.092s
+2025-10-09 18:10:22,895 [INFO] [TIMING] DeepSeek API call took 9.310s
+2025-10-09 18:10:22,897 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "get_info",
+    "reasoning": "Need to retrieve existing information about Akio to understand what we already know before discussing motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "filters": {
+            "label": ["Akio"]
+          },
+          "message": "Looking for existing character details about Akio to build upon for motivation discussion"
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "Acknowledging the user's interest in exploring Akio's motivations while we retrieve existing character data",
+    "data": {
+      "message": "Great! Let's dive into Akio's motivations. I'll first check what we already know about Akio, then we can explore what drives this character. What initially comes to mind about what motivates Akio in your story?"
+    }
+  }
+]
+2025-10-09 18:10:22,898 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "get_info",
+    "reasoning": "Need to retrieve existing information about Akio to understand what we already know before discussing motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "filters": {
+            "label": ["Akio"]
+        ...
+2025-10-09 18:10:22,900 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-09 18:10:22,901 [DEBUG] Normalizing DeepSeek response: [{'action': 'get_info', 'reasoning': 'Need to retrieve existing information about Akio to understand what we already know before discussing motivations', 'data': {'requests': [{'target': 'nodes', 'filters': {'label': ['Akio']}, 'message': 'Looking for existing character details about Akio to build upon for motivation discussion'}]}}, {'action': 'respond', 'reasoning': "Acknowledging the user's interest in exploring Akio's motivations while we retrieve existing character data", 'data': {'message': "Great! Let's dive into Akio's motivations. I'll first check what we already know about Akio, then we can explore what drives this character. What initially comes to mind about what motivates Akio in your story?"}}]
+2025-10-09 18:10:22,913 [INFO] [TIMING] Response parsing took 0.015s
+2025-10-09 18:10:22,914 [INFO] [CHAT] Found 1 respond actions, 1 background actions
+2025-10-09 18:10:22,915 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 18:10:22,917 [DEBUG] Markdown parsed to HTML.
+2025-10-09 18:10:22,923 [INFO] [TIMING] Total request time: 25.277s
+2025-10-09 18:10:22,926 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-09 18:10:22,930 [DEBUG] [CHAT] Background thread started
+2025-10-09 18:10:22,941 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 18:10:27,295 [INFO] [TIMING] Session init took 4.352s
+2025-10-09 18:10:34,026 [INFO] [TIMING] Summary fetch took 6.725s
+2025-10-09 18:10:45,611 [INFO] [TIMING] DeepSeek API call took 9.239s
+2025-10-09 18:10:45,612 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "get_info",
+    "reasoning": "Need to check what existing information we have about Akio before discussing motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "filters": {
+            "label": ["Akio"]
+          },
+          "message": "Retrieving existing information about Akio to build on current knowledge"
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "Acknowledging the character's confusion and youth as starting points for exploring motivations",
+    "data": {
+      "message": "That's an interesting starting point - a confused young character. Youthful confusion can create compelling internal conflicts. What kind of situation is Akio facing that might be contributing to his confusion? Is he dealing with family expectations, personal identity, or perhaps a major life decision?"
+    }
+  }
+]
+2025-10-09 18:10:45,615 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "get_info",
+    "reasoning": "Need to check what existing information we have about Akio before discussing motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "filters": {
+            "label": ["Akio"]
+          },
+          "message":...
+2025-10-09 18:10:45,616 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-09 18:10:45,617 [DEBUG] Normalizing DeepSeek response: [{'action': 'get_info', 'reasoning': 'Need to check what existing information we have about Akio before discussing motivations', 'data': {'requests': [{'target': 'nodes', 'filters': {'label': ['Akio']}, 'message': 'Retrieving existing information about Akio to build on current knowledge'}]}}, {'action': 'respond', 'reasoning': "Acknowledging the character's confusion and youth as starting points for exploring motivations", 'data': {'message': "That's an interesting starting point - a confused young character. Youthful confusion can create compelling internal conflicts. What kind of situation is Akio facing that might be contributing to his confusion? Is he dealing with family expectations, personal identity, or perhaps a major life decision?"}}]
+2025-10-09 18:10:45,619 [INFO] [TIMING] Response parsing took 0.004s
+2025-10-09 18:10:45,619 [INFO] [CHAT] Found 1 respond actions, 1 background actions
+2025-10-09 18:10:45,621 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 18:10:45,623 [DEBUG] Markdown parsed to HTML.
+2025-10-09 18:10:47,923 [INFO] [TIMING] Total request time: 24.982s
+2025-10-09 18:10:47,924 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-09 18:10:47,928 [DEBUG] [CHAT] Background thread started
+2025-10-09 18:11:09,813 [DEBUG] [CHAT] /chat endpoint called
+2025-10-09 18:11:17,292 [INFO] [INFO] New session created: -Ob7RzsmaqnF5YaPElVs
+2025-10-09 18:11:17,295 [INFO] [TIMING] Session init took 7.480s
+2025-10-09 18:11:28,386 [INFO] [TIMING] Summary fetch took 9.013s
+2025-10-09 18:11:36,398 [INFO] [TIMING] DeepSeek API call took 5.400s
+2025-10-09 18:11:36,398 [DEBUG] [CHAT] DeepSeek raw response: ```json
+{
+  "action": "respond",
+  "reasoning": "User has initiated a conversation. I should welcome them and ask about their creative writing project to begin the CPS process.",
+  "data": {
+    "message": "Hello! Welcome to your creative writing assistant. I'm here to help you brainstorm and develop your story using Creative Problem Solving techniques. What story or writing project would you like to work on today?"
+  }
+}
+```
+2025-10-09 18:11:36,403 [DEBUG] Parsing DeepSeek raw response:
+```json
+{
+  "action": "respond",
+  "reasoning": "User has initiated a conversation. I should welcome them and ask about their creative writing project to begin the CPS process.",
+  "data": {
+    "message": "Hello! Welcome to your creative writing assistant. I'm here to help you brainstorm and develo...
+2025-10-09 18:11:36,405 [DEBUG] Found 1 JSON block(s) in fenced code format.
+2025-10-09 18:11:36,406 [DEBUG] Parsed JSON block: {'action': 'respond', 'reasoning': 'User has initiated a conversation. I should welcome them and ask about their creative writing project to begin the CPS process.', 'data': {'message': "Hello! Welcome to your creative writing assistant. I'm here to help you brainstorm and develop your story using Creative Problem Solving techniques. What story or writing project would you like to work on today?"}}
+2025-10-09 18:11:36,406 [DEBUG] Normalizing DeepSeek response: [{'action': 'respond', 'reasoning': 'User has initiated a conversation. I should welcome them and ask about their creative writing project to begin the CPS process.', 'data': {'message': "Hello! Welcome to your creative writing assistant. I'm here to help you brainstorm and develop your story using Creative Problem Solving techniques. What story or writing project would you like to work on today?"}}]
+2025-10-09 18:11:36,406 [INFO] [TIMING] Response parsing took 0.003s
+2025-10-09 18:11:36,406 [INFO] [CHAT] Found 1 respond actions, 0 background actions
+2025-10-09 18:11:36,410 [DEBUG] Parsing markdown. Output format: html
+2025-10-09 18:11:36,412 [DEBUG] Markdown parsed to HTML.
+2025-10-09 18:11:36,419 [INFO] [TIMING] Total request time: 26.605s
+2025-10-09 18:11:36,419 [INFO] [CHAT] No background actions to process
+2025-10-10 12:14:30,780 [INFO] Flask app initialized, logging set up.
+2025-10-10 12:14:31,032 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-10 12:14:31,184 [INFO] DeepSeek client initialized.
+2025-10-10 12:14:31,188 [DEBUG] [SERVER] Starting Flask server
+2025-10-10 12:14:35,141 [INFO] Flask app initialized, logging set up.
+2025-10-10 12:14:35,141 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-10 12:14:35,357 [INFO] DeepSeek client initialized.
+2025-10-10 12:14:35,361 [DEBUG] [SERVER] Starting Flask server
+2025-10-10 12:15:58,775 [INFO] Flask app initialized, logging set up.
+2025-10-10 12:15:58,779 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-10 12:15:58,954 [INFO] DeepSeek client initialized.
+2025-10-10 12:15:58,958 [DEBUG] [SERVER] Starting Flask server
+2025-10-10 12:17:38,984 [DEBUG] [CHAT] /chat endpoint called
+2025-10-10 12:17:46,550 [INFO] [INFO] New session created: -ObBKfSekNcSwCO5FU1a
+2025-10-10 12:17:46,550 [INFO] [TIMING] Session init took 7.566s
+2025-10-10 12:17:57,629 [INFO] [TIMING] Summary fetch took 8.994s
+2025-10-10 12:18:12,004 [INFO] [TIMING] DeepSeek API call took 12.053s
+2025-10-10 12:18:12,006 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "get_info",
+    "reasoning": "User is asking about their character Akio. I need to fetch any existing information about this character from the Profile Manager to provide a comprehensive summary.",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "payload": {
+            "filters": {
+              "label": ["Akio"]
+            }
+          },
+          "message": "Looking for character node named Akio"
+        },
+        {
+          "target": "links",
+          "payload": {
+            "filters": {
+              "participants": ["Akio"]
+            }
+          },
+          "message": "Looking for relationships involving Akio"
+        },
+        {
+          "target": "events",
+          "payload": {
+            "filters": {
+              "description": "Akio"
+            }
+          },
+          "message": "Looking for events involving Akio"
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "While fetching the information about Akio, I'll let the user know I'm retrieving what we've discussed so far.",
+    "data": {
+      "message": "I'll check what we've recorded about Akio so far. Let me pull up all the information about this character from our story tracking system."
+    }
+  }
+]
+2025-10-10 12:18:12,008 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "get_info",
+    "reasoning": "User is asking about their character Akio. I need to fetch any existing information about this character from the Profile Manager to provide a comprehensive summary.",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+         ...
+2025-10-10 12:18:12,010 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-10 12:18:12,011 [DEBUG] Normalizing DeepSeek response: [{'action': 'get_info', 'reasoning': 'User is asking about their character Akio. I need to fetch any existing information about this character from the Profile Manager to provide a comprehensive summary.', 'data': {'requests': [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': 'Looking for character node named Akio'}, {'target': 'links', 'payload': {'filters': {'participants': ['Akio']}}, 'message': 'Looking for relationships involving Akio'}, {'target': 'events', 'payload': {'filters': {'description': 'Akio'}}, 'message': 'Looking for events involving Akio'}]}}, {'action': 'respond', 'reasoning': "While fetching the information about Akio, I'll let the user know I'm retrieving what we've discussed so far.", 'data': {'message': "I'll check what we've recorded about Akio so far. Let me pull up all the information about this character from our story tracking system."}}]
+2025-10-10 12:18:12,012 [INFO] [TIMING] Response parsing took 0.004s
+2025-10-10 12:18:12,013 [INFO] [CHAT] Found 1 respond actions, 1 background actions
+2025-10-10 12:18:12,016 [DEBUG] Parsing markdown. Output format: html
+2025-10-10 12:18:12,027 [DEBUG] Markdown parsed to HTML.
+2025-10-10 12:18:12,036 [INFO] [TIMING] Total request time: 33.052s
+2025-10-10 12:18:12,038 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-10 12:18:12,044 [DEBUG] [CHAT] Background thread started
+2025-10-10 12:18:12,062 [DEBUG] [CHAT] /chat endpoint called
+2025-10-10 12:18:16,701 [INFO] [TIMING] Session init took 4.635s
+2025-10-10 12:18:25,815 [INFO] [TIMING] Summary fetch took 9.106s
+2025-10-10 12:18:37,196 [INFO] [TIMING] DeepSeek API call took 9.058s
+2025-10-10 12:18:37,197 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "get_info",
+    "reasoning": "I need to retrieve all existing information about Akio to understand what we've already discussed about this character before exploring motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "payload": {
+            "filters": {
+              "label": ["Akio"]
+            }
+          },
+          "message": "Retrieving all existing information about the character Akio"
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "While I fetch the existing information about Akio, I'll engage the user in a CPS-style exploration of character motivations",
+    "data": {
+      "message": "Great! Let's explore Akio's motivations. Before we dive in, could you tell me what initially drives Akio? What's the core desire or goal that propels them forward in your story?"
+    }
+  }
+]
+2025-10-10 12:18:37,198 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "get_info",
+    "reasoning": "I need to retrieve all existing information about Akio to understand what we've already discussed about this character before exploring motivations",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "payload": {
+    ...
+2025-10-10 12:18:37,199 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-10 12:18:37,201 [DEBUG] Normalizing DeepSeek response: [{'action': 'get_info', 'reasoning': "I need to retrieve all existing information about Akio to understand what we've already discussed about this character before exploring motivations", 'data': {'requests': [{'target': 'nodes', 'payload': {'filters': {'label': ['Akio']}}, 'message': 'Retrieving all existing information about the character Akio'}]}}, {'action': 'respond', 'reasoning': "While I fetch the existing information about Akio, I'll engage the user in a CPS-style exploration of character motivations", 'data': {'message': "Great! Let's explore Akio's motivations. Before we dive in, could you tell me what initially drives Akio? What's the core desire or goal that propels them forward in your story?"}}]
+2025-10-10 12:18:37,203 [INFO] [TIMING] Response parsing took 0.005s
+2025-10-10 12:18:37,203 [INFO] [CHAT] Found 1 respond actions, 1 background actions
+2025-10-10 12:18:37,206 [DEBUG] Parsing markdown. Output format: html
+2025-10-10 12:18:37,208 [DEBUG] Markdown parsed to HTML.
+2025-10-10 12:18:37,218 [INFO] [TIMING] Total request time: 25.156s
+2025-10-10 12:18:37,220 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-10 12:18:37,227 [DEBUG] [CHAT] Background thread started
+2025-10-10 12:18:37,244 [DEBUG] [CHAT] /chat endpoint called
+2025-10-10 12:18:41,896 [INFO] [TIMING] Session init took 4.649s
+2025-10-10 12:18:48,899 [INFO] [TIMING] Summary fetch took 6.996s
+2025-10-10 12:19:02,353 [INFO] [TIMING] DeepSeek API call took 11.109s
+2025-10-10 12:19:02,354 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "log_idea",
+    "reasoning": "User is describing Akio's character traits and internal state, which is valuable character development information for our story planning",
+    "data": {
+      "idea": "Akio is a confused individual due to his youth, struggling with uncertainty about his identity and direction",
+      "ideaId": null,
+      "evaluations": {
+        "flexibilityCategory": "Character",
+        "elaboration": "Medium",
+        "originality": "Medium",
+        "reasoning": "This idea provides good character depth by connecting confusion to youth, but could benefit from more specific examples or contextual details"
+      }
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "Acknowledging the character insight and prompting for more specific motivations to build on this foundation",
+    "data": {
+      "message": "That's an interesting starting point - a young character grappling with confusion. Let's explore what might be causing this confusion. Is Akio torn between different paths or expectations? Maybe conflicting family duties versus personal desires? Or perhaps he's struggling to find his place in a changing world?"
+    }
+  }
+]
+2025-10-10 12:19:02,356 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "log_idea",
+    "reasoning": "User is describing Akio's character traits and internal state, which is valuable character development information for our story planning",
+    "data": {
+      "idea": "Akio is a confused individual due to his youth, struggling with uncertainty about...
+2025-10-10 12:19:02,357 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-10 12:19:02,358 [DEBUG] Normalizing DeepSeek response: [{'action': 'log_idea', 'reasoning': "User is describing Akio's character traits and internal state, which is valuable character development information for our story planning", 'data': {'idea': 'Akio is a confused individual due to his youth, struggling with uncertainty about his identity and direction', 'ideaId': None, 'evaluations': {'flexibilityCategory': 'Character', 'elaboration': 'Medium', 'originality': 'Medium', 'reasoning': 'This idea provides good character depth by connecting confusion to youth, but could benefit from more specific examples or contextual details'}}}, {'action': 'respond', 'reasoning': 'Acknowledging the character insight and prompting for more specific motivations to build on this foundation', 'data': {'message': "That's an interesting starting point - a young character grappling with confusion. Let's explore what might be causing this confusion. Is Akio torn between different paths or expectations? Maybe conflicting family duties versus personal desires? Or perhaps he's struggling to find his place in a changing world?"}}]
+2025-10-10 12:19:02,359 [INFO] [TIMING] Response parsing took 0.003s
+2025-10-10 12:19:02,360 [INFO] [CHAT] Found 1 respond actions, 1 background actions
+2025-10-10 12:19:02,361 [DEBUG] Parsing markdown. Output format: html
+2025-10-10 12:19:02,364 [DEBUG] Markdown parsed to HTML.
+2025-10-10 12:19:04,672 [INFO] [TIMING] Total request time: 27.427s
+2025-10-10 12:19:04,675 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-10 12:19:04,680 [DEBUG] [CHAT] Background thread started
+2025-10-10 12:19:25,081 [DEBUG] [CHAT] /chat endpoint called
+2025-10-10 12:19:32,603 [INFO] [INFO] New session created: -ObBL4M0FNAF100pnP82
+2025-10-10 12:19:32,604 [INFO] [TIMING] Session init took 7.521s
+2025-10-10 12:19:43,677 [INFO] [TIMING] Summary fetch took 9.007s
+2025-10-10 12:19:52,056 [INFO] [TIMING] DeepSeek API call took 6.080s
+2025-10-10 12:19:52,056 [DEBUG] [CHAT] DeepSeek raw response: ```json
+{
+  "action": "respond",
+  "reasoning": "User has initiated a creative writing session. Need to understand what stage they're at and what they'd like to work on.",
+  "data": {
+    "message": "Hello! I'm here to help you with your creative writing project. Are you just getting started with brainstorming ideas, or do you have an existing story you'd like to develop further? I can help you with character development, plot planning, world-building, or any other aspect of your story."
+  }
+}
+```
+2025-10-10 12:19:52,056 [DEBUG] Parsing DeepSeek raw response:
+```json
+{
+  "action": "respond",
+  "reasoning": "User has initiated a creative writing session. Need to understand what stage they're at and what they'd like to work on.",
+  "data": {
+    "message": "Hello! I'm here to help you with your creative writing project. Are you just getting started with br...
+2025-10-10 12:19:52,056 [DEBUG] Found 1 JSON block(s) in fenced code format.
+2025-10-10 12:19:52,064 [DEBUG] Parsed JSON block: {'action': 'respond', 'reasoning': "User has initiated a creative writing session. Need to understand what stage they're at and what they'd like to work on.", 'data': {'message': "Hello! I'm here to help you with your creative writing project. Are you just getting started with brainstorming ideas, or do you have an existing story you'd like to develop further? I can help you with character development, plot planning, world-building, or any other aspect of your story."}}
+2025-10-10 12:19:52,066 [DEBUG] Normalizing DeepSeek response: [{'action': 'respond', 'reasoning': "User has initiated a creative writing session. Need to understand what stage they're at and what they'd like to work on.", 'data': {'message': "Hello! I'm here to help you with your creative writing project. Are you just getting started with brainstorming ideas, or do you have an existing story you'd like to develop further? I can help you with character development, plot planning, world-building, or any other aspect of your story."}}]
+2025-10-10 12:19:52,067 [INFO] [TIMING] Response parsing took 0.012s
+2025-10-10 12:19:52,067 [INFO] [CHAT] Found 1 respond actions, 0 background actions
+2025-10-10 12:19:52,067 [DEBUG] Parsing markdown. Output format: html
+2025-10-10 12:19:52,072 [DEBUG] Markdown parsed to HTML.
+2025-10-10 12:19:52,077 [INFO] [TIMING] Total request time: 26.996s
+2025-10-10 12:19:52,077 [INFO] [CHAT] No background actions to process

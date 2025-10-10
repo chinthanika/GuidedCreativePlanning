@@ -2,6 +2,35 @@ import { database } from "../Firebase/firebaseAdmin.js";
 import { get, set, update, remove, ref, child, push } from "../Firebase/firebase.js";
 import StoryProfileManager from "./StoryProfileManager.js";
 
+const WORLDBUILDING_SCHEMAS = {
+    magicSystems: {
+        required: ['name', 'type', 'description'],
+        optional: ['parentId', 'children', 'rules', 'limitations', 'costs']
+    },
+    cultures: {
+        required: ['name', 'type', 'description'],
+        optional: ['parentId', 'children', 'values', 'traditions', 'hierarchy', 'beliefs', 'language', 'territory']
+    },
+    locations: {
+        required: ['name', 'type', 'description'],
+        optional: ['parentId', 'children', 'climate', 'geography', 'inhabitants', 'resources', 'dangerLevel', 'purpose', 'features']
+    },
+    technology: {
+        required: ['name', 'type', 'description'],
+        optional: ['parentId', 'children', 'howItWorks', 'requirements', 'limitations', 'socialImpact']
+    },
+    history: {
+        required: ['name', 'type', 'timeframe', 'description'],
+        optional: ['parentId', 'children', 'cause', 'outcome', 'impact', 'artifacts']
+    },
+    organizations: {
+        required: ['name', 'type', 'description'],
+        optional: ['parentId', 'children', 'founded', 'purpose', 'structure', 'power', 'headquarters']
+    }
+};
+
+const VALID_WORLDBUILDING_CATEGORIES = Object.keys(WORLDBUILDING_SCHEMAS);
+
 export default class ConfirmationPipeline {
     constructor({ uid } = {}) {
         if (!uid) throw new Error("User ID is required");
@@ -60,7 +89,7 @@ export default class ConfirmationPipeline {
             throw new Error(`Event stage must be one of: ${validStages.join(", ")}`);
         }
 
-        // ✅ enforce MM/DD/YYYY format
+        // enforce MM/DD/YYYY format
         const dateRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/;
         if (!dateRegex.test(data.date)) {
             throw new Error("Event 'date' must be in MM/DD/YYYY format, e.g. 07/03/2023");
@@ -75,7 +104,50 @@ export default class ConfirmationPipeline {
         }
     }
 
+    async _validateWorldBuilding(category, data) {
+        if (!VALID_WORLDBUILDING_CATEGORIES.includes(category)) {
+            throw new Error(`Invalid world-building category: ${category}. Must be one of: ${VALID_WORLDBUILDING_CATEGORIES.join(", ")}`);
+        }
+
+        const schema = WORLDBUILDING_SCHEMAS[category];
+
+        // Check required fields
+        for (const field of schema.required) {
+            if (!data[field]) {
+                throw new Error(`World-building item in '${category}' must have '${field}'`);
+            }
+        }
+
+        // Initialize optional arrays if not provided
+        if (!data.children) data.children = [];
+        if (data.parentId === undefined) data.parentId = null;
+
+        // Validate parentId exists if provided
+        if (data.parentId) {
+            const parent = await this.manager.getWorldBuildingItem(category, data.parentId);
+            if (!parent) {
+                throw new Error(`Parent item with id '${data.parentId}' not found in category '${category}'`);
+            }
+        }
+
+        // Category-specific validation
+        if (category === 'locations' && data.territory) {
+            // Validate territory reference exists in locations
+            const territoryExists = await this.manager.getWorldBuildingItem('locations', data.territory);
+            if (!territoryExists) {
+                throw new Error(`Territory with id '${data.territory}' not found in locations`);
+            }
+        }
+    }
+
     async _validateChange(entityType, data) {
+        // Handle world-building entity types (e.g., "worldBuilding-magicSystems")
+        if (entityType.startsWith("worldBuilding-")) {
+            const category = entityType.replace("worldBuilding-", "");
+            await this._validateWorldBuilding(category, data);
+            return;
+        }
+
         switch (entityType) {
             case "node":
                 await this._validateNode(data);
@@ -113,24 +185,31 @@ export default class ConfirmationPipeline {
                 }
                 break;
 
+            case "worldBuilding-delete":
+                if (!data.category || !data.identifier) {
+                    throw new Error("worldBuilding-delete requires 'category' and 'identifier'");
+                }
+                if (!VALID_WORLDBUILDING_CATEGORIES.includes(data.category)) {
+                    throw new Error(`Invalid category: ${data.category}`);
+                }
+                break;
+
             default:
                 throw new Error(`Unknown entityType: ${entityType}`);
         }
     }
 
 
-
     /* =========================
        STAGE / CONFIRM / DENY
     ========================= */
     async stageChange(entityType, entityId, newData) {
-        // If this is a link staging request, normalize node1/node2 into source/target first
+        // Normalize link data
         if (entityType === "link") {
             let nodeA = await this.manager.getNode(newData.node1) || await this.manager.resolveNodeByName(newData.node1);
             let nodeB = await this.manager.getNode(newData.node2) || await this.manager.resolveNodeByName(newData.node2);
 
             if (!nodeA || !nodeB) {
-                // check pending
                 const pending = await this.listPending();
                 const pendingNodes = Object.values(pending)
                     .filter(c => c.entityType === "node")
@@ -139,31 +218,32 @@ export default class ConfirmationPipeline {
                 nodeA = nodeA || pendingNodes.find(n => n.id === newData.node1 || n.label === newData.node1);
                 nodeB = nodeB || pendingNodes.find(n => n.id === newData.node2 || n.label === newData.node2);
 
-                // If still missing, throw
                 if (!nodeA || !nodeB) {
                     throw new Error(`Cannot stage link: node1='${newData.node1}' or node2='${newData.node2}' not found`);
                 }
             }
 
-            // normalize to source/target IDs
             const [n1, n2] = this.manager._normalizePair(nodeA.id, nodeB.id);
             newData = { ...newData, source: n1, target: n2 };
         }
 
-
-        // Validate now that we've normalized (this will call _validateLink which expects node1/node2) 
-        // so we must make _validateLink tolerate source/target shape:
+        // Validate
         await this._validateChange(entityType, newData);
 
-        // ===== Prevent duplicate pending changes =====
+        // Prevent duplicate pending changes
         const pending = await this.listPending();
         const duplicate = Object.values(pending).find(c => {
             if (c.entityType !== entityType) return false;
+            
+            // Handle world-building comparisons
+            if (entityType.startsWith("worldBuilding-")) {
+                return c.newData.name === newData.name && c.newData.type === newData.type;
+            }
+            
             switch (entityType) {
                 case "node":
                     return c.newData.label === newData.label && c.newData.group === newData.group;
                 case "link":
-                    // both pending and newData will use source/target
                     const [pn1, pn2] = this.manager._normalizePair(c.newData.source || c.newData.node1, c.newData.target || c.newData.node2);
                     const [nn1, nn2] = this.manager._normalizePair(newData.source || newData.node1, newData.target || newData.node2);
                     return pn1 === nn1 && pn2 === nn2 && newData.type === c.newData.type;
@@ -175,8 +255,7 @@ export default class ConfirmationPipeline {
         });
         if (duplicate) throw new Error(`A pending ${entityType} with the same data already exists.`);
 
-        // NOTE: link handling already done above (we normalized earlier)
-        // ===== validate deletes against DB =====
+        // Validate deletes against DB
         if (entityType === "node-delete") {
             const node = await this.manager.getNode(newData.identifier)
                 || await this.manager.resolveNodeByName(newData.identifier);
@@ -207,8 +286,14 @@ export default class ConfirmationPipeline {
             newData.identifier = event.id;
         }
 
-        // ===== Stage change =====
-        // Use push() to avoid millisecond collision for pending keys
+        if (entityType === "worldBuilding-delete") {
+            const item = await this.manager.getWorldBuildingItem(newData.category, newData.identifier)
+                || await this.manager.resolveWorldBuildingItemByName(newData.category, newData.identifier);
+            if (!item) throw new Error(`Cannot stage worldBuilding-delete: '${newData.identifier}' not found in '${newData.category}'`);
+            newData.identifier = item.id;
+        }
+
+        // Stage change
         const newRef = push(this.pendingRef);
         const changeKey = newRef.key;
         const changeRef = child(this.pendingRef, changeKey);
@@ -239,85 +324,96 @@ export default class ConfirmationPipeline {
         let result;
 
         try {
-            switch (entityType) {
-                case "link": {
-                    const nodeA = await this.manager.getNode(newData.source);
-                    const nodeB = await this.manager.getNode(newData.target);
-                    if (!nodeA || !nodeB) {
-                        throw new Error(
-                            `Cannot confirm link: node(s) not yet confirmed: ${newData.source}, ${newData.target}`
+            // Handle world-building confirmations
+            if (entityType.startsWith("worldBuilding-")) {
+                const category = entityType.replace("worldBuilding-", "");
+                result = await this.manager.upsertWorldBuildingItem(
+                    category,
+                    entityId || Date.now().toString(),
+                    newData
+                );
+            }
+            else {
+                switch (entityType) {
+                    case "link": {
+                        const nodeA = await this.manager.getNode(newData.source);
+                        const nodeB = await this.manager.getNode(newData.target);
+                        if (!nodeA || !nodeB) {
+                            throw new Error(
+                                `Cannot confirm link: node(s) not yet confirmed: ${newData.source}, ${newData.target}`
+                            );
+                        }
+
+                        const allLinks = await this.manager.getAllLinks();
+                        const dup = Object.values(allLinks).find(
+                            l =>
+                                ((l.source === newData.source && l.target === newData.target) ||
+                                    (l.source === newData.target && l.target === newData.source)) &&
+                                l.type === newData.type
                         );
+
+                        if (dup && !overwrite) {
+                            const error = new Error("Link already exists between these nodes");
+                            error.code = "LINK_EXISTS";
+                            error.duplicate = dup;
+                            throw error;
+                        }
+
+                        result = await this.manager.upsertLinkByIds(
+                            newData.source,
+                            newData.target,
+                            newData.type,
+                            newData.context || "",
+                            { overwrite: true }
+                        );
+                        break;
                     }
 
-                    // 🔍 Check for existing link
-                    const allLinks = await this.manager.getAllLinks();
-                    const dup = Object.values(allLinks).find(
-                        l =>
-                            ((l.source === newData.source && l.target === newData.target) ||
-                                (l.source === newData.target && l.target === newData.source)) &&
-                            l.type === newData.type
-                    );
+                    case "node":
+                        result = await this.manager.upsertNode(
+                            entityId || Date.now().toString(),
+                            newData
+                        );
+                        break;
 
-                    if (dup && !overwrite) {
-                        const error = new Error("Link already exists between these nodes");
-                        error.code = "LINK_EXISTS";
-                        error.duplicate = dup;
-                        throw error;
-                    }
+                    case "event":
+                        if (entityId) {
+                            result = await this.manager.upsertEvent(entityId, newData);
+                        } else {
+                            const newId = Date.now().toString();
+                            result = await this.manager.upsertEvent(newId, newData);
+                        }
+                        break;
 
-                    result = await this.manager.upsertLinkByIds(
-                        newData.source,
-                        newData.target,
-                        newData.type,
-                        newData.context || "",
-                        { overwrite: true } // ✅ always overwrite once confirmed
-                    );
-                    break;
+                    case "profile":
+                        const oldProfile = await this.manager.getProfile() || {};
+                        result = await this.manager.updateProfile({ ...oldProfile, ...newData });
+                        break;
+
+                    case "node-delete":
+                        result = await this.manager.deleteNode(newData.identifier);
+                        break;
+
+                    case "link-delete":
+                        result = await this.manager.deleteLinkByIds(newData.node1, newData.node2);
+                        break;
+
+                    case "event-delete":
+                        result = await this.manager.deleteEventById(newData.identifier);
+                        if (!result.deleted) {
+                            result = await this.manager.deleteEventByTitle(newData.identifier);
+                        }
+                        break;
+
+                    case "worldBuilding-delete":
+                        result = await this.manager.deleteWorldBuildingItem(newData.category, newData.identifier);
+                        break;
+
+                    default:
+                        throw new Error(`Unknown entityType: ${entityType}`);
                 }
-
-                case "node":
-                    result = await this.manager.upsertNode(
-                        entityId || Date.now().toString(),
-                        newData
-                    );
-                    break;
-
-                case "event":
-                    if (entityId) {
-                        result = await this.manager.upsertEvent(entityId, newData);
-                    } else {
-                        const newId = Date.now().toString();
-                        result = await this.manager.upsertEvent(newId, newData);
-                    }
-                    break;
-
-                case "profile":
-                    const oldProfile = await this.manager.getProfile() || {};
-                    result = await this.manager.updateProfile({ ...oldProfile, ...newData });
-                    break;
-
-                /* ====== NEW: unified delete calls ====== */
-                case "node-delete":
-                    result = await this.manager.deleteNode(newData.identifier);
-                    break;
-
-                case "link-delete":
-                    result = await this.manager.deleteLinkByIds(newData.node1, newData.node2);
-                    break;
-
-                case "event-delete":
-                    result = await this.manager.deleteEventById(newData.identifier);
-                    if (!result.deleted) {
-                        // fallback: try by title if ID didn't match
-                        result = await this.manager.deleteEventByTitle(newData.identifier);
-                    }
-                    break;
-
-                default:
-                    throw new Error(`Unknown entityType: ${entityType}`);
             }
 
-            // Only remove if successful (not in conflict)
             await remove(child(this.pendingRef, changeKey));
             return { confirmed: true, result };
 
@@ -325,7 +421,6 @@ export default class ConfirmationPipeline {
             return { confirmed: false, error: err.message };
         }
     }
-
 
     async deny(changeKey) {
         if (!changeKey) throw new Error("changeKey is required");

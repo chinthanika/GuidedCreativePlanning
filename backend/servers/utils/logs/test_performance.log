@@ -1,0 +1,851 @@
+2025-10-10 12:16:22,306 [INFO] FULL PERFORMANCE VALIDATION SUITE — Tuesday + Wednesday checks
+2025-10-10 12:16:22,495 [INFO] ---- After TEST 1: Cache Stats Endpoint ----
+2025-10-10 12:16:22,522 [INFO] {
+  "metadata": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  }
+}
+2025-10-10 12:16:22,539 [INFO] {
+  "metadata": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  }
+}
+2025-10-10 12:16:22,560 [INFO] {
+  "nodes": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  },
+  "links": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  },
+  "events": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  }
+}
+2025-10-10 12:16:26,493 [INFO]   Warming cache with first metadata call...
+2025-10-10 12:16:31,330 [INFO]   Call 1: 2.042s
+2025-10-10 12:16:33,383 [INFO]   Call 2: 2.052s
+2025-10-10 12:16:35,702 [INFO]   Call 3: 2.316s
+2025-10-10 12:16:37,746 [INFO]   Call 4: 2.045s
+2025-10-10 12:16:39,793 [INFO]   Call 5: 2.047s
+2025-10-10 12:16:40,819 [INFO] ---- After TEST 2: Repeated Metadata Calls ----
+2025-10-10 12:16:40,835 [INFO] {
+  "metadata": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  }
+}
+2025-10-10 12:16:40,853 [INFO] {
+  "metadata": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  }
+}
+2025-10-10 12:16:40,874 [INFO] {
+  "nodes": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  },
+  "links": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  },
+  "events": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  }
+}
+2025-10-10 12:17:04,698 [INFO]   DT Message 1: 23.817s
+2025-10-10 12:17:22,831 [INFO]   DT Message 2: 18.134s
+2025-10-10 12:17:38,887 [INFO]   DT Message 3: 16.053s
+2025-10-10 12:17:38,889 [INFO] DT average response time: 19.334s
+2025-10-10 12:17:38,917 [INFO] ---- After TEST 3: DT Response Time ----
+2025-10-10 12:17:38,933 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 2,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "33.33%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  }
+}
+2025-10-10 12:17:38,948 [INFO] {
+  "metadata": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  }
+}
+2025-10-10 12:17:38,970 [INFO] {
+  "nodes": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  },
+  "links": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  },
+  "events": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  }
+}
+2025-10-10 12:18:12,050 [INFO]   BS Message 1: 33.074s
+2025-10-10 12:18:12,051 [INFO]     Response: <p>I'll check what we've recorded about Akio so far. Let me pull up all the info...
+2025-10-10 12:18:37,233 [INFO]   BS Message 2: 25.181s
+2025-10-10 12:18:37,235 [INFO]     Response: <p>Great! Let's explore Akio's motivations. Before we dive in, could you tell me...
+2025-10-10 12:19:04,684 [INFO]   BS Message 3: 27.447s
+2025-10-10 12:19:04,686 [INFO]     Response: <p>That's an interesting starting point - a young character grappling with confu...
+2025-10-10 12:19:04,687 [INFO] BS average response time: 28.568s
+2025-10-10 12:19:04,715 [INFO] ---- After TEST 3: BS Response Time ----
+2025-10-10 12:19:04,732 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 2,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "33.33%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  }
+}
+2025-10-10 12:19:04,749 [INFO] {
+  "metadata": {
+    "hit_rate": "76.92%",
+    "hits": 10,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "55.56%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  }
+}
+2025-10-10 12:19:04,794 [INFO] {
+  "nodes": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  },
+  "links": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  },
+  "events": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  }
+}
+2025-10-10 12:19:24,945 [INFO]   DT Response time: 20.150s
+2025-10-10 12:19:24,947 [INFO]   DT Immediate message: False
+2025-10-10 12:19:24,948 [INFO]   DT Background processing: True
+2025-10-10 12:19:24,999 [INFO] ---- After TEST 4: DT Background Separation ----
+2025-10-10 12:19:25,036 [INFO] {
+  "metadata": {
+    "hit_rate": "62.50%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-10 12:19:25,056 [INFO] {
+  "metadata": {
+    "hit_rate": "76.92%",
+    "hits": 10,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "55.56%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  }
+}
+2025-10-10 12:19:25,074 [INFO] {
+  "nodes": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  },
+  "links": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  },
+  "events": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  }
+}
+2025-10-10 12:19:52,084 [INFO]   BS Response time: 27.010s
+2025-10-10 12:19:52,084 [INFO]   BS Immediate message: True
+2025-10-10 12:19:52,089 [INFO]   BS Background processing: False
+2025-10-10 12:19:52,098 [INFO] ---- After TEST 4: BS Background Separation ----
+2025-10-10 12:19:52,124 [INFO] {
+  "metadata": {
+    "hit_rate": "62.50%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-10 12:19:52,142 [INFO] {
+  "metadata": {
+    "hit_rate": "77.78%",
+    "hits": 14,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-10 12:19:52,166 [INFO] {
+  "nodes": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  },
+  "links": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  },
+  "events": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  }
+}
+2025-10-10 12:20:02,036 [INFO] ---- After TEST 5: Cache Invalidation (Session API) ----
+2025-10-10 12:20:02,064 [INFO] {
+  "metadata": {
+    "hit_rate": "62.50%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-10 12:20:02,082 [INFO] {
+  "metadata": {
+    "hit_rate": "77.78%",
+    "hits": 14,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-10 12:20:02,099 [INFO] {
+  "nodes": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  },
+  "links": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  },
+  "events": {
+    "hits": 0,
+    "misses": 0,
+    "writes": 0,
+    "hitRate": "0.00%",
+    "size": 0
+  }
+}
+2025-10-10 12:20:03,863 [INFO] ---- After WED TEST 1: PM Batch Endpoint ----
+2025-10-10 12:20:03,889 [INFO] {
+  "metadata": {
+    "hit_rate": "62.50%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-10 12:20:03,902 [INFO] {
+  "metadata": {
+    "hit_rate": "77.78%",
+    "hits": 14,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-10 12:20:03,915 [INFO] {
+  "nodes": {
+    "hits": 1,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "50.00%",
+    "size": 1
+  },
+  "links": {
+    "hits": 0,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "0.00%",
+    "size": 1
+  },
+  "events": {
+    "hits": 0,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "0.00%",
+    "size": 1
+  }
+}
+2025-10-10 12:20:03,932 [INFO]   Batch time: 0.015s
+2025-10-10 12:20:20,421 [INFO]   Sequential time: 16.488s
+2025-10-10 12:20:20,422 [INFO]   Improvement: 99.9%
+2025-10-10 12:20:20,436 [INFO] ---- After WED TEST 2: PM Batch vs Sequential ----
+2025-10-10 12:20:20,467 [INFO] {
+  "metadata": {
+    "hit_rate": "62.50%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 0
+  }
+}
+2025-10-10 12:20:20,482 [INFO] {
+  "metadata": {
+    "hit_rate": "77.78%",
+    "hits": 14,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-10 12:20:20,496 [INFO] {
+  "nodes": {
+    "hits": 3,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "75.00%",
+    "size": 1
+  },
+  "links": {
+    "hits": 1,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "50.00%",
+    "size": 1
+  },
+  "events": {
+    "hits": 1,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "50.00%",
+    "size": 1
+  }
+}
+2025-10-10 12:20:20,764 [INFO]   First request: 0.255s (expected miss)
+2025-10-10 12:20:21,042 [INFO]   Second request: 0.278s (expected hit)
+2025-10-10 12:20:21,051 [INFO] 
+  Cache stats:
+2025-10-10 12:20:21,053 [INFO] {
+  "nodes": {
+    "hits": 3,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "75.00%",
+    "size": 1
+  },
+  "links": {
+    "hits": 1,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "50.00%",
+    "size": 1
+  },
+  "events": {
+    "hits": 1,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "50.00%",
+    "size": 1
+  }
+}
+2025-10-10 12:20:21,058 [INFO] ---- After WED TEST 3: PM Cache ----
+2025-10-10 12:20:21,072 [INFO] {
+  "metadata": {
+    "hit_rate": "62.50%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 0
+  }
+}
+2025-10-10 12:20:21,105 [INFO] {
+  "metadata": {
+    "hit_rate": "77.78%",
+    "hits": 14,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-10 12:20:21,118 [INFO] {
+  "nodes": {
+    "hits": 3,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "75.00%",
+    "size": 1
+  },
+  "links": {
+    "hits": 1,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "50.00%",
+    "size": 1
+  },
+  "events": {
+    "hits": 1,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "50.00%",
+    "size": 1
+  }
+}
+2025-10-10 12:20:21,394 [INFO]   Initial nodes count: 32
+2025-10-10 12:20:21,688 [INFO] ---- After WED TEST 4: PM Cache Invalidation ----
+2025-10-10 12:20:21,711 [INFO] {
+  "metadata": {
+    "hit_rate": "62.50%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 0
+  }
+}
+2025-10-10 12:20:21,744 [INFO] {
+  "metadata": {
+    "hit_rate": "77.78%",
+    "hits": 14,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-10 12:20:21,756 [INFO] {
+  "nodes": {
+    "hits": 3,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "75.00%",
+    "size": 1
+  },
+  "links": {
+    "hits": 1,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "50.00%",
+    "size": 1
+  },
+  "events": {
+    "hits": 1,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "50.00%",
+    "size": 1
+  }
+}
+2025-10-10 12:20:44,219 [INFO]   Chat response time: 22.461s
+2025-10-10 12:20:44,219 [INFO]   Has message: False
+2025-10-10 12:20:44,220 [INFO]   Background processing: True
+2025-10-10 12:20:44,248 [INFO] ---- After WED TEST 5: Flask Batch Integration ----
+2025-10-10 12:20:44,279 [INFO] {
+  "metadata": {
+    "hit_rate": "60.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "20.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 8,
+    "size": 1
+  }
+}
+2025-10-10 12:20:44,296 [INFO] {
+  "metadata": {
+    "hit_rate": "77.78%",
+    "hits": 14,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 0
+  }
+}
+2025-10-10 12:20:44,311 [INFO] {
+  "nodes": {
+    "hits": 3,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "75.00%",
+    "size": 1
+  },
+  "links": {
+    "hits": 1,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "50.00%",
+    "size": 1
+  },
+  "events": {
+    "hits": 1,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "50.00%",
+    "size": 1
+  }
+}
+2025-10-10 12:20:44,348 [INFO] ---- After WED TEST 6: PM Fallback Mechanism ----
+2025-10-10 12:20:44,362 [INFO] {
+  "metadata": {
+    "hit_rate": "60.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "20.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 8,
+    "size": 1
+  }
+}
+2025-10-10 12:20:44,379 [INFO] {
+  "metadata": {
+    "hit_rate": "77.78%",
+    "hits": 14,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 0
+  }
+}
+2025-10-10 12:20:44,393 [INFO] {
+  "nodes": {
+    "hits": 3,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "75.00%",
+    "size": 1
+  },
+  "links": {
+    "hits": 1,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "50.00%",
+    "size": 1
+  },
+  "events": {
+    "hits": 1,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "50.00%",
+    "size": 1
+  }
+}
+2025-10-10 12:20:45,121 [INFO]   Completed 5 concurrent requests in 0.727s  Successful: 5 Errors: 0
+2025-10-10 12:20:45,136 [INFO] ---- After WED TEST 7: PM Concurrent Batches ----
+2025-10-10 12:20:45,170 [INFO] {
+  "metadata": {
+    "hit_rate": "60.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "20.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 8,
+    "size": 1
+  }
+}
+2025-10-10 12:20:45,184 [INFO] {
+  "metadata": {
+    "hit_rate": "77.78%",
+    "hits": 14,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 0
+  }
+}
+2025-10-10 12:20:45,203 [INFO] {
+  "nodes": {
+    "hits": 8,
+    "misses": 6,
+    "writes": 6,
+    "hitRate": "57.14%",
+    "size": 1
+  },
+  "links": {
+    "hits": 1,
+    "misses": 6,
+    "writes": 6,
+    "hitRate": "14.29%",
+    "size": 1
+  },
+  "events": {
+    "hits": 1,
+    "misses": 1,
+    "writes": 1,
+    "hitRate": "50.00%",
+    "size": 1
+  }
+}
+2025-10-10 12:20:45,205 [INFO]   DT effective hit rate: 62.31% (hits=81, misses=49)
+2025-10-10 12:20:45,206 [INFO]   BS effective hit rate: 77.64% (hits=184, misses=53)
+2025-10-10 12:20:45,207 [INFO]   PM effective hit rates (by target):
+2025-10-10 12:20:45,208 [INFO]     nodes: 65.62%
+2025-10-10 12:20:45,209 [INFO]     links: 31.25%
+2025-10-10 12:20:45,211 [INFO]     events: 45.45%
+2025-10-10 12:20:45,271 [INFO] 
+  Score: 9/14 tests passed
