@@ -1,167 +1,255 @@
-// utils/ProfileManagerCache.js
-import NodeCache from "node-cache";
+// servers/utils/ProfileManagerCache.js
 
-/**
- * Cache layer for Profile Manager to reduce Firebase reads
- * - Short TTL (30s) for frequently accessed data
- * - Separate caches for nodes, links, events
- * - User-scoped cache keys
- */
 class ProfileManagerCache {
   constructor() {
-    // Separate caches with different characteristics
-    this.nodesCache = new NodeCache({ 
-      stdTTL: 30,      // 30 second TTL
-      checkperiod: 60,  // Check for expired keys every 60s
-      useClones: false  // Don't clone (we're not mutating)
-    });
-    
-    this.linksCache = new NodeCache({ stdTTL: 30, checkperiod: 60, useClones: false });
-    this.eventsCache = new NodeCache({ stdTTL: 30, checkperiod: 60, useClones: false });
-    
-    // Track statistics
-    this.stats = {
-      nodes: { hits: 0, misses: 0, writes: 0 },
-      links: { hits: 0, misses: 0, writes: 0 },
-      events: { hits: 0, misses: 0, writes: 0 }
-    };
+    this.cache = new Map(); // userId -> { nodes, links, events, worldbuilding_* }
+    this.ttl = 5 * 60 * 1000; // 5 minutes
   }
 
-  // ============ NODES ============
-  
-  getNodes(userId) {
-    const key = `nodes:${userId}`;
-    const cached = this.nodesCache.get(key);
-    
-    if (cached !== undefined) {
-      this.stats.nodes.hits++;
-      console.log(`[CACHE HIT] Nodes for user ${userId}`);
-      return cached;
+  _getUserCache(userId) {
+    if (!this.cache.has(userId)) {
+      this.cache.set(userId, {
+        nodes: null,
+        links: null,
+        events: null,
+        worldbuilding: {
+          magicSystems: null,
+          cultures: null,
+          locations: null,
+          technology: null,
+          history: null,
+          organizations: null
+        },
+        timestamps: {
+          nodes: null,
+          links: null,
+          events: null,
+          worldbuilding: {
+            magicSystems: null,
+            cultures: null,
+            locations: null,
+            technology: null,
+            history: null,
+            organizations: null
+          }
+        }
+      });
     }
-    
-    this.stats.nodes.misses++;
-    console.log(`[CACHE MISS] Nodes for user ${userId}`);
-    return null;
+    return this.cache.get(userId);
+  }
+
+  _isExpired(timestamp) {
+    if (!timestamp) return true;
+    return Date.now() - timestamp > this.ttl;
+  }
+
+  // ========== NODES ==========
+  getNodes(userId) {
+    const cache = this._getUserCache(userId);
+    if (this._isExpired(cache.timestamps.nodes)) {
+      cache.nodes = null;
+      cache.timestamps.nodes = null;
+      return null;
+    }
+    return cache.nodes;
   }
 
   setNodes(userId, data) {
-    const key = `nodes:${userId}`;
-    this.nodesCache.set(key, data);
-    this.stats.nodes.writes++;
-    console.log(`[CACHE WRITE] Nodes for user ${userId}, count: ${Object.keys(data || {}).length}`);
+    const cache = this._getUserCache(userId);
+    cache.nodes = data;
+    cache.timestamps.nodes = Date.now();
   }
 
-  invalidateNodes(userId) {
-    const key = `nodes:${userId}`;
-    this.nodesCache.del(key);
-    console.log(`[CACHE INVALIDATE] Nodes for user ${userId}`);
-  }
-
-  // ============ LINKS ============
-  
+  // ========== LINKS ==========
   getLinks(userId) {
-    const key = `links:${userId}`;
-    const cached = this.linksCache.get(key);
-    
-    if (cached !== undefined) {
-      this.stats.links.hits++;
-      console.log(`[CACHE HIT] Links for user ${userId}`);
-      return cached;
+    const cache = this._getUserCache(userId);
+    if (this._isExpired(cache.timestamps.links)) {
+      cache.links = null;
+      cache.timestamps.links = null;
+      return null;
     }
-    
-    this.stats.links.misses++;
-    console.log(`[CACHE MISS] Links for user ${userId}`);
-    return null;
+    return cache.links;
   }
 
   setLinks(userId, data) {
-    const key = `links:${userId}`;
-    this.linksCache.set(key, data);
-    this.stats.links.writes++;
-    console.log(`[CACHE WRITE] Links for user ${userId}, count: ${Object.keys(data || {}).length}`);
+    const cache = this._getUserCache(userId);
+    cache.links = data;
+    cache.timestamps.links = Date.now();
   }
 
-  invalidateLinks(userId) {
-    const key = `links:${userId}`;
-    this.linksCache.del(key);
-    console.log(`[CACHE INVALIDATE] Links for user ${userId}`);
-  }
-
-  // ============ EVENTS ============
-  
+  // ========== EVENTS ==========
   getEvents(userId) {
-    const key = `events:${userId}`;
-    const cached = this.eventsCache.get(key);
-    
-    if (cached !== undefined) {
-      this.stats.events.hits++;
-      console.log(`[CACHE HIT] Events for user ${userId}`);
-      return cached;
+    const cache = this._getUserCache(userId);
+    if (this._isExpired(cache.timestamps.events)) {
+      cache.events = null;
+      cache.timestamps.events = null;
+      return null;
     }
-    
-    this.stats.events.misses++;
-    console.log(`[CACHE MISS] Events for user ${userId}`);
-    return null;
+    return cache.events;
   }
 
   setEvents(userId, data) {
-    const key = `events:${userId}`;
-    this.eventsCache.set(key, data);
-    this.stats.events.writes++;
-    console.log(`[CACHE WRITE] Events for user ${userId}, count: ${Object.keys(data || {}).length}`);
+    const cache = this._getUserCache(userId);
+    cache.events = data;
+    cache.timestamps.events = Date.now();
   }
 
-  invalidateEvents(userId) {
-    const key = `events:${userId}`;
-    this.eventsCache.del(key);
-    console.log(`[CACHE INVALIDATE] Events for user ${userId}`);
+  // ========== WORLD-BUILDING ==========
+  getWorldBuilding(userId, category) {
+    const cache = this._getUserCache(userId);
+    if (!cache.worldbuilding[category]) return null;
+    
+    if (this._isExpired(cache.timestamps.worldbuilding[category])) {
+      cache.worldbuilding[category] = null;
+      cache.timestamps.worldbuilding[category] = null;
+      return null;
+    }
+    return cache.worldbuilding[category];
   }
 
-  // ============ UTILITIES ============
+  setWorldBuilding(userId, category, data) {
+    const cache = this._getUserCache(userId);
+    cache.worldbuilding[category] = data;
+    cache.timestamps.worldbuilding[category] = Date.now();
+  }
+
+  invalidateWorldBuilding(userId, category) {
+    const cache = this._getUserCache(userId);
+    cache.worldbuilding[category] = null;
+    cache.timestamps.worldbuilding[category] = null;
+  }
+
+  invalidateAllWorldBuilding(userId) {
+    const cache = this._getUserCache(userId);
+    const categories = ['magicSystems', 'cultures', 'locations', 'technology', 'history', 'organizations'];
+    for (const category of categories) {
+      cache.worldbuilding[category] = null;
+      cache.timestamps.worldbuilding[category] = null;
+    }
+  }
+
+  // ========== GENERIC GET/SET ==========
+  get(userId, key) {
+    if (key.startsWith('worldbuilding_')) {
+      const category = key.replace('worldbuilding_', '');
+      return this.getWorldBuilding(userId, category);
+    }
+    
+    const cache = this._getUserCache(userId);
+    if (this._isExpired(cache.timestamps[key])) {
+      cache[key] = null;
+      cache.timestamps[key] = null;
+      return null;
+    }
+    return cache[key];
+  }
+
+  set(userId, key, data) {
+    if (key.startsWith('worldbuilding_')) {
+      const category = key.replace('worldbuilding_', '');
+      return this.setWorldBuilding(userId, category, data);
+    }
+    
+    const cache = this._getUserCache(userId);
+    cache[key] = data;
+    cache.timestamps[key] = Date.now();
+  }
+
+  invalidate(userId, key) {
+    if (key.startsWith('worldbuilding_')) {
+      const category = key.replace('worldbuilding_', '');
+      return this.invalidateWorldBuilding(userId, category);
+    }
+    
+    const cache = this._getUserCache(userId);
+    cache[key] = null;
+    cache.timestamps[key] = null;
+  }
 
   invalidateAll(userId) {
-    this.invalidateNodes(userId);
-    this.invalidateLinks(userId);
-    this.invalidateEvents(userId);
-    console.log(`[CACHE INVALIDATE ALL] All caches for user ${userId}`);
+    const cache = this._getUserCache(userId);
+    cache.nodes = null;
+    cache.links = null;
+    cache.events = null;
+    cache.timestamps.nodes = null;
+    cache.timestamps.links = null;
+    cache.timestamps.events = null;
+    this.invalidateAllWorldBuilding(userId);
   }
 
+  // ========== STATS ==========
   getStats() {
-    const calculateRate = (hits, misses) => {
-      const total = hits + misses;
-      if (total === 0) return "0.00%";
-      return `${((hits / total) * 100).toFixed(2)}%`;
+    const stats = {
+      totalUsers: this.cache.size,
+      users: {}
     };
 
-    return {
-      nodes: {
-        ...this.stats.nodes,
-        hitRate: calculateRate(this.stats.nodes.hits, this.stats.nodes.misses),
-        size: this.nodesCache.keys().length
-      },
-      links: {
-        ...this.stats.links,
-        hitRate: calculateRate(this.stats.links.hits, this.stats.links.misses),
-        size: this.linksCache.keys().length
-      },
-      events: {
-        ...this.stats.events,
-        hitRate: calculateRate(this.stats.events.hits, this.stats.events.misses),
-        size: this.eventsCache.keys().length
+    for (const [userId, cache] of this.cache.entries()) {
+      const userStats = {
+        nodes: cache.nodes ? 'cached' : 'empty',
+        links: cache.links ? 'cached' : 'empty',
+        events: cache.events ? 'cached' : 'empty',
+        worldbuilding: {}
+      };
+
+      const categories = ['magicSystems', 'cultures', 'locations', 'technology', 'history', 'organizations'];
+      for (const category of categories) {
+        userStats.worldbuilding[category] = cache.worldbuilding[category] ? 'cached' : 'empty';
       }
-    };
+
+      stats.users[userId] = userStats;
+    }
+
+    return stats;
   }
 
-  clearStats() {
-    this.stats = {
-      nodes: { hits: 0, misses: 0, writes: 0 },
-      links: { hits: 0, misses: 0, writes: 0 },
-      events: { hits: 0, misses: 0, writes: 0 }
-    };
+  // ========== CLEANUP ==========
+  cleanup() {
+    const now = Date.now();
+    for (const [userId, cache] of this.cache.entries()) {
+      // Clean nodes
+      if (cache.timestamps.nodes && this._isExpired(cache.timestamps.nodes)) {
+        cache.nodes = null;
+        cache.timestamps.nodes = null;
+      }
+
+      // Clean links
+      if (cache.timestamps.links && this._isExpired(cache.timestamps.links)) {
+        cache.links = null;
+        cache.timestamps.links = null;
+      }
+
+      // Clean events
+      if (cache.timestamps.events && this._isExpired(cache.timestamps.events)) {
+        cache.events = null;
+        cache.timestamps.events = null;
+      }
+
+      // Clean world-building
+      const categories = ['magicSystems', 'cultures', 'locations', 'technology', 'history', 'organizations'];
+      for (const category of categories) {
+        if (cache.timestamps.worldbuilding[category] && this._isExpired(cache.timestamps.worldbuilding[category])) {
+          cache.worldbuilding[category] = null;
+          cache.timestamps.worldbuilding[category] = null;
+        }
+      }
+
+      // Remove user cache if everything is empty
+      const allEmpty = !cache.nodes && !cache.links && !cache.events &&
+        categories.every(cat => !cache.worldbuilding[cat]);
+      
+      if (allEmpty) {
+        this.cache.delete(userId);
+      }
+    }
   }
 }
 
-// Singleton instance
+// Auto-cleanup every 10 minutes
 const pmCache = new ProfileManagerCache();
+setInterval(() => {
+  pmCache.cleanup();
+  console.log('[CACHE] Cleanup completed');
+}, 10 * 60 * 1000);
 
 export default pmCache;

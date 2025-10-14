@@ -373,9 +373,14 @@ app.get("/api/worldbuilding/:category", async (req, res) => {
 
     // Optional filtering by parentId
     if (req.query.parentId !== undefined) {
-      const parentId = req.query.parentId === "null" ? null : req.query.parentId;
+      // Handle both "null" string and actual null
+      const parentId = req.query.parentId === "null" || req.query.parentId === "" ? null : req.query.parentId;
       items = Object.fromEntries(
-        Object.entries(items).filter(([_, item]) => item?.parentId === parentId)
+        Object.entries(items).filter(([_, item]) => {
+          // Explicit null check - treat undefined, null, and "null" string as null
+          const itemParentId = item?.parentId === "null" || item?.parentId === undefined ? null : item?.parentId;
+          return itemParentId === parentId;
+        })
       );
       logger.info(`[DATA] Filtered by parentId '${parentId}': ${Object.keys(items).length} items`);
     }
@@ -520,7 +525,250 @@ app.post("/api/stage-change", async (req, res) => {
   }
 });
 
+/**
+ * Direct event update (no staging/confirmation required)
+ * Used for user-driven changes like reordering
+ * 
+ * POST /api/events/update
+ * Body: {
+ *   userId: string,
+ *   eventId: string,
+ *   updates: { order, title, description, stage, ... }
+ * }
+ */
+app.post("/api/events/update", async (req, res) => {
+  logger.info(`[REQUEST] /api/events/update with body: ${JSON.stringify(req.body)}`);
 
+  try {
+    const { userId, eventId, updates } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+    if (!eventId) {
+      return res.status(400).json({ error: "eventId (Firebase key) is required" });
+    }
+    if (!updates) {
+      return res.status(400).json({ error: "updates object is required" });
+    }
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+
+    // Get the current event
+    const currentEvent = await pipeline.manager.getEvent(eventId);
+
+    if (!currentEvent) {
+      // Creating new event
+      const newEvent = { ...updates };
+      const result = await pipeline.manager.upsertEvent(eventId, newEvent);
+      pmCache.invalidateAll(userId);
+      return res.status(200).json({
+        success: true,
+        created: true,
+        firebaseKey: eventId,
+        saved: result
+      });
+    }
+
+    // Validate updates (same as before)
+    if (updates.order !== undefined) {
+      const allEvents = await pipeline.manager.getAllEvents();
+      const eventCount = Object.keys(allEvents).length;
+      if (!Number.isInteger(updates.order) || updates.order < 0 || updates.order >= eventCount) {
+        return res.status(400).json({
+          error: `Invalid order: ${updates.order}. Must be between 0 and ${eventCount - 1}`
+        });
+      }
+    }
+
+    if (updates.stage !== undefined) {
+      const validStages = ["introduction", "rising action", "climax", "falling action", "resolution"];
+      if (!validStages.includes(updates.stage)) {
+        return res.status(400).json({
+          error: `Invalid stage: ${updates.stage}. Must be one of: ${validStages.join(", ")}`
+        });
+      }
+    }
+
+    if (updates.date !== undefined && updates.date !== null) {
+      const dateRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/;
+      if (!dateRegex.test(updates.date)) {
+        return res.status(400).json({
+          error: "Event 'date' must be in MM/DD/YYYY format if provided"
+        });
+      }
+    }
+
+    // Merge and save
+    const updatedEvent = {
+      ...currentEvent,
+      ...updates,
+    };
+
+    const result = await pipeline.manager.upsertEvent(eventId, updatedEvent);
+    pmCache.invalidateAll(userId);
+
+    logger.info(`[DATA] Event ${eventId} updated successfully`);
+    res.status(200).json({
+      success: true,
+      firebaseKey: eventId,
+      updated: result
+    });
+
+  } catch (err) {
+    console.error("[ERROR /api/events/update]", err);
+    logger.error(`[ERROR] /api/events/update: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+/**
+ * Direct event deletion (no staging/confirmation required)
+ * Used for user-driven deletions from timeline
+ * 
+ * POST /api/events/delete
+ * Body: {
+ *   userId: string,
+ *   eventId: string
+ * }
+ */
+app.post("/api/events/delete", async (req, res) => {
+  logger.info(`[REQUEST] /api/events/delete with body: ${JSON.stringify(req.body)}`);
+  console.log("[DEBUG /api/events/delete] Full request body:", req.body);
+
+  try {
+    const { userId, eventId } = req.body;
+
+    console.log("[DEBUG] Extracted params - userId:", userId, "eventId:", eventId);
+
+    if (!userId) {
+      console.log("[DEBUG] Missing userId");
+      return res.status(400).json({ error: "userId is required" });
+    }
+    if (!eventId) {
+      console.log("[DEBUG] Missing eventId");
+      return res.status(400).json({ error: "eventId is required" });
+    }
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+
+    // Get the current event first
+    console.log("[DEBUG] Fetching event with id:", eventId);
+    const currentEvent = await pipeline.manager.getEvent(eventId);
+    console.log("[DEBUG] Event found:", currentEvent);
+
+    if (!currentEvent) {
+      console.log("[DEBUG] Event not found");
+      return res.status(404).json({ error: `Event not found with id '${eventId}'` });
+    }
+
+    // Delete the event
+    console.log("[DEBUG] Deleting event");
+    const result = await pipeline.manager.deleteEventById(eventId);
+    console.log("[DEBUG] Delete result:", result);
+
+    if (!result.deleted) {
+      console.log("[DEBUG] Failed to delete event");
+      return res.status(400).json({ error: `Failed to delete event: ${result.reason}` });
+    }
+
+    // Invalidate cache
+    pmCache.invalidateAll(userId);
+    console.log("[DEBUG] Cache invalidated");
+
+    logger.info(`[DATA] Event ${eventId} deleted successfully`);
+    res.status(200).json({
+      success: true,
+      eventId,
+      deleted: result
+    });
+
+  } catch (err) {
+    console.error("[ERROR /api/events/delete]", err);
+    logger.error(`[ERROR] /api/events/delete: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Direct event deletion (no staging/confirmation required)
+ * Used for user-driven deletions from timeline
+ * 
+ * POST /api/events/delete
+ * Body: {
+ *   userId: string,
+ *   eventId: string
+ */
+
+app.post("/api/events/batch-update", async (req, res) => {
+    logger.info(`[REQUEST] /api/events/batch-update with body: ${JSON.stringify(req.body)}`);
+
+    try {
+        const { userId, updates } = req.body;
+
+        if (!userId) return res.status(400).json({ error: "userId is required" });
+        if (!Array.isArray(updates)) return res.status(400).json({ error: "updates must be an array" });
+        if (updates.length === 0) return res.status(400).json({ error: "updates array cannot be empty" });
+
+        const pipeline = new ConfirmationPipeline({ uid: userId });
+        const allEvents = await pipeline.manager.getAllEvents();
+        const eventCount = Object.keys(allEvents).length;
+
+        // Validate all updates first
+        for (const update of updates) {
+            if (!update.eventId) {
+                return res.status(400).json({ error: "Each update must have an eventId (Firebase key)" });
+            }
+
+            const event = await pipeline.manager.getEvent(update.eventId);
+            if (!event) {
+                return res.status(404).json({ error: `Event not found: ${update.eventId}` });
+            }
+
+            if (update.order !== undefined) {
+                if (!Number.isInteger(update.order) || update.order < 0 || update.order >= eventCount) {
+                    return res.status(400).json({
+                        error: `Invalid order for event ${update.eventId}: ${update.order}`
+                    });
+                }
+            }
+
+            if (update.stage !== undefined) {
+                const validStages = ["introduction", "rising action", "climax", "falling action", "resolution"];
+                if (!validStages.includes(update.stage)) {
+                    return res.status(400).json({
+                        error: `Invalid stage for event ${update.eventId}: ${update.stage}`
+                    });
+                }
+            }
+        }
+
+        // Perform updates
+        const results = [];
+        for (const update of updates) {
+            const event = await pipeline.manager.getEvent(update.eventId);
+            const updatedEvent = { ...event, ...update };
+            // Remove eventId from the update object since it's the key
+            const { eventId, ...cleanUpdate } = updatedEvent;
+            const result = await pipeline.manager.upsertEvent(update.eventId, cleanUpdate);
+            results.push(result);
+            logger.info(`[DATA] Event ${update.eventId} batch updated`);
+        }
+
+        pmCache.invalidateAll(userId);
+
+        res.status(200).json({
+            success: true,
+            count: results.length,
+            updated: results
+        });
+
+    } catch (err) {
+        logger.error(`[ERROR] /api/events/batch-update: ${err}`);
+        res.status(500).json({ error: err.message });
+    }
+});
 
 /**
  * Confirm a change
@@ -855,6 +1103,34 @@ app.post("/api/batch", async (req, res) => {
   }
 });
 
+app.post("/api/events/cleanup-fields", async (req, res) => {
+    logger.info(`[REQUEST] /api/events/cleanup-fields`);
+    
+    try {
+        const { userId } = req.body;
+        
+        if (!userId) {
+            return res.status(400).json({ error: "userId is required" });
+        }
+        
+        const pipeline = new ConfirmationPipeline({ uid: userId });
+        const result = await pipeline.manager.cleanupEventFields();
+        
+        // Invalidate cache after cleanup
+        pmCache.invalidateAll(userId);
+        
+        logger.info(`[DATA] Cleaned ${result.cleanedCount} events, skipped ${result.skippedCount}`);
+        
+        res.status(200).json({
+            success: true,
+            ...result
+        });
+        
+    } catch (err) {
+        logger.error(`[ERROR] /api/events/cleanup-fields: ${err}`);
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // --- SSE Support ---
 const clients = [];
@@ -948,7 +1224,6 @@ async function getCachedWorldBuilding(userId, pipeline, category) {
 
   return items;
 }
-
 
 const PORT = 5001;
 app.listen(PORT, () => {

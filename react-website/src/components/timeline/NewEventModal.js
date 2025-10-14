@@ -7,7 +7,7 @@ import "../common/modal.css";
 
 const NewEventModal = ({ isOpen, closeModal, onSave, stages }) => {
     const [event, setEvent] = useState({
-        date: null,
+        date: null, // Optional now
         title: "",
         description: "",
         isMainEvent: false,
@@ -27,11 +27,11 @@ const NewEventModal = ({ isOpen, closeModal, onSave, stages }) => {
     }, [isOpen, stages]);
 
     const handleSave = () => {
-        if (event.date && event.title && event.description) {
+        if (event.title && event.description) { // Date no longer required
             onSave(event);
             closeModal();
         } else {
-            alert("Please fill in all required fields.");
+            alert("Please fill in title and description.");
         }
     };
 
@@ -55,18 +55,6 @@ const NewEventModal = ({ isOpen, closeModal, onSave, stages }) => {
                 <Typography id="modal-title" variant="h6" style={{ marginBottom: 16, textAlign: "center" }}>
                     Add New Event
                 </Typography>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                    <DatePicker
-                        label="Date"
-                        value={event.date}
-                        onChange={(newValue) => setEvent({ ...event, date: newValue })}
-                        renderInput={(params) => (
-                            <TextField {...params} 
-                            fullWidth size="small" 
-                            required style={{ marginBottom: 12 }} />
-                        )}
-                    />
-                </LocalizationProvider>
                 <TextField
                     label="Title"
                     value={event.title}
@@ -101,8 +89,8 @@ const NewEventModal = ({ isOpen, closeModal, onSave, stages }) => {
                     ))}
                 </Select>
                 <Select
-                    value={event.isMainEvent ? "true" : "false"} // Convert boolean to string for the Select component
-                    onChange={(e) => setEvent({ ...event, isMainEvent: e.target.value === "true" })} // Convert string back to boolean
+                    value={event.isMainEvent ? "true" : "false"}
+                    onChange={(e) => setEvent({ ...event, isMainEvent: e.target.value === "true" })}
                     fullWidth
                     size="small"
                     style={{ marginBottom: 12 }}
@@ -110,6 +98,19 @@ const NewEventModal = ({ isOpen, closeModal, onSave, stages }) => {
                     <MenuItem value="false">Not a Main Event</MenuItem>
                     <MenuItem value="true">Main Event</MenuItem>
                 </Select>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <DatePicker
+                        label="Date (Optional)"
+                        value={event.date}
+                        onChange={(newValue) => setEvent({ ...event, date: newValue })}
+                        renderInput={(params) => (
+                            <TextField {...params} 
+                            fullWidth 
+                            size="small" 
+                            style={{ marginBottom: 12 }} />
+                        )}
+                    />
+                </LocalizationProvider>
                 <Box style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
                     <Button onClick={handleSave} className="modal-btn save-btn">
                         Save

@@ -2,6 +2,7 @@ import { database } from "../Firebase/firebaseAdmin.js";
 import { get, set, update, remove, ref, child, push } from "../Firebase/firebase.js";
 import StoryProfileManager from "./StoryProfileManager.js";
 
+// World-building validation schemas
 const WORLDBUILDING_SCHEMAS = {
     magicSystems: {
         required: ['name', 'type', 'description'],
@@ -52,7 +53,7 @@ export default class ConfirmationPipeline {
             throw new Error(`Node group must be one of: ${validGroups.join(", ")}`);
         }
         else if (data.group === "Organisation") {
-            data.group = "Organization"; // normalize spelling
+            data.group = "Organization";
         }
     }
 
@@ -72,12 +73,10 @@ export default class ConfirmationPipeline {
             const nodeAInPending = !nodeA && pendingNodes.find(n => n.id === node1IdOrName || n.label === node1IdOrName);
             const nodeBInPending = !nodeB && pendingNodes.find(n => n.id === node2IdOrName || n.label === node2IdOrName);
 
-            // ✅ Throw only if neither confirmed nor pending
             if (!nodeA && !nodeAInPending) throw new Error(`Node not found: ${node1IdOrName}`);
             if (!nodeB && !nodeBInPending) throw new Error(`Node not found: ${node2IdOrName}`);
         }
     }
-
 
     async _validateEvent(data) {
         if (!data.title || !data.date || !data.stage) {
@@ -89,13 +88,11 @@ export default class ConfirmationPipeline {
             throw new Error(`Event stage must be one of: ${validStages.join(", ")}`);
         }
 
-        // enforce MM/DD/YYYY format
         const dateRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/;
         if (!dateRegex.test(data.date)) {
             throw new Error("Event 'date' must be in MM/DD/YYYY format, e.g. 07/03/2023");
         }
 
-        // Apply defaults if not provided
         if (data.description === undefined) {
             data.description = "";
         }
@@ -110,7 +107,7 @@ export default class ConfirmationPipeline {
         }
 
         const schema = WORLDBUILDING_SCHEMAS[category];
-
+        
         // Check required fields
         for (const field of schema.required) {
             if (!data[field]) {
@@ -198,7 +195,6 @@ export default class ConfirmationPipeline {
                 throw new Error(`Unknown entityType: ${entityType}`);
         }
     }
-
 
     /* =========================
        STAGE / CONFIRM / DENY
@@ -415,7 +411,7 @@ export default class ConfirmationPipeline {
             }
 
             await remove(child(this.pendingRef, changeKey));
-            return { confirmed: true, result };
+            return { confirmed: true, entityType, result };
 
         } catch (err) {
             return { confirmed: false, error: err.message };

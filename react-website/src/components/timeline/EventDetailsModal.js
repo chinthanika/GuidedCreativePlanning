@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Modal, Box, Button, TextField, Typography } from "@material-ui/core";
+import { Modal, Box, Button, TextField, Typography, Checkbox, FormControlLabel } from "@material-ui/core";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
 import "../common/modal.css";
 
-const EventDetailsModal = ({ isOpen, closeModal, event, onSave, setAsBackground }) => {
-    const [isEditing, setIsEditing] = useState(false);
+const EventDetailsModal = ({ isOpen, closeModal, event, onSave }) => {
+    const [isEditing, setIsEditing] = useState(true); // Start in edit mode
     const [editableEvent, setEditableEvent] = useState(event || {});
     const [imageUrl, setImageUrl] = useState(event?.imageUrl || "");
     const [isGenerating, setIsGenerating] = useState(false);
@@ -15,11 +15,19 @@ const EventDetailsModal = ({ isOpen, closeModal, event, onSave, setAsBackground 
     useEffect(() => {
         if (event) {
             setEditableEvent(event);
-            setImageUrl(event.imageUrl || ""); // Set default image URL
+            setImageUrl(event.imageUrl || "");
         } else {
-            setEditableEvent({ date: "", title: "", description: "", stage: "", isMainEvent: false }); // Provide default values
-            setImageUrl(""); // Reset image URL
+            setEditableEvent({ 
+                date: "", 
+                title: "", 
+                description: "", 
+                stage: "", 
+                isMainEvent: false,
+                useImageAsBackground: false 
+            });
+            setImageUrl("");
         }
+        setIsEditing(true); // Always start in edit mode when modal opens
     }, [event]);
 
     const handleEditToggle = () => {
@@ -30,9 +38,14 @@ const EventDetailsModal = ({ isOpen, closeModal, event, onSave, setAsBackground 
         setIsGenerating(true);
         try {
             console.log("Sending request to generate image with description:", editableEvent.description);
-            const response = await axios.post('https://guidedcreativeplanning-1.onrender.com/images', { description: editableEvent.description });
+            const response = await axios.post('https://guidedcreativeplanning-1.onrender.com/images', { 
+                description: editableEvent.description 
+            });
             setImageUrl(response.data.image_url);
-            setEditableEvent({ ...editableEvent, imageUrl: response.data.image_url });
+            setEditableEvent({ 
+                ...editableEvent, 
+                imageUrl: response.data.image_url 
+            });
             console.log("Image generated:", response.data.image_url);
         } catch (error) {
             console.error("Error generating image:", error);
@@ -41,18 +54,35 @@ const EventDetailsModal = ({ isOpen, closeModal, event, onSave, setAsBackground 
         }
     };
 
+    const handleSetAsBackground = () => {
+        setEditableEvent({
+            ...editableEvent,
+            useImageAsBackground: true
+        });
+    };
+
     const handleSave = () => {
-        onSave(editableEvent);
+        // Ensure we're saving the updated image URL and background setting
+        const eventToSave = {
+            ...editableEvent,
+            imageUrl: imageUrl || editableEvent.imageUrl
+        };
+        onSave(eventToSave);
         setIsEditing(false);
         closeModal();
     };
 
+    const handleClose = () => {
+        setIsEditing(true); // Reset to edit mode for next open
+        closeModal();
+    };
+
     if (!editableEvent) {
-        return null; // Render nothing if editableEvent is not set
+        return null;
     }
 
     return (
-        <Modal open={isOpen} onClose={closeModal} aria-labelledby="modal-title">
+        <Modal open={isOpen} onClose={handleClose} aria-labelledby="modal-title">
             <Box
                 style={{
                     position: "absolute",
@@ -69,31 +99,9 @@ const EventDetailsModal = ({ isOpen, closeModal, event, onSave, setAsBackground 
                 }}
             >
                 <Typography id="modal-title" variant="h6" style={{ marginBottom: 16, textAlign: "center" }}>
-                    Event Details
+                    Edit Event
                 </Typography>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                    <DatePicker
-                        label="Date"
-                        value={editableEvent.date ? new Date(editableEvent.date) : null}
-                        onChange={(newValue) => setEditableEvent({ ...editableEvent, date: newValue })}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                fullWidth
-                                size="small"
-                                required
-                                disabled={!isEditing}
-                                InputProps={{
-                                    ...params.InputProps,
-                                    style: {
-                                        color: "#63666A", // Darker text color
-                                    },
-                                }}
-                                style={{ marginBottom: 24 }}
-                            />
-                        )}
-                    />
-                </LocalizationProvider>
+
                 <TextField
                     label="Title"
                     value={editableEvent.title || ""}
@@ -103,11 +111,72 @@ const EventDetailsModal = ({ isOpen, closeModal, event, onSave, setAsBackground 
                     disabled={!isEditing}
                     InputProps={{
                         style: {
-                            color: "#63666A", // Darker text color
+                            color: "#63666A",
                         },
                     }}
-                    style={{ marginBottom: 24 }}
+                    style={{ marginBottom: 16 }}
                 />
+
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <DatePicker
+                        label="Date (MM/DD/YYYY)"
+                        value={editableEvent.date ? new Date(editableEvent.date) : null}
+                        onChange={(newValue) => {
+                            if (newValue) {
+                                // Format as MM/DD/YYYY
+                                const month = String(newValue.getMonth() + 1).padStart(2, '0');
+                                const day = String(newValue.getDate()).padStart(2, '0');
+                                const year = newValue.getFullYear();
+                                setEditableEvent({ 
+                                    ...editableEvent, 
+                                    date: `${month}/${day}/${year}` 
+                                });
+                            }
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                fullWidth
+                                size="small"
+                                disabled={!isEditing}
+                                InputProps={{
+                                    ...params.InputProps,
+                                    style: {
+                                        color: "#63666A",
+                                    },
+                                }}
+                                style={{ marginBottom: 16 }}
+                            />
+                        )}
+                    />
+                </LocalizationProvider>
+
+                <TextField
+                    label="Stage"
+                    value={editableEvent.stage || ""}
+                    onChange={(e) => setEditableEvent({ ...editableEvent, stage: e.target.value })}
+                    fullWidth
+                    size="small"
+                    disabled={!isEditing}
+                    select
+                    SelectProps={{
+                        native: true,
+                    }}
+                    InputProps={{
+                        style: {
+                            color: "#63666A",
+                        },
+                    }}
+                    style={{ marginBottom: 16 }}
+                >
+                    <option value="">Select Stage</option>
+                    <option value="introduction">Introduction</option>
+                    <option value="rising action">Rising Action</option>
+                    <option value="climax">Climax</option>
+                    <option value="falling action">Falling Action</option>
+                    <option value="resolution">Resolution</option>
+                </TextField>
+
                 <TextField
                     label="Description"
                     value={editableEvent.description || ""}
@@ -119,77 +188,78 @@ const EventDetailsModal = ({ isOpen, closeModal, event, onSave, setAsBackground 
                     disabled={!isEditing}
                     InputProps={{
                         style: {
-                            color: "#63666A", // Darker text color
+                            color: "#63666A",
                         },
                     }}
-                    style={{ marginBottom: 12 }}
+                    style={{ marginBottom: 16 }}
                 />
+
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={editableEvent.isMainEvent || false}
+                            onChange={(e) => setEditableEvent({ 
+                                ...editableEvent, 
+                                isMainEvent: e.target.checked 
+                            })}
+                            disabled={!isEditing}
+                        />
+                    }
+                    label="Mark as Main Event"
+                    style={{ marginBottom: 16 }}
+                />
+
                 {imageUrl && (
                     <div style={{ marginBottom: 16 }}>
-                        <img src={imageUrl} alt="Generated" style={{ width: "100%", borderRadius: 8 }} />
+                        <img src={imageUrl} alt="Event" style={{ width: "100%", borderRadius: 8 }} />
                     </div>
                 )}
+
                 {imageUrl && (
-                    <Button
-                        onClick={() => setAsBackground(imageUrl)}
-                        variant="contained"
-                        color="secondary"
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={editableEvent.useImageAsBackground || false}
+                                onChange={(e) => setEditableEvent({ 
+                                    ...editableEvent, 
+                                    useImageAsBackground: e.target.checked 
+                                })}
+                                disabled={!isEditing}
+                            />
+                        }
+                        label="Use as card background"
                         style={{ marginBottom: 16 }}
-                    >
-                        Set as Event Background
-                    </Button>
+                    />
                 )}
+
                 <Button
                     onClick={handleGenerateImage}
                     variant="contained"
                     color="primary"
-                    disabled={isGenerating}
+                    disabled={isGenerating || !isEditing}
+                    fullWidth
                     style={{ marginBottom: 16 }}
                 >
-                    {isGenerating ? "Generating..." : "Generate Image"}
+                    {isGenerating ? "Generating..." : "Generate Image from Description"}
                 </Button>
-                <TextField
-                    label="Stage"
-                    value={editableEvent.stage || ""}
-                    onChange={(e) => setEditableEvent({ ...editableEvent, stage: e.target.value })}
-                    fullWidth
-                    size="small"
-                    disabled={!isEditing}
-                    InputProps={{
-                        style: {
-                            color: "#63666A", // Darker text color
-                        },
-                    }}
-                    style={{ marginBottom: 12 }}
-                />
-                <TextField
-                    label="Main Event"
-                    value={editableEvent.isMainEvent ? "Yes" : "No"}
-                    onChange={(e) =>
-                        setEditableEvent({ ...editableEvent, isMainEvent: e.target.value === "Yes" })
-                    }
-                    fullWidth
-                    size="small"
-                    disabled={!isEditing}
-                    InputProps={{
-                        style: {
-                            color: "#63666A", // Darker text color
-                        },
-                    }}
-                    style={{ marginBottom: 12 }}
-                />
-                <Box style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
-                    {isEditing ? (
-                        <Button onClick={handleSave} className="modal-btn save-btn">
-                            Save
-                        </Button>
-                    ) : (
-                        <Button onClick={handleEditToggle} className="modal-btn edit-btn">
-                            Edit
-                        </Button>
-                    )}
-                    <Button onClick={closeModal} className="modal-btn cancel-btn">
-                        Close
+
+                <Box style={{ display: "flex", justifyContent: "space-between", marginTop: 16, gap: 8 }}>
+                    <Button 
+                        onClick={handleSave} 
+                        className="modal-btn save-btn"
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                    >
+                        Save Changes
+                    </Button>
+                    <Button 
+                        onClick={handleClose} 
+                        className="modal-btn cancel-btn"
+                        variant="outlined"
+                        fullWidth
+                    >
+                        Cancel
                     </Button>
                 </Box>
             </Box>

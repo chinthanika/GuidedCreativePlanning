@@ -378,47 +378,33 @@ class StoryProfileManager {
         return snapshot.exists() ? snapshot.val() : {};
     }
 
-    async getEvent(eventId) {
-        const snapshot = await get(child(this.eventsRef, eventId));
+    async getEvent(firebaseKey) {
+        const snapshot = await get(child(this.eventsRef, firebaseKey));
         return snapshot.exists() ? snapshot.val() : null;
     }
 
-    async resolveEventById(eventId) {
-        return this.getEvent(eventId);
+    async resolveEventById(firebaseKey) {
+        return this.getEvent(firebaseKey);
     }
 
     async resolveEventByName(title) {
         const all = await this.getAllEvents();
         for (const [key, event] of Object.entries(all)) {
             if (event?.title?.toLowerCase() === title.toLowerCase()) {
-                return { key, ...event };
+                return { firebaseKey: key, ...event };
             }
         }
         return null;
     }
 
-    async upsertEvent(eventId, data) {
-        const events = await this.getAllEvents();
-        let targetKey = null;
+    async upsertEvent(firebaseKey, data) {
+        // ✅ Clean the data - remove any id/eventId fields
+        const { id, eventId, firebaseKey: _, ...cleanData } = data;
 
-        // find existing by ID
-        for (const [key, ev] of Object.entries(events)) {
-            if (ev.id === eventId) {
-                targetKey = key;
-                break;
-            }
-        }
+        // ✅ Just save the clean data directly to the Firebase key
+        await set(child(this.eventsRef, firebaseKey), cleanData);
 
-        if (targetKey) {
-            const updated = { ...events[targetKey], ...data, id: eventId };
-            await set(child(this.eventsRef, targetKey), updated);
-            return updated;
-        } else {
-            const nextKey = Object.keys(events).length.toString();
-            const newEvent = { id: eventId, ...data };
-            await set(child(this.eventsRef, nextKey), newEvent);
-            return newEvent;
-        }
+        return { firebaseKey, ...cleanData };
     }
 
     async filterEventsByField(field, value) {
@@ -428,15 +414,14 @@ class StoryProfileManager {
         );
     }
 
-    async deleteEventById(eventId) {
-        const events = await this.getAllEvents();
-        for (const [key, ev] of Object.entries(events)) {
-            if (ev?.id === eventId) {
-                await remove(child(this.eventsRef, key));
-                return { deleted: true, key, event: ev };
-            }
+    async deleteEventById(firebaseKey) {
+        const event = await this.getEvent(firebaseKey);
+        if (!event) {
+            return { deleted: false, reason: `No event found with key '${firebaseKey}'` };
         }
-        return { deleted: false, reason: `No event found with id '${eventId}'` };
+
+        await remove(child(this.eventsRef, firebaseKey));
+        return { deleted: true, firebaseKey, event };
     }
 
     async deleteEventByTitle(title) {
@@ -444,12 +429,11 @@ class StoryProfileManager {
         for (const [key, event] of Object.entries(allEvents)) {
             if (event?.title?.toLowerCase() === title.toLowerCase()) {
                 await remove(child(this.eventsRef, key));
-                return { deleted: true, key, event };
+                return { deleted: true, firebaseKey: key, event };
             }
         }
         return { deleted: false, reason: `No event found with title '${title}'` };
     }
-
     /* =========================
        WORLD-BUILDING (hierarchical data)
     ========================= */
@@ -590,6 +574,44 @@ class StoryProfileManager {
     async diffWorldBuildingItem(category, itemId, newData) {
         const oldData = await this.getWorldBuildingItem(category, itemId);
         return this._diffObjects(oldData?.key ? { ...oldData, key: undefined } : null, newData);
+    }
+
+    async cleanupEventFields() {
+        const events = await this.getAllEvents();
+        const cleaned = [];
+        const skipped = [];
+
+        for (const [firebaseKey, event] of Object.entries(events)) {
+            if (!event) continue;
+
+            const hasRedundantFields = event.id !== undefined || event.eventId !== undefined;
+
+            if (hasRedundantFields) {
+                // Remove id and eventId fields
+                const { id, eventId, ...cleanEvent } = event;
+
+                // Save cleaned version
+                await set(child(this.eventsRef, firebaseKey), cleanEvent);
+
+                cleaned.push({
+                    firebaseKey,
+                    removed: { id, eventId },
+                    kept: Object.keys(cleanEvent)
+                });
+
+                console.log(`Cleaned event ${firebaseKey}: removed id="${id}", eventId="${eventId}"`);
+            } else {
+                skipped.push(firebaseKey);
+            }
+        }
+
+        return {
+            totalEvents: Object.keys(events).length,
+            cleanedCount: cleaned.length,
+            skippedCount: skipped.length,
+            cleaned,
+            skipped
+        };
     }
 }
 
