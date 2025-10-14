@@ -98,7 +98,7 @@ class ProfileManagerCache {
   getWorldBuilding(userId, category) {
     const cache = this._getUserCache(userId);
     if (!cache.worldbuilding[category]) return null;
-    
+
     if (this._isExpired(cache.timestamps.worldbuilding[category])) {
       cache.worldbuilding[category] = null;
       cache.timestamps.worldbuilding[category] = null;
@@ -128,13 +128,22 @@ class ProfileManagerCache {
     }
   }
 
+  async getWorldName() {
+    const snapshot = await get(child(this.baseRef, "worldName"));
+    return snapshot.exists() ? snapshot.val() : null;
+  }
+
+  async setWorldName(name) {
+    return set(child(this.baseRef, "worldName"), name);
+  }
+
   // ========== GENERIC GET/SET ==========
   get(userId, key) {
     if (key.startsWith('worldbuilding_')) {
       const category = key.replace('worldbuilding_', '');
       return this.getWorldBuilding(userId, category);
     }
-    
+
     const cache = this._getUserCache(userId);
     if (this._isExpired(cache.timestamps[key])) {
       cache[key] = null;
@@ -149,7 +158,7 @@ class ProfileManagerCache {
       const category = key.replace('worldbuilding_', '');
       return this.setWorldBuilding(userId, category, data);
     }
-    
+
     const cache = this._getUserCache(userId);
     cache[key] = data;
     cache.timestamps[key] = Date.now();
@@ -160,7 +169,7 @@ class ProfileManagerCache {
       const category = key.replace('worldbuilding_', '');
       return this.invalidateWorldBuilding(userId, category);
     }
-    
+
     const cache = this._getUserCache(userId);
     cache[key] = null;
     cache.timestamps[key] = null;
@@ -237,7 +246,7 @@ class ProfileManagerCache {
       // Remove user cache if everything is empty
       const allEmpty = !cache.nodes && !cache.links && !cache.events &&
         categories.every(cat => !cache.worldbuilding[cat]);
-      
+
       if (allEmpty) {
         this.cache.delete(userId);
       }

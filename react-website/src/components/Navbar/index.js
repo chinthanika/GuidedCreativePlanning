@@ -13,6 +13,7 @@ const Navbar = () => {
         <NavLink to="/map-generator">Map Generator</NavLink>
         <NavLink to="/story-map">Story Map</NavLink>
         <NavLink to="/story-timeline">Timeline</NavLink>
+        <NavLink to="/story-world">World</NavLink>
         <NavLink to="/story-editor">Story Editor</NavLink>
         <NavLink to="/chatbot">Chatbot</NavLink>
       </NavMenu>

@@ -485,6 +485,21 @@ app.get("/api/worldbuilding/:category/:identifier/children", async (req, res) =>
   }
 });
 
+// In profilemanager_server.js
+app.get("/api/world-metadata", async (req, res) => {
+  const { userId } = req.query;
+  const pipeline = new ConfirmationPipeline({ uid: userId });
+  const worldName = await pipeline.manager.getWorldName() || "My World";
+  res.json({ name: worldName });
+});
+
+app.post("/api/world-metadata", async (req, res) => {
+  const { userId, name } = req.body;
+  const pipeline = new ConfirmationPipeline({ uid: userId });
+  await pipeline.manager.setWorldName(name);
+  res.json({ success: true });
+});
+
 /**
  * Stage a change
  */

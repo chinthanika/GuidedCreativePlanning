@@ -514,6 +514,14 @@ class StoryProfileManager {
         );
     }
 
+    async getWorldName() {
+        const snapshot = await get(child(this.baseRef, "worldName"));
+        return snapshot.exists() ? snapshot.val() : null;
+    }
+
+    async setWorldName(name) {
+        return set(child(this.baseRef, "worldName"), name);
+    }
 
     /* =========================
        STORY TITLE & SUMMARY
