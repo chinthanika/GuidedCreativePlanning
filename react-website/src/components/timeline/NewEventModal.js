@@ -1,126 +1,127 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Box, Button, TextField, Typography, Select, MenuItem } from "@material-ui/core";
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-
-import "../common/modal.css";
 
 const NewEventModal = ({ isOpen, closeModal, onSave, stages }) => {
     const [event, setEvent] = useState({
-        date: null, // Optional now
+        date: "",
         title: "",
         description: "",
         isMainEvent: false,
-        stage: stages[0],
-    }); 
+        stage: stages && stages[0] ? stages[0] : "introduction",
+    });
 
     useEffect(() => {
         if (!isOpen) {
             setEvent({
-                date: null,
+                date: "",
                 title: "",
                 description: "",
                 isMainEvent: false,
-                stage: stages[0],
+                stage: stages && stages[0] ? stages[0] : "introduction",
             });
         }
     }, [isOpen, stages]);
 
+    if (!isOpen) return null;
+
     const handleSave = () => {
-        if (event.title && event.description) { // Date no longer required
-            onSave(event);
-            closeModal();
-        } else {
+        if (!event.title || !event.description) {
             alert("Please fill in title and description.");
+            return;
         }
+        onSave(event);
+    };
+
+    const handleClose = () => {
+        setEvent({
+            date: "",
+            title: "",
+            description: "",
+            isMainEvent: false,
+            stage: stages && stages[0] ? stages[0] : "introduction",
+        });
+        closeModal();
     };
 
     return (
-        <Modal open={isOpen} onClose={closeModal} aria-labelledby="modal-title">
-            <Box
-                style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    width: 300,
-                    maxHeight: "70vh",
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
-                    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
-                    padding: 16,
-                    borderRadius: 8,
-                    overflowY: "auto",
-                }}
-            >
-                <Typography id="modal-title" variant="h6" style={{ marginBottom: 16, textAlign: "center" }}>
+        <div className="timeline-modal-overlay" onClick={handleClose}>
+            <div className="timeline-modal-content" onClick={(e) => e.stopPropagation()}>
+                <h3 className="timeline-modal-header">
+                    <span>➕</span>
                     Add New Event
-                </Typography>
-                <TextField
-                    label="Title"
-                    value={event.title}
-                    onChange={(e) => setEvent({ ...event, title: e.target.value })}
-                    fullWidth
-                    size="small"
-                    required
-                    style={{ marginBottom: 12 }}
-                />
-                <TextField
-                    label="Description"
-                    value={event.description}
-                    onChange={(e) => setEvent({ ...event, description: e.target.value })}
-                    fullWidth
-                    size="small"
-                    multiline
-                    rows={3}
-                    required
-                    style={{ marginBottom: 12 }}
-                />
-                <Select
-                    value={event.stage}
-                    onChange={(e) => setEvent({ ...event, stage: e.target.value })}
-                    fullWidth
-                    size="small"
-                    style={{ marginBottom: 12 }}
-                >
-                    {stages.map((stage) => (
-                        <MenuItem key={stage} value={stage}>
-                            {stage.replace(/^\w/, (c) => c.toUpperCase())}
-                        </MenuItem>
-                    ))}
-                </Select>
-                <Select
-                    value={event.isMainEvent ? "true" : "false"}
-                    onChange={(e) => setEvent({ ...event, isMainEvent: e.target.value === "true" })}
-                    fullWidth
-                    size="small"
-                    style={{ marginBottom: 12 }}
-                >
-                    <MenuItem value="false">Not a Main Event</MenuItem>
-                    <MenuItem value="true">Main Event</MenuItem>
-                </Select>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                    <DatePicker
-                        label="Date (Optional)"
-                        value={event.date}
-                        onChange={(newValue) => setEvent({ ...event, date: newValue })}
-                        renderInput={(params) => (
-                            <TextField {...params} 
-                            fullWidth 
-                            size="small" 
-                            style={{ marginBottom: 12 }} />
-                        )}
-                    />
-                </LocalizationProvider>
-                <Box style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
-                    <Button onClick={handleSave} className="modal-btn save-btn">
-                        Save
-                    </Button>
-                    <Button onClick={closeModal} className="modal-btn cancel-btn">
+                </h3>
+
+                <div className="timeline-modal-form">
+                    <div className="timeline-form-group">
+                        <label>Title *</label>
+                        <input
+                            type="text"
+                            value={event.title}
+                            onChange={(e) => setEvent({ ...event, title: e.target.value })}
+                            placeholder="Enter event title..."
+                            autoFocus
+                        />
+                    </div>
+
+                    <div className="timeline-form-group">
+                        <label>Description *</label>
+                        <textarea
+                            value={event.description}
+                            onChange={(e) => setEvent({ ...event, description: e.target.value })}
+                            placeholder="Describe what happens in this event..."
+                            rows={4}
+                        />
+                    </div>
+
+                    <div className="timeline-form-group">
+                        <label>Story Stage *</label>
+                        <select
+                            value={event.stage}
+                            onChange={(e) => setEvent({ ...event, stage: e.target.value })}
+                        >
+                            {stages && stages.map((stage) => (
+                                <option key={stage} value={stage}>
+                                    {stage.charAt(0).toUpperCase() + stage.slice(1)}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="timeline-form-group">
+                        <label>Date (Optional)</label>
+                        <input
+                            type="date"
+                            value={event.date}
+                            onChange={(e) => setEvent({ ...event, date: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="timeline-checkbox-group">
+                        <input
+                            type="checkbox"
+                            id="isMainEvent"
+                            checked={event.isMainEvent}
+                            onChange={(e) => setEvent({ ...event, isMainEvent: e.target.checked })}
+                        />
+                        <label htmlFor="isMainEvent">Mark as Main Event</label>
+                    </div>
+                </div>
+
+                <div className="timeline-modal-actions">
+                    <button 
+                        className="timeline-modal-btn timeline-btn-save" 
+                        onClick={handleSave}
+                    >
+                        Create Event
+                    </button>
+                    <button 
+                        className="timeline-modal-btn timeline-btn-cancel" 
+                        onClick={handleClose}
+                    >
                         Cancel
-                    </Button>
-                </Box>
-            </Box>
-        </Modal>
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 };
 

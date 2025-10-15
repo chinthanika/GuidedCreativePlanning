@@ -4,6 +4,8 @@ import bodyParser from "body-parser";
 import ConfirmationPipeline from "../services/ConfirmationPipeline.js";
 import cors from "cors";
 
+import { child, push, remove, set } from "firebase/database";
+
 import logger from "./logger.js";
 import { requestLogger } from "./loggerMiddleware.js";
 
@@ -786,6 +788,165 @@ app.post("/api/events/batch-update", async (req, res) => {
 });
 
 /**
+ * Direct world-building item creation/update (no staging required)
+ * POST /api/worldbuilding/update
+ * Body: {
+ *   userId: string,
+ *   category: string,
+ *   firebaseKey?: string, // Optional - only for updates
+ *   data: { name, type, description, parentKey, ... }
+ * }
+ */
+app.post("/api/worldbuilding/update", async (req, res) => {
+  logger.info(`[REQUEST] /api/worldbuilding/update with body: ${JSON.stringify(req.body)}`);
+
+  try {
+    const { userId, category, firebaseKey, data } = req.body;
+
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+    if (!category) return res.status(400).json({ error: "category is required" });
+    if (!data) return res.status(400).json({ error: "data object is required" });
+
+    const validCategories = ["magicSystems", "cultures", "locations", "technology", "history", "organizations"];
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({
+        error: `Invalid category: ${category}. Must be one of: ${validCategories.join(", ")}`
+      });
+    }
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+
+    // Validate parentKey if provided
+    if (data.parentKey) {
+      const allItems = await pipeline.manager.getWorldBuildingCategory(category);
+      const parent = allItems[data.parentKey]; // Direct lookup by Firebase key
+      if (!parent) {
+        return res.status(400).json({
+          error: `Parent item with firebaseKey '${data.parentKey}' not found in category '${category}'`
+        });
+      }
+    }
+
+    // Remove any old parentId field if it exists
+    const cleanData = { ...data };
+    delete cleanData.parentId;
+
+    if (firebaseKey) {
+      // Update existing item
+      const currentItem = await pipeline.manager.getEvent(firebaseKey); // Using same pattern as events
+      const categoryRef = child(pipeline.manager.worldBuildingRef, `${category}/${firebaseKey}`);
+      await set(categoryRef, cleanData);
+      
+      logger.info(`[DATA] World-building item '${firebaseKey}' in '${category}' updated`);
+      res.status(200).json({
+        success: true,
+        category,
+        firebaseKey,
+        data: cleanData
+      });
+    } else {
+      // Create new item - let Firebase generate the key
+      const categoryRef = child(pipeline.manager.worldBuildingRef, category);
+      const newItemRef = push(categoryRef); // This generates a unique Firebase key
+      const newFirebaseKey = newItemRef.key;
+      
+      await set(newItemRef, cleanData);
+      
+      logger.info(`[DATA] World-building item '${newFirebaseKey}' in '${category}' created`);
+      res.status(200).json({
+        success: true,
+        created: true,
+        category,
+        firebaseKey: newFirebaseKey,
+        data: cleanData
+      });
+    }
+
+    // Invalidate cache
+    pmCache.invalidate(userId, `worldbuilding_${category}`);
+    pmCache.invalidateAll(userId);
+
+  } catch (err) {
+    logger.error(`[ERROR] /api/worldbuilding/update: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Direct world-building item deletion (no staging required)
+ */
+app.post("/api/worldbuilding/delete", async (req, res) => {
+  logger.info(`[REQUEST] /api/worldbuilding/delete with body: ${JSON.stringify(req.body)}`);
+
+  try {
+    const { userId, category, firebaseKey } = req.body;
+
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+    if (!category) return res.status(400).json({ error: "category is required" });
+    if (!firebaseKey) return res.status(400).json({ error: "firebaseKey is required" });
+
+    const validCategories = ["magicSystems", "cultures", "locations", "technology", "history", "organizations"];
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({
+        error: `Invalid category: ${category}. Must be one of: ${validCategories.join(", ")}`
+      });
+    }
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+
+    // Get all items to find children
+    const allItems = await pipeline.manager.getWorldBuildingCategory(category);
+    const item = allItems[firebaseKey];
+    
+    if (!item) {
+      return res.status(404).json({
+        error: `Item not found with firebaseKey: ${firebaseKey} in category '${category}'`
+      });
+    }
+
+    // Delete the item
+    const itemRef = child(pipeline.manager.worldBuildingRef, `${category}/${firebaseKey}`);
+    await remove(itemRef);
+
+    // Delete all children recursively (using parentKey now)
+    const childrenToDelete = Object.entries(allItems).filter(
+      ([_, i]) => i?.parentKey === firebaseKey
+    );
+    
+    for (const [childKey, child] of childrenToDelete) {
+      const childRef = child(pipeline.manager.worldBuildingRef, `${category}/${childKey}`);
+      await remove(childRef);
+      
+      // Recursively delete grandchildren
+      const grandchildren = Object.entries(allItems).filter(
+        ([_, gc]) => gc?.parentKey === childKey
+      );
+      for (const [gcKey, _] of grandchildren) {
+        const gcRef = child(pipeline.manager.worldBuildingRef, `${category}/${gcKey}`);
+        await remove(gcRef);
+      }
+    }
+
+    // Invalidate cache
+    pmCache.invalidate(userId, `worldbuilding_${category}`);
+    pmCache.invalidateAll(userId);
+
+    logger.info(`[DATA] World-building item '${firebaseKey}' in '${category}' deleted with ${childrenToDelete.length} children`);
+    res.status(200).json({
+      success: true,
+      category,
+      firebaseKey,
+      deleted: true,
+      childrenDeleted: childrenToDelete.length
+    });
+
+  } catch (err) {
+    logger.error(`[ERROR] /api/worldbuilding/delete: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * Confirm a change
  */
 app.post("/api/confirm-change", async (req, res) => {
@@ -804,7 +965,7 @@ app.post("/api/confirm-change", async (req, res) => {
 
       pmCache.invalidateAll(userId);
 
-      if (entityType.startsWith("worldBuilding-")) {
+      if (entityType && entityType.startsWith("worldBuilding-")) {
         const category = entityType.replace("worldBuilding-", "");
         pmCache.invalidate(userId, `worldbuilding_${category}`);
       }

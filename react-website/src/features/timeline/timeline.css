@@ -1,5 +1,6 @@
 /* Reset and base styles */
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -114,7 +115,9 @@ html, body {
   height: 100%;
   transition: transform 0.6s;
   transform-style: preserve-3d;
+  pointer-events: auto;
 }
+
 
 .card-inner.flipped {
   transform: rotateY(180deg);
@@ -263,11 +266,13 @@ html, body {
   display: flex;
   gap: 0.5rem;
   margin-top: 1rem;
+  flex-shrink: 0;
 }
 
-.btn-edit, .btn-delete {
+.btn-edit,
+.btn-delete {
   flex: 1;
-  padding: 0.5rem;
+  padding: 0.75rem 1rem;
   color: white;
   border: none;
   border-radius: 6px;
@@ -275,6 +280,16 @@ html, body {
   font-weight: 600;
   font-size: 0.9rem;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  text-align: center;
+}
+
+.btn-edit:active,
+.btn-delete:active {
+  transform: scale(0.98);
 }
 
 .btn-edit {
@@ -283,6 +298,7 @@ html, body {
 
 .btn-edit:hover {
   background-color: #0056b3;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
 }
 
 .btn-delete {
@@ -291,6 +307,7 @@ html, body {
 
 .btn-delete:hover {
   background-color: #c82333;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
 }
 
 /* Stage Legend */
@@ -369,7 +386,8 @@ html, body {
   gap: 1rem;
 }
 
-.btn-cancel, .btn-confirm-delete {
+.btn-cancel,
+.btn-confirm-delete {
   flex: 1;
   padding: 0.75rem;
   color: white;
@@ -471,8 +489,13 @@ html, body {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Toast Notification */
@@ -496,6 +519,7 @@ html, body {
     transform: translateX(400px);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -506,6 +530,7 @@ html, body {
   from {
     opacity: 1;
   }
+
   to {
     opacity: 0;
   }
@@ -565,7 +590,7 @@ html, body {
 }
 
 /* Disable pointer events during reorder */
-.reorder-overlay ~ * {
+.reorder-overlay~* {
   pointer-events: none;
 }
 
@@ -590,4 +615,620 @@ html, body {
     width: 50px;
     height: 50px;
   }
+}
+
+
+/* Modal Overlay */
+.timeline-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Modal Content Container */
+.timeline-modal-content {
+  background-color: white;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+  position: relative;
+}
+
+/* Modal Header */
+.timeline-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e9ecef;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.timeline-modal-header span {
+  font-size: 1.75rem;
+}
+
+/* Modal Form */
+.timeline-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Form Group */
+.timeline-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.timeline-form-group label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.95rem;
+}
+
+.timeline-form-group input[type="text"],
+.timeline-form-group input[type="date"],
+.timeline-form-group textarea,
+.timeline-form-group select {
+  padding: 0.75rem;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background-color: white;
+}
+
+.timeline-form-group input[type="text"]:focus,
+.timeline-form-group input[type="date"]:focus,
+.timeline-form-group textarea:focus,
+.timeline-form-group select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.timeline-form-group input:disabled,
+.timeline-form-group textarea:disabled,
+.timeline-form-group select:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.timeline-form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.5;
+}
+
+.timeline-form-group select {
+  cursor: pointer;
+}
+
+/* Checkbox Group */
+.timeline-checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.timeline-checkbox-group input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.timeline-checkbox-group label {
+  margin: 0;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* Image Preview */
+.timeline-image-preview {
+  margin: 1rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #dee2e6;
+}
+
+.timeline-image-preview img {
+  width: 100%;
+  display: block;
+}
+
+/* Modal Actions */
+
+/* Modal Overlay */
+.timeline-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* Modal Content Container */
+.timeline-modal-content {
+    background-color: white;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+    position: relative;
+}
+
+/* Modal Header */
+.timeline-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.timeline-modal-header span {
+    font-size: 1.75rem;
+}
+
+/* Modal Form */
+.timeline-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Form Group */
+.timeline-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.timeline-form-group label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.timeline-form-group input[type="text"],
+.timeline-form-group input[type="date"],
+.timeline-form-group textarea,
+.timeline-form-group select {
+    padding: 0.75rem;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    background-color: white;
+}
+
+.timeline-form-group input[type="text"]:focus,
+.timeline-form-group input[type="date"]:focus,
+.timeline-form-group textarea:focus,
+.timeline-form-group select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.timeline-form-group input:disabled,
+.timeline-form-group textarea:disabled,
+.timeline-form-group select:disabled {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+.timeline-form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.5;
+}
+
+.timeline-form-group select {
+    cursor: pointer;
+}
+
+/* Checkbox Group */
+.timeline-checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+.timeline-checkbox-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.timeline-checkbox-group label {
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* Image Preview */
+.timeline-image-preview {
+    margin: 1rem 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #dee2e6;
+}
+
+.timeline-image-preview img {
+    width: 100%;
+    display: block;
+}
+
+/* Modal Actions */
+/* Modal Overlay */
+.timeline-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* Modal Content Container */
+.timeline-modal-content {
+    background-color: white;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+    position: relative;
+}
+
+/* Modal Header */
+.timeline-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.timeline-modal-header span {
+    font-size: 1.75rem;
+}
+
+/* Modal Form */
+.timeline-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Form Group */
+.timeline-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.timeline-form-group label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.timeline-form-group input[type="text"],
+.timeline-form-group input[type="date"],
+.timeline-form-group textarea,
+.timeline-form-group select {
+    padding: 0.75rem;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    background-color: white;
+}
+
+.timeline-form-group input[type="text"]:focus,
+.timeline-form-group input[type="date"]:focus,
+.timeline-form-group textarea:focus,
+.timeline-form-group select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.timeline-form-group input:disabled,
+.timeline-form-group textarea:disabled,
+.timeline-form-group select:disabled {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+.timeline-form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.5;
+}
+
+.timeline-form-group select {
+    cursor: pointer;
+}
+
+/* Checkbox Group */
+.timeline-checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+.timeline-checkbox-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.timeline-checkbox-group label {
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* Image Preview */
+.timeline-image-preview {
+    margin: 1rem 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #dee2e6;
+}
+
+.timeline-image-preview img {
+    width: 100%;
+    display: block;
+}
+
+/* Modal Actions */
+.timeline-modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #e9ecef;
+    flex-wrap: wrap;
+}
+
+.timeline-modal-btn {
+    flex: 1;
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    min-width: 100px;
+}
+
+.timeline-modal-btn:active {
+    transform: scale(0.98);
+}
+
+.timeline-modal-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.timeline-btn-save {
+    background-color: #007bff;
+    color: white;
+}
+
+.timeline-btn-save:hover:not(:disabled) {
+    background-color: #0056b3;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.timeline-btn-cancel {
+    background-color: #6c757d;
+    color: white;
+}
+
+.timeline-btn-cancel:hover {
+    background-color: #5a6268;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.timeline-btn-delete {
+    background-color: #dc3545;
+    color: white;
+}
+
+.timeline-btn-delete:hover {
+    background-color: #c82333;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.timeline-btn-generate {
+    background-color: #28a745;
+    color: white;
+}
+
+.timeline-btn-generate:hover:not(:disabled) {
+    background-color: #218838;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Delete Confirmation Modal */
+.delete-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.delete-modal .modal-content {
+    background-color: white;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+}
+
+.delete-modal h3 {
+    margin: 0 0 1rem 0;
+    color: #333;
+    font-size: 1.5rem;
+}
+
+.delete-modal p {
+    margin: 0 0 1.5rem 0;
+    color: #666;
+    line-height: 1.6;
+}
+
+.delete-modal .modal-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.delete-modal .btn-cancel,
+.delete-modal .btn-confirm-delete {
+    flex: 1;
+    padding: 0.75rem;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.delete-modal .btn-cancel {
+    background-color: #6c757d;
+}
+
+.delete-modal .btn-cancel:hover {
+    background-color: #5a6268;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.delete-modal .btn-confirm-delete {
+    background-color: #dc3545;
+}
+
+.delete-modal .btn-confirm-delete:hover {
+    background-color: #c82333;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+/* Modal Scrollbar */
+.timeline-modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.timeline-modal-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.timeline-modal-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.timeline-modal-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+    .timeline-modal-content {
+        width: 95%;
+        padding: 1.5rem;
+        max-height: 90vh;
+    }
+
+    .timeline-modal-header {
+        font-size: 1.25rem;
+    }
+
+    .timeline-modal-actions {
+        flex-direction: column;
+    }
+
+    .timeline-modal-btn {
+        width: 100%;
+    }
+
+    .delete-modal .modal-content {
+        width: 95%;
+        padding: 1.5rem;
+    }
+}
+
+.card-actions button {
+  position: relative;
+  z-index: 100 !important;
+  pointer-events: auto !important;
 }

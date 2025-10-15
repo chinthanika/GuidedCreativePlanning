@@ -182,7 +182,7 @@ const TimelineCardGrid = () => {
     };
 
     // Edit event
-     const handleEditEvent = (event, e) => {
+    const handleEditEvent = (event, e) => {
         if (e) {
             e.stopPropagation(); // Prevent card flip
         }
@@ -232,6 +232,24 @@ const TimelineCardGrid = () => {
         }
     };
 
+    // Add this new handler function
+    const handleDeleteItem = async (event) => {
+        try {
+            await axios.post(`${API_BASE}/events/delete`, {
+                userId,
+                eventId: event.id,
+            });
+
+            fetchEvents();
+            setIsEventDetailsModalOpen(false);
+            showToast("Event deleted successfully!", "success");
+        } catch (error) {
+            console.error("Error deleting event:", error);
+            showToast("Failed to delete event", "error");
+        }
+    };
+
+
     if (loading) {
         return (
             <div className="loading-container">
@@ -240,6 +258,18 @@ const TimelineCardGrid = () => {
             </div>
         );
     }
+
+    const handleGenerateImage = async (description) => {
+        try {
+            const response = await axios.post('https://guidedcreativeplanning-1.onrender.com/images', {
+                description
+            });
+            return response.data.image_url;
+        } catch (error) {
+            console.error("Error generating image:", error);
+            throw error;
+        }
+    };
 
     return (
         <div className="timeline-card-grid">
@@ -284,6 +314,8 @@ const TimelineCardGrid = () => {
                 closeModal={() => setIsEventDetailsModalOpen(false)}
                 event={selectedEvent}
                 onSave={handleSaveEditedEvent}
+                onDelete={handleDeleteItem}
+                onGenerateImage={handleGenerateImage}
             />
 
             <div className="timeline-grid">
@@ -295,10 +327,18 @@ const TimelineCardGrid = () => {
                         onDragOver={(e) => handleDragOver(e, index)}
                         onDragLeave={handleDragLeave}
                         onDrop={(e) => handleDrop(e, index)}
-                        onClick={() => handleCardClick(event.id)}
                         className={`card-wrapper ${draggedIndex === index ? 'dragging' : ''} ${dragOverIndex === index && draggedIndex !== index ? 'drag-over' : ''}`}
                     >
-                        <div className={`card-inner ${flippedCard === event.id ? 'flipped' : ''}`}>
+                        <div
+                            className={`card-inner ${flippedCard === event.id ? 'flipped' : ''}`}
+                            onClick={(e) => {
+                                // Don't flip if clicking a button
+                                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                                    return;
+                                }
+                                handleCardClick(event.id);
+                            }}
+                        >
                             <div
                                 className={`card-front ${event.isMainEvent ? 'main-event' : ''}`}
                                 style={{
@@ -306,18 +346,7 @@ const TimelineCardGrid = () => {
                                     backgroundImage: event.useImageAsBackground && event.imageUrl ? `url(${event.imageUrl})` : undefined,
                                 }}
                             >
-                                <div className="card-front-content">
-                                    <div className="card-header">
-                                        <span className="card-number">{index + 1}</span>
-                                        {event.isMainEvent && <span className="badge-main">MAIN</span>}
-                                    </div>
-                                    <h3 className="card-title">{event.title}</h3>
-                                    <p className="card-stage">{event.stage}</p>
-                                </div>
-                                <div className="card-footer">
-                                    {event.date && <span className="card-date">{event.date}</span>}
-                                    <span className="card-hint">Click to flip</span>
-                                </div>
+                                {/* ... front card content ... */}
                             </div>
 
                             <div className="card-back" style={{ borderTop: `4px solid ${stageColors[event.stage]}` }}>

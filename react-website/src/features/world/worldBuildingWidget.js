@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuthValue } from '../../Firebase/AuthContext';
 import WorldBuildingDetailsModal from '../../components/world/worldBuildingDetailsModal';
-// import NewWorldBuildingModal from './NewWorldBuildingModal';
-// import RenameWorldModal from './RenameWorldModal';
+import NewWorldBuildingModal from '../../components/world/newWorldBuildingModal';
+import RenameWorldModal from '../../components/world/renameWorldModal';
 
 import './worldbuilding.css';
 
@@ -14,17 +14,14 @@ const WorldBuildingWidget = () => {
 
     const [worldName, setWorldName] = useState("World");
     const [categories, setCategories] = useState({});
-    const [expandedCategory, setExpandedCategory] = useState(null);
-    const [expandedItems, setExpandedItems] = useState({});
-    const [draggedItem, setDraggedItem] = useState(null);
-    const [dragOverItem, setDragOverItem] = useState(null);
-    
+    const [navigationPath, setNavigationPath] = useState([]);
+
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [isNewItemModalOpen, setIsNewItemModalOpen] = useState(false);
     const [isRenameWorldModalOpen, setIsRenameWorldModalOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(null);
-    
+
     const [loading, setLoading] = useState(false);
     const [toast, setToast] = useState(null);
 
@@ -37,13 +34,11 @@ const WorldBuildingWidget = () => {
         organizations: { label: 'Organizations', icon: '🏢', color: '#16a085' }
     };
 
-    // Toast helper
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
         setTimeout(() => setToast(null), 3000);
     };
 
-    // Fetch world name and all categories
     useEffect(() => {
         if (!userId) return;
         fetchWorldData();
@@ -52,14 +47,12 @@ const WorldBuildingWidget = () => {
     const fetchWorldData = async () => {
         try {
             setLoading(true);
-            
-            // Fetch world metadata
+
             const worldResponse = await axios.get(`${API_BASE}/world-metadata`, {
                 params: { userId }
             });
             setWorldName(worldResponse.data.name || "World");
 
-            // Fetch all categories
             const categoriesData = {};
             for (const [key, config] of Object.entries(categoryConfig)) {
                 const response = await axios.get(`${API_BASE}/worldbuilding/${key}`, {
@@ -76,74 +69,107 @@ const WorldBuildingWidget = () => {
         }
     };
 
-    // Toggle category expansion (only one at a time)
-    const toggleCategory = (categoryKey) => {
-        setExpandedCategory(expandedCategory === categoryKey ? null : categoryKey);
-    };
+    // ============================================
+    // GET CURRENT LEVEL (Updated to use firebaseKey)
+    // ============================================
+    const getCurrentLevel = () => {
+        if (navigationPath.length === 0) return { type: 'root', data: null };
 
-    // Toggle item expansion
-    const toggleItem = (itemId) => {
-        setExpandedItems(prev => ({
-            ...prev,
-            [itemId]: !prev[itemId]
-        }));
-    };
-
-    // Drag and drop handlers
-    const handleDragStart = (e, item, category) => {
-        setDraggedItem({ item, category });
-        e.dataTransfer.effectAllowed = 'move';
-    };
-
-    const handleDragOver = (e, targetItem, targetCategory) => {
-        e.preventDefault();
-        setDragOverItem({ item: targetItem, category: targetCategory });
-    };
-
-    const handleDragLeave = () => {
-        setDragOverItem(null);
-    };
-
-    const handleDrop = async (e, targetItem, targetCategory) => {
-        e.preventDefault();
-        
-        if (!draggedItem || draggedItem.category !== targetCategory) {
-            setDraggedItem(null);
-            setDragOverItem(null);
-            return;
+        const lastPath = navigationPath[navigationPath.length - 1];
+        if (lastPath.type === 'category') {
+            return { type: 'category', categoryKey: lastPath.key, data: lastPath };
         }
 
-        const newParentId = targetItem ? targetItem.id : null;
-        
-        if (draggedItem.item.id === newParentId) {
-            showToast("Cannot make an item its own parent", "error");
-            setDraggedItem(null);
-            setDragOverItem(null);
-            return;
+        const { categoryKey, firebaseKey } = lastPath;
+        const categoryData = categories[categoryKey] || {};
+        const item = categoryData[firebaseKey];  // Direct access using firebaseKey!
+
+        return {
+            type: 'item',
+            categoryKey,
+            firebaseKey,
+            data: item ? { ...item, firebaseKey } : undefined  // Add firebaseKey to data
+        };
+    };;
+
+    // ============================================
+    // GET CHILDREN (Updated to use parentKey)
+    // ============================================
+    const getChildrenForCurrentLevel = () => {
+        const current = getCurrentLevel();
+
+        if (current.type === 'root') {
+            return Object.entries(categoryConfig).map(([key, config]) => ({
+                id: key,
+                name: config.label,
+                icon: config.icon,
+                color: config.color,
+                type: 'category',
+                count: Object.keys(categories[key] || {}).length
+            }));
         }
 
-        try {
-            await axios.post(`${API_BASE}/worldbuilding/update`, {
-                userId,
-                category: targetCategory,
-                itemId: draggedItem.item.id,
-                updates: { parentId: newParentId }
-            });
-
-            fetchWorldData();
-            showToast("Item moved successfully!", "success");
-        } catch (error) {
-            console.error("Error moving item:", error);
-            showToast("Failed to move item", "error");
+        if (current.type === 'category') {
+            const categoryData = categories[current.categoryKey] || {};
+            // Get items with no parent (root level items)
+            const items = Object.entries(categoryData)
+                .filter(([_, item]) => !item?.parentKey)
+                .map(([firebaseKey, item]) => ({
+                    ...item,
+                    firebaseKey,  // Include the Firebase key
+                    type: 'item',
+                    categoryKey: current.categoryKey
+                }));
+            return items;
         }
 
-        setDraggedItem(null);
-        setDragOverItem(null);
+        if (current.type === 'item') {
+            const { categoryKey, firebaseKey } = current;
+            const categoryData = categories[categoryKey] || {};
+            // Get children where parentKey matches current item's firebaseKey
+            const children = Object.entries(categoryData)
+                .filter(([_, item]) => item?.parentKey === firebaseKey)
+                .map(([childKey, item]) => ({
+                    ...item,
+                    firebaseKey: childKey,  // Include the Firebase key
+                    type: 'item',
+                    categoryKey
+                }));
+            return children;
+        }
+
+        return [];
     };
 
-    // Modal handlers
+    // ============================================
+    // NAVIGATE TO ITEM (Updated to use firebaseKey)
+    // ============================================
+    const handleNavigateToItem = (node) => {
+        if (node.type === 'category') {
+            setNavigationPath([...navigationPath, { type: 'category', key: node.id }]);
+        } else if (node.type === 'item') {
+            setNavigationPath([...navigationPath, {
+                type: 'item',
+                categoryKey: node.categoryKey,
+                firebaseKey: node.firebaseKey  // Use firebaseKey instead of itemId
+            }]);
+        }
+    };
+
+    const handleBreadcrumbClick = (index) => {
+        setNavigationPath(navigationPath.slice(0, index));
+    };
+
+    const handleGoHome = () => {
+        setNavigationPath([]);
+    };
+
     const handleItemClick = (item, category) => {
-        setSelectedItem({ ...item, category });
+        setSelectedItem({
+            ...item,
+            category,
+            firebaseKey: item.firebaseKey  // Make sure firebaseKey is included
+        });
         setIsDetailsModalOpen(true);
     };
 
@@ -156,10 +182,14 @@ const WorldBuildingWidget = () => {
         try {
             const itemData = {
                 ...newItem,
-                parentId: newItem.parentId || null
+                parentKey: newItem.parentKey || null  // Use parentKey instead of parentId
             };
 
-            await axios.post(`${API_BASE}/worldbuilding/create`, {
+            // Remove the id field if it exists - we don't need it anymore
+            delete itemData.id;
+
+            // Let the backend generate the Firebase key
+            const response = await axios.post(`${API_BASE}/worldbuilding/update`, {
                 userId,
                 category: selectedCategory,
                 data: itemData
@@ -174,13 +204,20 @@ const WorldBuildingWidget = () => {
         }
     };
 
+    // ============================================
+    // SAVE EDITED ITEM
+    // ============================================
     const handleSaveEditedItem = async (updatedItem) => {
         try {
+            const itemData = { ...updatedItem };
+            delete itemData.firebaseKey;  // Don't include key in data
+            delete itemData.category;     // Don't include category in data
+
             await axios.post(`${API_BASE}/worldbuilding/update`, {
                 userId,
                 category: updatedItem.category,
-                itemId: updatedItem.id,
-                updates: updatedItem
+                firebaseKey: updatedItem.firebaseKey,
+                data: itemData
             });
 
             fetchWorldData();
@@ -192,6 +229,9 @@ const WorldBuildingWidget = () => {
         }
     };
 
+    // ============================================
+    // DELETE ITEM
+    // ============================================
     const handleDeleteItem = async (item) => {
         if (!window.confirm(`Delete "${item.name}"? This will also delete all child items.`)) {
             return;
@@ -201,7 +241,7 @@ const WorldBuildingWidget = () => {
             await axios.post(`${API_BASE}/worldbuilding/delete`, {
                 userId,
                 category: item.category,
-                itemId: item.id
+                firebaseKey: item.firebaseKey
             });
 
             fetchWorldData();
@@ -229,71 +269,6 @@ const WorldBuildingWidget = () => {
         }
     };
 
-    // Build tree structure for a category
-    const buildTree = (categoryKey) => {
-        const items = categories[categoryKey] || {};
-        const itemsArray = Object.values(items);
-        
-        // Get root items (no parent)
-        const rootItems = itemsArray.filter(item => !item.parentId || item.parentId === null);
-        
-        // Recursive function to build children
-        const getChildren = (parentId) => {
-            return itemsArray.filter(item => item.parentId === parentId);
-        };
-
-        return { rootItems, getChildren };
-    };
-
-    // Render tree item
-    const renderTreeItem = (item, category, level = 0) => {
-        const { getChildren } = buildTree(category);
-        const children = getChildren(item.id);
-        const hasChildren = children.length > 0;
-        const isExpanded = expandedItems[item.id];
-        const isDragging = draggedItem?.item.id === item.id;
-        const isDragOver = dragOverItem?.item?.id === item.id;
-
-        return (
-            <div key={item.id} className="tree-item-container">
-                <div
-                    className={`tree-item ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
-                    style={{ marginLeft: `${level * 20}px` }}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, item, category)}
-                    onDragOver={(e) => handleDragOver(e, item, category)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, item, category)}
-                    onClick={() => handleItemClick(item, category)}
-                >
-                    {hasChildren && (
-                        <button
-                            className="expand-btn"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                toggleItem(item.id);
-                            }}
-                        >
-                            {isExpanded ? '▼' : '▶'}
-                        </button>
-                    )}
-                    <div className="tree-item-content">
-                        <span className="tree-item-name">{item.name}</span>
-                        {item.description && (
-                            <span className="tree-item-preview">{item.description.substring(0, 50)}...</span>
-                        )}
-                    </div>
-                </div>
-                
-                {isExpanded && hasChildren && (
-                    <div className="tree-children">
-                        {children.map(child => renderTreeItem(child, category, level + 1))}
-                    </div>
-                )}
-            </div>
-        );
-    };
-
     if (loading) {
         return (
             <div className="loading-container">
@@ -303,8 +278,11 @@ const WorldBuildingWidget = () => {
         );
     }
 
+    const current = getCurrentLevel();
+    const children = getChildrenForCurrentLevel();
+    const config = current.type === 'item' ? categoryConfig[current.categoryKey] : null;
     return (
-        <div className="worldbuilding-container">
+        <div className="world-hierarchical-container">
             {toast && (
                 <div className={`toast toast-${toast.type}`}>
                     <span className="toast-icon">
@@ -314,9 +292,9 @@ const WorldBuildingWidget = () => {
                 </div>
             )}
 
-            <div className="world-header">
-                <div className="world-title">
-                    <h2>📖 {worldName}</h2>
+            <div className="world-hierarchical-header">
+                <div className="world-hierarchical-title">
+                    <h1>📖 {worldName}</h1>
                     <button
                         className="btn-rename-world"
                         onClick={() => setIsRenameWorldModalOpen(true)}
@@ -324,62 +302,138 @@ const WorldBuildingWidget = () => {
                         Rename
                     </button>
                 </div>
+
+                {navigationPath.length > 0 && (
+                    <div className="world-breadcrumb">
+                        <button onClick={handleGoHome} className="breadcrumb-item">
+                            📖 {worldName}
+                        </button>
+                        {navigationPath.map((path, idx) => {
+                            let displayName = 'Unknown';
+
+                            if (path.type === 'category') {
+                                displayName = categoryConfig[path.key]?.label || 'Unknown Category';
+                            } else if (path.type === 'item') {
+                                // Direct access using firebaseKey
+                                const categoryData = categories[path.categoryKey] || {};
+                                const item = categoryData[path.firebaseKey];
+                                displayName = item?.name || 'Unknown Item';
+                            }
+
+                            return (
+                                <React.Fragment key={idx}>
+                                    <span className="breadcrumb-separator">→</span>
+                                    <button
+                                        onClick={() => handleBreadcrumbClick(idx + 1)}
+                                        className="breadcrumb-item"
+                                    >
+                                        {displayName}
+                                    </button>
+                                </React.Fragment>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
-            <div className="world-tree">
-                {Object.entries(categoryConfig).map(([key, config]) => {
-                    const { rootItems } = buildTree(key);
-                    const itemCount = Object.keys(categories[key] || {}).length;
-                    const isExpanded = expandedCategory === key;
-
-                    return (
-                        <div key={key} className="category-section">
-                            <div
-                                className="category-header"
-                                onClick={() => toggleCategory(key)}
-                                style={{ borderLeftColor: config.color }}
-                            >
-                                <div className="category-title">
-                                    <span className="category-icon">{config.icon}</span>
-                                    <span className="category-label">{config.label}</span>
-                                    <span className="category-count">({itemCount})</span>
-                                </div>
-                                <div className="category-actions">
-                                    <button
-                                        className="btn-add-item"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleAddItem(key);
-                                        }}
-                                    >
-                                        +
-                                    </button>
-                                    <span className="expand-indicator">
-                                        {isExpanded ? '▼' : '▶'}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {isExpanded && (
-                                <div className="category-content">
-                                    {rootItems.length === 0 ? (
-                                        <div className="empty-category">
-                                            <p>No items yet. Click + to add one!</p>
-                                        </div>
-                                    ) : (
-                                        <div
-                                            className="tree-drop-zone"
-                                            onDragOver={(e) => handleDragOver(e, null, key)}
-                                            onDrop={(e) => handleDrop(e, null, key)}
-                                        >
-                                            {rootItems.map(item => renderTreeItem(item, key, 0))}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+            <div className="world-hierarchical-content">
+                <div className="world-focus-area">
+                    {current.type === 'root' && (
+                        <div className="world-root-card">
+                            <h2>{worldName}</h2>
+                            <p>World Root</p>
                         </div>
-                    );
-                })}
+                    )}
+
+                    {current.type === 'category' && (
+                        <div className="world-focus-card" style={{ borderColor: categoryConfig[current.categoryKey].color }}>
+                            <span className="world-focus-icon">{categoryConfig[current.categoryKey].icon}</span>
+                            <h2>{categoryConfig[current.categoryKey].label}</h2>
+                            <p>{children.length} items</p>
+                        </div>
+                    )}
+
+                    {current.type === 'item' && (
+                        <div className="world-focus-card" style={{ borderColor: config.color }}>
+                            <span className="world-focus-icon">{config.icon}</span>
+                            <h2>{current.data.name}</h2>
+                            <p className="world-focus-type">{current.data.type}</p>
+                            <p className="world-focus-description">{current.data.description}</p>
+                            {children.length > 0 && (
+                                <p className="world-focus-children">{children.length} sub-items</p>
+                            )}
+                            <div className="world-focus-buttons">
+                                <button
+                                    className="btn-edit-focus"
+                                    onClick={() => handleItemClick(current.data, current.categoryKey)}
+                                >
+                                    Edit Details
+                                </button>
+                                <button
+                                    className="btn-add-new-item"
+                                    onClick={() => {
+                                        setSelectedCategory(current.categoryKey);
+                                        setIsNewItemModalOpen(true);
+                                    }}
+                                >
+                                    + New Item
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {children.length > 0 && (
+                    <div className="world-children-area">
+                        <p className="world-children-label">
+                            {current.type === 'root' ? 'Categories' : 'Items'}
+                        </p>
+                        <div className="world-children-grid">
+                            {children.map((child, idx) => {
+                                const itemConfig = child.type === 'category'
+                                    ? categoryConfig[child.id]
+                                    : categoryConfig[child.categoryKey];
+
+                                return (
+                                    <div
+                                        key={child.id}
+                                        onClick={() => handleNavigateToItem(child)}
+                                        className="world-child-card"
+                                        style={{ borderColor: itemConfig.color, animationDelay: `${idx * 0.05}s` }}
+                                    >
+                                        <span className="world-child-icon">{itemConfig.icon}</span>
+                                        <h3>{child.name}</h3>
+                                        {child.type === 'category' && (
+                                            <p>{child.count} items</p>
+                                        )}
+                                        {child.type === 'item' && (
+                                            <>
+                                                <p className="world-child-type">{child.type}</p>
+                                                {child.count !== undefined && (
+                                                    <p className="world-child-meta">{child.count} sub-items</p>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {children.length === 0 && current.type !== 'root' && (
+                    <div className="world-empty-state">
+                        <p>No items here yet</p>
+                        {current.type === 'category' && (
+                            <button
+                                className="btn-add-first"
+                                onClick={() => handleAddItem(current.categoryKey)}
+                            >
+                                + Add Item
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
 
             <WorldBuildingDetailsModal
@@ -391,12 +445,13 @@ const WorldBuildingWidget = () => {
                 categoryConfig={categoryConfig}
             />
 
-            {/*<NewWorldBuildingModal
+            <NewWorldBuildingModal
                 isOpen={isNewItemModalOpen}
                 closeModal={() => setIsNewItemModalOpen(false)}
                 category={selectedCategory}
                 categoryConfig={categoryConfig}
                 existingItems={categories[selectedCategory] || {}}
+                parentFirebaseKey={current.type === 'item' ? current.firebaseKey : null}  // Add this line
                 onSave={handleSaveNewItem}
             />
 
@@ -406,8 +461,7 @@ const WorldBuildingWidget = () => {
                 currentName={worldName}
                 onSave={handleSaveWorldName}
             />
-            */}
-        </div> 
+        </div>
     );
 };
 
