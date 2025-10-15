@@ -3139,3 +3139,171 @@
 [2025-10-15 12:31:26] [INFO] [DATA] Using parsed filters: {}
 [2025-10-15 12:31:26] [INFO] [DATA] Returning events: 22,-ONJ7r7arlkKLSursxK_,-ONJMIneEt1bIlnYuB-O,-ONJMf4sqP05jdDVkHrS,-ONJMn59asw-8j9-QrQw,-ONJMryqmLcA6Roz1vq2,-ONJMx1FQK67VyQVAdWF,-ONs89csZyyr2K6br7s0,-ONs8D8_IBQ-hCVfXcDg,-ONs8GzGV-0LRBPMSwZv,-ONs9pEJDCAfUZOndcj5,-ONs9t74AYqBc9Cnh3eg,-ONsKt7X-3o2bVsWoM_I,-ONsKyGqAGfqV58QZhOp,-ONsL1RcDGJcIVYEct98,-ONsLyOgJQPQD70p8TJJ,-ONsWXoWSIwlpOnimiCc,-OP5LKXtFkkmN2LPoX5S,-OP5MN2e0udwnRbwcgXr,-OP5Nkfo-XVnTsDtRa7P,-mgq91aw8nu1zjfzbx
 [2025-10-15 12:31:26] [INFO] [REQ] GET /api/events?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 200 (307ms)
+[2025-10-15 13:31:12] [INFO] [REQ] GET /api/world-metadata?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (393ms)
+[2025-10-15 13:31:12] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:31:12.143Z
+[2025-10-15 13:31:12] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"magicSystems"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:31:12] [INFO] [REQ] GET /api/world-metadata?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (711ms)
+[2025-10-15 13:31:12] [INFO] [DATA] Items fetched in category 'magicSystems': 3
+[2025-10-15 13:31:12] [INFO] [DATA] Returning world-building items: 0,1,-Ob_tWsw_5fX9C7pmVZB
+[2025-10-15 13:31:12] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:31:12.858Z (duration: 715ms)
+[2025-10-15 13:31:12] [INFO] [REQ] GET /api/worldbuilding/magicSystems?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (716ms)
+[2025-10-15 13:31:12] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:31:12.859Z
+[2025-10-15 13:31:12] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"magicSystems"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:31:12] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:31:12.862Z
+[2025-10-15 13:31:12] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"cultures"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:31:13] [INFO] [DATA] Items fetched in category 'magicSystems': 3
+[2025-10-15 13:31:13] [INFO] [DATA] Returning world-building items: 0,1,-Ob_tWsw_5fX9C7pmVZB
+[2025-10-15 13:31:13] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:31:13.153Z (duration: 294ms)
+[2025-10-15 13:31:13] [INFO] [REQ] GET /api/worldbuilding/magicSystems?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (294ms)
+[2025-10-15 13:31:13] [INFO] [DATA] Items fetched in category 'cultures': 1
+[2025-10-15 13:31:13] [INFO] [DATA] Returning world-building items: 0
+[2025-10-15 13:31:13] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:31:13.164Z (duration: 302ms)
+[2025-10-15 13:31:13] [INFO] [REQ] GET /api/worldbuilding/cultures?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (303ms)
+[2025-10-15 13:31:13] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:31:13.166Z
+[2025-10-15 13:31:13] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"cultures"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:31:13] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:31:13.169Z
+[2025-10-15 13:31:13] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"locations"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:31:13] [INFO] [DATA] Items fetched in category 'cultures': 1
+[2025-10-15 13:31:13] [INFO] [DATA] Returning world-building items: 0
+[2025-10-15 13:31:13] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:31:13.419Z (duration: 253ms)
+[2025-10-15 13:31:13] [INFO] [REQ] GET /api/worldbuilding/cultures?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (253ms)
+[2025-10-15 13:31:13] [INFO] [DATA] Items fetched in category 'locations': 0
+[2025-10-15 13:31:13] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:31:13] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:31:13.420Z (duration: 251ms)
+[2025-10-15 13:31:13] [INFO] [REQ] GET /api/worldbuilding/locations?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (254ms)
+[2025-10-15 13:31:13] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:31:13.425Z
+[2025-10-15 13:31:13] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"locations"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:31:13] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:31:13.427Z
+[2025-10-15 13:31:13] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"technology"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:31:14] [INFO] [DATA] Items fetched in category 'locations': 0
+[2025-10-15 13:31:14] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:31:14] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:31:14.276Z (duration: 851ms)
+[2025-10-15 13:31:14] [INFO] [REQ] GET /api/worldbuilding/locations?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (852ms)
+[2025-10-15 13:31:14] [INFO] [DATA] Items fetched in category 'technology': 0
+[2025-10-15 13:31:14] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:31:14] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:31:14.277Z (duration: 850ms)
+[2025-10-15 13:31:14] [INFO] [REQ] GET /api/worldbuilding/technology?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (851ms)
+[2025-10-15 13:31:14] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:31:14.280Z
+[2025-10-15 13:31:14] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"technology"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:31:14] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:31:14.283Z
+[2025-10-15 13:31:14] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"history"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:31:14] [INFO] [DATA] Items fetched in category 'technology': 0
+[2025-10-15 13:31:14] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:31:14] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:31:14.616Z (duration: 336ms)
+[2025-10-15 13:31:14] [INFO] [REQ] GET /api/worldbuilding/technology?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (337ms)
+[2025-10-15 13:31:14] [INFO] [DATA] Items fetched in category 'history': 0
+[2025-10-15 13:31:14] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:31:14] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:31:14.618Z (duration: 335ms)
+[2025-10-15 13:31:14] [INFO] [REQ] GET /api/worldbuilding/history?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (336ms)
+[2025-10-15 13:31:14] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:31:14.622Z
+[2025-10-15 13:31:14] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"history"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:31:14] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:31:14.626Z
+[2025-10-15 13:31:14] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"organizations"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:31:14] [INFO] [DATA] Items fetched in category 'history': 0
+[2025-10-15 13:31:14] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:31:14] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:31:14.887Z (duration: 265ms)
+[2025-10-15 13:31:14] [INFO] [REQ] GET /api/worldbuilding/history?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (265ms)
+[2025-10-15 13:31:14] [INFO] [DATA] Items fetched in category 'organizations': 0
+[2025-10-15 13:31:14] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:31:14] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:31:14.888Z (duration: 262ms)
+[2025-10-15 13:31:14] [INFO] [REQ] GET /api/worldbuilding/organizations?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (263ms)
+[2025-10-15 13:31:14] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:31:14.891Z
+[2025-10-15 13:31:14] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"organizations"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:31:15] [INFO] [DATA] Items fetched in category 'organizations': 0
+[2025-10-15 13:31:15] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:31:15] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:31:15.135Z (duration: 244ms)
+[2025-10-15 13:31:15] [INFO] [REQ] GET /api/worldbuilding/organizations?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (244ms)
+[2025-10-15 13:35:22] [INFO] [DATA] Events fetched: 21
+[2025-10-15 13:35:22] [INFO] [DATA] Using parsed filters: {}
+[2025-10-15 13:35:22] [INFO] [DATA] Returning events: 22,-ONJ7r7arlkKLSursxK_,-ONJMIneEt1bIlnYuB-O,-ONJMf4sqP05jdDVkHrS,-ONJMn59asw-8j9-QrQw,-ONJMryqmLcA6Roz1vq2,-ONJMx1FQK67VyQVAdWF,-ONs89csZyyr2K6br7s0,-ONs8D8_IBQ-hCVfXcDg,-ONs8GzGV-0LRBPMSwZv,-ONs9pEJDCAfUZOndcj5,-ONs9t74AYqBc9Cnh3eg,-ONsKt7X-3o2bVsWoM_I,-ONsKyGqAGfqV58QZhOp,-ONsL1RcDGJcIVYEct98,-ONsLyOgJQPQD70p8TJJ,-ONsWXoWSIwlpOnimiCc,-OP5LKXtFkkmN2LPoX5S,-OP5MN2e0udwnRbwcgXr,-OP5Nkfo-XVnTsDtRa7P,-mgq91aw8nu1zjfzbx
+[2025-10-15 13:35:22] [INFO] [REQ] GET /api/events?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (258ms)
+[2025-10-15 13:35:22] [INFO] [DATA] Events fetched: 21
+[2025-10-15 13:35:22] [INFO] [DATA] Using parsed filters: {}
+[2025-10-15 13:35:22] [INFO] [DATA] Returning events: 22,-ONJ7r7arlkKLSursxK_,-ONJMIneEt1bIlnYuB-O,-ONJMf4sqP05jdDVkHrS,-ONJMn59asw-8j9-QrQw,-ONJMryqmLcA6Roz1vq2,-ONJMx1FQK67VyQVAdWF,-ONs89csZyyr2K6br7s0,-ONs8D8_IBQ-hCVfXcDg,-ONs8GzGV-0LRBPMSwZv,-ONs9pEJDCAfUZOndcj5,-ONs9t74AYqBc9Cnh3eg,-ONsKt7X-3o2bVsWoM_I,-ONsKyGqAGfqV58QZhOp,-ONsL1RcDGJcIVYEct98,-ONsLyOgJQPQD70p8TJJ,-ONsWXoWSIwlpOnimiCc,-OP5LKXtFkkmN2LPoX5S,-OP5MN2e0udwnRbwcgXr,-OP5Nkfo-XVnTsDtRa7P,-mgq91aw8nu1zjfzbx
+[2025-10-15 13:35:22] [INFO] [REQ] GET /api/events?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (242ms)
+[2025-10-15 13:37:02] [INFO] [DATA] Events fetched: 21
+[2025-10-15 13:37:02] [INFO] [DATA] Using parsed filters: {}
+[2025-10-15 13:37:02] [INFO] [DATA] Returning events: 22,-ONJ7r7arlkKLSursxK_,-ONJMIneEt1bIlnYuB-O,-ONJMf4sqP05jdDVkHrS,-ONJMn59asw-8j9-QrQw,-ONJMryqmLcA6Roz1vq2,-ONJMx1FQK67VyQVAdWF,-ONs89csZyyr2K6br7s0,-ONs8D8_IBQ-hCVfXcDg,-ONs8GzGV-0LRBPMSwZv,-ONs9pEJDCAfUZOndcj5,-ONs9t74AYqBc9Cnh3eg,-ONsKt7X-3o2bVsWoM_I,-ONsKyGqAGfqV58QZhOp,-ONsL1RcDGJcIVYEct98,-ONsLyOgJQPQD70p8TJJ,-ONsWXoWSIwlpOnimiCc,-OP5LKXtFkkmN2LPoX5S,-OP5MN2e0udwnRbwcgXr,-OP5Nkfo-XVnTsDtRa7P,-mgq91aw8nu1zjfzbx
+[2025-10-15 13:37:02] [INFO] [REQ] GET /api/events?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (259ms)
+[2025-10-15 13:37:02] [INFO] [DATA] Events fetched: 21
+[2025-10-15 13:37:02] [INFO] [DATA] Using parsed filters: {}
+[2025-10-15 13:37:02] [INFO] [DATA] Returning events: 22,-ONJ7r7arlkKLSursxK_,-ONJMIneEt1bIlnYuB-O,-ONJMf4sqP05jdDVkHrS,-ONJMn59asw-8j9-QrQw,-ONJMryqmLcA6Roz1vq2,-ONJMx1FQK67VyQVAdWF,-ONs89csZyyr2K6br7s0,-ONs8D8_IBQ-hCVfXcDg,-ONs8GzGV-0LRBPMSwZv,-ONs9pEJDCAfUZOndcj5,-ONs9t74AYqBc9Cnh3eg,-ONsKt7X-3o2bVsWoM_I,-ONsKyGqAGfqV58QZhOp,-ONsL1RcDGJcIVYEct98,-ONsLyOgJQPQD70p8TJJ,-ONsWXoWSIwlpOnimiCc,-OP5LKXtFkkmN2LPoX5S,-OP5MN2e0udwnRbwcgXr,-OP5Nkfo-XVnTsDtRa7P,-mgq91aw8nu1zjfzbx
+[2025-10-15 13:37:02] [INFO] [REQ] GET /api/events?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (227ms)
+[2025-10-15 13:43:35] [INFO] [DATA] Events fetched: 21
+[2025-10-15 13:43:35] [INFO] [DATA] Using parsed filters: {}
+[2025-10-15 13:43:35] [INFO] [DATA] Returning events: 22,-ONJ7r7arlkKLSursxK_,-ONJMIneEt1bIlnYuB-O,-ONJMf4sqP05jdDVkHrS,-ONJMn59asw-8j9-QrQw,-ONJMryqmLcA6Roz1vq2,-ONJMx1FQK67VyQVAdWF,-ONs89csZyyr2K6br7s0,-ONs8D8_IBQ-hCVfXcDg,-ONs8GzGV-0LRBPMSwZv,-ONs9pEJDCAfUZOndcj5,-ONs9t74AYqBc9Cnh3eg,-ONsKt7X-3o2bVsWoM_I,-ONsKyGqAGfqV58QZhOp,-ONsL1RcDGJcIVYEct98,-ONsLyOgJQPQD70p8TJJ,-ONsWXoWSIwlpOnimiCc,-OP5LKXtFkkmN2LPoX5S,-OP5MN2e0udwnRbwcgXr,-OP5Nkfo-XVnTsDtRa7P,-mgq91aw8nu1zjfzbx
+[2025-10-15 13:43:35] [INFO] [REQ] GET /api/events?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (273ms)
+[2025-10-15 13:43:46] [INFO] [REQ] GET /api/world-metadata?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (225ms)
+[2025-10-15 13:43:46] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:43:46.631Z
+[2025-10-15 13:43:46] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"magicSystems"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:43:46] [INFO] [REQ] GET /api/world-metadata?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (263ms)
+[2025-10-15 13:43:46] [INFO] [DATA] Items fetched in category 'magicSystems': 3
+[2025-10-15 13:43:46] [INFO] [DATA] Returning world-building items: 0,1,-Ob_tWsw_5fX9C7pmVZB
+[2025-10-15 13:43:46] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:43:46.884Z (duration: 253ms)
+[2025-10-15 13:43:46] [INFO] [REQ] GET /api/worldbuilding/magicSystems?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (255ms)
+[2025-10-15 13:43:46] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:43:46.885Z
+[2025-10-15 13:43:46] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"magicSystems"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:43:46] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:43:46.890Z
+[2025-10-15 13:43:46] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"cultures"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:43:47] [INFO] [DATA] Items fetched in category 'magicSystems': 3
+[2025-10-15 13:43:47] [INFO] [DATA] Returning world-building items: 0,1,-Ob_tWsw_5fX9C7pmVZB
+[2025-10-15 13:43:47] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:43:47.112Z (duration: 227ms)
+[2025-10-15 13:43:47] [INFO] [REQ] GET /api/worldbuilding/magicSystems?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (228ms)
+[2025-10-15 13:43:47] [INFO] [DATA] Items fetched in category 'cultures': 1
+[2025-10-15 13:43:47] [INFO] [DATA] Returning world-building items: 0
+[2025-10-15 13:43:47] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:43:47.116Z (duration: 226ms)
+[2025-10-15 13:43:47] [INFO] [REQ] GET /api/worldbuilding/cultures?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (226ms)
+[2025-10-15 13:43:47] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:43:47.117Z
+[2025-10-15 13:43:47] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"cultures"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:43:47] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:43:47.125Z
+[2025-10-15 13:43:47] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"locations"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:43:47] [INFO] [DATA] Items fetched in category 'cultures': 1
+[2025-10-15 13:43:47] [INFO] [DATA] Returning world-building items: 0
+[2025-10-15 13:43:47] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:43:47.351Z (duration: 234ms)
+[2025-10-15 13:43:47] [INFO] [REQ] GET /api/worldbuilding/cultures?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (235ms)
+[2025-10-15 13:43:47] [INFO] [DATA] Items fetched in category 'locations': 0
+[2025-10-15 13:43:47] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:43:47] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:43:47.358Z (duration: 233ms)
+[2025-10-15 13:43:47] [INFO] [REQ] GET /api/worldbuilding/locations?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (233ms)
+[2025-10-15 13:43:47] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:43:47.359Z
+[2025-10-15 13:43:47] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"locations"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:43:47] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:43:47.365Z
+[2025-10-15 13:43:47] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"technology"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:43:47] [INFO] [DATA] Items fetched in category 'locations': 0
+[2025-10-15 13:43:47] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:43:47] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:43:47.591Z (duration: 232ms)
+[2025-10-15 13:43:47] [INFO] [REQ] GET /api/worldbuilding/locations?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (233ms)
+[2025-10-15 13:43:47] [INFO] [DATA] Items fetched in category 'technology': 0
+[2025-10-15 13:43:47] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:43:47] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:43:47.598Z (duration: 233ms)
+[2025-10-15 13:43:47] [INFO] [REQ] GET /api/worldbuilding/technology?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (233ms)
+[2025-10-15 13:43:47] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:43:47.599Z
+[2025-10-15 13:43:47] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"technology"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:43:47] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:43:47.608Z
+[2025-10-15 13:43:47] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"history"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:43:47] [INFO] [DATA] Items fetched in category 'technology': 0
+[2025-10-15 13:43:47] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:43:47] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:43:47.824Z (duration: 225ms)
+[2025-10-15 13:43:47] [INFO] [REQ] GET /api/worldbuilding/technology?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (225ms)
+[2025-10-15 13:43:47] [INFO] [DATA] Items fetched in category 'history': 0
+[2025-10-15 13:43:47] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:43:47] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:43:47.833Z (duration: 225ms)
+[2025-10-15 13:43:47] [INFO] [REQ] GET /api/worldbuilding/history?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (226ms)
+[2025-10-15 13:43:47] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:43:47.835Z
+[2025-10-15 13:43:47] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"history"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:43:47] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:43:47.842Z
+[2025-10-15 13:43:47] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"organizations"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:43:48] [INFO] [DATA] Items fetched in category 'history': 0
+[2025-10-15 13:43:48] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:43:48] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:43:48.066Z (duration: 231ms)
+[2025-10-15 13:43:48] [INFO] [REQ] GET /api/worldbuilding/history?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (232ms)
+[2025-10-15 13:43:48] [INFO] [DATA] Items fetched in category 'organizations': 0
+[2025-10-15 13:43:48] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:43:48] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:43:48.072Z (duration: 230ms)
+[2025-10-15 13:43:48] [INFO] [REQ] GET /api/worldbuilding/organizations?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (231ms)
+[2025-10-15 13:43:48] [INFO] [START] /api/worldbuilding/:category at 2025-10-15T05:43:48.074Z
+[2025-10-15 13:43:48] [INFO] [REQUEST] /api/worldbuilding/:category request with params: {"category":"organizations"}, query: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2"}
+[2025-10-15 13:43:48] [INFO] [DATA] Items fetched in category 'organizations': 0
+[2025-10-15 13:43:48] [INFO] [DATA] Returning world-building items: 
+[2025-10-15 13:43:48] [INFO] [END] /api/worldbuilding/:category at 2025-10-15T05:43:48.298Z (duration: 224ms)
+[2025-10-15 13:43:48] [INFO] [REQ] GET /api/worldbuilding/organizations?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (224ms)
