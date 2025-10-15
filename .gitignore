@@ -15,3 +15,5 @@ build/
 
 react-website/src/Firebase/structuredcreativeplanning-firebase-adminsdk-y05ga-29db951c0a.json
 backend/Firebase/structuredcreativeplanning-fdea4acca240.json
+backend/node_modules
+backend/servers/logs/
