@@ -53,7 +53,7 @@ async function migrateEventOrder() {
                 };
 
                 await set(eventRef, updatedEvent);
-                console.log(`  ✓ Event ${eventKey} - Added order: ${order}`);
+                console.log(`  [PASS] Event ${eventKey} - Added order: ${order}`);
                 userEventCount++;
                 totalEventsMigrated++;
             }

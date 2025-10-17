@@ -38,8 +38,8 @@ def log_duration(section_name):
         log.info(f"⏱ END: {section_name} (took {duration:.3f}s)\n")
 
 # ----- Endpoints (edit if needed) -----
-BASE_URL_DT = "http://10.163.9.197:5003"   # DeepThinker Flask server
-BASE_URL_BS = "http://10.163.9.197:5002"   # BrainStamp (?) Flask server
+BASE_URL_DT = "http://10.163.2.53:5003"   # DeepThinker Flask server
+BASE_URL_BS = "http://10.163.2.53:5002"   # BrainStamp (?) Flask server
 PM_URL = "http://localhost:5001"        # Profile Manager (Node) server
 SESSION_API = "http://localhost:4000"   # Session service
 
@@ -69,11 +69,11 @@ def fetch_and_store_cache_stats(note="Snapshot"):
             r = requests.get(url, timeout=5)
             r.raise_for_status()
             stats = r.json()
-            log.info(f"✓ {label} Cache Stats:")
+            log.info(f"[PASS] {label} Cache Stats:")
             pretty_json(stats)
             all_test_cache_stats.append((label, stats))
         except Exception as e:
-            log.warning(f"⚠ Failed to fetch {label} cache-stats: {e}")
+            log.warning(f"[WARN] Failed to fetch {label} cache-stats: {e}")
 
 # ----- Tuesday tests (cache & chat) -----
 def test_cache_stats_endpoint():
@@ -81,22 +81,22 @@ def test_cache_stats_endpoint():
         ok = True
         try:
             rdt = requests.get(f"{BASE_URL_DT}/debug/cache-stats", timeout=5); rdt.raise_for_status()
-            log.info("✓ DT cache-stats OK")
+            log.info("[PASS] DT cache-stats OK")
         except Exception as e:
-            log.error(f"✗ DT cache-stats failed: {e}"); ok = False
+            log.error(f"[FAIL] DT cache-stats failed: {e}"); ok = False
 
         try:
             rbs = requests.get(f"{BASE_URL_BS}/debug/cache-stats", timeout=5); rbs.raise_for_status()
-            log.info("✓ BS cache-stats OK")
+            log.info("[PASS] BS cache-stats OK")
         except Exception as e:
-            log.error(f"✗ BS cache-stats failed: {e}"); ok = False
+            log.error(f"[FAIL] BS cache-stats failed: {e}"); ok = False
 
         # PM optional
         try:
             rpm = requests.get(f"{PM_URL}/api/cache-stats", timeout=5); rpm.raise_for_status()
-            log.info("✓ PM cache-stats OK")
+            log.info("[PASS] PM cache-stats OK")
         except Exception:
-            log.warning("⚠ PM cache-stats not reachable (optional)")
+            log.warning("[WARN] PM cache-stats not reachable (optional)")
 
         return ok
 
@@ -107,9 +107,9 @@ def test_repeated_metadata_calls():
             cr = requests.post(f"{SESSION_API}/session/create", json={"uid": TEST_UID}, timeout=10)
             cr.raise_for_status()
             session_id = cr.json().get("sessionID")
-            log.info(f"✓ Created test session: {session_id}")
+            log.info(f"[PASS] Created test session: {session_id}")
         except Exception as e:
-            log.error(f"✗ Failed to create test session: {e}")
+            log.error(f"[FAIL] Failed to create test session: {e}")
             return False
 
         # warm cache
@@ -118,7 +118,7 @@ def test_repeated_metadata_calls():
             requests.post(f"{SESSION_API}/session/get_metadata", json={"uid": TEST_UID, "sessionID": session_id}, timeout=10)
             time.sleep(0.5)
         except Exception as e:
-            log.error(f"✗ Warm-up failed: {e}")
+            log.error(f"[FAIL] Warm-up failed: {e}")
             return False
 
         times = []
@@ -137,17 +137,17 @@ def test_repeated_metadata_calls():
             r.raise_for_status()
             stats = r.json()
             hit_rate = float(stats["metadata"]["hit_rate"].rstrip("%"))
-            log.info(f"✓ Cache hit rate (DT metadata): {hit_rate}%")
+            log.info(f"[PASS] Cache hit rate (DT metadata): {hit_rate}%")
             # store snapshot
             all_test_cache_stats.append(("DT", stats))
             if hit_rate >= 70.0:
-                log.info("✓ PASS: Cache hit rate is good (>70%)")
+                log.info("[PASS] PASS: Cache hit rate is good (>70%)")
                 return True
             else:
-                log.warning(f"✗ FAIL: Cache hit rate too low ({hit_rate}% < 70%)")
+                log.warning(f"[FAIL] FAIL: Cache hit rate too low ({hit_rate}% < 70%)")
                 return False
         except Exception as e:
-            log.error(f"✗ Failed to fetch DT cache-stats: {e}")
+            log.error(f"[FAIL] Failed to fetch DT cache-stats: {e}")
             return False
 
 def test_response_time(base_url, label):
@@ -182,13 +182,13 @@ def test_response_time(base_url, label):
             except Exception:
                 pass
             if avg_time < 10.0:
-                log.info(f"✓ PASS: {label} response times acceptable")
+                log.info(f"[PASS] PASS: {label} response times acceptable")
                 return True
             else:
-                log.warning(f"✗ FAIL: {label} response too slow (avg {avg_time:.3f}s)")
+                log.warning(f"[FAIL] FAIL: {label} response too slow (avg {avg_time:.3f}s)")
                 return False
         except Exception as e:
-            log.error(f"✗ {label} response time test failed: {e}")
+            log.error(f"[FAIL] {label} response time test failed: {e}")
             return False    
 
 def test_background_separation(base_url, label):
@@ -213,17 +213,17 @@ def test_background_separation(base_url, label):
             pass
 
         if has_message and elapsed < 15.0:
-            log.info(f"✓ PASS: {label} immediate response with message")
+            log.info(f"[PASS] PASS: {label} immediate response with message")
             return True
         elif not has_message and has_background:
-            log.warning(f"⚠ WARNING: {label} background-only response detected")
+            log.warning(f"[WARN] WARNING: {label} background-only response detected")
             return True
         else:
-            log.warning(f"✗ FAIL: {label} response took too long or missing message")
+            log.warning(f"[FAIL] FAIL: {label} response took too long or missing message")
             return False
 
     except Exception as e:
-        log.error(f"✗ {label} background separation test failed: {e}")
+        log.error(f"[FAIL] {label} background separation test failed: {e}")
         return False
 
 def test_cache_invalidation_session_api():
@@ -242,14 +242,14 @@ def test_cache_invalidation_session_api():
             "uid": TEST_UID, "sessionID": session_id, "updates": {"testField": "testValue"}, "mode": "shared"
         }, timeout=20)
         upd.raise_for_status()
-        log.info("  ✓ Metadata updated")
+        log.info("  [PASS] Metadata updated")
 
         # get again
         r2 = requests.post(f"{SESSION_API}/session/get_metadata", json={"uid": TEST_UID, "sessionID": session_id}, timeout=20)
         r2.raise_for_status()
         data = r2.json()
         if data.get("metadata", {}).get("shared", {}).get("testField") == "testValue":
-            log.info("  ✓ Fresh data retrieved after update")
+            log.info("  [PASS] Fresh data retrieved after update")
             # snapshot DT/BS caches
             try:
                 all_test_cache_stats.append(("DT", requests.get(f"{BASE_URL_DT}/debug/cache-stats", timeout=5).json()))
@@ -261,10 +261,10 @@ def test_cache_invalidation_session_api():
                 pass
             return True
         else:
-            log.warning("✗ FAIL: Stale cache data returned")
+            log.warning("[FAIL] FAIL: Stale cache data returned")
             return False
     except Exception as e:
-        log.error(f"✗ Cache invalidation test failed: {e}")
+        log.error(f"[FAIL] Cache invalidation test failed: {e}")
         return False
 
 # ----- Wednesday tests (Profile Manager / batching) -----
@@ -285,18 +285,18 @@ def test_batch_endpoint():
         elapsed = time.time() - start
         data = r.json()
         results = data.get("results", [])
-        log.info(f"  ✓ Batch request completed in {elapsed:.3f}s")
-        log.info(f"  ✓ Returned {len(results)} results")
+        log.info(f"  [PASS] Batch request completed in {elapsed:.3f}s")
+        log.info(f"  [PASS] Returned {len(results)} results")
         if len(results) != 3:
-            log.warning(f"  ✗ Expected 3 results, got {len(results)}")
+            log.warning(f"  [FAIL] Expected 3 results, got {len(results)}")
             return False
         for i, res in enumerate(results):
             if "data" in res:
                 t = type(res["data"]).__name__
                 cnt = len(res["data"]) if hasattr(res["data"], "__len__") else "?"
-                log.info(f"  ✓ Result {i+1}: {t} with {cnt} items")
+                log.info(f"  [PASS] Result {i+1}: {t} with {cnt} items")
             elif "error" in res:
-                log.error(f"  ⚠ Result {i+1}: Error: {res['error']}")
+                log.error(f"  [WARN] Result {i+1}: Error: {res['error']}")
         # snapshot PM cache-stats
         try:
             pm_stats = requests.get(f"{PM_URL}/api/cache-stats", timeout=5).json()
@@ -305,7 +305,7 @@ def test_batch_endpoint():
             pass
         return True
     except Exception as e:
-        log.error(f"✗ FAIL: Batch endpoint failed: {e}")
+        log.error(f"[FAIL] FAIL: Batch endpoint failed: {e}")
         return False
 
 def test_batch_vs_sequential():
@@ -332,13 +332,13 @@ def test_batch_vs_sequential():
         except Exception:
             pass
         if batch_time < seq_time:
-            log.info("✓ PASS: Batch is faster than sequential")
+            log.info("[PASS] PASS: Batch is faster than sequential")
             return True
         else:
-            log.warning("✗ FAIL: Batch is not faster (cache effects possible)")
+            log.warning("[FAIL] FAIL: Batch is not faster (cache effects possible)")
             return True
     except Exception as e:
-        log.error(f"✗ FAIL: Performance test failed: {e}")
+        log.error(f"[FAIL] FAIL: Performance test failed: {e}")
         return False
 
 def test_pm_cache():
@@ -367,13 +367,13 @@ def test_pm_cache():
         except Exception:
             pass
         if t2 < t1 * 0.6:
-            log.info("✓ PASS: PM cache improves performance")
+            log.info("[PASS] PASS: PM cache improves performance")
             return True
         else:
-            log.warning("⚠ WARNING: PM cache improvement not significant")
+            log.warning("[WARN] WARNING: PM cache improvement not significant")
             return True
     except Exception as e:
-        log.error(f"✗ FAIL: PM cache test failed: {e}")
+        log.error(f"[FAIL] FAIL: PM cache test failed: {e}")
         return False
 
 def test_cache_invalidation_pm():
@@ -390,10 +390,10 @@ def test_cache_invalidation_pm():
             "newData": {"label": "Test Cache Invalidation Node", "group": "Person"}
         }, timeout=20)
         st.raise_for_status()
-        log.info("  ✓ Staged a change")
+        log.info("  [PASS] Staged a change")
         r2 = requests.get(f"{PM_URL}/api/nodes", params={"userId": TEST_UID}, timeout=20)
         r2.raise_for_status()
-        log.info("  ✓ Re-read nodes after staging")
+        log.info("  [PASS] Re-read nodes after staging")
         try:
             stats = requests.get(f"{PM_URL}/api/cache-stats", timeout=5).json()
             all_test_cache_stats.append(("PM", stats))
@@ -401,7 +401,7 @@ def test_cache_invalidation_pm():
             pass
         return True
     except Exception as e:
-        log.error(f"✗ FAIL: PM cache invalidation test failed: {e}")
+        log.error(f"[FAIL] FAIL: PM cache invalidation test failed: {e}")
         return False
 
 def test_flask_batch_integration():
@@ -425,10 +425,10 @@ def test_flask_batch_integration():
             all_test_cache_stats.append(("PM", requests.get(f"{PM_URL}/api/cache-stats", timeout=5).json()))
         except Exception:
             pass
-        log.info("  ⚠ Check PM logs for '[BATCH]' entries to confirm batching")
+        log.info("  [WARN] Check PM logs for '[BATCH]' entries to confirm batching")
         return True
     except Exception as e:
-        log.error(f"✗ FAIL: Flask integration test failed: {e}")
+        log.error(f"[FAIL] FAIL: Flask integration test failed: {e}")
         return False
 
 def test_fallback_mechanism():
@@ -441,11 +441,11 @@ def test_fallback_mechanism():
             data = r.json()
             results = data.get("results", [])
             if results and "error" in results[0]:
-                log.info("  ✓ Batch returns structured error for invalid target")
-        log.info("✓ PASS: Error handling present (fallback check recommended in logs)")
+                log.info("  [PASS] Batch returns structured error for invalid target")
+        log.info("[PASS] PASS: Error handling present (fallback check recommended in logs)")
         return True
     except Exception as e:
-        log.warning(f"⚠ Partial pass: {e}")
+        log.warning(f"[WARN] Partial pass: {e}")
         return True
 
 def test_concurrent_batches():
@@ -472,13 +472,13 @@ def test_concurrent_batches():
         except Exception:
             pass
         if errors:
-            log.warning("⚠ Some concurrent requests failed (check PM logs)")
+            log.warning("[WARN] Some concurrent requests failed (check PM logs)")
             return True
         else:
-            log.info("✓ PASS: Concurrent batch handling OK")
+            log.info("[PASS] PASS: Concurrent batch handling OK")
             return True
     except Exception as e:
-        log.error(f"✗ FAIL: Concurrent test failed: {e}")
+        log.error(f"[FAIL] FAIL: Concurrent test failed: {e}")
         return False
 
 # ----- Aggregate and overall cache efficiency -----
@@ -516,7 +516,7 @@ def compute_overall_cache_efficiency():
                 pm_links_hits += pl_h; pm_links_misses += pl_m
                 pm_events_hits += pe_h; pm_events_misses += pe_m
         except Exception as e:
-            log.error(f"⚠ Skipped malformed stats for {label}: {e}")
+            log.error(f"[WARN] Skipped malformed stats for {label}: {e}")
 
     def pct(h, m):
         return (h / (h + m)) if (h + m) > 0 else None
@@ -548,17 +548,17 @@ def compute_overall_cache_efficiency():
     total_misses = dt_misses + bs_misses + pm_nodes_misses + pm_links_misses + pm_events_misses
     overall = (total_hits / (total_hits + total_misses)) if (total_hits + total_misses) > 0 else None
     if overall is not None:
-        log.info(f"  → Overall Cache Hit Rate (combined): {overall:.2%} (hits={total_hits}, misses={total_misses})")
+        log.info(f"  -> Overall Cache Hit Rate (combined): {overall:.2%} (hits={total_hits}, misses={total_misses})")
     else:
-        log.info("  → Overall Cache Hit Rate: No data")
+        log.info("  -> Overall Cache Hit Rate: No data")
 
     return overall
 
 # ----- Run all tests in order -----
 def run_all_tests():
-    log.info("█" * 60)
+    log.info("=" * 60)
     log.info("FULL PERFORMANCE VALIDATION SUITE — Tuesday + Wednesday checks")
-    log.info("█" * 60)
+    log.info("=" * 60)
 
     results = {}
 
@@ -614,20 +614,20 @@ def run_all_tests():
     passed = sum(1 for v in results.values() if v)
     total = len(results)
     for name, ok in results.items():
-        log.info(f"  {'✓ PASS' if ok else '✗ FAIL'}: {name}")
+        log.info(f"  {'[PASS] PASS' if ok else '[FAIL] FAIL'}: {name}")
     log.info(f"\n  Score: {passed}/{total} tests passed")
 
     if overall_cache is not None and overall_cache >= 0.7:
-        log.info("  ✓ PASS: Combined effective cache hit rate acceptable (>=70%)")
+        log.info("  [PASS] PASS: Combined effective cache hit rate acceptable (>=70%)")
     else:
-        log.warning("  ✗ FAIL: Combined effective cache hit rate below threshold (70%) or no data")
+        log.warning("  [FAIL] FAIL: Combined effective cache hit rate below threshold (70%) or no data")
 
     # final decision
     if passed >= total - 1:
-        log.info("\n  ✓✓✓ SUITE PASSED (allowing 1 failure) ✓✓✓")
+        log.info("\n  [PASS][PASS][PASS] SUITE PASSED (allowing 1 failure) [PASS][PASS][PASS]")
         return True
     else:
-        log.warning(f"\n  ✗✗✗ {total - passed} TESTS FAILED ✗✗✗")
+        log.warning(f"\n  [FAIL][FAIL][FAIL] {total - passed} TESTS FAILED [FAIL][FAIL][FAIL]")
         return False
 
 if __name__ == "__main__":

@@ -246,22 +246,35 @@ CPS-SPECIFIC JSON ACTION SCHEMAS (YOU MUST OUTPUT THESE EXACTLY)
     "reasoning": "User proposed an idea; logging it for CPS",
     "data": {
       "idea": "The idea text exactly as user said or confirmed",
-      "ideaId": null,                       # MUST be null / omitted for new idea—backend will assign ID
-      "evaluations": {                      # optional at Ideate; recommended in Develop
-        "flexibilityCategory": "Character|Plot|Setting|Theme|Mechanic|Other",
-        "elaboration": "Low|Medium|High",
-        "originality": "Low|Medium|High",
-        "reasoning": "Short rationale for these scores"
+      "ideaId": null,
+      "evaluations": {
+        "flexibilityCategory": "Character|Plot|Setting|Theme|Mechanic|Other",  # REQUIRED
+        "elaboration": "Low",        # Default to Low if uncertain
+        "originality": "Low",        # Default to Low if uncertain
+        "reasoning": "Initial assessment - will refine in Develop stage"
       }
     }
   },
   {
     "action": "respond",
     "reasoning": "Short note about intent",
-    "data": { "message": "Conversational text for the user (reworded CFM prompt or explanation of action for user)" }
+    "data": { "message": "Conversational text for the user" }
   }
 ]
-- IMPORTANT: For *new* ideas leave ideaId null. The backend will push the idea and return an id that will appear in future session_snapshot.
+- IMPORTANT: Always include at least flexibilityCategory when logging ideas.
+- For Clarify/Ideate stages, use Low scores with reasoning "Logged for later evaluation"
+- For Develop stage, provide detailed evaluations with specific reasoning
+```
+
+And update the Ideate stage instructions:
+```
+2) Ideate (Divergence)
+   - Encourage many user-generated ideas; do not evaluate deeply.
+   - Log each user idea via `log_idea` action with BASIC evaluations:
+     * Always include flexibilityCategory (Character/Plot/Setting/etc)
+     * Set elaboration="Low", originality="Low" 
+     * Add reasoning="Logged for evaluation in Develop stage"
+   - Full evaluation (Medium/High scores) happens in Develop stage
 
 4) evaluate_idea
 [
@@ -353,39 +366,30 @@ CPS-SPECIFIC JSON ACTION SCHEMAS (YOU MUST OUTPUT THESE EXACTLY)
 }
 
 ---------------------------
-PROFILE MANAGER / ENTITY JSON SCHEMAS (KEEP THESE EXACT)
-Core Functions:
+PROFILE MANAGER / ENTITY JSON SCHEMAS (UPDATED WITH WORLD-BUILDING)
 
+Core Functions:
 1. Entity Tracking
-- Track story entities: characters, organizations, and locations.
-- Track links: relationships between entities.
-- Track events: plot points or story occurrences.
+- Track story entities: characters, organizations, locations
+- Track links: relationships between entities
+- Track events: plot points or story occurrences
+- Track world-building: magic systems, cultures, locations, technology, history, organizations
 
 2. Conversation Rules
-- Prioritize clarifying questions before creating or modifying entities.
-- Only stage changes when the user has provided enough detail.
-- Always check if the entity already exists before staging to avoid duplicates.
-- Include a "reasoning" field explaining why an action is suggested.
+- Prioritize clarifying questions before creating or modifying entities
+- Only stage changes when the user has provided enough detail
+- Always check if the entity already exists before staging to avoid duplicates
+- Include a "reasoning" field explaining why an action is suggested
 
 3. Profile Manager Operations
-- Fetch information: Use get_info to retrieve details about nodes, links, or events.
-- Clarify information: Use query to ask the user for missing or ambiguous details.
-- Stage changes: Use stage_change to create or update nodes, links, or events.
-- When exploring a character’s relationships, automatically fetch all related links and provide context before asking further questions.
-- Only stage changes after sufficient discussion with the user.
+- Fetch information: Use get_info to retrieve details about nodes, links, events, OR world-building
+- Clarify information: Use query to ask the user for missing or ambiguous details
+- Stage changes: Use stage_change to create or update nodes, links, events, OR world-building
+- Only stage changes after sufficient discussion with the user
 
 4. JSON Schemas
 
-- Respond
-[
-  {
-    "action": "respond",
-    "reasoning": "Optional explanation",
-    "data": { "message": "Hello! Who would you like to discuss today?" }
-  }
-]
-
-- Get Info / Query
+- Get Info / Query (UPDATED - now supports world-building)
 [
   {
     "action": "get_info|query",
@@ -393,9 +397,26 @@ Core Functions:
     "data": {
       "requests": [
         {
-          "target": "nodes|links|events|pending_changes",
+          "target": "nodes|links|events|pending_changes|worldbuilding",
           "entity_id": "optional",
-          "payload": { "filters": { ... } },
+          "payload": { 
+            "filters": { 
+              // For nodes:
+              "label": "character name",
+              "group": "Person|Organization|Location",
+              
+              // For links:
+              "participants": ["name1", "name2"],
+              
+              // For events:
+              "description": "substring",
+              
+              // For world-building (NEW):
+              "category": "magicSystems|cultures|locations|technology|history|organizations",
+              "name": "optional substring search",
+              "parentKey": "optional parent Firebase key"
+            } 
+          },
           "message": "Explain why this info is needed"
         }
       ]
@@ -404,11 +425,11 @@ Core Functions:
   {
     "action": "respond",
     "reasoning": "Short note about intent",
-    "data": { "message": "Conversational text for the user (reworded CFM prompt or explanation of action for user)" }
+    "data": { "message": "Conversational text for the user" }
   }
 ]
 
-- Stage Change
+- Stage Change (UPDATED - now supports world-building)
 [
   {
     "action": "stage_change",
@@ -416,38 +437,37 @@ Core Functions:
     "data": {
       "requests": [
         {
-          "entityType": "node|link|event",
-          "entityId": null,
-          "newData": { ... }
-        }
-      ]
-    }
-  },
-  {
-    "action": "respond",
-    "reasoning": "Short note about intent",
-    "data": { "message": "Conversational text for the user (reworded CFM prompt or explanation of action for user)" }
-  }
-]
-- For *new* nodes/links/events set `entityId` null; backend will assign. For updates, use backend-provided IDs from session_snapshot.
-
-Examples:
-
-- Node creation:
-[
-  {
-    "action": "stage_change",
-    "reasoning": "Creating a new character node based on user's input",
-    "data": {
-      "requests": [
-        {
-          "entityType": "node",
-          "entityId": null,
-          "newData": {
-            "label": "Alice Johnson",
+          "entityType": "node|link|event|worldBuilding-{category}",
+          "entityId": null,  # null for new; existing ID for updates
+          "newData": { 
+            // For nodes:
+            "label": "Character Name",
             "group": "Person",
-            "aliases": "Alice, AJ",
-            "attributes": { "age": "32", "occupation": "detective" }
+            "aliases": "Alias1, Alias2",
+            "attributes": {...},
+            
+            // For links:
+            "node1": "Character Name",
+            "node2": "Other Name",
+            "type": "relationship type",
+            "context": "description",
+            
+            // For events:
+            "title": "Event Title",
+            "description": "...",
+            "date": "MM/DD/YYYY",
+            "order": 0,
+            
+            // For world-building (NEW):
+            // entityType: "worldBuilding-magicSystems"
+            "name": "Elemental Binding",
+            "type": "hard magic|soft magic|...",
+            "description": "...",
+            "parentKey": null,  # optional parent Firebase key
+            "attributes": {
+              "cost": "Physical stamina",
+              "limitation": "One element at a time"
+            }
           }
         }
       ]
@@ -456,25 +476,34 @@ Examples:
   {
     "action": "respond",
     "reasoning": "Short note about intent",
-    "data": { "message": "Conversational text for the user (reworded CFM prompt or explanation of action for user)" }
+    "data": { "message": "Conversational text for the user" }
   }
 ]
 
-- Link creation:
+WORLD-BUILDING CATEGORIES:
+- magicSystems: Magic systems, spells, enchantments
+- cultures: Societies, civilizations, ethnic groups
+- locations: World geography, realms, regions (distinct from entity nodes)
+- technology: Inventions, devices, scientific advances
+- history: Historical events, eras, timelines
+- organizations: Guilds, factions, institutions (world-level, not character-specific)
+
+WORLD-BUILDING USAGE EXAMPLES:
+
+Example 1: Check for existing magic system
 [
   {
-    "action": "stage_change",
-    "reasoning": "Both nodes exist, so creating a friendship link",
+    "action": "get_info",
+    "reasoning": "Need to check if Elemental Binding magic already exists before creating",
     "data": {
       "requests": [
         {
-          "entityType": "link",
-          "entityId": null,
-          "newData": {
-            "node1": "Alice Johnson",
-            "node2": "Bob Smith",
-            "type": "friends",
-            "context": "Work friends at Agency X"
+          "target": "worldbuilding",
+          "payload": {
+            "filters": {
+              "category": "magicSystems",  // MUST be one of the 6 valid categories
+              "name": "Elemental"
+            }
           }
         }
       ]
@@ -482,26 +511,32 @@ Examples:
   },
   {
     "action": "respond",
-    "reasoning": "Short note about intent",
-    "data": { "message": "Conversational text for the user (reworded CFM prompt or explanation of action for user)" }
+    "reasoning": "Acknowledge search",
+    "data": { "message": "Let me check if we have any elemental magic systems..." }
   }
 ]
 
-- Event creation:
+Example 2: Create new magic system (with validation)
 [
   {
     "action": "stage_change",
-    "reasoning": "The user has decided on a new plot point.",
+    "reasoning": "User provided enough detail about hard magic system with clear rules",
     "data": {
       "requests": [
         {
-          "entityType": "event",
-          "entityId": null,
+          "entityType": "worldBuilding-magicSystems",  // Format: worldBuilding-{category}
+          "entityId": null,  // null for new items
           "newData": {
-              "title": "Secret Meeting",
-              "description": "Alice meets Bob to discuss mission",
-              "date": "07/03/2023",
-              "order": 3
+            "name": "Elemental Binding",
+            "type": "hard magic",
+            "description": "Magic users can temporarily bind with elemental spirits to channel their power",
+            "parentKey": null,  // null for root-level items
+            "attributes": {
+              "cost": "Physical stamina proportional to element power",
+              "limitation": "Can only bind one element at a time",
+              "source": "Ancient pact with elemental spirits",
+              "rarity": "Rare - requires training from childhood"
+            }
           }
         }
       ]
@@ -509,11 +544,84 @@ Examples:
   },
   {
     "action": "respond",
-    "reasoning": "Short note about intent",
-    "data": { "message": "Conversational text for the user (reworded CFM prompt or explanation of action for user)" }
+    "reasoning": "Confirm staging",
+    "data": { 
+      "message": "I've staged the Elemental Binding magic system. It's a hard magic system with clear costs and limitations. Would you like to review it?" 
+    }
   }
 ]
 
+Example 3: Create hierarchical culture with parent
+[
+  {
+    "action": "stage_change",
+    "reasoning": "User wants to create a subculture within the Sand Wanderers",
+    "data": {
+      "requests": [
+        {
+          "entityType": "worldBuilding-cultures",
+          "entityId": null,
+          "newData": {
+            "name": "Oasis Keepers",
+            "type": "sedentary subculture",
+            "description": "A sect of Sand Wanderers who settled around permanent oases",
+            "parentKey": "-NxYz123abc",  // Firebase key of parent culture
+            "attributes": {
+              "relation": "Maintains trading posts for nomadic kin",
+              "specialization": "Water magic and agriculture"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "Explain relationship",
+    "data": { 
+      "message": "I've created the Oasis Keepers as a subculture of the Sand Wanderers. They're the settled branch that maintains the trading posts." 
+    }
+  }
+]
+
+VALIDATION RULES FOR WORLD-BUILDING:
+1. ALWAYS validate category is one of the 6 valid categories before staging
+2. Use "parentKey" (Firebase key) for hierarchical relationships, not "parentId"
+3. For NEW items, set entityId to null - backend assigns Firebase key
+4. For UPDATES, use the existing Firebase key from session_snapshot
+5. NEVER use world-building for character-specific entities (use nodes instead)
+IMPORTANT DISTINCTIONS:
+- Use "node" (group: Location) for specific places characters visit (e.g., "The Rusty Anchor Inn")
+- Use "worldBuilding-locations" for world geography (e.g., "The Scorched Desert Region")
+- Use "node" (group: Organization) for character-specific groups (e.g., "Detective Agency where Alice works")
+- Use "worldBuilding-organizations" for world-level institutions (e.g., "The Global Mage Council")
+
+WORLD-BUILDING CATEGORIES (MANDATORY LIST):
+The system supports exactly 6 world-building categories. You MUST use these exact names:
+
+1. "magicSystems" - Magic systems, spells, enchantments, supernatural powers
+   Examples: Elemental Binding, Rune Magic, Blood Magic, Divine Blessings
+
+2. "cultures" - Societies, civilizations, ethnic groups, cultural practices
+   Examples: Desert Nomads, Mountain Clans, City-State Merchants, Scholarly Orders
+
+3. "locations" - World geography, realms, regions, territories (NOT specific places)
+   Examples: The Scorched Desert, Northern Mountains, Floating Isles, Underdark
+   Note: Use "node" (group: Location) for specific places like "The Rusty Inn"
+
+4. "technology" - Inventions, devices, scientific advances, engineering
+   Examples: Airships, Gunpowder, Printing Press, Crystal Communication
+
+5. "history" - Historical events, eras, timelines, significant past occurrences
+   Examples: The Great War, Age of Dragons, Founding of the Empire, The Cataclysm
+
+6. "organizations" - Guilds, factions, institutions, world-level groups
+   Examples: Mage Council, Thieves Guild, Church of Light, Merchant Alliance
+   Note: Use "node" (group: Organization) for character-specific groups
+
+CRITICAL: Never invent new categories. Always use these exact 6 category names.
+
+---------------------------
 Behavior Guidelines:
 - Always return JSON matching the schemas above.
 - Include "reasoning" for every action.
@@ -523,17 +631,36 @@ Behavior Guidelines:
 - Do not generate IDs; use entity names only.
 
 FILTER RULES (mandatory):
+
+- For worldbuilding (/api/worldbuilding):
+  - REQUIRED filter: "category" (MUST be one of: magicSystems, cultures, locations, technology, history, organizations)
+  - Optional filters:
+    - "name": string (substring match, case-insensitive)
+    - "parentKey": string (Firebase key) or null for root items
+  - Examples:
+    // Get all magic systems
+    { "filters": { "category": "magicSystems" } }
+    
+    // Search for elemental magic
+    { "filters": { "category": "magicSystems", "name": "Elemental" } }
+    
+    // Get root-level cultures (no parent)
+    { "filters": { "category": "cultures", "parentKey": null } }
+    
+    // Get children of specific culture
+    { "filters": { "category": "cultures", "parentKey": "-NxYz123abc" } }
+
 - For nodes (/api/nodes):
   - Allowed filters:
-    - "label": string (this is the name of the node)
-    - "group": one of "Person", "Organization" or "Location"
+    - "label": string or array (node name/alias)
+    - "group": "Person" | "Organization" | "Location"
   - Example:
     { "filters": { "label": ["Alice Johnson", "AJ"] } }
 
 - For links (/api/links):
   - Preferred filter:
-    - "participants": string or array (node name(s)). Automatically resolves to matching links.
-  - Fallback filters (less common):
+    - "participants": string or array (node names, automatically resolves)
+  - Fallback filters:
     - "node1": string (name)
     - "node2": string (name)
   - Example:
@@ -546,10 +673,10 @@ FILTER RULES (mandatory):
     { "filters": { "description": "battle at the docks" } }
 
 - For pending changes (/api/pending-changes):
-  - No filters allowed.
+  - No filters allowed
   - Example:
     { "requests": [{ "target": "pending_changes" }] }
-
+    
 ---------------------------
 REWRITING RULE (MANDATORY)
 - When you receive a `cfm_prompt` object from the CFM:
@@ -565,6 +692,113 @@ ERROR / DUPLICATE HANDLING (MANDATORY)
   - Return a `respond` action acknowledging: e.g., `{"action":"respond","reasoning":"duplicate pending change acknowledged","data":{"message":"That change is already pending; would you like to...?"}}`
   - Continue conversation flow; do not block the session.
 
+---------------------------
+PROGRESS REPORTING (MANDATORY)
+---------------------------
+The session_snapshot includes a "stageProgress" field with real-time readiness assessment:
+
+{
+  "stageProgress": {
+    "current": "Ideate",
+    "ready": false,
+    "nextStage": "Develop",
+    "message": "3/5 ideas, 1/2 categories - Need: 2 more ideas, 1 more category",
+    "metrics": {
+      "hmwCount": 0,
+      "ideaCount": 3,
+      "categoryCount": 1,
+      "refinedCount": 0,
+      "highQualityCount": 0
+    }
+  }
+}
+
+MANDATORY: After EVERY log_idea or add_hmw action, include progress in your respond message.
+
+RESPONSE TEMPLATE:
+"[Acknowledge action]. **Progress:** [stageProgress.message]"
+
+EXAMPLES:
+
+Example 1 - After logging 3rd idea (not ready):
+[
+  {
+    "action": "log_idea",
+    "reasoning": "User provided plot twist idea",
+    "data": {
+      "idea": "The villain offers the mentor a deal",
+      "ideaId": null,
+      "evaluations": {
+        "flexibilityCategory": "Plot",
+        "elaboration": "Low",
+        "originality": "Low",
+        "reasoning": "Logged for Develop stage evaluation"
+      }
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "Acknowledge and report progress from snapshot",
+    "data": {
+      "message": "Great plot twist! I've logged the villain's deal. Let's keep going. What if we look at it from a different point of view..."
+    }
+  }
+]
+
+Example 2 - After logging 5th idea (backend auto-advanced):
+# Note: Backend auto-advanced, so next snapshot will show stage="Develop"
+[
+  {
+    "action": "log_idea",
+    "reasoning": "User provided 5th idea",
+    "data": {
+      "idea": "The betrayal reveals a prophecy",
+      "ideaId": null,
+      "evaluations": {
+        "flexibilityCategory": "Theme",
+        "elaboration": "Low",
+        "originality": "Low",
+        "reasoning": "Logged for Develop stage evaluation"
+      }
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "Celebrate milestone - backend auto-advanced stage",
+    "data": {
+      "message": "Excellent! The prophecy theme adds depth. We now have five ideas. Let's refine them. Which should we develop first?"
+    }
+  }
+]
+
+Example 3 - After 3rd HMW (backend auto-advanced):
+[
+  {
+    "action": "add_hmw",
+    "reasoning": "User provided 3rd HMW",
+    "data": {
+      "hmwQuestion": "How might we show the mentor's internal conflict?"
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "Celebrate Clarify completion",
+    "data": {
+      "message": "Perfect! We've automatically advanced to Ideate stage!** Let's start generating ideas. What comes to mind?"
+    }
+  }
+]
+
+CRITICAL RULES:
+1. ALWAYS read stageProgress from session_snapshot
+2. ALWAYS include progress.message in your response
+3. DO NOT call check_progress action - backend handles this automatically
+4. DO NOT calculate progress yourself - trust the snapshot data
+
+HOW TO DETECT AUTO-ADVANCEMENT:
+Compare session_snapshot.stage to the stage from previous messages:
+- If stage changed AND stageProgress.ready was true → Auto-advancement occurred
+  
 ---------------------------
 OUTPUT & SAFETY NOTES
 - Always return valid JSON matching one of the action schemas above.
@@ -666,7 +900,64 @@ def background_handle_action(actions, user_id, deepseek_messages, cfm_session):
             "finishedAt": time.time(),
         })
 
-
+def background_handle_action(actions, user_id, deepseek_messages, cfm_session):
+    """Run heavy background updates asynchronously with proper error handling."""
+    try:
+        # Force immediate logging to confirm thread started
+        print(f"[THREAD START] Thread ID: {threading.get_ident()}, Actions: {len(actions)}")
+        logger.info(f"[THREAD] Background thread started with {len(actions)} actions")
+        
+        thread_start = time.time()
+        
+        # Validate inputs
+        if not actions:
+            logger.warning("[THREAD] No actions to process")
+            return
+        
+        if not cfm_session:
+            logger.error("[THREAD] CRITICAL: cfm_session is None!")
+            return
+        
+        logger.info(f"[THREAD] Session ID: {cfm_session.session_id}")
+        logger.info(f"[THREAD] User ID: {user_id}")
+        
+        # Log each action before processing
+        for idx, act in enumerate(actions):
+            action_type = act.get("action") if isinstance(act, dict) else "unknown"
+            logger.info(f"[THREAD] Action {idx+1}/{len(actions)}: {action_type}")
+        
+        # Process actions
+        for i, act in enumerate(actions):
+            action_name = act.get("action", "unknown") if isinstance(act, dict) else "unknown"
+            logger.debug(f"[THREAD] Processing action {i+1}/{len(actions)}: {action_name}")
+            
+            action_start = time.time()
+            try:
+                handle_action(
+                    act, 
+                    user_id, 
+                    deepseek_messages, 
+                    cfm_session,
+                    update_status=None  # Don't use Firebase status in thread
+                )
+                action_time = time.time() - action_start
+                logger.info(f"[THREAD] Completed action {action_name} in {action_time:.3f}s")
+            except Exception as e:
+                logger.error(f"[THREAD] Action {action_name} failed: {e}")
+                logger.exception(f"[THREAD] Traceback:")
+                # Continue processing other actions
+                continue
+        
+        thread_time = time.time() - thread_start
+        logger.info(f"[THREAD] Background thread completed in {thread_time:.3f}s")
+        
+    except Exception as e:
+        # This catches ANY exception that would kill the thread
+        logger.exception(f"[THREAD] CRITICAL: Background thread crashed: {e}")
+        print(f"[THREAD CRASH] {e}")  # Also print to console
+        import traceback
+        traceback.print_exc()
+        
 def parse_markdown(md_text, output="text"):
     logger.debug(f"Parsing markdown. Output format: {output}")
     if not md_text:
@@ -849,12 +1140,62 @@ def fetch_profile_data_sequential(requests_list, user_id):
     return profile_data
 
 def fetch_profile_data(req_obj, user_id):
+    """
+    Fetch profile data including world-building items.
+    """
     logger.debug(f"Fetching profile data for user {user_id} with request: {req_obj}")
+    
     target = req_obj.get("target")
     payload = req_obj.get("payload", {})
     filters = payload.get("filters", {})
     entity_id = req_obj.get("entity_id")
 
+    # WORLD-BUILDING TARGET
+    if target == "worldbuilding":
+        category = filters.get("category")
+        if not category:
+            return {"error": "worldbuilding target requires 'category' filter"}
+        
+        # Validate category
+        valid_categories = ["magicSystems", "cultures", "locations", 
+                          "technology", "history", "organizations"]
+        if category not in valid_categories:
+            return {
+                "error": f"Invalid category '{category}'. Must be one of: {', '.join(valid_categories)}"
+            }
+
+        url = f"{PROFILE_MANAGER_URL}/worldbuilding/{category}"
+        
+        # Build query params
+        params = {"userId": user_id}
+        if filters.get("name"):
+            params["name"] = filters["name"]
+        if "parentKey" in filters:
+            params["parentKey"] = filters["parentKey"]
+        
+        try:
+            logger.debug(f"Fetching world-building: {url} with params {params}")
+            resp = requests.get(url, params=params)
+            resp.raise_for_status()
+            data = resp.json()
+
+            logger.debug(f"World-building response: {len(data) if isinstance(data, dict) else 'N/A'} items")
+            
+            return data or {"data": {}}
+        
+        except requests.HTTPError as e:
+            if e.response.status_code == 404:
+                return {"data": {}}
+            
+            error_msg = f"HTTP {e.response.status_code}: {e.response.text}"
+            logger.error(f"World-building fetch failed: {error_msg}")
+            return {"error": error_msg}
+        
+        except Exception as e:
+            logger.exception(f"Error fetching world-building: {e}")
+            return {"error": str(e)}
+    
+    # EXISTING TARGETS (nodes, links, events, pending_changes)
     if target == "nodes":
         url = f"{PROFILE_MANAGER_URL}/nodes/{entity_id}" if entity_id else f"{PROFILE_MANAGER_URL}/nodes"
     elif target == "links":
@@ -887,9 +1228,6 @@ def fetch_profile_data(req_obj, user_id):
     except Exception as e:
         logger.exception(f"Unexpected error fetching profile data: {e}")
         return {"error": str(e)}
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 # -------------------- STAGING --------------------
 def process_node_request(req_obj, user_id):
@@ -952,7 +1290,45 @@ def process_event_request(req_obj, user_id):
     logger.debug(f"[STAGING] POST /stage-change response: {resp.text}")
     return resp.json()
 
+def process_worldbuilding_request(req_obj, user_id, etype):
+    """Stage world-building changes to Profile Manager."""
+    logger.debug(f"[STAGING] process_worldbuilding_request called with req_obj: {req_obj}, user_id: {user_id}")
 
+    if not etype or not etype.startswith("worldBuilding-"):
+        return {"error": f"Invalid world-building entityType: {etype}"}
+    
+    category = etype.replace("worldBuilding-", "")
+    
+    valid_categories = ["magicSystems", "cultures", "locations", 
+                       "technology", "history", "organizations"]
+    if category not in valid_categories:
+        return {"error": f"Invalid world-building category: {category}. Must be one of: {', '.join(valid_categories)}"}
+    
+    try:
+        # Stage the world-building change
+        staging_resp = requests.post(
+            f"{PROFILE_MANAGER_URL}/stage-change",
+            json={
+                "userId": user_id,
+                "entityType": etype,  # "worldBuilding-magicSystems"
+                "entityId": req_obj.get("entityId"),  # Firebase key or None for new
+                "newData": req_obj["newData"]
+            },
+            timeout=10.0
+        )
+        staging_resp.raise_for_status()
+        resp = staging_resp.json()
+        logger.debug(f"[STAGING] World-building staging response: {resp}")
+        return resp
+        
+    except requests.HTTPError as e:
+        error_msg = f"HTTP {e.response.status_code}: {e.response.text}"
+        logger.error(f"[STAGING] World-building staging failed: {error_msg}")
+        return {"error": error_msg}
+    except Exception as e:
+        logger.exception(f"[STAGING] World-building staging exception: {e}")
+        return {"error": str(e)}
+                                    
 # -------------------- ACTION HANDLER BRAINSTORMING --------------------
 def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0, update_status=None):
     """Recursively handle DeepSeek actions."""
@@ -1028,18 +1404,18 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0,
                 update_status("processing", "Adding new HMW question")
             q = data.get("hmwQuestion")
             if q:
-                cfm_session.add_hmw_question(q)
-                logger.debug(f"[ACTION] Added HMW: {q}")
-
+                hmw_count = cfm_session.add_hmw_question(q)
+                logger.debug(f"[ACTION] Added HMW: {q}, total count: {hmw_count}")
+                
         elif action == "log_idea":
             if update_status:
                 update_status("processing", "Logging new idea")
             idea_text = data.get("idea")
             evals = data.get("evaluations", {})
             if idea_text:
-                cfm_session.log_idea(idea_text, evals)
-                logger.debug(f"[ACTION] Logged idea: {idea_text}, Evaluations: {evals}")
-
+                idea_id = cfm_session.log_idea(idea_text, evals)
+                logger.debug(f"[ACTION] Logged idea {idea_id}")
+                
         elif action == "evaluate_idea":
             if update_status:
                 update_status("processing", "Evaluating idea")
@@ -1167,31 +1543,41 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0,
                     bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
 
                 combined_result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1)
-
+        
         elif action == "stage_change":
             if update_status:
-              update_status("processing", "Staging changes to story database...")
+                update_status("processing", "Staging changes to story database...")
             
             staging_start = time.time()
             staged_summaries = []
+            
             for req in requests_list:
                 etype = req.get("entityType")
+                
                 if etype == "node":
                     resp = process_node_request(req, user_id)
                 elif etype == "link":
                     resp = process_link_request(req, user_id)
                 elif etype == "event":
                     resp = process_event_request(req, user_id)
+                elif etype and etype.startswith("worldBuilding-"):
+                    resp = process_worldbuilding_request(req, user_id, etype)
                 else:
-                    resp = {"error": f"Unknown entityType {etype}"}
+                    resp = {"error": f"Unknown entityType: {etype}"}
+                
                 staged_summaries.append(resp)
+                logger.debug(f"[STAGING] Staged {etype}: {resp}")
 
             staging_time = time.time() - staging_start
             logger.info(f"[TIMING] Staging operations took {staging_time:.3f}s")
 
             for s in staged_summaries:
-                cfm_session.save_message("system", f"STAGING RESULT: {json.dumps(s)}",
-                                        action="stage_result", visible=False)
+                cfm_session.save_message(
+                    "system", 
+                    f"STAGING RESULT: {json.dumps(s)}",
+                    action="stage_result", 
+                    visible=False
+                )
 
             combined_result["staging_results"] = staged_summaries
             logger.debug(f"[ACTION] Completed stage_change, summaries: {staged_summaries}")
@@ -1207,7 +1593,7 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0,
 # -------------------- CHAT ENDPOINT --------------------
 @app.route("/chat", methods=["POST"])
 def chat():
-    request_start = time.time()  # START TIMING
+    request_start = time.time()
     logger.debug("[CHAT] /chat endpoint called")
     data = request.json
     user_message = data.get("message")
@@ -1217,27 +1603,75 @@ def chat():
     if not user_message or not user_id:
         logger.warning("[CHAT] Missing message or user_id")
         return jsonify({"error": "Message and user_id are required"}), 400
-
+    
     # ------------------ INIT BS SESSION ------------------
     try:
-        session_init_start = time.time()
-        if session_id:
-            try:
-                cfm_session = BSConversationFlowManager(user_id, session_id)
-            except Exception as e:
-                logger.warning(f"[WARN] Invalid session_id {session_id}, creating new. Error: {e}")
+            session_init_start = time.time()
+            if session_id:
+                try:
+                    cfm_session = BSConversationFlowManager(user_id, session_id)
+                except Exception as e:
+                    logger.warning(f"[WARN] Invalid session_id {session_id}, creating new. Error: {e}")
+                    cfm_session = BSConversationFlowManager.create_session(user_id)
+                    session_id = cfm_session.session_id
+            else:
                 cfm_session = BSConversationFlowManager.create_session(user_id)
                 session_id = cfm_session.session_id
-        else:
-            cfm_session = BSConversationFlowManager.create_session(user_id)
-            session_id = cfm_session.session_id
-            logger.info(f"[INFO] New session created: {session_id}")
-        
-        session_init_time = time.time() - session_init_start
-        logger.info(f"[TIMING] Session init took {session_init_time:.3f}s")
+                logger.info(f"[INFO] New session created: {session_id}")
+            
+            session_init_time = time.time() - session_init_start
+            logger.info(f"[TIMING] Session init took {session_init_time:.3f}s")
     except Exception as e:
         logger.exception(f"Failed to initialize BS session: {e}")
         return jsonify({"error": f"Failed to initialize BS session: {e}"}), 500
+
+    # ========== DEFERRED AUTO-ADVANCE CHECK ==========
+    # Check if previous actions should have triggered stage advance
+    try:
+        check_start = time.time()
+        
+        # Get current state from CFM
+        current_stage = cfm_session.get_stage()
+        bs_meta = cfm_session.get_metadata().get("brainstorming", {})
+        
+        hmw_count = len(bs_meta.get("hmwQuestions", {}))
+        ideas_meta = cfm_session.get_all_ideas()
+        idea_count = len(ideas_meta)
+        
+        categories = set()
+        for idea in ideas_meta.values():
+            cat = idea.get("evaluations", {}).get("flexibilityCategory")
+            if cat:
+                categories.add(cat)
+        category_count = len(categories)
+        
+        logger.debug(f"[AUTO-CHECK] stage={current_stage}, hmws={hmw_count}, ideas={idea_count}, cats={category_count}")
+        
+        auto_advanced = False
+        advanced_reason = ""
+        
+        # Check transitions - ONLY if not already advancing
+        if current_stage == "Clarify" and hmw_count >= 3:
+            logger.info(f"[AUTO-ADVANCE] Clarify → Ideate ({hmw_count} HMWs)")
+            cfm_session.switch_stage("Ideate", reasoning=f"Auto-advanced: {hmw_count} HMWs")
+            auto_advanced = True
+            advanced_reason = f"Auto-advanced Clarify→Ideate: {hmw_count} HMWs met"
+            logger.warning(f"[AUTO-CHECK] STAGE ADVANCED: {advanced_reason}")
+            
+        elif current_stage == "Ideate" and idea_count >= 5 and category_count >= 2:
+            logger.info(f"[AUTO-ADVANCE] Ideate → Develop ({idea_count} ideas, {category_count} cats)")
+            cfm_session.switch_stage("Develop", reasoning=f"Auto: {idea_count} ideas, {category_count} categories")
+            auto_advanced = True
+            advanced_reason = f"Auto-advanced Ideate→Develop: {idea_count} ideas, {category_count} categories"
+            logger.warning(f"[AUTO-CHECK] STAGE ADVANCED: {advanced_reason}")
+        
+        check_time = time.time() - check_start
+        logger.info(f"[TIMING] Auto-check took {check_time:.3f}s (auto_advanced={auto_advanced})")
+        
+    except Exception as e:
+        logger.error(f"[AUTO-CHECK] Failed: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
 
     # ------------------ SAVE USER MESSAGE ------------------
     try:
@@ -1282,14 +1716,35 @@ def chat():
         recent_msgs = []
 
     # ------------------ DEEPSEEK CALL ------------------
-    deepseek_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    for m in recent_msgs:
+    try:
+      session_snapshot = cfm_session.get_session_snapshot()
+      
+      deepseek_messages = [
+          {"role": "system", "content": SYSTEM_PROMPT},
+          {
+              "role": "system", 
+              "content": f"Session Context:\n{json.dumps(session_snapshot, indent=2)}"
+          }
+      ]
+      
+      for m in recent_msgs:
         deepseek_messages.append({
             "role": m["role"], 
             "content": m["content"]
         })
-    deepseek_messages.append({"role": "user", "content": user_message})
-    
+
+      deepseek_messages.append({"role": "user", "content": user_message})
+    except Exception as e:
+      logger.exception(f"Error generating snapshot: {e}")
+      deepseek_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+      
+      for m in recent_msgs:
+          deepseek_messages.append({
+              "role": m["role"], 
+              "content": m["content"]
+          })
+      deepseek_messages.append({"role": "user", "content": user_message})
+      
     try:
         llm_start = time.time()
         response = client.chat.completions.create(
@@ -1315,22 +1770,53 @@ def chat():
         parse_time = time.time() - parse_start
         logger.info(f"[TIMING] Response parsing took {parse_time:.3f}s")
 
-        # CRITICAL FIX: Separate respond from non-respond
         respond_actions = []
-        non_respond_actions = []
+        immediate_actions = []   # NEW: add_hmw, log_idea, check_progress - need auto-advance
+        background_actions = []  # get_info, stage_change - can be async
         
         # Handle both list and single dict
         actions_list = bot_reply_json if isinstance(bot_reply_json, list) else [bot_reply_json]
         
         for obj in actions_list:
             if isinstance(obj, dict):
-                if obj.get("action") == "respond":
+                action_type = obj.get("action")
+                
+                if action_type == "respond":
                     respond_actions.append(obj)
+                elif action_type in ["add_hmw", "log_idea", "check_progress", "evaluate_idea", "refine_idea"]:
+                    immediate_actions.append(obj)  # ← Process in main thread
                 else:
-                    non_respond_actions.append(obj)
+                    background_actions.append(obj)  # get_info, stage_change, query
         
-        logger.info(f"[CHAT] Found {len(respond_actions)} respond actions, {len(non_respond_actions)} background actions")
+        logger.info(f"[CHAT] Actions: {len(respond_actions)} respond, {len(immediate_actions)} immediate, {len(background_actions)} background")
 
+          # ========== PROCESS IMMEDIATE ACTIONS IN MAIN THREAD ==========
+        if immediate_actions:
+            logger.debug(f"[CHAT] Processing {len(immediate_actions)} immediate actions in main thread")
+            immediate_start = time.time()
+            
+            try:
+                immediate_result = handle_action(
+                    immediate_actions,
+                    user_id,
+                    recent_msgs,
+                    cfm_session,
+                    depth=0
+                )
+                
+                immediate_time = time.time() - immediate_start
+                logger.info(f"[TIMING] Immediate actions took {immediate_time:.3f}s")
+                
+                # CRITICAL: Force metadata refresh after immediate actions
+                logger.debug("[CHAT] Forcing metadata refresh after immediate actions")
+                cfm_session._refresh_metadata_cache()
+                cfm_session._refresh_ideas_cache()
+                
+            except Exception as e:
+                logger.error(f"[CHAT] Immediate action processing failed: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+                
         # Extract ONLY respond action for immediate return
         chat_message = None
         for obj in respond_actions:
@@ -1368,15 +1854,16 @@ def chat():
             "chat_message": chat_message,
             "session_id": session_id,
             "mode": "brainstorming",
-            "background_processing": len(non_respond_actions) > 0
+            "background_processing": len(background_actions) > 0
         }
 
-        # ------------------ BACKGROUND THREAD ------------------
-        if non_respond_actions:
-            logger.debug(f"[CHAT] Spawning background thread for {len(non_respond_actions)} actions")
+        # ------------------ BACKGROUND THREAD (ONLY FOR HEAVY OPS) ------------------
+        if background_actions:
+            logger.debug(f"[CHAT] Spawning background thread for {len(background_actions)} actions")
+            
             threading.Thread(
               target=background_handle_action,
-              args=(non_respond_actions, user_id, recent_msgs, cfm_session),
+              args=(background_actions, user_id, recent_msgs, cfm_session),
               daemon=True
             ).start()
             logger.debug("[CHAT] Background thread started")
@@ -1384,6 +1871,7 @@ def chat():
             logger.info("[CHAT] No background actions to process")
 
         return jsonify(result), 200
+
 
     except Exception as e:
         total_time = time.time() - request_start

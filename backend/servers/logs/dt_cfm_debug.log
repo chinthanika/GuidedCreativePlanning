@@ -1463,3 +1463,157 @@ AttributeError: 'str' object has no attribute 'get'
 2025-10-10 12:20:38,018 [DEBUG] [CACHE HIT] Metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObBLICJyr7HcNXknSYg
 2025-10-10 12:20:55,855 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=None
 2025-10-10 12:20:58,446 [DEBUG] [MESSAGE SAVE] Message saved with ID=-ObBLQWfCcfsxrpQgEAb
+2025-10-15 15:50:45,793 [DEBUG] [SESSION CREATE] Created session -ObaqOfZ5HDuSfLOZ1VE for uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2
+2025-10-15 15:50:48,082 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 15:50:48,082 [DEBUG] [INIT] DT session connected and metadata cached
+2025-10-15 15:50:48,088 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=None
+2025-10-15 15:50:48,090 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaqOfZ5HDuSfLOZ1VE
+2025-10-15 15:50:50,124 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 15:50:50,124 [INFO] [TIMING] Summary metadata fetch took 2.033s
+2025-10-15 15:50:50,671 [DEBUG] [MESSAGE SAVE] Message saved with ID=-ObaqPwJZZIikt_ZCS3D
+2025-10-15 15:50:52,440 [DEBUG] [CACHE MISS] Fetching metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaqOfZ5HDuSfLOZ1VE
+2025-10-15 15:50:54,740 [INFO] [TIMING] Metadata fetch took 2.300s
+2025-10-15 15:50:54,741 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaqOfZ5HDuSfLOZ1VE
+2025-10-15 15:50:56,792 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 15:50:56,792 [INFO] [TIMING] Summary metadata fetch took 2.051s
+2025-10-15 15:50:59,087 [DEBUG] [CACHE HIT] Metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaqOfZ5HDuSfLOZ1VE
+2025-10-15 15:51:10,400 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 15:51:10,401 [DEBUG] [INIT] DT session connected and metadata cached
+2025-10-15 15:51:10,402 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=None
+2025-10-15 15:51:10,403 [DEBUG] [CACHE HIT] Summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaqOfZ5HDuSfLOZ1VE
+2025-10-15 15:51:13,000 [DEBUG] [MESSAGE SAVE] Message saved with ID=-ObaqVNYsjxaAvBmKXY9
+2025-10-15 15:51:13,084 [DEBUG] [CACHE HIT] Metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaqOfZ5HDuSfLOZ1VE
+2025-10-15 15:51:13,084 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaqOfZ5HDuSfLOZ1VE
+2025-10-15 15:51:15,389 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 15:51:15,390 [INFO] [TIMING] Summary metadata fetch took 2.307s
+2025-10-15 15:51:17,688 [DEBUG] [CACHE HIT] Metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaqOfZ5HDuSfLOZ1VE
+2025-10-15 15:51:24,535 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=None
+2025-10-15 15:51:27,120 [DEBUG] [MESSAGE SAVE] Message saved with ID=-ObaqYpc23SigTwaMF3l
+2025-10-15 15:51:27,839 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 15:51:27,839 [DEBUG] [INIT] DT session connected and metadata cached
+2025-10-15 15:51:27,839 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=None
+2025-10-15 15:51:27,841 [DEBUG] [CACHE HIT] Summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaqOfZ5HDuSfLOZ1VE
+2025-10-15 15:51:30,168 [ERROR] [ERROR] get_recent_messages failed: 'str' object has no attribute 'get'
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\DTConversationFlowManager.py", line 469, in get_recent_messages
+    msgs = sorted(messages_snapshot.items(), key=lambda kv: kv[1].get("timestamp", 0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\DTConversationFlowManager.py", line 469, in <lambda>
+    msgs = sorted(messages_snapshot.items(), key=lambda kv: kv[1].get("timestamp", 0))
+                                                            ^^^^^^^^^
+AttributeError: 'str' object has no attribute 'get'
+2025-10-15 15:51:30,172 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaqOfZ5HDuSfLOZ1VE
+2025-10-15 15:51:30,434 [DEBUG] [MESSAGE SAVE] Message saved with ID=-ObaqZdG5bmxFBJRLDCd
+2025-10-15 15:51:32,221 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 15:51:32,221 [INFO] [TIMING] Summary metadata fetch took 2.049s
+2025-10-15 15:51:34,517 [DEBUG] [CACHE MISS] Fetching metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaqOfZ5HDuSfLOZ1VE
+2025-10-15 15:51:36,800 [INFO] [TIMING] Metadata fetch took 2.283s
+2025-10-15 15:53:11,397 [DEBUG] [SESSION CREATE] Created session -ObaqxDyuCGUvKnkwgXY for uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2
+2025-10-15 15:53:13,691 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 15:53:13,691 [DEBUG] [INIT] DT session connected and metadata cached
+2025-10-15 15:53:13,693 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=None
+2025-10-15 15:53:13,693 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaqxDyuCGUvKnkwgXY
+2025-10-15 15:53:15,742 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 15:53:15,742 [INFO] [TIMING] Summary metadata fetch took 2.049s
+2025-10-15 15:53:16,263 [DEBUG] [MESSAGE SAVE] Message saved with ID=-ObaqyTs6QRrWmFa2JE8
+2025-10-15 15:53:18,056 [DEBUG] [CACHE MISS] Fetching metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaqxDyuCGUvKnkwgXY
+2025-10-15 15:53:20,358 [INFO] [TIMING] Metadata fetch took 2.302s
+2025-10-15 15:53:20,358 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaqxDyuCGUvKnkwgXY
+2025-10-15 15:53:22,389 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 15:53:22,389 [INFO] [TIMING] Summary metadata fetch took 2.030s
+2025-10-15 15:53:24,708 [DEBUG] [CACHE HIT] Metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaqxDyuCGUvKnkwgXY
+2025-10-15 15:53:29,552 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=None
+2025-10-15 15:53:32,256 [DEBUG] [MESSAGE SAVE] Message saved with ID=-Obar1Lfrf-baIkayjRh
+2025-10-15 15:54:30,154 [DEBUG] [SESSION CREATE] Created session -ObarFSHTRN-uB530sWm for uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2
+2025-10-15 15:54:32,485 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 15:54:32,486 [DEBUG] [INIT] DT session connected and metadata cached
+2025-10-15 15:54:32,487 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=None
+2025-10-15 15:54:32,488 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObarFSHTRN-uB530sWm
+2025-10-15 15:54:34,534 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 15:54:34,534 [INFO] [TIMING] Summary metadata fetch took 2.046s
+2025-10-15 15:54:35,019 [DEBUG] [MESSAGE SAVE] Message saved with ID=-ObarGhk8a0R4nfLjUeL
+2025-10-15 15:54:36,846 [DEBUG] [CACHE MISS] Fetching metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObarFSHTRN-uB530sWm
+2025-10-15 15:54:39,168 [INFO] [TIMING] Metadata fetch took 2.320s
+2025-10-15 15:54:39,168 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObarFSHTRN-uB530sWm
+2025-10-15 15:54:41,198 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 15:54:41,198 [INFO] [TIMING] Summary metadata fetch took 2.028s
+2025-10-15 15:54:43,506 [DEBUG] [CACHE HIT] Metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObarFSHTRN-uB530sWm
+2025-10-15 15:55:04,718 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=None
+2025-10-15 15:55:07,276 [DEBUG] [MESSAGE SAVE] Message saved with ID=-ObarO_ZS4jSO_oxUS-E
+2025-10-15 16:20:09,959 [DEBUG] [SESSION CREATE] Created session -Obax7MNhGZwOepWbc7- for uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2
+2025-10-15 16:20:12,304 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 16:20:12,304 [DEBUG] [INIT] DT session connected and metadata cached
+2025-10-15 16:20:12,306 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=None
+2025-10-15 16:20:12,307 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Obax7MNhGZwOepWbc7-
+2025-10-15 16:20:14,356 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 16:20:14,356 [INFO] [TIMING] Summary metadata fetch took 2.048s
+2025-10-15 16:20:14,884 [DEBUG] [MESSAGE SAVE] Message saved with ID=-Obax8cbwptJ9KB3q4KA
+2025-10-15 16:20:16,706 [DEBUG] [CACHE MISS] Fetching metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Obax7MNhGZwOepWbc7-
+2025-10-15 16:20:19,023 [INFO] [TIMING] Metadata fetch took 2.317s
+2025-10-15 16:20:19,024 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Obax7MNhGZwOepWbc7-
+2025-10-15 16:20:21,080 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 16:20:21,080 [INFO] [TIMING] Summary metadata fetch took 2.057s
+2025-10-15 16:20:23,401 [DEBUG] [CACHE HIT] Metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Obax7MNhGZwOepWbc7-
+2025-10-15 16:20:34,450 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 16:20:34,451 [DEBUG] [INIT] DT session connected and metadata cached
+2025-10-15 16:20:34,451 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=None
+2025-10-15 16:20:34,453 [DEBUG] [CACHE HIT] Summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Obax7MNhGZwOepWbc7-
+2025-10-15 16:20:36,748 [DEBUG] [CACHE HIT] Metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Obax7MNhGZwOepWbc7-
+2025-10-15 16:20:36,748 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Obax7MNhGZwOepWbc7-
+2025-10-15 16:20:37,372 [DEBUG] [MESSAGE SAVE] Message saved with ID=-ObaxE6zueX-zKLWf7Pj
+2025-10-15 16:20:38,803 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 16:20:38,803 [INFO] [TIMING] Summary metadata fetch took 2.054s
+2025-10-15 16:20:41,131 [DEBUG] [CACHE HIT] Metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Obax7MNhGZwOepWbc7-
+2025-10-15 16:20:45,864 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=None
+2025-10-15 16:20:48,425 [DEBUG] [MESSAGE SAVE] Message saved with ID=-ObaxGp0tS-Pqb65Oi3l
+2025-10-15 16:20:50,570 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 16:20:50,570 [DEBUG] [INIT] DT session connected and metadata cached
+2025-10-15 16:20:50,571 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=None
+2025-10-15 16:20:50,571 [DEBUG] [CACHE HIT] Summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Obax7MNhGZwOepWbc7-
+2025-10-15 16:20:53,222 [ERROR] [ERROR] get_recent_messages failed: 'str' object has no attribute 'get'
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\DTConversationFlowManager.py", line 469, in get_recent_messages
+    msgs = sorted(messages_snapshot.items(), key=lambda kv: kv[1].get("timestamp", 0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\DTConversationFlowManager.py", line 469, in <lambda>
+    msgs = sorted(messages_snapshot.items(), key=lambda kv: kv[1].get("timestamp", 0))
+                                                            ^^^^^^^^^
+AttributeError: 'str' object has no attribute 'get'
+2025-10-15 16:20:53,226 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Obax7MNhGZwOepWbc7-
+2025-10-15 16:20:53,491 [DEBUG] [MESSAGE SAVE] Message saved with ID=-ObaxI1RV2lZP0LpThth
+2025-10-15 16:20:55,285 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 16:20:55,286 [INFO] [TIMING] Summary metadata fetch took 2.059s
+2025-10-15 16:20:57,621 [DEBUG] [CACHE MISS] Fetching metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Obax7MNhGZwOepWbc7-
+2025-10-15 16:20:59,945 [INFO] [TIMING] Metadata fetch took 2.325s
+2025-10-15 16:23:30,000 [DEBUG] [SESSION CREATE] Created session -ObaxtBesMsBPKzSLMtS for uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2
+2025-10-15 16:23:32,361 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 16:23:32,362 [DEBUG] [INIT] DT session connected and metadata cached
+2025-10-15 16:23:32,364 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=None
+2025-10-15 16:23:32,371 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaxtBesMsBPKzSLMtS
+2025-10-15 16:23:34,460 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 16:23:34,462 [INFO] [TIMING] Summary metadata fetch took 2.089s
+2025-10-15 16:23:34,967 [DEBUG] [MESSAGE SAVE] Message saved with ID=-ObaxuU4x8I83Nt_JrM7
+2025-10-15 16:23:36,775 [DEBUG] [CACHE MISS] Fetching metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaxtBesMsBPKzSLMtS
+2025-10-15 16:23:39,126 [INFO] [TIMING] Metadata fetch took 2.350s
+2025-10-15 16:23:39,127 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaxtBesMsBPKzSLMtS
+2025-10-15 16:23:41,224 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 16:23:41,225 [INFO] [TIMING] Summary metadata fetch took 2.099s
+2025-10-15 16:23:43,529 [DEBUG] [CACHE HIT] Metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObaxtBesMsBPKzSLMtS
+2025-10-15 16:23:49,747 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=None
+2025-10-15 16:23:52,333 [DEBUG] [MESSAGE SAVE] Message saved with ID=-ObaxyiQc-__y60rqi60
+2025-10-15 16:24:49,282 [DEBUG] [SESSION CREATE] Created session -ObayBZGGGPBaMa7bCS3 for uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2
+2025-10-15 16:24:51,629 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 16:24:51,629 [DEBUG] [INIT] DT session connected and metadata cached
+2025-10-15 16:24:51,630 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=None
+2025-10-15 16:24:51,632 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObayBZGGGPBaMa7bCS3
+2025-10-15 16:24:53,709 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 16:24:53,710 [INFO] [TIMING] Summary metadata fetch took 2.078s
+2025-10-15 16:24:54,192 [DEBUG] [MESSAGE SAVE] Message saved with ID=-ObayCpDpAULif0liurt
+2025-10-15 16:24:56,028 [DEBUG] [CACHE MISS] Fetching metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObayBZGGGPBaMa7bCS3
+2025-10-15 16:24:58,343 [INFO] [TIMING] Metadata fetch took 2.314s
+2025-10-15 16:24:58,344 [DEBUG] [CACHE MISS] Fetching summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObayBZGGGPBaMa7bCS3
+2025-10-15 16:25:00,406 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'deepthinking', 'shared']
+2025-10-15 16:25:00,406 [INFO] [TIMING] Summary metadata fetch took 2.062s
+2025-10-15 16:25:02,714 [DEBUG] [CACHE HIT] Metadata for dt:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-ObayBZGGGPBaMa7bCS3
+2025-10-15 16:25:27,588 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=None
+2025-10-15 16:25:30,194 [DEBUG] [MESSAGE SAVE] Message saved with ID=-ObayLbAwKzVOQWfY7ad

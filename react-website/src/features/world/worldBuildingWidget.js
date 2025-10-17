@@ -286,7 +286,7 @@ const WorldBuildingWidget = () => {
             {toast && (
                 <div className={`toast toast-${toast.type}`}>
                     <span className="toast-icon">
-                        {toast.type === 'success' ? '✓' : '✕'}
+                        {toast.type === 'success' ? '[PASS]' : '✕'}
                     </span>
                     <span className="toast-message">{toast.message}</span>
                 </div>

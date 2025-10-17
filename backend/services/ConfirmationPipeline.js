@@ -31,7 +31,7 @@ const WORLDBUILDING_SCHEMAS = {
 };
 
 const VALID_WORLDBUILDING_CATEGORIES = Object.keys(WORLDBUILDING_SCHEMAS);
-const entityType = "WorldBuilding";
+
 export default class ConfirmationPipeline {
     constructor({ uid } = {}) {
         if (!uid) throw new Error("User ID is required");

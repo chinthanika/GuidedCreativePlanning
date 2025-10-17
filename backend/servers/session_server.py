@@ -16,17 +16,42 @@ from utils.Session import Session
 # ---------------- LOGGING SETUP ----------------
 os.makedirs("logs", exist_ok=True)
 log_file = "logs/session_api_debug.log"
+
+# Create handlers
 rotating_handler = RotatingFileHandler(
-    log_file, mode='a', maxBytes=5*1024*1024, backupCount=3, encoding=None, delay=0
+    log_file, 
+    mode='a', 
+    maxBytes=5*1024*1024, 
+    backupCount=3, 
+    encoding='utf-8',
+    delay=False  # Change to False or remove (False is default)
 )
+rotating_handler.setLevel(logging.DEBUG)
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
-    handlers=[rotating_handler, logging.StreamHandler()]
-)
+# Add this line to force immediate writes
+import sys
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
+rotating_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
+
 logger = logging.getLogger("SessionAPI")
+logger.setLevel(logging.DEBUG)
+logger.addHandler(rotating_handler)
+logger.addHandler(console_handler)
+logger.propagate = False
 
+# Force unbuffered output
+for handler in logger.handlers:
+    if isinstance(handler, RotatingFileHandler):
+        handler.stream.reconfigure(line_buffering=True)  # Python 3.7+
+
+
+logger.info("=" * 50)
+logger.info("SESSION SERVER STARTING UP")
+logger.info("=" * 50)
 # ---------------- FIREBASE INIT ----------------
 cred = credentials.Certificate("../Firebase/structuredcreativeplanning-fdea4acca240.json")
 firebase_admin.initialize_app(cred, {
@@ -87,8 +112,7 @@ def summarise_active_sessions():
         logger.info("[SessionAPI] Running scheduled summarisation job for all active sessions")
         
         active_sessions = Session.get_all_active_sessions()
-        logger.info(f"[SessionAPI] Found {len(active_sessions)} active sessions")
-        
+
         for session in active_sessions:
             try:
                 # Check message count BEFORE fetching
@@ -356,6 +380,24 @@ def get_current_angle():
     angle = session.get_metadata("deepthinking").get("currentAngle")
     logger.debug(f"Current angle for session={session.session_id}: {angle}")
     return jsonify({"currentAngle": angle})
+
+@app.route("/debug/session/<uid>/<session_id>", methods=["GET"])
+def debug_session(uid, session_id):
+    """Debug endpoint to inspect session structure."""
+    try:
+        ref = db.reference(f"chatSessions/{uid}/{session_id}")
+        data = ref.get()
+        
+        return jsonify({
+            "exists": data is not None,
+            "currentMode": data.get("currentMode") if data else None,
+            "metadata_keys": list(data.get("metadata", {}).keys()) if data else [],
+            "brainstorming": data.get("metadata", {}).get("brainstorming") if data else None,
+            "ideas_count": len(data.get("ideas", {})) if data else 0,
+            "full_data": data
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":

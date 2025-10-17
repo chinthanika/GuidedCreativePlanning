@@ -11,16 +11,37 @@ CACHE_TTL = 5  # 5 seconds
 # ---------------- LOGGING SETUP ----------------
 os.makedirs("logs", exist_ok=True)
 log_file = "logs/session_api_debug.log"
-rotating_handler = RotatingFileHandler(
-    log_file, mode='a', maxBytes=5*1024*1024, backupCount=3, encoding=None, delay=0
-)
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
-    handlers=[rotating_handler, logging.StreamHandler()]
+# Create handlers
+rotating_handler = RotatingFileHandler(
+    log_file, 
+    mode='a', 
+    maxBytes=5*1024*1024, 
+    backupCount=3, 
+    encoding='utf-8',
+    delay=False  # Change to False or remove (False is default)
 )
-logger = logging.getLogger("SessionAPI")
+rotating_handler.setLevel(logging.DEBUG)
+
+# Add this line to force immediate writes
+import sys
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
+rotating_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
+
+logger = logging.getLogger("SessionModule")
+logger.setLevel(logging.DEBUG)
+logger.addHandler(rotating_handler)
+logger.addHandler(console_handler)
+logger.propagate = False
+
+# Force unbuffered output
+for handler in logger.handlers:
+    if isinstance(handler, RotatingFileHandler):
+        handler.stream.reconfigure(line_buffering=True)  # Python 3.7+
 
 def _get_cache_key(uid, session_id, mode=None):
     """Generate cache key for session metadata."""
@@ -51,35 +72,50 @@ class Session:
     # ---------------- SESSION MGMT ----------------
     @staticmethod
     def create(uid: str, metadata_shared: dict = None, metadata_dt: dict = None, metadata_bs: dict = None):
-        """
-        Create a new session with shared + mode-specific metadata and register it as active.
-        """
         session_ref = db.reference(f"chatSessions/{uid}")
         active_ref = db.reference(f"chatSessions/activeSessions/{uid}")
         new_session_ref = session_ref.push()
         session_id = new_session_ref.key
 
         now = int(time.time() * 1000)
+        
+        # ENSURE all metadata objects exist with required fields
         metadata = {
-            "shared": metadata_shared or {},
-            "deepthinking": metadata_dt or {},
-            "brainstorming": metadata_bs or {}
+            "shared": {
+                "createdAt": now,
+                "updatedAt": now,
+                **(metadata_shared or {})
+            },
+            "deepthinking": {
+                "currentCategory": None,
+                "currentAngle": None,
+                "asked": [],
+                "depth": 0,
+                "followUpCount": 0,
+                **(metadata_dt or {})
+            },
+            "brainstorming": {
+                "stage": "Clarify",
+                "parentSessionId": None,
+                "hmwQuestions": {},  # ← Changed from [] to {}
+                "stageHistory": [],
+                "fluencyScore": "Low",
+                "flexibilityCategories": [],
+                **(metadata_bs or {})
+            }
         }
-        metadata["shared"].update({"createdAt": now, "updatedAt": now})
 
         base_data = {
-            "currentMode": "deepthinking",  # default
+            "currentMode": "deepthinking",
             "metadata": metadata,
             "messages": {},
             "ideas": {}
         }
 
-        # Save session
         new_session_ref.set(base_data)
-
-        # Add to active sessions
         active_ref.child(session_id).set({"startedAt": now})
         
+        logger.info(f"Created session {session_id} with metadata: {metadata}")
         return Session(uid, session_id)
     
     @classmethod
@@ -101,7 +137,6 @@ class Session:
                 age_hours = (now - started_at) / (1000 * 60 * 60)
                 
                 if age_hours > 24:
-                    logger.debug(f"Skipping old session {session_id} (age: {age_hours:.1f}h)")
                     continue
                 
                 active_sessions.append(cls(uid, session_id))
@@ -149,12 +184,25 @@ class Session:
         return result
 
     def update_metadata(self, updates: dict, mode: str = "shared"):
-         updates["updatedAt"] = int(time.time() * 1000)
-         self.metadata_ref.child(mode).update(updates)
-
-         # Invalidate cache for this session
-         _invalidate_session_cache(self.uid, self.session_id)
-         print(f"[SESSION CACHE INVALIDATE] Cleared cache for {self.uid}/{self.session_id}")
+        if not updates:
+            return
+            
+        updates["updatedAt"] = int(time.time() * 1000)
+        
+        # Ensure the path exists first
+        mode_ref = self.metadata_ref.child(mode)
+        existing = mode_ref.get()
+        
+        if existing is None:
+            # Path doesn't exist, create it with updates
+            logger.warning(f"[SESSION] Metadata path {mode} didn't exist, creating it")
+            mode_ref.set(updates)
+        else:
+            # Path exists, update it
+            mode_ref.update(updates)
+    
+        _invalidate_session_cache(self.uid, self.session_id)
+        logger.debug(f"[SESSION CACHE INVALIDATE] Cleared cache for {self.uid}/{self.session_id}")
 
 
     def switch_mode(self, mode: str):

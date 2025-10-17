@@ -849,3 +849,1479 @@
 2025-10-10 12:20:45,211 [INFO]     events: 45.45%
 2025-10-10 12:20:45,271 [INFO] 
   Score: 9/14 tests passed
+2025-10-15 15:38:45,793 [INFO] FULL VALIDATION SUITE — Cache + PM + World-Building + CPS
+2025-10-15 15:38:45,797 [INFO] 
+============================================================
+2025-10-15 15:38:45,797 [INFO]   CACHE & PERFORMANCE TESTS
+2025-10-15 15:38:45,798 [INFO] ============================================================
+2025-10-15 15:39:00,229 [INFO]   First request: 0.284s
+2025-10-15 15:39:00,513 [INFO]   Second request: 0.284s
+2025-10-15 15:39:00,523 [INFO] ---- After Cache Tests ----
+2025-10-15 15:39:10,566 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 15:39:10,566 [INFO] 
+============================================================
+2025-10-15 15:39:10,568 [INFO]   WORLD-BUILDING TESTS
+2025-10-15 15:39:10,569 [INFO] ============================================================
+2025-10-15 15:39:10,820 [INFO]   Sample item: name=Elemental Binding, type=hard
+2025-10-15 15:39:11,628 [INFO]   World-building result: 0 items
+2025-10-15 15:39:32,676 [INFO] 
+============================================================
+2025-10-15 15:39:32,676 [INFO]   CPS STAGE PROGRESSION TESTS
+2025-10-15 15:39:32,677 [INFO] ============================================================
+2025-10-15 15:39:39,168 [INFO]   Initial stage: Unknown
+2025-10-15 15:39:39,168 [INFO]   Sending message 1/3...
+2025-10-15 15:40:03,065 [INFO]   Setting up Ideate stage...
+2025-10-15 15:40:26,937 [INFO]   Generating test idea...
+2025-10-15 15:40:50,829 [INFO]   Sending test message...
+2025-10-15 15:41:14,677 [INFO]   Generating HMW questions...
+2025-10-15 15:41:35,726 [INFO] 
+============================================================
+2025-10-15 15:41:35,726 [INFO]   TEST RESULTS SUMMARY
+2025-10-15 15:41:35,728 [INFO] ============================================================
+2025-10-15 15:41:35,743 [INFO] 
+  Score: 5/12 tests passed
+2025-10-15 15:43:16,025 [INFO] FULL VALIDATION SUITE — Cache + PM + World-Building + CPS
+2025-10-15 15:43:16,030 [INFO] 
+============================================================
+2025-10-15 15:43:16,030 [INFO]   CACHE & PERFORMANCE TESTS
+2025-10-15 15:43:16,030 [INFO] ============================================================
+2025-10-15 15:43:27,325 [INFO]   First request: 0.261s
+2025-10-15 15:43:27,583 [INFO]   Second request: 0.257s
+2025-10-15 15:43:27,593 [INFO] ---- After Cache Tests ----
+2025-10-15 15:43:37,651 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "cached",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 15:43:37,652 [INFO] 
+============================================================
+2025-10-15 15:43:37,652 [INFO]   WORLD-BUILDING TESTS
+2025-10-15 15:43:37,653 [INFO] ============================================================
+2025-10-15 15:43:37,980 [INFO]   Sample item: name=Elemental Binding, type=hard
+2025-10-15 15:43:38,513 [INFO]   World-building result: 0 items
+2025-10-15 15:43:59,550 [INFO] 
+============================================================
+2025-10-15 15:43:59,551 [INFO]   CPS STAGE PROGRESSION TESTS
+2025-10-15 15:43:59,551 [INFO] ============================================================
+2025-10-15 15:44:05,653 [INFO]   Initial stage: Unknown
+2025-10-15 15:44:05,653 [INFO]   Sending message 1/3...
+2025-10-15 15:44:29,733 [INFO]   Setting up Ideate stage...
+2025-10-15 15:44:53,629 [INFO]   Generating test idea...
+2025-10-15 15:45:17,492 [INFO]   Sending test message...
+2025-10-15 15:45:41,380 [INFO]   Generating HMW questions...
+2025-10-15 15:46:02,439 [INFO] 
+============================================================
+2025-10-15 15:46:02,439 [INFO]   TEST RESULTS SUMMARY
+2025-10-15 15:46:02,440 [INFO] ============================================================
+2025-10-15 15:46:02,460 [INFO] 
+  Score: 5/12 tests passed
+2025-10-15 15:47:28,934 [INFO] FULL VALIDATION SUITE — Cache + PM + World-Building + CPS
+2025-10-15 15:47:28,936 [INFO] 
+============================================================
+2025-10-15 15:47:28,937 [INFO]   CACHE & PERFORMANCE TESTS
+2025-10-15 15:47:28,937 [INFO] ============================================================
+2025-10-15 15:47:42,730 [INFO] FULL PERFORMANCE VALIDATION SUITE — Tuesday + Wednesday checks
+2025-10-15 15:47:52,862 [INFO] ---- After TEST 1: Cache Stats Endpoint ----
+2025-10-15 15:48:02,897 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 15:48:07,751 [INFO]   Warming cache with first metadata call...
+2025-10-15 15:48:12,606 [INFO]   Call 1: 2.055s
+2025-10-15 15:48:14,672 [INFO]   Call 2: 2.066s
+2025-10-15 15:48:16,984 [INFO]   Call 3: 2.311s
+2025-10-15 15:48:19,028 [INFO]   Call 4: 2.044s
+2025-10-15 15:48:21,088 [INFO]   Call 5: 2.059s
+2025-10-15 15:48:27,106 [INFO] ---- After TEST 2: Repeated Metadata Calls ----
+2025-10-15 15:48:37,157 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 15:48:58,199 [INFO] ---- After TEST 3: DT Response Time ----
+2025-10-15 15:49:08,246 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 15:49:29,311 [INFO] ---- After TEST 3: BS Response Time ----
+2025-10-15 15:49:39,338 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 15:50:24,736 [INFO] FULL PERFORMANCE VALIDATION SUITE — Tuesday + Wednesday checks
+2025-10-15 15:50:24,778 [INFO] ---- After TEST 1: Cache Stats Endpoint ----
+2025-10-15 15:50:24,797 [INFO] {
+  "metadata": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  }
+}
+2025-10-15 15:50:24,816 [INFO] {
+  "metadata": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  }
+}
+2025-10-15 15:50:24,840 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 15:50:28,611 [INFO]   Warming cache with first metadata call...
+2025-10-15 15:50:33,461 [INFO]   Call 1: 2.023s
+2025-10-15 15:50:35,489 [INFO]   Call 2: 2.027s
+2025-10-15 15:50:37,811 [INFO]   Call 3: 2.321s
+2025-10-15 15:50:39,847 [INFO]   Call 4: 2.036s
+2025-10-15 15:50:41,870 [INFO]   Call 5: 2.023s
+2025-10-15 15:50:42,881 [INFO] ---- After TEST 2: Repeated Metadata Calls ----
+2025-10-15 15:50:42,889 [INFO] {
+  "metadata": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  }
+}
+2025-10-15 15:50:42,904 [INFO] {
+  "metadata": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  }
+}
+2025-10-15 15:50:42,912 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 15:51:06,785 [INFO]   DT Message 1: 23.870s
+2025-10-15 15:51:25,032 [INFO]   DT Message 2: 18.247s
+2025-10-15 15:51:43,142 [INFO]   DT Message 3: 18.110s
+2025-10-15 15:51:43,142 [INFO] DT average response time: 20.075s
+2025-10-15 15:51:43,151 [INFO] ---- After TEST 3: DT Response Time ----
+2025-10-15 15:51:43,178 [INFO] {
+  "metadata": {
+    "hit_rate": "60.00%",
+    "hits": 3,
+    "invalidations": 0,
+    "misses": 2,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "33.33%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  }
+}
+2025-10-15 15:51:43,210 [INFO] {
+  "metadata": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  }
+}
+2025-10-15 15:51:43,218 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 15:52:13,728 [INFO]   BS Message 1: 30.506s
+2025-10-15 15:52:13,729 [INFO]     Response: <p>I'll check what information we have about your character Akio in our records....
+2025-10-15 15:52:41,297 [INFO]   BS Message 2: 27.568s
+2025-10-15 15:52:41,298 [INFO]     Response: <p>Great! Let's explore Akio's motivations. First, let me check what we already ...
+2025-10-15 15:53:08,175 [INFO]   BS Message 3: 26.876s
+2025-10-15 15:53:08,175 [INFO]     Response: <p>That's an interesting starting point - a confused young character can create ...
+2025-10-15 15:53:08,176 [INFO] BS average response time: 28.317s
+2025-10-15 15:53:08,503 [INFO] ---- After TEST 3: BS Response Time ----
+2025-10-15 15:53:08,526 [INFO] {
+  "metadata": {
+    "hit_rate": "60.00%",
+    "hits": 3,
+    "invalidations": 0,
+    "misses": 2,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "33.33%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  }
+}
+2025-10-15 15:53:08,537 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "55.56%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  }
+}
+2025-10-15 15:53:08,552 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 15:53:29,556 [INFO]   DT Response time: 21.003s
+2025-10-15 15:53:29,557 [INFO]   DT Immediate message: True
+2025-10-15 15:53:29,557 [INFO]   DT Background processing: False
+2025-10-15 15:53:29,576 [INFO] ---- After TEST 4: DT Background Separation ----
+2025-10-15 15:53:29,608 [INFO] {
+  "metadata": {
+    "hit_rate": "57.14%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-15 15:53:29,638 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "55.56%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  }
+}
+2025-10-15 15:53:29,645 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 15:53:56,671 [INFO]   BS Response time: 27.024s
+2025-10-15 15:53:56,671 [INFO]   BS Immediate message: True
+2025-10-15 15:53:56,671 [INFO]   BS Background processing: False
+2025-10-15 15:53:56,678 [INFO] ---- After TEST 4: BS Background Separation ----
+2025-10-15 15:53:56,698 [INFO] {
+  "metadata": {
+    "hit_rate": "57.14%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-15 15:53:56,705 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-15 15:53:56,713 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 15:54:06,610 [INFO] ---- After TEST 5: Cache Invalidation (Session API) ----
+2025-10-15 15:54:06,617 [INFO] {
+  "metadata": {
+    "hit_rate": "57.14%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-15 15:54:06,625 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-15 15:54:06,633 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 15:54:08,296 [INFO] ---- After WED TEST 1: PM Batch Endpoint ----
+2025-10-15 15:54:08,314 [INFO] {
+  "metadata": {
+    "hit_rate": "57.14%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-15 15:54:08,322 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-15 15:54:08,330 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 15:54:08,342 [INFO]   Batch time: 0.011s
+2025-10-15 15:54:26,013 [INFO]   Sequential time: 17.670s
+2025-10-15 15:54:26,013 [INFO]   Improvement: 99.9%
+2025-10-15 15:54:26,041 [INFO] ---- After WED TEST 2: PM Batch vs Sequential ----
+2025-10-15 15:54:26,059 [INFO] {
+  "metadata": {
+    "hit_rate": "57.14%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 0
+  }
+}
+2025-10-15 15:54:26,067 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-15 15:54:26,074 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 15:54:26,340 [INFO]   First request: 0.260s (expected miss)
+2025-10-15 15:54:26,620 [INFO]   Second request: 0.280s (expected hit)
+2025-10-15 15:54:26,624 [INFO] 
+  Cache stats:
+2025-10-15 15:54:26,625 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 15:54:26,627 [INFO] ---- After WED TEST 3: PM Cache ----
+2025-10-15 15:54:26,633 [INFO] {
+  "metadata": {
+    "hit_rate": "57.14%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 0
+  }
+}
+2025-10-15 15:54:26,659 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-15 15:54:26,691 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 15:54:26,949 [INFO]   Initial nodes count: 32
+2025-10-15 15:54:27,250 [INFO] ---- After WED TEST 4: PM Cache Invalidation ----
+2025-10-15 15:54:27,258 [INFO] {
+  "metadata": {
+    "hit_rate": "57.14%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 0
+  }
+}
+2025-10-15 15:54:27,284 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-15 15:54:27,313 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 15:54:51,377 [INFO]   Chat response time: 24.063s
+2025-10-15 15:54:51,378 [INFO]   Has message: False
+2025-10-15 15:54:51,378 [INFO]   Background processing: True
+2025-10-15 15:54:51,403 [INFO] ---- After WED TEST 5: Flask Batch Integration ----
+2025-10-15 15:54:51,410 [INFO] {
+  "metadata": {
+    "hit_rate": "55.56%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "20.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 8,
+    "size": 1
+  }
+}
+2025-10-15 15:54:51,419 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 0
+  }
+}
+2025-10-15 15:54:51,443 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 15:54:51,475 [INFO] ---- After WED TEST 6: PM Fallback Mechanism ----
+2025-10-15 15:54:51,505 [INFO] {
+  "metadata": {
+    "hit_rate": "55.56%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "20.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 8,
+    "size": 1
+  }
+}
+2025-10-15 15:54:51,514 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 0
+  }
+}
+2025-10-15 15:54:51,522 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 15:54:51,553 [INFO]   Completed 5 concurrent requests in 0.029s  Successful: 5 Errors: 0
+2025-10-15 15:54:51,582 [INFO] ---- After WED TEST 7: PM Concurrent Batches ----
+2025-10-15 15:54:51,598 [INFO] {
+  "metadata": {
+    "hit_rate": "55.56%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "20.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 8,
+    "size": 1
+  }
+}
+2025-10-15 15:54:51,630 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "50.00%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 0
+  }
+}
+2025-10-15 15:54:51,661 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 15:54:51,662 [INFO]   DT effective hit rate: 57.02% (hits=65, misses=49)
+2025-10-15 15:54:51,663 [INFO]   BS effective hit rate: 66.67% (hits=106, misses=53)
+2025-10-15 15:54:51,695 [INFO] 
+  Score: 8/14 tests passed
+2025-10-15 16:19:48,490 [INFO] FULL PERFORMANCE VALIDATION SUITE — Tuesday + Wednesday checks
+2025-10-15 16:19:48,671 [INFO] ---- After TEST 1: Cache Stats Endpoint ----
+2025-10-15 16:19:48,697 [INFO] {
+  "metadata": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  }
+}
+2025-10-15 16:19:48,726 [INFO] {
+  "metadata": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  }
+}
+2025-10-15 16:19:48,734 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 16:19:52,705 [INFO]   Warming cache with first metadata call...
+2025-10-15 16:19:57,577 [INFO]   Call 1: 2.018s
+2025-10-15 16:19:59,600 [INFO]   Call 2: 2.023s
+2025-10-15 16:20:01,904 [INFO]   Call 3: 2.303s
+2025-10-15 16:20:03,943 [INFO]   Call 4: 2.039s
+2025-10-15 16:20:06,014 [INFO]   Call 5: 2.071s
+2025-10-15 16:20:07,034 [INFO] ---- After TEST 2: Repeated Metadata Calls ----
+2025-10-15 16:20:07,046 [INFO] {
+  "metadata": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  }
+}
+2025-10-15 16:20:07,060 [INFO] {
+  "metadata": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  }
+}
+2025-10-15 16:20:07,072 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 16:20:30,979 [INFO]   DT Message 1: 23.903s
+2025-10-15 16:20:47,990 [INFO]   DT Message 2: 17.011s
+2025-10-15 16:21:07,010 [INFO]   DT Message 3: 19.020s
+2025-10-15 16:21:07,011 [INFO] DT average response time: 19.978s
+2025-10-15 16:21:11,321 [INFO] ---- After TEST 3: DT Response Time ----
+2025-10-15 16:21:13,595 [INFO] {
+  "metadata": {
+    "hit_rate": "60.00%",
+    "hits": 3,
+    "invalidations": 0,
+    "misses": 2,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "33.33%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  }
+}
+2025-10-15 16:21:13,713 [INFO] {
+  "metadata": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "0.00%",
+    "hits": 0,
+    "invalidations": 0,
+    "misses": 0,
+    "size": 0
+  }
+}
+2025-10-15 16:21:13,769 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 16:22:34,593 [INFO]   BS Message 1: 80.796s
+2025-10-15 16:22:34,596 [INFO]     Response: <p>Let me check what information we have about your character Akio in our record...
+2025-10-15 16:23:02,638 [INFO]   BS Message 2: 28.041s
+2025-10-15 16:23:02,639 [INFO]     Response: <p>Great! Let's explore Akio's motivations. To frame this creatively, let me ask...
+2025-10-15 16:23:26,822 [INFO]   BS Message 3: 24.184s
+2025-10-15 16:23:26,822 [INFO]     Response: <p>That's an interesting starting point - a confused young character can create ...
+2025-10-15 16:23:26,822 [INFO] BS average response time: 44.340s
+2025-10-15 16:23:26,843 [INFO] ---- After TEST 3: BS Response Time ----
+2025-10-15 16:23:26,896 [INFO] {
+  "metadata": {
+    "hit_rate": "60.00%",
+    "hits": 3,
+    "invalidations": 0,
+    "misses": 2,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "33.33%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  }
+}
+2025-10-15 16:23:26,906 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "44.44%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 5,
+    "size": 1
+  }
+}
+2025-10-15 16:23:27,055 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 16:23:49,756 [INFO]   DT Response time: 22.700s
+2025-10-15 16:23:49,758 [INFO]   DT Immediate message: True
+2025-10-15 16:23:49,758 [INFO]   DT Background processing: False
+2025-10-15 16:23:49,781 [INFO] ---- After TEST 4: DT Background Separation ----
+2025-10-15 16:23:49,800 [INFO] {
+  "metadata": {
+    "hit_rate": "57.14%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-15 16:23:49,817 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 6,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "44.44%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 5,
+    "size": 1
+  }
+}
+2025-10-15 16:23:49,826 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 16:24:17,248 [INFO]   BS Response time: 27.421s
+2025-10-15 16:24:17,248 [INFO]   BS Immediate message: True
+2025-10-15 16:24:17,248 [INFO]   BS Background processing: False
+2025-10-15 16:24:17,253 [INFO] ---- After TEST 4: BS Background Separation ----
+2025-10-15 16:24:17,259 [INFO] {
+  "metadata": {
+    "hit_rate": "57.14%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-15 16:24:17,276 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "41.67%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 7,
+    "size": 1
+  }
+}
+2025-10-15 16:24:17,285 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 16:24:27,395 [INFO] ---- After TEST 5: Cache Invalidation (Session API) ----
+2025-10-15 16:24:27,412 [INFO] {
+  "metadata": {
+    "hit_rate": "57.14%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-15 16:24:27,430 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "41.67%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 7,
+    "size": 1
+  }
+}
+2025-10-15 16:24:27,438 [INFO] {
+  "totalUsers": 0,
+  "users": {}
+}
+2025-10-15 16:24:29,033 [INFO] ---- After WED TEST 1: PM Batch Endpoint ----
+2025-10-15 16:24:29,041 [INFO] {
+  "metadata": {
+    "hit_rate": "57.14%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 1
+  }
+}
+2025-10-15 16:24:29,057 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "41.67%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 7,
+    "size": 1
+  }
+}
+2025-10-15 16:24:29,089 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 16:24:29,098 [INFO]   Batch time: 0.007s
+2025-10-15 16:24:45,302 [INFO]   Sequential time: 16.202s
+2025-10-15 16:24:45,302 [INFO]   Improvement: 100.0%
+2025-10-15 16:24:45,309 [INFO] ---- After WED TEST 2: PM Batch vs Sequential ----
+2025-10-15 16:24:45,315 [INFO] {
+  "metadata": {
+    "hit_rate": "57.14%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 0
+  }
+}
+2025-10-15 16:24:45,345 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "41.67%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 7,
+    "size": 1
+  }
+}
+2025-10-15 16:24:45,377 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 16:24:45,627 [INFO]   First request: 0.245s (expected miss)
+2025-10-15 16:24:45,877 [INFO]   Second request: 0.249s (expected hit)
+2025-10-15 16:24:45,881 [INFO] 
+  Cache stats:
+2025-10-15 16:24:45,881 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 16:24:45,885 [INFO] ---- After WED TEST 3: PM Cache ----
+2025-10-15 16:24:45,893 [INFO] {
+  "metadata": {
+    "hit_rate": "57.14%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 0
+  }
+}
+2025-10-15 16:24:45,903 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "41.67%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 7,
+    "size": 1
+  }
+}
+2025-10-15 16:24:45,910 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 16:24:46,155 [INFO]   Initial nodes count: 32
+2025-10-15 16:24:46,418 [INFO] ---- After WED TEST 4: PM Cache Invalidation ----
+2025-10-15 16:24:46,436 [INFO] {
+  "metadata": {
+    "hit_rate": "57.14%",
+    "hits": 4,
+    "invalidations": 0,
+    "misses": 3,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "25.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 6,
+    "size": 0
+  }
+}
+2025-10-15 16:24:46,446 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "41.67%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 7,
+    "size": 1
+  }
+}
+2025-10-15 16:24:46,454 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 16:25:12,727 [INFO]   Chat response time: 26.272s
+2025-10-15 16:25:12,728 [INFO]   Has message: False
+2025-10-15 16:25:12,728 [INFO]   Background processing: True
+2025-10-15 16:25:12,746 [INFO] ---- After WED TEST 5: Flask Batch Integration ----
+2025-10-15 16:25:12,758 [INFO] {
+  "metadata": {
+    "hit_rate": "55.56%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "20.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 8,
+    "size": 1
+  }
+}
+2025-10-15 16:25:12,771 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "41.67%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 7,
+    "size": 0
+  }
+}
+2025-10-15 16:25:12,784 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 16:25:12,806 [INFO] ---- After WED TEST 6: PM Fallback Mechanism ----
+2025-10-15 16:25:12,834 [INFO] {
+  "metadata": {
+    "hit_rate": "55.56%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "20.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 8,
+    "size": 1
+  }
+}
+2025-10-15 16:25:12,865 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "41.67%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 7,
+    "size": 0
+  }
+}
+2025-10-15 16:25:12,876 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 16:25:12,923 [INFO]   Completed 5 concurrent requests in 0.044s  Successful: 5 Errors: 0
+2025-10-15 16:25:12,936 [INFO] ---- After WED TEST 7: PM Concurrent Batches ----
+2025-10-15 16:25:12,946 [INFO] {
+  "metadata": {
+    "hit_rate": "55.56%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 1
+  },
+  "summaries": {
+    "hit_rate": "20.00%",
+    "hits": 2,
+    "invalidations": 0,
+    "misses": 8,
+    "size": 1
+  }
+}
+2025-10-15 16:25:12,974 [INFO] {
+  "metadata": {
+    "hit_rate": "66.67%",
+    "hits": 8,
+    "invalidations": 0,
+    "misses": 4,
+    "size": 0
+  },
+  "summaries": {
+    "hit_rate": "41.67%",
+    "hits": 5,
+    "invalidations": 0,
+    "misses": 7,
+    "size": 0
+  }
+}
+2025-10-15 16:25:12,986 [INFO] {
+  "totalUsers": 1,
+  "users": {
+    "04E9XYnVi8QD3yHAIXeBHCRp2sN2": {
+      "nodes": "cached",
+      "links": "cached",
+      "events": "cached",
+      "worldbuilding": {
+        "magicSystems": "empty",
+        "cultures": "empty",
+        "locations": "empty",
+        "technology": "empty",
+        "history": "empty",
+        "organizations": "empty"
+      }
+    }
+  }
+}
+2025-10-15 16:25:12,987 [INFO]   DT effective hit rate: 57.02% (hits=65, misses=49)
+2025-10-15 16:25:12,988 [INFO]   BS effective hit rate: 66.67% (hits=106, misses=53)
+2025-10-15 16:25:13,025 [INFO] 
+  Score: 8/14 tests passed

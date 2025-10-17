@@ -373,18 +373,17 @@ app.get("/api/worldbuilding/:category", async (req, res) => {
 
     logger.info(`[DATA] Items fetched in category '${category}': ${Object.keys(items).length}`);
 
-    // Optional filtering by parentId
-    if (req.query.parentId !== undefined) {
+    if (req.query.parentKey !== undefined) {
       // Handle both "null" string and actual null
-      const parentId = req.query.parentId === "null" || req.query.parentId === "" ? null : req.query.parentId;
+      const parentKey = req.query.parentKey === "null" || req.query.parentKey === "" ? null : req.query.parentKey;
       items = Object.fromEntries(
         Object.entries(items).filter(([_, item]) => {
-          // Explicit null check - treat undefined, null, and "null" string as null
-          const itemParentId = item?.parentId === "null" || item?.parentId === undefined ? null : item?.parentId;
-          return itemParentId === parentId;
+          // Check parentKey field (Firebase key reference)
+          const itemParentKey = item?.parentKey === "null" || item?.parentKey === undefined ? null : item?.parentKey;
+          return itemParentKey === parentKey;
         })
       );
-      logger.info(`[DATA] Filtered by parentId '${parentId}': ${Object.keys(items).length} items`);
+      logger.info(`[DATA] Filtered by parentKey '${parentKey}': ${Object.keys(items).length} items`);
     }
 
     // Optional filtering by name (fuzzy search)
@@ -462,6 +461,13 @@ app.get("/api/worldbuilding/:category/:identifier/children", async (req, res) =>
 
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
+    const validCategories = ["magicSystems", "cultures", "locations", "technology", "history", "organizations"];
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({
+        error: `Invalid category: ${category}. Must be one of: ${validCategories.join(", ")}`
+      });
+    }
+
     const pipeline = new ConfirmationPipeline({ uid: userId });
 
     // Get parent item to verify it exists
@@ -476,8 +482,14 @@ app.get("/api/worldbuilding/:category/:identifier/children", async (req, res) =>
       });
     }
 
-    // Get all children
-    const children = await pipeline.manager.filterWorldBuildingByParent(category, parent.id);
+    // The parent object from getWorldBuildingItem includes the Firebase key
+    const parentFirebaseKey = parent.key; // This is the Firebase key
+    
+    // Filter items where parentKey matches this Firebase key
+    const allItems = await pipeline.manager.getWorldBuildingCategory(category);
+    const children = Object.fromEntries(
+      Object.entries(allItems).filter(([_, item]) => item?.parentKey === parentFirebaseKey)
+    );
 
     logger.info(`[DATA] Children found for '${identifier}': ${Object.keys(children).length}`);
     res.status(200).json(children);
@@ -487,7 +499,6 @@ app.get("/api/worldbuilding/:category/:identifier/children", async (req, res) =>
   }
 });
 
-// In profilemanager_server.js
 app.get("/api/world-metadata", async (req, res) => {
   const { userId } = req.query;
   const pipeline = new ConfirmationPipeline({ uid: userId });
@@ -500,46 +511,6 @@ app.post("/api/world-metadata", async (req, res) => {
   const pipeline = new ConfirmationPipeline({ uid: userId });
   await pipeline.manager.setWorldName(name);
   res.json({ success: true });
-});
-
-/**
- * Stage a change
- */
-app.post("/api/stage-change", async (req, res) => {
-  logger.info(`[REQUEST] /api/stage-change request with body: ${JSON.stringify(req.body)}`);
-  console.log("Received /api/stage-change request with body:", req.body);
-  try {
-    const { userId, entityType, entityId, newData } = req.body;
-    if (!userId || !entityType || !newData) {
-      return res.status(400).json({ error: "userId, entityType, and newData are required" });
-    }
-
-    if (entityType === "link") {
-      if (!newData.node1 || !newData.node2 || !newData.type) {
-        return res.status(400).json({
-          error: "Links must include node1, node2, and type"
-        });
-      }
-    }
-
-    const pipeline = new ConfirmationPipeline({ uid: userId });
-    const staged = await pipeline.stageChange(entityType, entityId, newData);
-
-    pmCache.invalidateAll(userId);
-
-    if (entityType.startsWith("worldBuilding-")) {
-      const category = entityType.replace("worldBuilding-", "");
-      pmCache.invalidate(userId, `worldbuilding_${category}`);
-    }
-
-
-    // Broadcast to all connected clients
-    broadcastPendingUpdate(userId);
-
-    res.status(200).json(staged); // ✅ already includes status, editable, nextStep
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
 });
 
 /**
@@ -1043,6 +1014,75 @@ app.get("/api/pending-changes", async (req, res) => {
   }
 });
 
+/**
+ * Stage a change
+ */
+app.post("/api/stage-change", async (req, res) => {
+  logger.info(`[REQUEST] /api/stage-change request with body: ${JSON.stringify(req.body)}`);
+  console.log("Received /api/stage-change request with body:", req.body);
+  try {
+    const { userId, entityType, entityId, newData } = req.body;
+    if (!userId || !entityType || !newData) {
+      return res.status(400).json({ error: "userId, entityType, and newData are required" });
+    }
+    if (entityType.startsWith("worldBuilding-")) {
+      const category = entityType.replace("worldBuilding-", "");
+      const validCategories = ["magicSystems", "cultures", "locations", "technology", "history", "organizations"];
+      
+      if (!validCategories.includes(category)) {
+        return res.status(400).json({
+          error: `Invalid world-building category: ${category}. Must be one of: ${validCategories.join(", ")}`
+        });
+      }
+
+      // Validate required fields based on category
+      if (!newData.name || !newData.type || !newData.description) {
+        return res.status(400).json({
+          error: `World-building items in '${category}' must have name, type, and description`
+        });
+      }
+
+      // Validate parentKey if provided (must be a Firebase key or null)
+      if (newData.parentKey !== undefined && newData.parentKey !== null) {
+        const pipeline = new ConfirmationPipeline({ uid: userId });
+        const allItems = await pipeline.manager.getWorldBuildingCategory(category);
+        
+        if (!allItems[newData.parentKey]) {
+          return res.status(400).json({
+            error: `Parent item with Firebase key '${newData.parentKey}' not found in category '${category}'`
+          });
+        }
+      }
+    }
+    if (entityType === "link") {
+      if (!newData.node1 || !newData.node2 || !newData.type) {
+        return res.status(400).json({
+          error: "Links must include node1, node2, and type"
+        });
+      }
+    }
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    const staged = await pipeline.stageChange(entityType, entityId, newData);
+
+    pmCache.invalidateAll(userId);
+
+    if (entityType.startsWith("worldBuilding-")) {
+      const category = entityType.replace("worldBuilding-", "");
+      pmCache.invalidate(userId, `worldbuilding_${category}`);
+    }
+
+
+    // Broadcast to all connected clients
+    broadcastPendingUpdate(userId);
+
+    res.status(200).json(staged); // ✅ already includes status, editable, nextStep
+  } catch (err) {
+    logger.error(`[ERROR] /api/stage-change: ${err}`);
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // ============ BATCH ENDPOINT ============
 /**
  * POST /api/batch
@@ -1207,11 +1247,14 @@ app.post("/api/batch", async (req, res) => {
 
           let items = await getCachedWorldBuilding(userId, pipeline, category);
 
-          // Apply parentId filter if provided
-          if (filters.parentId !== undefined) {
-            const parentId = filters.parentId === "null" ? null : filters.parentId;
+          // Apply parentKey filter if provided
+          if (filters.parentKey !== undefined) {
+            const parentKey = filters.parentKey === "null" ? null : filters.parentKey;
             items = Object.fromEntries(
-              Object.entries(items).filter(([_, item]) => item?.parentId === parentId)
+              Object.entries(items).filter(([_, item]) => {
+                const itemParentKey = item?.parentKey === "null" || item?.parentKey === undefined ? null : item?.parentKey;
+                return itemParentKey === parentKey;
+              })
             );
           }
 
