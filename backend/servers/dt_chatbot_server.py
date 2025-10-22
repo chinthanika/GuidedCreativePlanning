@@ -78,7 +78,7 @@ firebase_admin.initialize_app(cred, {
 })
 
 # DeepSeek API setup
-DEEPSEEK_API_KEY = "sk-6c4641c0b8404e049912cafc281e04f5"
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 if not DEEPSEEK_API_KEY:
     raise ValueError("DEEPSEEK_API_KEY environment variable is not set")
 

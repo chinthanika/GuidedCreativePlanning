@@ -35,7 +35,7 @@ logger.addHandler(rotating_handler)
 logger.info("Flask app initialized, logging set up.")
 
 # -------------------- DEEPSEEK + PROFILE MANAGER --------------------
-DEEPSEEK_API_KEY = "sk-6c4641c0b8404e049912cafc281e04f5"
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 if not DEEPSEEK_API_KEY:
     logger.critical("DeepSeek API key not found. Exiting.")
     raise ValueError("DEEPSEEK_API_KEY environment variable is not set")
