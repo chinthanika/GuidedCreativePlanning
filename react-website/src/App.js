@@ -19,7 +19,8 @@ import StoryMap from './pages/storymap/story-map';
 import StoryTimeline from './pages/timeline/timeline';
 import StoryEditor from './pages/storyeditor/story';
 import Chatbot from './pages/chatbot/chatbot'; // Import the Chatbot page
-  
+import StoryWorld from './pages/world/world';  
+
 function App() {
 
     //These constants will be visible inside AuthProvider
@@ -45,6 +46,7 @@ return (
                 <Route path='/map-generator' element={<MapGenerator/>}/>
                 <Route path='/story-map' element={<StoryMap/>}/>
                 <Route path='/story-timeline' element={<StoryTimeline/>}/>
+                <Route path='/story-world' element={<StoryWorld/>}/>
                 <Route path='/chatbot' element={<Chatbot/>}/>
                 <Route path='/story-editor' element={<StoryEditor/>}/>
                 <Route exact path='/' element={

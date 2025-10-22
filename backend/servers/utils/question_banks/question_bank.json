@@ -1,0 +1,1661 @@
+{
+    "primary": {
+        "MOT001": {
+            "id": "MOT001",
+            "category": "motivation",
+            "angle": "goals_and_purposes",
+            "prompt": "What is your character trying to achieve in this scene or storyline?",
+            "example_context": "Clarify whether the character seeks survival, love, revenge, recognition, or another goal.",
+            "tags": [
+                "motivation",
+                "character",
+                "purpose"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "MOT002": {
+            "id": "MOT002",
+            "category": "motivation",
+            "angle": "questions",
+            "prompt": "What question or problem is driving your character’s actions right now?",
+            "example_context": "For instance, are they asking themselves how to save someone, escape danger, or achieve a dream?",
+            "tags": [
+                "motivation",
+                "character",
+                "question"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "MOT003": {
+            "id": "MOT003",
+            "category": "motivation",
+            "angle": "information",
+            "prompt": "What past experiences, events, or knowledge shape your character’s motivation here?",
+            "example_context": "Think about backstory, previous conflicts, or lessons that influence their current choice.",
+            "tags": [
+                "motivation",
+                "character",
+                "information"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "MOT004": {
+            "id": "MOT004",
+            "category": "motivation",
+            "angle": "inferences_and_conclusions",
+            "prompt": "What conclusions has your character drawn that guide their actions?",
+            "example_context": "For example, do they assume someone is trustworthy, or believe a certain action will lead to success?",
+            "tags": [
+                "motivation",
+                "character",
+                "reasoning"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "MOT005": {
+            "id": "MOT005",
+            "category": "motivation",
+            "angle": "concepts_and_ideas",
+            "prompt": "What beliefs, values, or ideas are shaping your character’s choices?",
+            "example_context": "Consider whether they are guided by loyalty, justice, ambition, fear, or another concept.",
+            "tags": [
+                "motivation",
+                "character",
+                "concepts"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "MOT006": {
+            "id": "MOT006",
+            "category": "motivation",
+            "angle": "assumptions",
+            "prompt": "What assumptions does your character make about the world, others, or themselves?",
+            "example_context": "For instance, do they assume allies are reliable, enemies are dangerous, or success is inevitable?",
+            "tags": [
+                "motivation",
+                "character",
+                "assumptions"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "MOT007": {
+            "id": "MOT007",
+            "category": "motivation",
+            "angle": "implications_and_consequences",
+            "prompt": "What might happen in the story if your character follows or ignores this motivation?",
+            "example_context": "Consider conflicts, unexpected outcomes, or how other characters might respond.",
+            "tags": [
+                "motivation",
+                "character",
+                "consequences"
+            ],
+            "requires_confirmation": false,
+            "priority": 4
+        },
+        "MOT008": {
+            "id": "MOT008",
+            "category": "motivation",
+            "angle": "viewpoints_and_perspectives",
+            "prompt": "How might other characters or the audience interpret this motivation?",
+            "example_context": "Different perspectives could see the character as heroic, selfish, misguided, or clever.",
+            "tags": [
+                "motivation",
+                "character",
+                "perspective"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "SET001": {
+            "id": "SET001",
+            "category": "setting",
+            "angle": "goals_and_purposes",
+            "prompt": "What role does this setting play in the story or scene?",
+            "example_context": "Clarify whether it drives conflict, supports character goals, or establishes mood.",
+            "tags": [
+                "setting",
+                "worldbuilding",
+                "purpose"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "SET002": {
+            "id": "SET002",
+            "category": "setting",
+            "angle": "questions",
+            "prompt": "What question does this setting raise for the characters or story?",
+            "example_context": "For example, does it challenge the characters, offer opportunities, or reveal secrets?",
+            "tags": [
+                "setting",
+                "worldbuilding",
+                "question"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "ORG001": {
+            "id": "ORG001",
+            "category": "organization",
+            "angle": "goals_and_purposes",
+            "prompt": "What is this organization trying to achieve in the story or world?",
+            "example_context": "Clarify whether the organization seeks power, survival, social change, wealth, knowledge, or another goal.",
+            "tags": [
+                "organization",
+                "purpose",
+                "group"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "ORG002": {
+            "id": "ORG002",
+            "category": "organization",
+            "angle": "questions",
+            "prompt": "What question or problem drives this organization’s actions?",
+            "example_context": "For instance, are they seeking how to expand influence, protect their members, or eliminate a rival?",
+            "tags": [
+                "organization",
+                "question",
+                "conflict"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "ORG003": {
+            "id": "ORG003",
+            "category": "organization",
+            "angle": "information",
+            "prompt": "What past events, traditions, or knowledge shape this organization’s goals?",
+            "example_context": "Think about its founding story, cultural history, or prior conflicts that guide its mission.",
+            "tags": [
+                "organization",
+                "history",
+                "information"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "ORG004": {
+            "id": "ORG004",
+            "category": "organization",
+            "angle": "inferences_and_conclusions",
+            "prompt": "What conclusions has this organization drawn that guide its strategies?",
+            "example_context": "For example, do they believe outsiders are dangerous, or that unity guarantees survival?",
+            "tags": [
+                "organization",
+                "reasoning",
+                "strategy"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "ORG005": {
+            "id": "ORG005",
+            "category": "organization",
+            "angle": "concepts_and_ideas",
+            "prompt": "What core beliefs, values, or ideas shape this organization’s identity?",
+            "example_context": "Consider whether it is guided by justice, ambition, secrecy, loyalty, or faith.",
+            "tags": [
+                "organization",
+                "concepts",
+                "identity"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "ORG006": {
+            "id": "ORG006",
+            "category": "organization",
+            "angle": "assumptions",
+            "prompt": "What assumptions does this organization make about the world, its allies, or its enemies?",
+            "example_context": "For instance, do they assume authority is absolute, rivals are weak, or change is inevitable?",
+            "tags": [
+                "organization",
+                "assumptions",
+                "beliefs"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "ORG007": {
+            "id": "ORG007",
+            "category": "organization",
+            "angle": "implications_and_consequences",
+            "prompt": "What might happen if this organization pursues or abandons its current path?",
+            "example_context": "Consider conflicts, shifts in power, or consequences for members and outsiders.",
+            "tags": [
+                "organization",
+                "consequences",
+                "impact"
+            ],
+            "requires_confirmation": false,
+            "priority": 4
+        },
+        "ORG008": {
+            "id": "ORG008",
+            "category": "organization",
+            "angle": "viewpoints_and_perspectives",
+            "prompt": "How might other groups, characters, or the audience interpret this organization’s actions?",
+            "example_context": "Different perspectives could see them as liberators, oppressors, visionaries, or villains.",
+            "tags": [
+                "organization",
+                "perspective",
+                "interpretation"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "SET003": {
+            "id": "SET003",
+            "category": "setting",
+            "angle": "information",
+            "prompt": "What details about the environment or world inform how the story unfolds?",
+            "example_context": "Consider sensory elements, history, culture, or resources that shape action.",
+            "tags": [
+                "setting",
+                "worldbuilding",
+                "information"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "SET004": {
+            "id": "SET004",
+            "category": "setting",
+            "angle": "inferences_and_conclusions",
+            "prompt": "What conclusions can be drawn about the story from this setting?",
+            "example_context": "For instance, what does the location suggest about danger, opportunity, or character choices?",
+            "tags": [
+                "setting",
+                "worldbuilding",
+                "reasoning"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "SET005": {
+            "id": "SET005",
+            "category": "setting",
+            "angle": "concepts_and_ideas",
+            "prompt": "What ideas or themes does this setting represent in the story?",
+            "example_context": "It could reflect freedom, isolation, wealth, decay, or social tension.",
+            "tags": [
+                "setting",
+                "worldbuilding",
+                "concepts"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "SET006": {
+            "id": "SET006",
+            "category": "setting",
+            "angle": "assumptions",
+            "prompt": "What assumptions about the world or characters are implied by this setting?",
+            "example_context": "For example, do characters assume safety, danger, scarcity, or abundance here?",
+            "tags": [
+                "setting",
+                "worldbuilding",
+                "assumptions"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "SET007": {
+            "id": "SET007",
+            "category": "setting",
+            "angle": "implications_and_consequences",
+            "prompt": "How might the story change if this setting were different or removed?",
+            "example_context": "Think about how plot, conflict, or character development would be affected.",
+            "tags": [
+                "setting",
+                "worldbuilding",
+                "consequences"
+            ],
+            "requires_confirmation": false,
+            "priority": 4
+        },
+        "SET008": {
+            "id": "SET008",
+            "category": "setting",
+            "angle": "viewpoints_and_perspectives",
+            "prompt": "How might different characters experience or interpret this setting?",
+            "example_context": "One character might find it comforting, another intimidating, or revealing of secrets.",
+            "tags": [
+                "setting",
+                "worldbuilding",
+                "perspective"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "CHAR001": {
+            "id": "CHAR001",
+            "category": "character",
+            "angle": "goals_and_purposes",
+            "prompt": "What is your character trying to achieve in this scene or story?",
+            "example_context": "Clarify whether they seek survival, revenge, love, power, or another goal.",
+            "tags": [
+                "character",
+                "goals",
+                "purpose"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "CHAR002": {
+            "id": "CHAR002",
+            "category": "character",
+            "angle": "questions",
+            "prompt": "What question or problem is motivating your character’s actions?",
+            "example_context": "For example, are they asking how to protect someone, escape danger, or gain advantage?",
+            "tags": [
+                "character",
+                "motivation",
+                "question"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "CHAR003": {
+            "id": "CHAR003",
+            "category": "character",
+            "angle": "information",
+            "prompt": "What experiences, history, or knowledge shape this character’s choices?",
+            "example_context": "Think about past events, relationships, or skills that influence their behavior.",
+            "tags": [
+                "character",
+                "backstory",
+                "information"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "CHAR004": {
+            "id": "CHAR004",
+            "category": "character",
+            "angle": "inferences_and_conclusions",
+            "prompt": "What conclusions does the character make that guide their actions?",
+            "example_context": "Consider assumptions about others, predictions of outcomes, or personal reasoning.",
+            "tags": [
+                "character",
+                "reasoning",
+                "decisions"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "CHAR005": {
+            "id": "CHAR005",
+            "category": "character",
+            "angle": "concepts_and_ideas",
+            "prompt": "What beliefs, values, or ideas shape how this character behaves?",
+            "example_context": "For example, loyalty, justice, ambition, fear, or curiosity could influence their choices.",
+            "tags": [
+                "character",
+                "values",
+                "concepts"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "CHAR006": {
+            "id": "CHAR006",
+            "category": "character",
+            "angle": "assumptions",
+            "prompt": "What assumptions is your character making about themselves, others, or the world?",
+            "example_context": "For instance, do they assume allies are trustworthy, enemies are dangerous, or success is inevitable?",
+            "tags": [
+                "character",
+                "assumptions",
+                "thinking"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "CHAR007": {
+            "id": "CHAR007",
+            "category": "character",
+            "angle": "implications_and_consequences",
+            "prompt": "What could happen if your character follows or ignores this motivation?",
+            "example_context": "Think about conflicts, consequences for other characters, or how it drives the plot forward.",
+            "tags": [
+                "character",
+                "stakes",
+                "consequences"
+            ],
+            "requires_confirmation": false,
+            "priority": 4
+        },
+        "CHAR008": {
+            "id": "CHAR008",
+            "category": "character",
+            "angle": "viewpoints_and_perspectives",
+            "prompt": "How might other characters or the audience interpret this character’s actions?",
+            "example_context": "One character might see them as heroic, another as reckless, or the audience may sympathize differently.",
+            "tags": [
+                "character",
+                "perspective",
+                "interpretation"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "PLOT001": {
+            "id": "PLOT001",
+            "category": "plot",
+            "angle": "goals_and_purposes",
+            "prompt": "What is the purpose of this plot event in the story?",
+            "example_context": "Clarify whether it escalates conflict, resolves tension, or advances character arcs.",
+            "tags": [
+                "plot",
+                "purpose",
+                "story"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "PLOT002": {
+            "id": "PLOT002",
+            "category": "plot",
+            "angle": "questions",
+            "prompt": "What question or challenge does this plot point raise for the characters?",
+            "example_context": "For example, does it force a choice, reveal a secret, or test their limits?",
+            "tags": [
+                "plot",
+                "question",
+                "challenge"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "PLOT003": {
+            "id": "PLOT003",
+            "category": "plot",
+            "angle": "information",
+            "prompt": "What prior events or setup inform this plot development?",
+            "example_context": "Consider foreshadowing, character decisions, or world events that make it plausible.",
+            "tags": [
+                "plot",
+                "information",
+                "causality"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "PLOT004": {
+            "id": "PLOT004",
+            "category": "plot",
+            "angle": "inferences_and_conclusions",
+            "prompt": "What can be inferred about the story’s direction from this plot point?",
+            "example_context": "For instance, does it suggest rising stakes, betrayal, or a turning point?",
+            "tags": [
+                "plot",
+                "reasoning",
+                "inference"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "PLOT005": {
+            "id": "PLOT005",
+            "category": "plot",
+            "angle": "concepts_and_ideas",
+            "prompt": "What themes or ideas does this plot event highlight?",
+            "example_context": "It might explore justice, sacrifice, ambition, love, or deception.",
+            "tags": [
+                "plot",
+                "themes",
+                "concepts"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "PLOT006": {
+            "id": "PLOT006",
+            "category": "plot",
+            "angle": "assumptions",
+            "prompt": "What assumptions about the story or characters underlie this plot development?",
+            "example_context": "For example, are you assuming certain character reactions or predictable outcomes?",
+            "tags": [
+                "plot",
+                "assumptions",
+                "story"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "PLOT007": {
+            "id": "PLOT007",
+            "category": "plot",
+            "angle": "implications_and_consequences",
+            "prompt": "What might happen next as a result of this plot event?",
+            "example_context": "Consider conflicts, chain reactions, or character growth triggered by it.",
+            "tags": [
+                "plot",
+                "stakes",
+                "consequences"
+            ],
+            "requires_confirmation": false,
+            "priority": 4
+        },
+        "PLOT008": {
+            "id": "PLOT008",
+            "category": "plot",
+            "angle": "viewpoints_and_perspectives",
+            "prompt": "How might different characters or the audience interpret this plot development?",
+            "example_context": "One character may feel victorious, another betrayed, and the audience may anticipate a twist.",
+            "tags": [
+                "plot",
+                "perspective",
+                "interpretation"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "THE001": {
+            "id": "THE001",
+            "category": "theme",
+            "angle": "goals_and_purposes",
+            "prompt": "What central idea or theme is emerging in this part of the story?",
+            "example_context": "Clarify whether it explores justice, love, identity, or another concept.",
+            "tags": [
+                "theme",
+                "purpose",
+                "story"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "THE002": {
+            "id": "THE002",
+            "category": "theme",
+            "angle": "questions",
+            "prompt": "What question or tension does this theme raise for the characters or story?",
+            "example_context": "Does it challenge morality, loyalty, or societal norms?",
+            "tags": [
+                "theme",
+                "question",
+                "challenge"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "THE003": {
+            "id": "THE003",
+            "category": "theme",
+            "angle": "information",
+            "prompt": "What narrative details reinforce this theme?",
+            "example_context": "Look for recurring imagery, dialogue, or motifs.",
+            "tags": [
+                "theme",
+                "information",
+                "evidence"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "THE004": {
+            "id": "THE004",
+            "category": "theme",
+            "angle": "inferences_and_conclusions",
+            "prompt": "What can we infer about the story’s message from this theme?",
+            "example_context": "For example, it may suggest hope, tragedy, or moral lessons.",
+            "tags": [
+                "theme",
+                "reasoning",
+                "inference"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "THE005": {
+            "id": "THE005",
+            "category": "theme",
+            "angle": "concepts_and_ideas",
+            "prompt": "What larger ideas or concepts does this theme highlight?",
+            "example_context": "It may touch on identity, justice, sacrifice, or freedom.",
+            "tags": [
+                "theme",
+                "concepts",
+                "ideas"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "THE006": {
+            "id": "THE006",
+            "category": "theme",
+            "angle": "assumptions",
+            "prompt": "What assumptions about the story or characters underlie this theme?",
+            "example_context": "For instance, assuming that love always triumphs or that society is unjust.",
+            "tags": [
+                "theme",
+                "assumptions",
+                "story"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "THE007": {
+            "id": "THE007",
+            "category": "theme",
+            "angle": "implications_and_consequences",
+            "prompt": "What consequences or effects does this theme create in the story?",
+            "example_context": "It may shape character choices, conflicts, or reader interpretation.",
+            "tags": [
+                "theme",
+                "stakes",
+                "consequences"
+            ],
+            "requires_confirmation": false,
+            "priority": 4
+        },
+        "THE008": {
+            "id": "THE008",
+            "category": "theme",
+            "angle": "viewpoints_and_perspectives",
+            "prompt": "How might different characters experience or respond to this theme?",
+            "example_context": "One may embrace justice, another resent it.",
+            "tags": [
+                "theme",
+                "perspective",
+                "interpretation"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "CONF001": {
+            "id": "CONF001",
+            "category": "conflict",
+            "angle": "goals_and_purposes",
+            "prompt": "What specific conflict is occurring here?",
+            "example_context": "Clarify if it’s internal, interpersonal, or external.",
+            "tags": [
+                "conflict",
+                "purpose",
+                "story"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "CONF002": {
+            "id": "CONF002",
+            "category": "conflict",
+            "angle": "questions",
+            "prompt": "What question or challenge does this conflict pose?",
+            "example_context": "Does it test morality, loyalty, or survival?",
+            "tags": [
+                "conflict",
+                "question",
+                "challenge"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "CONF003": {
+            "id": "CONF003",
+            "category": "conflict",
+            "angle": "information",
+            "prompt": "What narrative details establish this conflict?",
+            "example_context": "Look for resistance, stakes, or opposing forces.",
+            "tags": [
+                "conflict",
+                "information",
+                "evidence"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "CONF004": {
+            "id": "CONF004",
+            "category": "conflict",
+            "angle": "inferences_and_conclusions",
+            "prompt": "What does this conflict reveal about the story’s direction?",
+            "example_context": "It may foreshadow escalation, resolution, or character growth.",
+            "tags": [
+                "conflict",
+                "reasoning",
+                "inference"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "CONF005": {
+            "id": "CONF005",
+            "category": "conflict",
+            "angle": "concepts_and_ideas",
+            "prompt": "What ideas or themes are highlighted through this conflict?",
+            "example_context": "For instance, power, sacrifice, betrayal, or freedom.",
+            "tags": [
+                "conflict",
+                "concepts",
+                "ideas"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "CONF006": {
+            "id": "CONF006",
+            "category": "conflict",
+            "angle": "assumptions",
+            "prompt": "What assumptions about characters or world rules shape this conflict?",
+            "example_context": "E.g., assuming loyalty, fear, or societal pressure drives tension.",
+            "tags": [
+                "conflict",
+                "assumptions",
+                "story"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "CONF007": {
+            "id": "CONF007",
+            "category": "conflict",
+            "angle": "implications_and_consequences",
+            "prompt": "What consequences might arise if this conflict continues or escalates?",
+            "example_context": "It could lead to tragedy, growth, or major turning points.",
+            "tags": [
+                "conflict",
+                "stakes",
+                "consequences"
+            ],
+            "requires_confirmation": false,
+            "priority": 4
+        },
+        "CONF008": {
+            "id": "CONF008",
+            "category": "conflict",
+            "angle": "viewpoints_and_perspectives",
+            "prompt": "How might different characters perceive or react to this conflict?",
+            "example_context": "What one sees as necessary, another may view as betrayal.",
+            "tags": [
+                "conflict",
+                "perspective",
+                "interpretation"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "RES001": {
+            "id": "RES001",
+            "category": "resolution",
+            "angle": "goals_and_purposes",
+            "prompt": "What type of resolution is being pursued?",
+            "example_context": "Clarify if it’s compromise, victory, or escape.",
+            "tags": [
+                "resolution",
+                "purpose",
+                "story"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "RES002": {
+            "id": "RES002",
+            "category": "resolution",
+            "angle": "questions",
+            "prompt": "What question or tension does this resolution answer?",
+            "example_context": "Does it resolve character arcs, conflicts, or thematic questions?",
+            "tags": [
+                "resolution",
+                "question",
+                "challenge"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "RES003": {
+            "id": "RES003",
+            "category": "resolution",
+            "angle": "information",
+            "prompt": "What narrative signals indicate the story is moving toward resolution?",
+            "example_context": "Look for closure of arcs, reduced tension, or fulfilled setups.",
+            "tags": [
+                "resolution",
+                "information",
+                "evidence"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "RES004": {
+            "id": "RES004",
+            "category": "resolution",
+            "angle": "inferences_and_conclusions",
+            "prompt": "What does this resolution imply about the story’s meaning?",
+            "example_context": "Endings may highlight justice, growth, futility, or transformation.",
+            "tags": [
+                "resolution",
+                "reasoning",
+                "inference"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "RES005": {
+            "id": "RES005",
+            "category": "resolution",
+            "angle": "concepts_and_ideas",
+            "prompt": "What ideas or themes are reinforced through this resolution?",
+            "example_context": "Such as reconciliation, sacrifice, or triumph.",
+            "tags": [
+                "resolution",
+                "concepts",
+                "ideas"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "RES006": {
+            "id": "RES006",
+            "category": "resolution",
+            "angle": "assumptions",
+            "prompt": "What assumptions underlie this resolution?",
+            "example_context": "E.g., assuming justice will prevail or love will endure.",
+            "tags": [
+                "resolution",
+                "assumptions",
+                "story"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "RES007": {
+            "id": "RES007",
+            "category": "resolution",
+            "angle": "implications_and_consequences",
+            "prompt": "What might happen if this resolution is delayed or fails?",
+            "example_context": "Tension may persist, arcs may remain incomplete, or stakes unresolved.",
+            "tags": [
+                "resolution",
+                "stakes",
+                "consequences"
+            ],
+            "requires_confirmation": false,
+            "priority": 4
+        },
+        "RES008": {
+            "id": "RES008",
+            "category": "resolution",
+            "angle": "viewpoints_and_perspectives",
+            "prompt": "How might different characters view this resolution?",
+            "example_context": "One may see fairness, another loss, and the audience may interpret a moral lesson.",
+            "tags": [
+                "resolution",
+                "perspective",
+                "interpretation"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "TONE001": {
+            "id": "TONE001",
+            "category": "tone",
+            "angle": "goals_and_purposes",
+            "prompt": "What tone is being conveyed in this moment?",
+            "example_context": "Clarify whether the mood is hopeful, tense, humorous, or ironic.",
+            "tags": [
+                "tone",
+                "purpose",
+                "story"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "TONE002": {
+            "id": "TONE002",
+            "category": "tone",
+            "angle": "questions",
+            "prompt": "What question or tension does this tone highlight?",
+            "example_context": "Does it signal irony, suspense, or character uncertainty?",
+            "tags": [
+                "tone",
+                "question",
+                "challenge"
+            ],
+            "requires_confirmation": false,
+            "priority": 2
+        },
+        "TONE003": {
+            "id": "TONE003",
+            "category": "tone",
+            "angle": "information",
+            "prompt": "What textual details establish this tone?",
+            "example_context": "Look at word choice, imagery, pacing, or dialogue.",
+            "tags": [
+                "tone",
+                "information",
+                "evidence"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "TONE004": {
+            "id": "TONE004",
+            "category": "tone",
+            "angle": "inferences_and_conclusions",
+            "prompt": "What can be inferred about the narrator or story from this tone?",
+            "example_context": "Irony may indicate skepticism, warmth may show empathy.",
+            "tags": [
+                "tone",
+                "reasoning",
+                "inference"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "TONE005": {
+            "id": "TONE005",
+            "category": "tone",
+            "angle": "concepts_and_ideas",
+            "prompt": "What mood, emotion, or thematic idea does this tone highlight?",
+            "example_context": "It might evoke tension, humor, or moral weight.",
+            "tags": [
+                "tone",
+                "concepts",
+                "ideas"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "TONE006": {
+            "id": "TONE006",
+            "category": "tone",
+            "angle": "assumptions",
+            "prompt": "What assumptions about audience or story influence this tone?",
+            "example_context": "E.g., assuming readers expect suspense, comedy, or seriousness.",
+            "tags": [
+                "tone",
+                "assumptions",
+                "story"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        },
+        "TONE007": {
+            "id": "TONE007",
+            "category": "tone",
+            "angle": "implications_and_consequences",
+            "prompt": "What might happen if the tone shifts suddenly here?",
+            "example_context": "It could surprise, unsettle, or reframe reader expectations.",
+            "tags": [
+                "tone",
+                "stakes",
+                "consequences"
+            ],
+            "requires_confirmation": false,
+            "priority": 4
+        },
+        "TONE008": {
+            "id": "TONE008",
+            "category": "tone",
+            "angle": "viewpoints_and_perspectives",
+            "prompt": "How might different characters perceive the tone of this moment?",
+            "example_context": "One may find humor, another tension, another dread.",
+            "tags": [
+                "tone",
+                "perspective",
+                "interpretation"
+            ],
+            "requires_confirmation": false,
+            "priority": 3
+        }
+    },
+    "follow_up": {
+        "FU001": {
+            "id": "FU001",
+            "category": "clarity",
+            "prompt": "Could you give an example to make that clearer?",
+            "example_context": "When a student describes a character’s motivation vaguely, the bot asks for an example.",
+            "tags": [
+                "clarity",
+                "character",
+                "motivation"
+            ],
+            "difficulty": 1
+        },
+        "FU002": {
+            "id": "FU002",
+            "category": "clarity",
+            "prompt": "What exactly do you mean by that?",
+            "example_context": "If the setting is described as 'strange', the bot asks for specifics.",
+            "tags": [
+                "clarity",
+                "setting"
+            ],
+            "difficulty": 2
+        },
+        "FU003": {
+            "id": "FU003",
+            "category": "clarity",
+            "prompt": "Could you rephrase that in another way?",
+            "example_context": "A student explains a plot twist in confusing terms, so the bot asks for a rephrasing.",
+            "tags": [
+                "clarity",
+                "plot"
+            ],
+            "difficulty": 2
+        },
+        "FU004": {
+            "id": "FU004",
+            "category": "clarity",
+            "prompt": "Can you unpack what you meant by that phrase?",
+            "example_context": "If a student says the theme is 'complicated,' the bot asks them to explain further.",
+            "tags": [
+                "clarity",
+                "theme"
+            ],
+            "difficulty": 3
+        },
+        "FU005": {
+            "id": "FU005",
+            "category": "clarity",
+            "prompt": "Could you provide more detail?",
+            "example_context": "The bot prompts for more detail when a character is only described as 'nice.'",
+            "tags": [
+                "clarity",
+                "character"
+            ],
+            "difficulty": 1
+        },
+        "FU006": {
+            "id": "FU006",
+            "category": "clarity",
+            "prompt": "What would that look like in your story?",
+            "example_context": "If a student says the setting is 'beautiful,' the bot asks for a concrete description.",
+            "tags": [
+                "clarity",
+                "setting"
+            ],
+            "difficulty": 3
+        },
+        "FU007": {
+            "id": "FU007",
+            "category": "clarity",
+            "prompt": "What specific aspect are you referring to?",
+            "example_context": "When a student mentions 'conflict,' the bot asks if they mean inner or external conflict.",
+            "tags": [
+                "clarity",
+                "conflict"
+            ],
+            "difficulty": 2
+        },
+        "FU008": {
+            "id": "FU008",
+            "category": "clarity",
+            "prompt": "Could you illustrate that with a short example?",
+            "example_context": "The bot asks for a short example when the student explains a character’s values.",
+            "tags": [
+                "clarity",
+                "character",
+                "theme"
+            ],
+            "difficulty": 3
+        },
+        "FU009": {
+            "id": "FU009",
+            "category": "precision",
+            "prompt": "Could you be more specific?",
+            "example_context": "When a student writes 'the character is sad,' the bot asks how exactly they show sadness.",
+            "tags": [
+                "precision",
+                "character"
+            ],
+            "difficulty": 2
+        },
+        "FU010": {
+            "id": "FU010",
+            "category": "precision",
+            "prompt": "What exact words or actions show this?",
+            "example_context": "If a conflict is described as 'big,' the bot prompts for exact events.",
+            "tags": [
+                "precision",
+                "conflict"
+            ],
+            "difficulty": 3
+        },
+        "FU011": {
+            "id": "FU011",
+            "category": "precision",
+            "prompt": "Can you narrow that down?",
+            "example_context": "When a setting is described as 'magical,' the bot asks what part of it is magical.",
+            "tags": [
+                "precision",
+                "setting"
+            ],
+            "difficulty": 2
+        },
+        "FU012": {
+            "id": "FU012",
+            "category": "precision",
+            "prompt": "Which part are you focusing on?",
+            "example_context": "A student describes a theme as 'justice,' and the bot asks what part of justice matters.",
+            "tags": [
+                "precision",
+                "theme"
+            ],
+            "difficulty": 3
+        },
+        "FU013": {
+            "id": "FU013",
+            "category": "precision",
+            "prompt": "How could you describe that in sharper detail?",
+            "example_context": "If a plot is 'exciting,' the bot asks for what specific events make it so.",
+            "tags": [
+                "precision",
+                "plot"
+            ],
+            "difficulty": 2
+        },
+        "FU014": {
+            "id": "FU014",
+            "category": "precision",
+            "prompt": "What are the key features?",
+            "example_context": "When a student describes a character as 'unique,' the bot asks for key distinguishing traits.",
+            "tags": [
+                "precision",
+                "character"
+            ],
+            "difficulty": 2
+        },
+        "FU015": {
+            "id": "FU015",
+            "category": "precision",
+            "prompt": "What exactly happens in that moment?",
+            "example_context": "The bot presses for detail when a student says 'a big event occurred.'",
+            "tags": [
+                "precision",
+                "event"
+            ],
+            "difficulty": 3
+        },
+        "FU016": {
+            "id": "FU016",
+            "category": "precision",
+            "prompt": "Could you break that down into parts?",
+            "example_context": "The bot asks for specifics when a student calls a relationship 'complicated.'",
+            "tags": [
+                "precision",
+                "relationship"
+            ],
+            "difficulty": 4
+        },
+        "FU017": {
+            "id": "FU017",
+            "category": "accuracy",
+            "prompt": "How could we check if that’s true?",
+            "example_context": "If a student says a character would never forgive, the bot asks how that could be verified in the story.",
+            "tags": [
+                "accuracy",
+                "character"
+            ],
+            "difficulty": 3
+        },
+        "FU018": {
+            "id": "FU018",
+            "category": "accuracy",
+            "prompt": "What evidence supports that?",
+            "example_context": "When a theme is proposed as 'friendship,' the bot asks what evidence in the story shows this.",
+            "tags": [
+                "accuracy",
+                "theme"
+            ],
+            "difficulty": 3
+        },
+        "FU019": {
+            "id": "FU019",
+            "category": "accuracy",
+            "prompt": "Is there a place in your story that shows this clearly?",
+            "example_context": "If a conflict is described as 'dangerous,' the bot asks for textual proof.",
+            "tags": [
+                "accuracy",
+                "conflict"
+            ],
+            "difficulty": 3
+        },
+        "FU020": {
+            "id": "FU020",
+            "category": "accuracy",
+            "prompt": "How do you know that will happen?",
+            "example_context": "If a student says the plot will 'surprise the reader,' the bot asks how they know.",
+            "tags": [
+                "accuracy",
+                "plot"
+            ],
+            "difficulty": 4
+        },
+        "FU021": {
+            "id": "FU021",
+            "category": "accuracy",
+            "prompt": "What makes you confident in that description?",
+            "example_context": "When a setting is described as 'realistic,' the bot asks why.",
+            "tags": [
+                "accuracy",
+                "setting"
+            ],
+            "difficulty": 2
+        },
+        "FU022": {
+            "id": "FU022",
+            "category": "accuracy",
+            "prompt": "What detail proves that?",
+            "example_context": "If a student claims a character is brave, the bot asks for an example action.",
+            "tags": [
+                "accuracy",
+                "character"
+            ],
+            "difficulty": 3
+        },
+        "FU023": {
+            "id": "FU023",
+            "category": "accuracy",
+            "prompt": "Is there a specific moment that illustrates this?",
+            "example_context": "When a student describes a relationship as 'toxic,' the bot asks for a specific scene.",
+            "tags": [
+                "accuracy",
+                "relationship"
+            ],
+            "difficulty": 3
+        },
+        "FU024": {
+            "id": "FU024",
+            "category": "accuracy",
+            "prompt": "What source or reference could confirm this?",
+            "example_context": "If a setting is based on history, the bot asks for historical accuracy.",
+            "tags": [
+                "accuracy",
+                "setting",
+                "history"
+            ],
+            "difficulty": 5
+        },
+        "FU025": {
+            "id": "FU025",
+            "category": "relevance",
+            "prompt": "How does this relate to their main goal?",
+            "example_context": "If a subplot is introduced, the bot asks how it connects to the protagonist’s main goal.",
+            "tags": [
+                "relevance",
+                "plot"
+            ],
+            "difficulty": 2
+        },
+        "FU026": {
+            "id": "FU026",
+            "category": "relevance",
+            "prompt": "Why does this matter to your story?",
+            "example_context": "When a student adds a side character, the bot asks why they are important.",
+            "tags": [
+                "relevance",
+                "character"
+            ],
+            "difficulty": 3
+        },
+        "FU027": {
+            "id": "FU027",
+            "category": "relevance",
+            "prompt": "What role does this play?",
+            "example_context": "The bot checks relevance when a student includes an event without a clear purpose.",
+            "tags": [
+                "relevance",
+                "event"
+            ],
+            "difficulty": 2
+        },
+        "FU028": {
+            "id": "FU028",
+            "category": "relevance",
+            "prompt": "Does this support your theme?",
+            "example_context": "If a scene is comedic, the bot asks if it connects to the story’s theme.",
+            "tags": [
+                "relevance",
+                "theme"
+            ],
+            "difficulty": 3
+        },
+        "FU029": {
+            "id": "FU029",
+            "category": "relevance",
+            "prompt": "Is this the most important thing to focus on?",
+            "example_context": "If a student dwells on minor details, the bot asks if they matter to the main plot.",
+            "tags": [
+                "relevance",
+                "plot"
+            ],
+            "difficulty": 2
+        },
+        "FU030": {
+            "id": "FU030",
+            "category": "relevance",
+            "prompt": "How does this connect to the conflict?",
+            "example_context": "When describing a side event, the bot checks if it relates to the conflict.",
+            "tags": [
+                "relevance",
+                "conflict"
+            ],
+            "difficulty": 3
+        },
+        "FU031": {
+            "id": "FU031",
+            "category": "relevance",
+            "prompt": "Does this build toward the resolution?",
+            "example_context": "The bot asks if a subplot contributes to the ending.",
+            "tags": [
+                "relevance",
+                "plot",
+                "resolution"
+            ],
+            "difficulty": 3
+        },
+        "FU032": {
+            "id": "FU032",
+            "category": "relevance",
+            "prompt": "Why is this detail worth including?",
+            "example_context": "If a student adds descriptive detail, the bot asks if it supports the narrative purpose.",
+            "tags": [
+                "relevance",
+                "setting",
+                "detail"
+            ],
+            "difficulty": 2
+        },
+        "FU033": {
+            "id": "FU033",
+            "category": "depth",
+            "prompt": "What makes this a complex situation?",
+            "example_context": "If a student describes a conflict simply as 'bad,' the bot asks for complexity.",
+            "tags": [
+                "depth",
+                "conflict"
+            ],
+            "difficulty": 3
+        },
+        "FU034": {
+            "id": "FU034",
+            "category": "depth",
+            "prompt": "What underlying issues might be involved?",
+            "example_context": "If a student says a relationship ended suddenly, the bot asks about underlying causes.",
+            "tags": [
+                "depth",
+                "relationship"
+            ],
+            "difficulty": 4
+        },
+        "FU035": {
+            "id": "FU035",
+            "category": "depth",
+            "prompt": "What hidden motives could be at play?",
+            "example_context": "When a villain acts, the bot asks about deeper motives.",
+            "tags": [
+                "depth",
+                "character",
+                "motivation"
+            ],
+            "difficulty": 4
+        },
+        "FU036": {
+            "id": "FU036",
+            "category": "depth",
+            "prompt": "What are the consequences if this happens?",
+            "example_context": "If a student describes a war breaking out, the bot asks about wider consequences.",
+            "tags": [
+                "depth",
+                "event"
+            ],
+            "difficulty": 3
+        },
+        "FU037": {
+            "id": "FU037",
+            "category": "depth",
+            "prompt": "What makes this important beyond the obvious?",
+            "example_context": "If a student says a hero wins, the bot asks what deeper meaning it carries.",
+            "tags": [
+                "depth",
+                "theme"
+            ],
+            "difficulty": 3
+        },
+        "FU038": {
+            "id": "FU038",
+            "category": "depth",
+            "prompt": "What difficult choices are involved?",
+            "example_context": "The bot prompts for difficult choices if a character faces a dilemma.",
+            "tags": [
+                "depth",
+                "conflict"
+            ],
+            "difficulty": 4
+        },
+        "FU039": {
+            "id": "FU039",
+            "category": "depth",
+            "prompt": "What assumptions are you making here?",
+            "example_context": "If a character is labeled as 'evil,' the bot asks what assumptions underlie this.",
+            "tags": [
+                "depth",
+                "character"
+            ],
+            "difficulty": 3
+        },
+        "FU040": {
+            "id": "FU040",
+            "category": "depth",
+            "prompt": "What does this reveal about the bigger picture?",
+            "example_context": "If a student focuses on a single event, the bot asks how it connects to the broader plot.",
+            "tags": [
+                "depth",
+                "plot"
+            ],
+            "difficulty": 3
+        },
+        "FU041": {
+            "id": "FU041",
+            "category": "breadth",
+            "prompt": "What other perspectives should we include?",
+            "example_context": "If only the hero’s view is described, the bot asks about the villain’s perspective.",
+            "tags": [
+                "breadth",
+                "character",
+                "viewpoint"
+            ],
+            "difficulty": 3
+        },
+        "FU042": {
+            "id": "FU042",
+            "category": "breadth",
+            "prompt": "What would another character think of this?",
+            "example_context": "If a relationship is described one-sidedly, the bot asks how the other feels.",
+            "tags": [
+                "breadth",
+                "relationship"
+            ],
+            "difficulty": 2
+        },
+        "FU043": {
+            "id": "FU043",
+            "category": "breadth",
+            "prompt": "How might this look from the reader’s perspective?",
+            "example_context": "The bot prompts for reader perception when describing a shocking twist.",
+            "tags": [
+                "breadth",
+                "reader",
+                "plot"
+            ],
+            "difficulty": 3
+        },
+        "FU044": {
+            "id": "FU044",
+            "category": "breadth",
+            "prompt": "Could someone else interpret this differently?",
+            "example_context": "When describing a theme like 'justice,' the bot asks for alternative interpretations.",
+            "tags": [
+                "breadth",
+                "theme"
+            ],
+            "difficulty": 4
+        },
+        "FU045": {
+            "id": "FU045",
+            "category": "breadth",
+            "prompt": "What’s an opposing possibility?",
+            "example_context": "If a character is confident of success, the bot asks what could go wrong.",
+            "tags": [
+                "breadth",
+                "conflict"
+            ],
+            "difficulty": 3
+        },
+        "FU046": {
+            "id": "FU046",
+            "category": "breadth",
+            "prompt": "What would happen if we reversed the roles?",
+            "example_context": "The bot asks what happens if a villain became the hero.",
+            "tags": [
+                "breadth",
+                "character"
+            ],
+            "difficulty": 4
+        },
+        "FU047": {
+            "id": "FU047",
+            "category": "breadth",
+            "prompt": "Is there a cultural or historical angle here?",
+            "example_context": "If a story is set in a real place, the bot asks about cultural perspectives.",
+            "tags": [
+                "breadth",
+                "setting",
+                "culture"
+            ],
+            "difficulty": 5
+        },
+        "FU048": {
+            "id": "FU048",
+            "category": "breadth",
+            "prompt": "How would this seem from a neutral observer’s point of view?",
+            "example_context": "When describing a heated conflict, the bot asks how a bystander might see it.",
+            "tags": [
+                "breadth",
+                "conflict"
+            ],
+            "difficulty": 3
+        }
+    },
+    "meta_transitions": {
+        "MT001": {
+            "id": "MT001",
+            "scope": "socratic",
+            "transition_type": "angle_to_angle",
+            "prompt": "How might shifting the focus from one angle to another reveal new insights?",
+            "example_context": "Exploring a character’s motivation, then moving to their conflict",
+            "tags": [
+                "angle",
+                "transition"
+            ],
+            "requires_confirmation": false,
+            "priority": 5,
+            "trigger_conditions": [
+                {
+                    "type": "depth_check"
+                }
+            ]
+        },
+        "MT002": {
+            "id": "MT002",
+            "scope": "socratic",
+            "transition_type": "angle_to_category",
+            "prompt": "What connections can you draw from this angle to a different aspect of the story?",
+            "example_context": "Moving from character motivation to how it influences the setting",
+            "tags": [
+                "angle",
+                "category"
+            ],
+            "requires_confirmation": false,
+            "priority": 6,
+            "trigger_conditions": [
+                {
+                    "type": "breadth_check"
+                }
+            ]
+        },
+        "MT003": {
+            "id": "MT003",
+            "scope": "socratic",
+            "transition_type": "category_to_category",
+            "prompt": "How might shifting focus from one story element to another deepen understanding?",
+            "example_context": "Linking setting to plot development",
+            "tags": [
+                "category",
+                "story"
+            ],
+            "requires_confirmation": false,
+            "priority": 6,
+            "trigger_conditions": [
+                {
+                    "type": "breadth_check"
+                }
+            ]
+        },
+        "MT004": {
+            "id": "MT004",
+            "scope": "socratic",
+            "transition_type": "confirm_switch",
+            "prompt": "Would it be useful to shift the discussion to a new direction now?",
+            "example_context": "Checking before moving from character focus to plot focus",
+            "tags": [
+                "switch",
+                "confirmation"
+            ],
+            "requires_confirmation": true,
+            "priority": 7,
+            "trigger_conditions": [
+                {
+                    "type": "user_state_check"
+                }
+            ]
+        },
+        "MT005": {
+            "id": "MT005",
+            "scope": "socratic",
+            "transition_type": "backtrack",
+            "prompt": "Would revisiting an earlier point help clarify or expand the discussion?",
+            "example_context": "Returning to a previous angle on character motivation after exploring conflict",
+            "tags": [
+                "backtrack",
+                "reflection"
+            ],
+            "requires_confirmation": true,
+            "priority": 4,
+            "trigger_conditions": [
+                {
+                    "type": "reflection_needed"
+                }
+            ]
+        },
+        "MT006": {
+            "id": "MT006",
+            "scope": "socratic",
+            "transition_type": "closure",
+            "prompt": "What key insights have emerged, and how might you summarize or conclude this thread?",
+            "example_context": "Wrapping up discussion of character dynamics before moving on",
+            "tags": [
+                "closure",
+                "synthesis"
+            ],
+            "requires_confirmation": false,
+            "priority": 8,
+            "trigger_conditions": [
+                {
+                    "type": "end_of_thread"
+                }
+            ]
+        }
+    }
+}

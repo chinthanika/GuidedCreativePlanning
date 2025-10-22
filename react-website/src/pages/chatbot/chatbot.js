@@ -1,12 +1,21 @@
 import React from "react";
-import ChatbotWindow from "../../components/chatbot/ChatWindow";
+import ChatWindow from "../../components/chatbot/ChatWindow";
+import PendingChanges from "../../components/chatbot/PendingChanges";
+import { useAuthValue } from '../../Firebase/AuthContext';
+import "./chatbot.css"; // new CSS for layout
 
 export default function Chatbot() {
+  const { currentUser } = useAuthValue();
+  const uid = currentUser?.uid;
+
   return (
-    <div>
-      <h1>Chatbot</h1>
-      {/* Other content */}
-      <ChatbotWindow />
+    <div className="chatbot-page-container">
+      <div className="chat-window-container">
+        <ChatWindow />
+      </div>
+      <div className="pending-changes-container">
+        <PendingChanges userId={uid} />
+      </div>
     </div>
   );
 }

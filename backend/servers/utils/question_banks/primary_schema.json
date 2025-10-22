@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PrimaryQuestionBank",
+  "description": "Schema for the complete set of Socratic questions across all creative writing categories",
+  "type": "object",
+  "properties": {
+    "bank": {
+      "type": "array",
+      "description": "List of categories, each with its structured questions",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "motivation",
+              "setting",
+              "character",
+              "plot",
+              "theme",
+              "conflict",
+              "resolution",
+              "tone"
+            ],
+            "description": "Creative writing element category"
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the question (e.g., MOT001)"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "clarification",
+                    "assumption",
+                    "evidence",
+                    "implication",
+                    "consequence",
+                    "alternative",
+                    "viewpoint",
+                    "example"
+                  ],
+                  "description": "Reasoning type of Socratic question"
+                },
+                "question": {
+                  "type": "string",
+                  "description": "The Socratic question text"
+                },
+                "example_context": {
+                  "type": "string",
+                  "description": "General example of how the question could apply in creative writing",
+                  "minLength": 5
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Optional keywords for search/indexing (e.g., 'character', 'theme')"
+                },
+                "difficulty": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 5,
+                  "description": "Scale of cognitive challenge (1=basic, 5=advanced)"
+                }
+              },
+              "required": ["id", "type", "question"]
+            }
+          }
+        },
+        "required": ["category", "questions"]
+      }
+    }
+  },
+  "required": ["bank"]
+}

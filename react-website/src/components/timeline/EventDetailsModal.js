@@ -1,199 +1,220 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { Modal, Box, Button, TextField, Typography } from "@material-ui/core";
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
-import "../common/modal.css";
-
-const EventDetailsModal = ({ isOpen, closeModal, event, onSave, setAsBackground }) => {
+const EventDetailsModal = ({ isOpen, closeModal, event, onSave, onDelete, onGenerateImage }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editableEvent, setEditableEvent] = useState(event || {});
-    const [imageUrl, setImageUrl] = useState(event?.imageUrl || "");
+    const [imageUrl, setImageUrl] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
 
     useEffect(() => {
         if (event) {
             setEditableEvent(event);
-            setImageUrl(event.imageUrl || ""); // Set default image URL
-        } else {
-            setEditableEvent({ date: "", title: "", description: "", stage: "", isMainEvent: false }); // Provide default values
-            setImageUrl(""); // Reset image URL
+            setImageUrl(event.imageUrl || "");
         }
+        setIsEditing(false);
     }, [event]);
 
-    const handleEditToggle = () => {
-        setIsEditing(!isEditing);
-    };
+    if (!isOpen || !event) return null;
 
     const handleGenerateImage = async () => {
+        if (!editableEvent.description) {
+            alert("Please add a description first to generate an image.");
+            return;
+        }
+
         setIsGenerating(true);
         try {
-            console.log("Sending request to generate image with description:", editableEvent.description);
-            const response = await axios.post('https://guidedcreativeplanning-1.onrender.com/images', { description: editableEvent.description });
-            setImageUrl(response.data.image_url);
-            setEditableEvent({ ...editableEvent, imageUrl: response.data.image_url });
-            console.log("Image generated:", response.data.image_url);
+            const generatedImageUrl = await onGenerateImage(editableEvent.description);
+            setImageUrl(generatedImageUrl);
+            setEditableEvent({ 
+                ...editableEvent, 
+                imageUrl: generatedImageUrl 
+            });
         } catch (error) {
             console.error("Error generating image:", error);
+            alert("Failed to generate image. Please try again.");
         } finally {
             setIsGenerating(false);
         }
     };
 
     const handleSave = () => {
-        onSave(editableEvent);
+        const eventToSave = {
+            ...editableEvent,
+            imageUrl: imageUrl || editableEvent.imageUrl
+        };
+        onSave(eventToSave);
+        setIsEditing(false);
+    };
+
+    const handleDelete = () => {
+        if (window.confirm(`Delete "${event.title}"? This action cannot be undone.`)) {
+            onDelete(event);
+        }
+    };
+
+    const handleClose = () => {
+        setEditableEvent(event);
+        setImageUrl(event.imageUrl || "");
         setIsEditing(false);
         closeModal();
     };
 
-    if (!editableEvent) {
-        return null; // Render nothing if editableEvent is not set
-    }
+    const stages = [
+        "introduction",
+        "rising action",
+        "climax",
+        "falling action",
+        "resolution"
+    ];
 
     return (
-        <Modal open={isOpen} onClose={closeModal} aria-labelledby="modal-title">
-            <Box
-                style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    width: 400,
-                    maxHeight: "80vh",
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
-                    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
-                    padding: 16,
-                    borderRadius: 8,
-                    overflowY: "auto",
-                }}
-            >
-                <Typography id="modal-title" variant="h6" style={{ marginBottom: 16, textAlign: "center" }}>
-                    Event Details
-                </Typography>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                    <DatePicker
-                        label="Date"
-                        value={editableEvent.date ? new Date(editableEvent.date) : null}
-                        onChange={(newValue) => setEditableEvent({ ...editableEvent, date: newValue })}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                fullWidth
-                                size="small"
-                                required
-                                disabled={!isEditing}
-                                InputProps={{
-                                    ...params.InputProps,
-                                    style: {
-                                        color: "#63666A", // Darker text color
-                                    },
-                                }}
-                                style={{ marginBottom: 24 }}
-                            />
-                        )}
-                    />
-                </LocalizationProvider>
-                <TextField
-                    label="Title"
-                    value={editableEvent.title || ""}
-                    onChange={(e) => setEditableEvent({ ...editableEvent, title: e.target.value })}
-                    fullWidth
-                    size="small"
-                    disabled={!isEditing}
-                    InputProps={{
-                        style: {
-                            color: "#63666A", // Darker text color
-                        },
-                    }}
-                    style={{ marginBottom: 24 }}
-                />
-                <TextField
-                    label="Description"
-                    value={editableEvent.description || ""}
-                    onChange={(e) => setEditableEvent({ ...editableEvent, description: e.target.value })}
-                    fullWidth
-                    size="small"
-                    multiline
-                    minRows={3}
-                    disabled={!isEditing}
-                    InputProps={{
-                        style: {
-                            color: "#63666A", // Darker text color
-                        },
-                    }}
-                    style={{ marginBottom: 12 }}
-                />
-                {imageUrl && (
-                    <div style={{ marginBottom: 16 }}>
-                        <img src={imageUrl} alt="Generated" style={{ width: "100%", borderRadius: 8 }} />
+        <div className="timeline-modal-overlay" onClick={handleClose}>
+            <div className="timeline-modal-content" onClick={(e) => e.stopPropagation()}>
+                <h3 className="timeline-modal-header">
+                    <span>📝</span>
+                    {event.title}
+                </h3>
+
+                <div className="timeline-modal-form">
+                    <div className="timeline-form-group">
+                        <label>Title</label>
+                        <input
+                            type="text"
+                            value={editableEvent.title || ""}
+                            onChange={(e) => setEditableEvent({ ...editableEvent, title: e.target.value })}
+                            disabled={!isEditing}
+                        />
                     </div>
-                )}
-                {imageUrl && (
-                    <Button
-                        onClick={() => setAsBackground(imageUrl)}
-                        variant="contained"
-                        color="secondary"
-                        style={{ marginBottom: 16 }}
-                    >
-                        Set as Event Background
-                    </Button>
-                )}
-                <Button
-                    onClick={handleGenerateImage}
-                    variant="contained"
-                    color="primary"
-                    disabled={isGenerating}
-                    style={{ marginBottom: 16 }}
-                >
-                    {isGenerating ? "Generating..." : "Generate Image"}
-                </Button>
-                <TextField
-                    label="Stage"
-                    value={editableEvent.stage || ""}
-                    onChange={(e) => setEditableEvent({ ...editableEvent, stage: e.target.value })}
-                    fullWidth
-                    size="small"
-                    disabled={!isEditing}
-                    InputProps={{
-                        style: {
-                            color: "#63666A", // Darker text color
-                        },
-                    }}
-                    style={{ marginBottom: 12 }}
-                />
-                <TextField
-                    label="Main Event"
-                    value={editableEvent.isMainEvent ? "Yes" : "No"}
-                    onChange={(e) =>
-                        setEditableEvent({ ...editableEvent, isMainEvent: e.target.value === "Yes" })
-                    }
-                    fullWidth
-                    size="small"
-                    disabled={!isEditing}
-                    InputProps={{
-                        style: {
-                            color: "#63666A", // Darker text color
-                        },
-                    }}
-                    style={{ marginBottom: 12 }}
-                />
-                <Box style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
-                    {isEditing ? (
-                        <Button onClick={handleSave} className="modal-btn save-btn">
-                            Save
-                        </Button>
-                    ) : (
-                        <Button onClick={handleEditToggle} className="modal-btn edit-btn">
-                            Edit
-                        </Button>
+
+                    <div className="timeline-form-group">
+                        <label>Date</label>
+                        <input
+                            type="date"
+                            value={editableEvent.date || ""}
+                            onChange={(e) => setEditableEvent({ ...editableEvent, date: e.target.value })}
+                            disabled={!isEditing}
+                        />
+                    </div>
+
+                    <div className="timeline-form-group">
+                        <label>Story Stage</label>
+                        <select
+                            value={editableEvent.stage || ""}
+                            onChange={(e) => setEditableEvent({ ...editableEvent, stage: e.target.value })}
+                            disabled={!isEditing}
+                        >
+                            {stages.map((stage) => (
+                                <option key={stage} value={stage}>
+                                    {stage.charAt(0).toUpperCase() + stage.slice(1)}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="timeline-form-group">
+                        <label>Description</label>
+                        <textarea
+                            value={editableEvent.description || ""}
+                            onChange={(e) => setEditableEvent({ ...editableEvent, description: e.target.value })}
+                            rows={4}
+                            disabled={!isEditing}
+                        />
+                    </div>
+
+                    <div className="timeline-checkbox-group">
+                        <input
+                            type="checkbox"
+                            id="isMainEventEdit"
+                            checked={editableEvent.isMainEvent || false}
+                            onChange={(e) => setEditableEvent({ 
+                                ...editableEvent, 
+                                isMainEvent: e.target.checked 
+                            })}
+                            disabled={!isEditing}
+                        />
+                        <label htmlFor="isMainEventEdit">Mark as Main Event</label>
+                    </div>
+
+                    {imageUrl && (
+                        <div className="timeline-image-preview">
+                            <img src={imageUrl} alt="Event visualization" />
+                        </div>
                     )}
-                    <Button onClick={closeModal} className="modal-btn cancel-btn">
-                        Close
-                    </Button>
-                </Box>
-            </Box>
-        </Modal>
+
+                    {imageUrl && (
+                        <div className="timeline-checkbox-group">
+                            <input
+                                type="checkbox"
+                                id="useAsBackground"
+                                checked={editableEvent.useImageAsBackground || false}
+                                onChange={(e) => setEditableEvent({ 
+                                    ...editableEvent, 
+                                    useImageAsBackground: e.target.checked 
+                                })}
+                                disabled={!isEditing}
+                            />
+                            <label htmlFor="useAsBackground">Use as card background</label>
+                        </div>
+                    )}
+
+                    {isEditing && onGenerateImage && (
+                        <button
+                            onClick={handleGenerateImage}
+                            className="timeline-modal-btn timeline-btn-generate"
+                            disabled={isGenerating}
+                            style={{ width: '100%' }}
+                        >
+                            {isGenerating ? "Generating..." : "🎨 Generate Image from Description"}
+                        </button>
+                    )}
+                </div>
+
+                <div className="timeline-modal-actions">
+                    {isEditing ? (
+                        <>
+                            <button 
+                                className="timeline-modal-btn timeline-btn-save" 
+                                onClick={handleSave}
+                            >
+                                Save Changes
+                            </button>
+                            <button 
+                                className="timeline-modal-btn timeline-btn-cancel" 
+                                onClick={() => {
+                                    setEditableEvent(event);
+                                    setImageUrl(event.imageUrl || "");
+                                    setIsEditing(false);
+                                }}
+                            >
+                                Cancel
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button 
+                                className="timeline-modal-btn timeline-btn-save" 
+                                onClick={() => setIsEditing(true)}
+                            >
+                                Edit
+                            </button>
+                            <button 
+                                className="timeline-modal-btn timeline-btn-delete" 
+                                onClick={handleDelete}
+                            >
+                                Delete
+                            </button>
+                            <button 
+                                className="timeline-modal-btn timeline-btn-cancel" 
+                                onClick={handleClose}
+                            >
+                                Close
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
     );
 };
 

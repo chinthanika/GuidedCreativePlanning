@@ -1,0 +1,78 @@
+.pending-changes {
+  padding: 1rem 1.5rem;
+  background: #f1f3f6;
+  border-radius: 10px;
+  max-width: 700px;
+  margin: 2rem auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.pending-changes h3 {
+  margin-bottom: 1rem;
+  text-align: center;
+  color: #2c3e50;
+  font-size: 1.5rem;
+}
+
+.change-card {
+  background: #fff;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+
+.change-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.change-details {
+  font-size: 0.95rem;
+  color: #34495e;
+}
+
+.status {
+  font-size: 0.85rem;
+  font-weight: bold;
+  margin-top: 0.25rem;
+}
+
+.status.pending { color: #e67e22; }
+.status.confirmed { color: #27ae60; }
+.status.denied { color: #c0392b; }
+
+.change-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.change-actions button {
+  flex: 1;
+  padding: 0.5rem 0.8rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+  color: #fff;
+}
+
+.change-actions button:nth-child(1) { background: #27ae60; } /* Confirm */
+.change-actions button:nth-child(2) { background: #c0392b; } /* Deny */
+.change-actions button:nth-child(3) { background: #95a5a6; color: #fff; } /* Edit */
+
+.change-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.change-actions button:hover:not(:disabled) {
+  opacity: 0.9;
+}

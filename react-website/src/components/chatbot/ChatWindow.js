@@ -1,112 +1,236 @@
-import React, { useState, useEffect, useRef } from "react";
-
-import { useAuthValue } from '../../Firebase/AuthContext';
+import React, { useRef, useState, useEffect } from "react";
 import { database } from '../../Firebase/firebase';
-import { ref, push, set, get, update, serverTimestamp, onValue, query, orderByChild } from "firebase/database";
+import { set, ref, onValue, push } from "firebase/database";
+import { useAuthValue } from '../../Firebase/AuthContext';
 
-import "./chatbot.css"; // optional styling
+import { sendMessage } from '../../services/chatbotAPI';
+import "./chatbot.css";
 
-export default function ChatbotWindow() {
+const ChatWindow = () => {
     const { currentUser } = useAuthValue();
-    const [messages, setMessages] = useState([]);
+    const uid = currentUser?.uid;
+    const [mode, setMode] = useState("brainstorming");
+    const [sessionID, setSessionID] = useState(null);
     const [input, setInput] = useState("");
-    const [chatSessionId, setChatSessionId] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [messages, setMessages] = useState([]);
+    const [backgroundStatus, setBackgroundStatus] = useState(null);
 
     const messagesEndRef = useRef(null);
 
-    // ✅ Auto-scroll to bottom when new messages arrive
     useEffect(() => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
-    }, [messages]);
+    }, [messages, backgroundStatus]);
 
-    // ✅ Create a new chat session if none exists
+    // Listen for background task completion
     useEffect(() => {
-        if (!currentUser) return;
+        if (!uid) return;
 
-        const newChatRef = push(ref(database, `chatSessions/${currentUser.uid}`));
-        const newChatId = newChatRef.key;
+        const taskRef = ref(database, `backgroundTasks/${uid}`);
+        const unsubscribe = onValue(taskRef, (snapshot) => {
+            const tasks = snapshot.val();
+            if (!tasks) {
+                setBackgroundStatus(null);
+                return;
+            }
 
-        set(newChatRef, {
-            metadata: {
-                title: "New Chat",
-                createdAt: Date.now(),
-                updatedAt: Date.now()
-            },
-            messages: {}
-        });
+            const taskArray = Object.entries(tasks).map(([id, t]) => ({
+                id,
+                ...t,
+                updatedAt: Number(t.updatedAt || 0),
+            }));
 
-        setChatSessionId(newChatId);
+            const latestTask = taskArray.sort((a, b) => b.updatedAt - a.updatedAt)[0];
+            if (!latestTask) {
+                setBackgroundStatus(null);
+                return;
+            }
 
-        // Attach listener to messages
-        const messagesRef = ref(database, `chatSessions/${currentUser.uid}/${newChatId}/messages`);
-        const q = query(messagesRef, orderByChild("timestamp"));
+            console.log("Latest background task:", latestTask);
 
-        const unsubscribe = onValue(q, (snapshot) => {
-            const msgs = [];
-            snapshot.forEach((child) => {
-                msgs.push({ id: child.key, ...child.val() });
-            });
-            setMessages(msgs);
+            // Update status display
+            if (latestTask.status === "processing") {
+                setBackgroundStatus({
+                    message: latestTask.message || "Processing...",
+                    type: "processing"
+                });
+            } else if (latestTask.status === "done") {
+                // Clear status after a brief delay
+                setTimeout(() => setBackgroundStatus(null), 2000);
+            } else if (latestTask.status === "error") {
+                setBackgroundStatus({
+                    message: "Something went wrong. Please try again.",
+                    type: "error"
+                });
+                setTimeout(() => setBackgroundStatus(null), 5000);
+            }
         });
 
         return () => unsubscribe();
-    }, [currentUser]);
+    }, [uid]);
 
-    // ✅ Send message (push to Firebase)
-    const sendMessage = async () => {
-        if (!input.trim() || !chatSessionId) return;
+    // Listen for changes in Firebase messages
+    useEffect(() => {
+        if (!uid) return;
+        if (!sessionID) {
+            const sessionsRef = ref(database, `chatSessions/${uid}`);
+            const newSessionRef = push(sessionsRef);
 
-        const messagesRef = ref(database, `chatSessions/${currentUser.uid}/${chatSessionId}/messages`);
+            set(newSessionRef, {
+                metadata: {
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                    title: "New Chat",
+                },
+                messages: {},
+            });
 
-        // User message
-        await push(messagesRef, {
-            sender: "user",
-            text: input,
-            timestamp: Date.now()
+            setSessionID(newSessionRef.key);
+            return;
+        }
+
+        const messagesRef = ref(database, `chatSessions/${uid}/${sessionID}/messages`);
+
+        const unsubscribe = onValue(messagesRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const parsedMessages = Object.entries(data).map(([id, msg]) => ({
+                    id,
+                    ...msg,
+                }));
+                parsedMessages.sort((a, b) => (a.timestamp > b.timestamp ? 1 : -1));
+                setMessages(parsedMessages);
+            } else {
+                setMessages([]);
+            }
         });
 
+        return () => unsubscribe();
+    }, [uid, sessionID]);
+
+    // Handle sending a message
+    const handleSend = async () => {
+        if (input.trim() === "" || loading) return;
+
+        const userText = input.trim();
         setInput("");
 
-        // Temporary mock bot reply
-        setTimeout(async () => {
-            await push(messagesRef, {
-                sender: "bot",
-                text: "Echo: " + input,
-                timestamp: Date.now()
-            });
-        }, 500);
+        // Show typing indicator
+        setLoading(true);
 
-        // Update metadata timestamp
-        const metadataRef = ref(database, `chatSessions/${currentUser.uid}/${chatSessionId}/metadata`);
-        await update(metadataRef, { updatedAt: Date.now() });
+        try {
+            // Call backend
+            const botData = await sendMessage(uid, sessionID, userText, mode);
+
+            // Update session ID if new
+            if (botData?.session_id && botData.session_id !== sessionID) {
+                setSessionID(botData.session_id);
+            }
+
+            // If no immediate chat message but background work is happening
+            if (!botData?.chat_message && botData?.background_processing) {
+                setBackgroundStatus({
+                    message: "Processing your request...",
+                    type: "processing"
+                });
+            }
+
+            // Hide typing indicator
+            setLoading(false);
+
+        } catch (error) {
+            setLoading(false);
+            console.error("Send error:", error);
+
+            // Show error message
+            setBackgroundStatus({
+                message: "Failed to send message. Please try again.",
+                type: "error"
+            });
+            
+            setTimeout(() => setBackgroundStatus(null), 5000);
+        }
     };
 
     return (
-        <div className="chatbot-window">
-            <div className="chat-messages">
-                {messages.map((msg) => (
-                    <div
-                        key={msg.id}
-                        className={`message ${msg.sender === "user" ? "user" : "bot"}`}
+        <div className="chatbot-page">
+            <div className="chatbot-window">
+                <div className="mode-switcher">
+                    <button
+                        onClick={() => setMode("deepthinking")}
+                        className={mode === "deepthinking" ? "active" : ""}
                     >
-                        {msg.text}
-                    </div>
-                ))}
-                <div ref={messagesEndRef} />
-            </div>
+                        Deepthinking
+                    </button>
+                    <button
+                        onClick={() => setMode("brainstorming")}
+                        className={mode === "brainstorming" ? "active" : ""}
+                    >
+                        Brainstorming
+                    </button>
+                </div>
 
-            <div className="chat-input">
-                <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                    placeholder="Type a message..."
-                />
-                <button onClick={sendMessage}>Send</button>
+                {/* Chat messages */}
+                <div className="chat-messages">
+                    {messages
+                        .filter((msg) => msg.visible !== false)
+                        .map((msg) => (
+                            <div
+                                key={msg.id}
+                                className={`message-wrapper ${msg.role === "user" ? "user" : "assistant"}`}
+                            >
+                                <div className={`message ${msg.role}`}>
+                                    {msg.role === "assistant" && msg.content.startsWith("<") ? (
+                                        <div
+                                            dangerouslySetInnerHTML={{ __html: msg.content }}
+                                        />
+                                    ) : (
+                                        <p>{msg.content}</p>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    
+                    {/* Loading indicator */}
+                    {loading && (
+                        <div className="message-wrapper assistant">
+                            <div className="message assistant typing">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Background status */}
+                    {backgroundStatus && !loading && (
+                        <div className="message-wrapper system">
+                            <div className={`message system ${backgroundStatus.type}`}>
+                                <p>{backgroundStatus.message}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div ref={messagesEndRef} />
+                </div>
+
+                {/* Input bar */}
+                <div className="chat-input">
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && !loading && handleSend()}
+                        placeholder="Type a message..."
+                        disabled={loading}
+                    />
+                    <button onClick={handleSend} disabled={loading}>
+                        {loading ? "..." : "Send"}
+                    </button>
+                </div>
             </div>
         </div>
     );
-}
+};
+
+export default ChatWindow;
