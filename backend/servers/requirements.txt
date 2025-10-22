@@ -121,12 +121,12 @@ newspaper3k==0.2.8
 nltk==3.8.1
 notebook==6.5.3
 notebook_shim==0.2.2
-numpy==1.24.2
+numpy>=1.26.0
 openai==1.61.1
 openpyxl==3.1.5
 orjson==3.8.10
 packaging==23.0
-pandas==1.5.3
+pandas>=2.2.0
 pandocfilters==1.5.0
 parso==0.8.3
 pathy==0.10.1
@@ -158,7 +158,7 @@ python-slugify==8.0.0
 pytz==2023.2
 pytz-deprecation-shim==0.1.0.post0
 pyvis==0.3.2
-pywin32==306
+pywin32==306; platform_system == "Windows"
 pywinpty==2.0.10
 PyYAML==6.0
 pyzmq==25.0.2
