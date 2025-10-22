@@ -1444,7 +1444,7 @@ async function getCachedWorldBuilding(userId, pipeline, category) {
   return items;
 }
 
-const PORT = 5001;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-  console.log(`Profile Manager running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
