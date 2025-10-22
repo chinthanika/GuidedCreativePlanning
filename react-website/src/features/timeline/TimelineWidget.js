@@ -9,7 +9,7 @@ import './timeline.css';
 const TimelineCardGrid = () => {
     const { currentUser } = useAuthValue();
     const userId = currentUser ? currentUser.uid : null;
-    const API_BASE = "http://localhost:5001/api";
+    const API_BASE = "https://guidedcreativeplanning-pfm.onrender.com/api";
 
     const [events, setEvents] = useState([]);
     const [flippedCard, setFlippedCard] = useState(null);
