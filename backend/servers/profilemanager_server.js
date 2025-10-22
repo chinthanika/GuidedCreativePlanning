@@ -15,7 +15,8 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://guided-creative-planning-v11b-bqtgde5q3-chinthanikas-projects.vercel.app"
+  "https://guided-creative-planning-v11b-r32p0jwvm-chinthanikas-projects.vercel.app/",
+  "https://guided-creative-planning-v11b-git-main-chinthanikas-projects.vercel.app/"
 ];
 
 app.use(
