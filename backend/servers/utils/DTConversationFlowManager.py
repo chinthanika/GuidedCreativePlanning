@@ -466,7 +466,16 @@ class DTConversationFlowManager:
                 dt_meta = self.get_metadata()
                 return {"summaries": cached_data["summaries"], "unsummarised": [], "dt_metadata": dt_meta}
 
-            msgs = sorted(messages_snapshot.items(), key=lambda kv: kv[1].get("timestamp", 0))
+            msgs = []
+            for msg_id, m in messages_snapshot.items():
+                # If message is a string, wrap it in a dict
+                if isinstance(m, str):
+                    logger.warning(f"[MESSAGES] Message {msg_id} is a string, wrapping in dict")
+                    m = {"content": m, "timestamp": 0, "role": "unknown"}
+                
+                msgs.append((msg_id, m))
+
+            msgs = sorted(msgs, key=lambda kv: kv[1].get("timestamp", 0))
             unsummarised = []
 
             for msg_id, m in msgs:

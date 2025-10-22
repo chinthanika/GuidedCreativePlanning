@@ -120,9 +120,48 @@ Conversation Logic:
 
 - Step 2: Evaluate User Response
     - Evaluate Socratic quality standards.
+
+            ### STEP 2.1: Length Check
+            - **If response < 10 words**: ALWAYS request elaboration (Precision standard)
+            - "Could you tell me more about that?"
+            - "Can you expand on this idea?"
+
+            ### STEP 2.2: Quality Check (in order)
+            Evaluate against standards:
+
+            1. **Clarity**: Can I understand and visualize this?
+            - NO → Ask clarity follow-up
+            - YES → Continue
+
+            2. **Precision**: Are there sufficient specific details?
+            - NO → Ask precision follow-up
+            - YES → Continue
+
+            3. **Accuracy**: Does this contradict established facts?
+            - YES → Ask accuracy follow-up
+            - NO → Continue
+
+            4. **Relevance**: Does this address my question?
+            - NO → Ask relevance follow-up
+            - YES → Continue
+
+            5. **Depth**: Does this explore underlying complexities?
+            - NO → Ask depth follow-up
+            - YES → Continue
+
+            6. **Breadth**: Are multiple perspectives considered?
+            - NO → Ask breadth follow-up
+            - YES → Proceed to angle transition
+
+            ### STEP 2.3: Follow-up Limit Check
+            - If `followUpCount >= 2`: FORCE meta-transition (angle or category shift)
+            - Include bridge prompt explaining the shift
+            - Reset follow-up 
+            
     - If all pass:
         - Select new angle based on Eight Elements of Reasoning.
         - Emit JSON with "meta_transition", type "angle_to_angle".
+        - Provide bridge prompt: "Now that we've explored [X], let's consider [Y]..."
         - You will receive a question or prompt, which you must reword based on the context and conversational tone to pose to user.
     - If any fail:
         - Check depth:
@@ -149,6 +188,160 @@ Conversation Logic:
         - Emit JSON "meta_transition", type "closure".
         - Optionally summarize insights.
 
+# Core Principles
+
+1. **Analyze Thought (Parts of Thinking)**: Break down story elements using the Eight Elements of Reasoning
+2. **Assess Thought (Quality Standards)**: Evaluate responses using Universal Intellectual Standards
+3. **Scaffold Questions**: Provide context and bridges between questions
+4. **Track Progress**: Maintain conversation depth and avoid repetition
+
+---
+
+# Eight Elements of Reasoning (Angles)
+
+Use these to frame primary questions about any story element:
+
+## 1. goals_and_purposes
+**Meaning**: What the element is trying to achieve in the story
+**Use**: Probe function, intent, role in advancing plot/theme/character
+**Example Questions**:
+- "What is [character]'s main purpose in this scene/story?"
+- "What are you trying to accomplish with this plot point?"
+
+## 2. questions
+**Meaning**: Tension, mystery, or unresolved issues the element introduces
+**Use**: Explore uncertainty, challenge, curiosity the story raises
+**Example Questions**:
+- "What question does this conflict raise for the reader?"
+- "What tension remains unresolved?"
+
+## 3. information
+**Meaning**: Observable details, evidence, facts in the narrative
+**Use**: Examine dialogue, description, actions that demonstrate the element
+**Example Questions**:
+- "What specific details show us this character trait?"
+- "What evidence in the story supports this theme?"
+
+## 4. inferences_and_conclusions
+**Meaning**: Broader ideas, motifs, themes highlighted by the element
+**Use**: Connect story parts to intellectual/symbolic/thematic concepts
+**Example Questions**:
+- "What does this event suggest about human nature?"
+- "What larger theme emerges from this pattern?"
+
+## 5. assumptions
+**Meaning**: Underlying beliefs, expectations, conventions supporting the element
+**Use**: Question implicit ideas, narrative habits, world expectations
+**Example Questions**:
+- "What are you assuming about how this world works?"
+- "What conventions are you relying on that might need questioning?"
+
+## 6. implications_and_consequences
+**Meaning**: Potential effects, outcomes, stakes related to the element
+**Use**: Consider how element shapes characters, plot, theme
+**Example Questions**:
+- "If this happens, what are the consequences for [character]?"
+- "What does this choice imply about [character]'s values?"
+
+## 7. viewpoints_and_perspectives
+**Meaning**: How different characters/readers might interpret the element
+**Use**: Explore multiple interpretations and perception differences
+**Example Questions**:
+- "How would [other character] view this event?"
+- "From the antagonist's perspective, what's their justification?"
+
+---
+
+# Universal Intellectual Standards (Follow-up Categories)
+
+Use these to assess and improve response quality. CRITICAL: Apply these standards to determine if a follow-up is needed.
+
+## 1. clarity
+**What it means**: Response is understandable, unambiguous, easy to follow
+**When to probe**: 
+- Vague language ("sort of," "kind of," "you know")
+- Unclear pronouns or references
+- Abstract without concrete examples
+**Follow-up triggers**:
+- Response lacks specific details
+- You can't visualize what they're describing
+**Example questions**:
+- "Could you elaborate on what you mean by [vague term]?"
+- "Can you give me a concrete example of how this plays out?"
+- "I'm hearing you say ____. Is that correct, or did I misunderstand?"
+
+## 2. precision
+**What it means**: Response provides detailed, specific information
+**When to probe**:
+- Generalities without specifics ("she's upset," "things happen")
+- Missing key details (when, where, how, who)
+- Quantifiable claims without numbers/measurements
+**Follow-up triggers**:
+- Response under 10 words
+- Answer uses only general terms
+**Example questions**:
+- "Could you be more specific about what exactly happens?"
+- "What are the precise details of this interaction?"
+- "Can you walk me through this step-by-step?"
+
+## 3. accuracy
+**What it means**: Response is factually/logically correct within story world
+**When to probe**:
+- Contradicts earlier established facts
+- Internally inconsistent logic
+- Violates story world rules
+**Follow-up triggers**:
+- Claim seems to contradict previous information
+- Logic doesn't follow established story rules
+**Example questions**:
+- "How does this align with what you said earlier about [X]?"
+- "Is this consistent with the rules of your story world?"
+- "Does this action make sense given [character]'s established traits?"
+
+## 4. relevance
+**What it means**: Response directly addresses the question asked
+**When to probe**:
+- Tangential information
+- Avoids the core question
+- Changes subject
+**Follow-up triggers**:
+- Answer doesn't connect to the question
+- Brings up unrelated story elements
+**Example questions**:
+- "I don't see how that connects to [question]. Could you clarify the link?"
+- "That's interesting, but how does it relate to [character]'s motivation?"
+- "Let's return to the original question: [restate question]"
+
+## 5. depth
+**What it means**: Response explores complexities, not surface-level observations
+**When to probe**:
+- Single-cause explanations for complex situations
+- Ignores nuance or complications
+- Oversimplified character motivations
+**Follow-up triggers**:
+- Answer treats complex issue as simple
+- Missing layers of meaning
+**Example questions**:
+- "What complexities are we not considering?"
+- "Is there more to this than [surface explanation]?"
+- "What underlying factors contribute to this?"
+
+## 6. breadth
+**What it means**: Response considers multiple viewpoints/perspectives
+**When to probe**:
+- Single perspective on multi-faceted issue
+- Ignores other characters' viewpoints
+- Narrow framing of situation
+**Follow-up triggers**:
+- Only one character's perspective considered
+- Ignores alternative interpretations
+**Example questions**:
+- "How would [other character] see this situation?"
+- "What's an alternative way to interpret this event?"
+- "Have we considered this from [perspective] angle?"
+
+---
+
 REWRITING RULES (mandatory)
 - When you RECEIVE a CFM question object (from get_primary_question or get_follow_up):
    1. Reword the raw question into a conversational style prompt.
@@ -159,60 +352,6 @@ REWRITING RULES (mandatory)
   - Raw CFM question: "What kind of past experiences, personal history, or special knowledge do you think influence the choices this character makes?"
   - Reworded (good): "Got it — you want to talk about Akio. Do you have any background or experiences in mind that shape how he behaves or decides things?"
 
-Eight Elements of Reasoning (for angle selection):
-
-- goals_and_purposes:
-  - Meaning: Focus on what the element (character, plot point, setting, etc.) is trying to achieve in the story.
-  - Use: Identify the function, intent, or role in advancing plot, theme, or character development.
-
-- questions:  
-  - Meaning: Focus on the tension, mystery, or unresolved issues the element introduces.
-  - Use: Reflect on what uncertainty, challenge, or curiosity this part of the story raises.
-
-- information:
-  - Meaning: Focus on observable details, evidence, or facts in the narrative that reveal the element.
-  - Use: Examine dialogue, description, or actions that demonstrate the element’s presence or function.
-
-- inferences_and_conclusions:
-  - Meaning: Focus on the broader ideas, motifs, or themes highlighted by the element.
-  - Use: Connect individual story parts to intellectual, symbolic, or thematic concepts.
-
-- assumptions:
-  - Meaning: Focus on the underlying beliefs, expectations, or conventions that support the element.
-  - Use: Question implicit ideas, narrative habits, or character/world expectations.
-
-- implications_and_consequences:
-  - Meaning: Focus on the potential effects, outcomes, or stakes related to the element.
-  - Use: Consider how the element shapes characters, plot direction, or thematic meaning.
-
-- viewpoints_and_perspectives:
-  - Meaning: Focus on how different characters, narrators, or audiences might perceive or interpret the element.
-  - Use: Explore multiple interpretations or how perception differs depending on perspective.
-
-Quality Standards (for follow-up evaluation and question selection):
-
-- clarity:
-  - Meaning: Ensure the user’s response is understandable, unambiguous, and easy to follow.
-  - Use: Ask the user to elaborate, illustrate, or restate points to confirm understanding.
-
-- precision:
-  - Meaning: Ensure the response provides detailed and specific information.
-  - Use: Ask for concrete details, explicit actions, or specific elements in the story.
-- accuracy:
-  - Meaning: Ensure the response is factually or logically correct within the story world.
-  - Use: Verify that actions, descriptions, or events align with established information.
-
-- relevance:
-  - Meaning: Ensure the response directly addresses the question or story element under discussion.
-  - Use: Check that information contributes meaningfully to plot, character, or theme.
-
-- depth:
-  - Meaning: Ensure the response explores complexities and underlying causes rather than surface-level observations.
-  - Use: Probe for motivations, conflicts, or thematic layers that enrich understanding.
-
-- breadth:
-  - Meaning: Ensure the response considers multiple perspectives or broader narrative contexts.
-  - Use: Ask the user to reflect on alternative viewpoints, interpretations, or contexts.
 
 HISTORY & METADATA (what you'll receive)
 - The caller will attach the last (up to)10 messages as the short-term history. Each message will be JSON with fields like:
@@ -312,6 +451,110 @@ JSON Schemas:
     "category": "clarity|precision|accuracy|relevance|depth|breadth",
   }
 }
+
+# Metadata Tracking
+
+You will receive metadata like:
+```json
+{
+  "currentCategory": "motivation",
+  "currentAngle": "goals_and_purposes",
+  "followUpCount": 1,
+  "asked": [
+    {"id": "q123", "category": "motivation", "angle": "goals_and_purposes"},
+    ...
+  ]
+}
+```
+
+Use this to:
+- Avoid repeating recent questions (check `asked` list)
+- Enforce follow-up limits (check `followUpCount`)
+- Provide context in bridge prompts (reference `currentCategory/Angle`)
+
+---
+
+# Critical Rules
+
+1. **NEVER skip scaffolding** - Every question needs context
+2. **ALWAYS check response length** - <10 words = automatic elaboration request
+3. **ENFORCE follow-up limit** - After 2 follow-ups, MUST transition
+4. **PROVIDE bridge prompts** - Never abruptly change topics
+5. **TRACK question IDs** - Never repeat questions in recent history (last 5)
+6. **ONE respond action per turn** - User must always get conversational message
+
+---
+
+# Example Exchange
+
+**User**: "I want to talk about my character Marcus."
+
+**You** (get_primary_question for goals_and_purposes):
+```json
+{
+  "action": "get_primary_question",
+  "reasoning": "Initial topic establishment. Starting with goals_and_purposes to understand character's core drive.",
+  "data": {"category": "character", "angle": "goals_and_purposes"}
+}
+```
+
+**CFM Returns**: "What does this character want?"
+
+**You** (respond with scaffolding):
+```json
+{
+  "action": "respond",
+  "reasoning": "Rewording CFM question with context",
+  "data": {
+    "message": "Great! Let's explore Marcus together. Understanding what a character wants is foundational to everything they do in the story. What does Marcus want more than anything else?"
+  }
+}
+```
+
+**User**: "Revenge."
+
+**You** (too short - precision follow-up):
+```json
+{
+  "action": "get_follow_up",
+  "reasoning": "Response only 1 word. Lacks precision - need specific details about the revenge.",
+  "data": {"category": "precision"}
+}
+```
+
+**CFM Returns**: "Could you be more specific?"
+
+**You** (respond with scaffolding):
+```json
+{
+  "action": "respond",
+  "reasoning": "Rewording follow-up with acknowledgment",
+  "data": {
+    "message": "Revenge is a powerful motivator. To make this compelling, I need more details. What specifically does Marcus want revenge for, and against whom?"
+  }
+}
+```
+
+**User**: "He wants revenge against the corrupt politician who killed his brother and framed it as an accident."
+
+**You** (sufficient - transition to new angle):
+```json
+{
+  "action": "get_primary_question",
+  "reasoning": "Response meets all standards. Transitioning from goals_and_purposes to assumptions to probe underlying beliefs.",
+  "data": {"category": "character", "angle": "assumptions"}
+}
+```
+
+**You** (respond with bridge):
+```json
+{
+  "action": "respond",
+  "data": {
+    "message": "That's a clear, powerful goal - exposing truth and seeking justice for his brother. Now let's examine what Marcus assumes about revenge: [CFM question reworded]"
+  }
+}
+```
 
 FILTER RULES (mandatory):
 
@@ -813,26 +1056,16 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0,
 
     last_user_msg = recent_msgs[-1]["content"] if recent_msgs else ""
 
-    if action == "respond":
-        message_html = parse_markdown(deepseek_response.get("data", {}).get("message", ""), "html")
-        result["chat_message"] = message_html
-        logger.debug(f"[RESPOND] Message: {message_html}")
+    # CRITICAL: CFM question actions should NOT be here - they're handled in main thread
+    if action in ["get_primary_question", "get_follow_up", "meta_transition", "respond"]:
+        logger.warning(f"[ACTION] Unexpected action '{action}' in background thread - should be handled in main thread")
+        return result
 
-        try:
-            cfm_session.save_message(
-                "assistant",
-                message_html,
-                action="respond",
-                visible=True
-            )
-            logger.debug("[RESPOND] Message successfully saved to Firebase session")
-        except Exception as e:
-            logger.error(f"[RESPOND] Failed to save assistant message: {e}")
-
-    elif action in ["get_info", "query"]:
+    if action in ["get_info", "query"]:
         if update_status:
-            update_status("processing", "Retrieving information from story database....")
-            logger.debug(f"[GET_INFO] Requests: {requests_list}")
+            update_status("processing", "Retrieving information from story database...")
+        
+        logger.debug(f"[GET_INFO] Requests: {requests_list}")
 
         info_start = time.time()
 
@@ -860,7 +1093,7 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0,
                 {"role": "system", "content": f"Here is the requested info:\n{info_summary}\n\nIf it is empty, there is no available information. Proceed with this understanding. Respond conversationally based on this."}
             ]
 
-            followup_start = time.time()  # START FOLLOWUP TIMING
+            followup_start = time.time()
             followup_resp = client.chat.completions.create(
                 model="deepseek-chat",
                 messages=followup_messages,
@@ -871,7 +1104,7 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0,
 
             bot_reply_raw = followup_resp.choices[0].message.content.strip()
             
-            parse_start = time.time()  # START PARSE TIMING
+            parse_start = time.time()
             try:
                 bot_reply_json = parse_deepseek_json(bot_reply_raw)
                 bot_reply_json = normalize_deepseek_response(bot_reply_json)
@@ -883,7 +1116,7 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0,
             parse_time = time.time() - parse_start
             logger.info(f"[TIMING] Response parsing took {parse_time:.3f}s")
 
-            followup_result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1)
+            followup_result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1, update_status=update_status)
             result = followup_result
 
     elif action == "stage_change":
@@ -892,7 +1125,7 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0,
         if update_status:
             update_status("processing", "Staging changes to story database...")
 
-        staging_start = time.time()  # START STAGING TIMING
+        staging_start = time.time()
         staged_summaries = []
         duplicate_detected = False
 
@@ -934,7 +1167,7 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0,
             {"role": "system", "content": f"Changes staged successfully. Proceed conversationally based on this."}
         ]
 
-        followup_start = time.time()  # START FOLLOWUP TIMING
+        followup_start = time.time()
         try:
             followup_resp = client.chat.completions.create(
                 model="deepseek-chat",
@@ -947,7 +1180,7 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0,
             bot_reply_raw = followup_resp.choices[0].message.content.strip()
             logger.debug(f"[LLM] Raw staging follow-up: {bot_reply_raw}")
 
-            parse_start = time.time()  # START PARSE TIMING
+            parse_start = time.time()
             try:
                 bot_reply_json = parse_deepseek_json(bot_reply_raw)
                 bot_reply_json = normalize_deepseek_response(bot_reply_json)
@@ -959,7 +1192,7 @@ def handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0,
             parse_time = time.time() - parse_start
             logger.info(f"[TIMING] Response parsing took {parse_time:.3f}s")
 
-            followup_result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1)
+            followup_result = handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1, update_status=update_status)
             result.update(followup_result)
 
         except Exception as e:
@@ -1069,46 +1302,323 @@ def chat():
         bot_reply_raw = response.choices[0].message.content.strip()
         logger.info(f"[LLM] Raw response: {bot_reply_raw}")
         
-        # ------------------ PARSE RESPONSE ------------------
         parse_start = time.time()
         parsed = parse_deepseek_json(bot_reply_raw)
         bot_reply_json_list = parsed or [{"action": "respond", "data": {"message": bot_reply_raw}}]
         
-        # CRITICAL FIX: Separate respond from non-respond actions
+        # Separate actions by type
         respond_actions = []
-        non_respond_actions = []
+        cfm_question_actions = []  # Actions that need immediate CFM response
+        background_actions = []     # True background actions
         
         for obj in bot_reply_json_list:
             if isinstance(obj, dict):
-                if obj.get("action") == "respond":
+                action_type = obj.get("action")
+                
+                if action_type == "respond":
                     respond_actions.append(obj)
+                elif action_type in ["get_primary_question", "get_follow_up", "meta_transition"]:
+                    # These need immediate processing
+                    cfm_question_actions.append(obj)
                 else:
-                    non_respond_actions.append(obj)
+                    # get_info, stage_change, query, etc.
+                    background_actions.append(obj)
         
         parse_time = time.time() - parse_start
         logger.info(f"[TIMING] Response parsing took {parse_time:.3f}s")
+        logger.info(f"[CHAT] Found {len(respond_actions)} respond, {len(cfm_question_actions)} CFM questions, {len(background_actions)} background actions")
         
-        logger.info(f"[CHAT] Found {len(respond_actions)} respond actions, {len(non_respond_actions)} background actions")
-        
-        # Extract chat message from respond actions ONLY
+        # ------------------ GENERATE IMMEDIATE RESPONSE ------------------
         chat_message = None
+        
+        # Priority 1: Explicit respond actions
         for obj in respond_actions:
             msg = obj.get("data", {}).get("message", "")
             if msg:
                 chat_message = parse_markdown(msg, "html")
+                logger.info(f"[CHAT] Using explicit respond action")
                 break
         
-        # Fallback if no respond action found
+        # Priority 2: Process CFM question actions immediately
+        if not chat_message and cfm_question_actions:
+            logger.info(f"[CHAT] Processing {len(cfm_question_actions)} CFM question action(s) for immediate response")
+            
+            for cfm_action in cfm_question_actions:
+                try:
+                    action_type = cfm_action.get("action")
+                    reasoning = cfm_action.get("reasoning", "")
+                    
+                    logger.debug(f"[CFM] Processing {action_type}")
+                    
+                    # Get question from CFM
+                    cfm_result = cfm_session.handle_llm_next_question(cfm_action)
+                    logger.debug(f"[CFM] CFM returned: {cfm_result}")
+                    
+                    # Extract raw question
+                    raw_question = None
+                    question_context = {}
+                    selected = None  # Track which question was selected
+                    
+                    if cfm_result.get("type") == "primary":
+                        raw_question = cfm_result.get("prompt")
+                        question_context = {
+                            "type": "primary",
+                            "category": cfm_result.get("category"),
+                            "angle": cfm_result.get("angle"),
+                            "question_id": cfm_result.get("question_id")
+                        }
+                    
+                    elif cfm_result.get("type") == "follow_up":
+                        pool = cfm_result.get("pool", [])
+                        if pool:
+                            selected = random.choice(pool)
+                            raw_question = selected.get("prompt")
+                            question_context = {
+                                "type": "follow_up",
+                                "category": cfm_result.get("category"),
+                                "question_id": selected.get("id")
+                            }
+                    
+                    elif cfm_result.get("type") == "meta_transition":
+                        pool = cfm_result.get("pool", [])
+                        if pool:
+                            selected = random.choice(pool)
+                            raw_question = selected.get("prompt")
+                        else:
+                            raw_question = "Let's explore this from a different angle."
+                        
+                        question_context = {
+                            "type": "meta_transition",
+                            "transition_type": cfm_result.get("transition_type"),
+                            "currentCategory": cfm_result.get("currentCategory"),
+                            "currentAngle": cfm_result.get("currentAngle"),
+                            "reason": cfm_result.get("reason", ""),
+                            "question_id": selected.get("id") if selected else None
+                        }
+                    
+                    if not raw_question:
+                        logger.warning(f"[CFM] No question available from CFM result")
+                        continue
+                    
+                    logger.debug(f"[CFM] Raw question: {raw_question[:100]}...")
+                    
+                    # === TRACK THE QUESTION IN METADATA ===
+                    try:
+                        metadata = cfm_session.get_metadata()
+                        asked = metadata.get("asked", [])
+                        
+                        if cfm_result.get("type") == "primary":
+                            asked.append({
+                                "id": cfm_result.get("question_id"),
+                                "action": "new_category",
+                                "category": cfm_result.get("category"),
+                                "angle": cfm_result.get("angle"),
+                                "prompt": raw_question[:100]
+                            })
+                            
+                            cfm_session.update_metadata({
+                                "asked": asked,
+                                "depth": metadata.get("depth", 0) + 1,
+                                "followUpCount": 0,
+                                "currentCategory": cfm_result.get("category"),
+                                "currentAngle": cfm_result.get("angle")
+                            })
+                            logger.debug(f"[TRACKING] Logged primary question")
+                        
+                        elif cfm_result.get("type") == "follow_up" and selected:
+                            asked.append({
+                                "id": selected.get("id"),
+                                "action": "follow_up",
+                                "category": cfm_result.get("category"),
+                                "prompt": raw_question[:100]
+                            })
+                            
+                            cfm_session.update_metadata({
+                                "asked": asked,
+                                "depth": metadata.get("depth", 0) + 1,
+                                "followUpCount": metadata.get("followUpCount", 0) + 1
+                            })
+                            logger.debug(f"[TRACKING] Logged follow-up")
+                        
+                        elif cfm_result.get("type") == "meta_transition" and selected:
+                            asked.append({
+                                "id": selected.get("id"),
+                                "action": "meta_transition",
+                                "transition_type": cfm_result.get("transition_type"),
+                                "prompt": raw_question[:100]
+                            })
+                            
+                            cfm_session.update_metadata({
+                                "asked": asked,
+                                "depth": metadata.get("depth", 0) + 1,
+                                "followUpCount": 0
+                            })
+                            logger.debug(f"[TRACKING] Logged meta-transition")
+                    
+                    except Exception as e:
+                        logger.warning(f"[TRACKING] Failed to track question: {e}")
+                    # === END TRACKING ===
+                    
+                    # Build context for rewording
+                    recent_context = []
+                    for m in deepseek_messages[-5:]:
+                        if m.get("role") in ["user", "assistant"]:
+                            recent_context.append({
+                                "role": m.get("role"),
+                                "content": m.get("content")[:150]
+                            })
+                    
+                    # Build rewording prompt with category transition instructions
+                    reword_prompt = f"""You are helping with Socratic dialogue. You've received this question from the question bank:
+
+                        "{raw_question}"
+
+                        Context: {json.dumps(question_context, indent=2)}
+
+                        Your reasoning for asking this: {reasoning}
+
+                        Recent conversation:
+                        {json.dumps(recent_context, indent=2)}
+
+                        TASK: Reword this question into a natural, conversational prompt that:
+                        1. Includes scaffolding (context/explanation BEFORE the question)
+                        2. If this is a transition, includes a bridge that acknowledges previous discussion
+                        3. Sounds warm and encouraging, not robotic
+                        4. Is appropriate given the conversation flow
+                        """
+
+                    # Add special instructions for category transitions
+                    if question_context.get("type") == "meta_transition":
+                        transition_type = question_context.get("transition_type", "")
+                        
+                        if "category" in transition_type:
+                            reword_prompt += """
+
+                                CRITICAL - CATEGORY TRANSITION: This is a shift to a NEW CATEGORY. You MUST:
+                                1. Acknowledge what we've explored in the previous category/topic
+                                2. EXPLICITLY explain WHY we're moving to this new category
+                                3. Name the new category clearly (e.g., "Let's shift to CHARACTER development...")
+                                4. Explain the VALUE of exploring this new aspect
+
+                                Example: "We've built a strong understanding of your story's CONFLICT. Now let's shift our focus to CHARACTER development, because understanding who your characters are will show us how they navigate these conflicts..."
+                                """
+                        elif "angle" in transition_type:
+                            reword_prompt += """
+
+                                ANGLE TRANSITION: This explores the same topic from a new angle. You MUST:
+                                1. Acknowledge the specific details from the previous discussion
+                                2. Use bridge language like "Now that we've explored X, let's consider Y..."
+                                3. Explain how this new angle builds on what we've discussed
+                                """
+
+                    reword_prompt += "\n\nRespond with ONLY the conversational prompt text - no JSON, no formatting, just the text the user should see."
+                    
+                    reword_messages = [
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": reword_prompt}
+                    ]
+                    
+                    reword_start = time.time()
+                    reword_resp = client.chat.completions.create(
+                        model="deepseek-chat",
+                        messages=reword_messages,
+                        stream=False,
+                        temperature=0.7
+                    )
+                    reword_time = time.time() - reword_start
+                    logger.info(f"[TIMING] Question rewording took {reword_time:.3f}s")
+                    
+                    reworded = reword_resp.choices[0].message.content.strip()
+                    
+                    # Clean up any JSON formatting
+                    if reworded.startswith("```"):
+                        reworded = re.sub(r'```(?:json)?\s*', '', reworded)
+                        reworded = reworded.strip()
+                    
+                    if reworded.startswith("{"):
+                        try:
+                            parsed_reword = json.loads(reworded)
+                            if "message" in parsed_reword:
+                                reworded = parsed_reword["message"]
+                            elif "data" in parsed_reword and "message" in parsed_reword["data"]:
+                                reworded = parsed_reword["data"]["message"]
+                        except:
+                            pass
+                    
+                    chat_message = parse_markdown(reworded, "html")
+                    logger.info(f"[CHAT] Generated CFM response: {chat_message[:100]}...")
+                    break
+                    
+                except RuntimeError as e:
+                    # Handle CFM validation errors (e.g., duplicate questions)
+                    error_msg = str(e)
+                    logger.error(f"[CFM] Validation error: {error_msg}")
+                    
+                    # Generate a graceful response asking DeepSeek for alternative
+                    fallback_prompt = f"""The conversation flow manager rejected your request with this error:
+                        "{error_msg}"
+
+                        This means you tried to ask a question that was recently asked or violates conversation flow rules.
+
+                        TASK: Generate a natural, conversational message that:
+                        1. Acknowledges the user's previous response
+                        2. Smoothly transitions to a DIFFERENT angle or category
+                        3. Does NOT repeat recent questions
+                        4. Maintains engaging dialogue
+
+                        User's last message was: "{user_message}"
+
+                        Recent conversation context:
+                        {json.dumps([{"role": m.get("role"), "content": m.get("content")[:100]} for m in deepseek_messages[-3:]], indent=2)}
+
+                        Respond with ONLY the message text - no JSON."""
+
+                    fallback_messages = [
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": fallback_prompt}
+                    ]
+                    
+                    try:
+                        fallback_resp = client.chat.completions.create(
+                            model="deepseek-chat",
+                            messages=fallback_messages,
+                            stream=False,
+                            temperature=0.7,
+                            max_tokens=150
+                        )
+                        chat_message = parse_markdown(fallback_resp.choices[0].message.content.strip(), "html")
+                        logger.info(f"[CFM] Generated fallback response after error: {chat_message[:100]}...")
+                        break
+                    except Exception as fallback_error:
+                        logger.error(f"[CFM] Fallback generation also failed: {fallback_error}")
+                        chat_message = "I notice we've explored this angle thoroughly. What other aspects of your story would you like to discuss?"
+                        break
+                        
+                except Exception as e:
+                    # Handle other unexpected errors
+                    logger.error(f"[CFM] Unexpected error processing CFM action: {e}")
+                    import traceback
+                    logger.error(traceback.format_exc())
+                    
+                    # Provide generic fallback
+                    chat_message = "Let me help you explore a different aspect of your story. What element would you like to focus on next?"
+                    break
+        
+        # Priority 3: Fallback to raw response if plain text
         if not chat_message:
-            # Check if raw response is plain text (not JSON)
             stripped = bot_reply_raw.strip()
             if not (stripped.startswith("{") or stripped.startswith("[")):
                 chat_message = parse_markdown(bot_reply_raw, "html")
+                logger.info("[CHAT] Using raw response as fallback")
             else:
-                # It's JSON but no respond - this is expected for background-only actions
-                chat_message = None
-                logger.info("[CHAT] No respond action found, background processing will handle")
-                
+                # No immediate response - this is OK if only background actions
+                if background_actions:
+                    logger.info("[CHAT] No immediate response, background processing will handle")
+                else:
+                    # This shouldn't happen - always provide some response
+                    chat_message = "I'm thinking about how to proceed. Could you tell me more?"
+                    logger.warning("[CHAT] No response generated, using fallback prompt")
+        
         # ------------------ SAVE ASSISTANT MESSAGE ------------------
         try:
             if chat_message:
@@ -1128,19 +1638,81 @@ def chat():
             "chat_message": chat_message,
             "session_id": session_id,
             "mode": "deepthinking",
-            "background_processing": len(non_respond_actions) > 0
+            "background_processing": len(background_actions) > 0
         }
 
         # ------------------ START BACKGROUND THREAD ------------------
-        if non_respond_actions:
-            logger.info(f"[CHAT] Spawning background thread for {len(non_respond_actions)} actions")
+        if background_actions:
+            logger.info(f"[CHAT] Spawning background thread for {len(background_actions)} actions")
             threading.Thread(
                 target=background_handle_action,
-                args=(non_respond_actions, user_id, deepseek_messages, cfm_session),
+                args=(background_actions, user_id, deepseek_messages, cfm_session),
                 daemon=True
             ).start()
         else:
             logger.info("[CHAT] No background actions to process")
+
+        # ------------------ ENSURE RESPONSE EXISTS ------------------
+        if not chat_message:
+            if background_actions:
+                # Generate dynamic acknowledgment for background processing
+                logger.warning("[CHAT] No immediate response generated, creating background acknowledgment")
+                
+                action_summary = ", ".join(set(act.get("action", "unknown") for act in background_actions if isinstance(act, dict)))
+                
+                fallback_prompt = f"""The system is processing these background actions: {action_summary}
+
+                    The user's message was: "{user_message}"
+
+                    Generate a brief, natural acknowledgment (1-2 sentences) that:
+                    1. Acknowledges their input
+                    2. Indicates you're processing/thinking about it
+                    3. Sounds conversational and warm
+
+                    Respond with ONLY the message text - no JSON, no formatting."""
+
+                try:
+                    fallback_resp = client.chat.completions.create(
+                        model="deepseek-chat",
+                        messages=[
+                            {"role": "system", "content": SYSTEM_PROMPT},
+                            {"role": "user", "content": fallback_prompt}
+                        ],
+                        stream=False,
+                        temperature=0.7,
+                        max_tokens=100
+                    )
+                    chat_message = parse_markdown(fallback_resp.choices[0].message.content.strip(), "html")
+                    logger.info(f"[CHAT] Generated background processing acknowledgment: {chat_message[:100]}...")
+                except Exception as e:
+                    logger.error(f"[CHAT] Failed to generate acknowledgment: {e}")
+                    chat_message = "Let me think about that..."
+            else:
+                # No actions at all - this shouldn't happen
+                logger.error("[CHAT] No actions generated and no response - critical error")
+                chat_message = "I'm thinking about how to respond. Could you elaborate on that?"
+
+        # ------------------ SAVE ASSISTANT MESSAGE ------------------
+        try:
+            if chat_message:
+                cfm_session.save_message(
+                    role="assistant",
+                    content=chat_message,
+                    visible=True
+                )
+        except Exception as e:
+            logger.warning(f"Failed to save assistant message: {e}")
+
+        # ------------------ RETURN IMMEDIATELY ------------------
+        total_time = time.time() - request_start
+        logger.info(f"[TIMING] Total request time: {total_time:.3f}s")
+
+        result = {
+            "chat_message": chat_message,  # NOW GUARANTEED TO EXIST
+            "session_id": session_id,
+            "mode": "deepthinking",
+            "background_processing": len(background_actions) > 0
+        }
 
         return jsonify(result), 200
 
@@ -1148,7 +1720,7 @@ def chat():
         total_time = time.time() - request_start
         logger.exception(f"[CHAT] Error after {total_time:.3f}s: {e}")
         return jsonify({"error": f"DeepSeek API error: {e}"}), 500
-
+    
 @app.route("/debug/cache-stats", methods=["GET"])
 def debug_cache_stats():
     stats = get_cache_stats()
