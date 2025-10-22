@@ -10,7 +10,7 @@ import './worldbuilding.css';
 const WorldBuildingWidget = () => {
     const { currentUser } = useAuthValue();
     const userId = currentUser ? currentUser.uid : null;
-    const API_BASE = "http://localhost:5001/api";
+    const API_BASE = "https://guidedcreativeplanning-pfm.onrender.com/api";
 
     const [worldName, setWorldName] = useState("World");
     const [categories, setCategories] = useState({});

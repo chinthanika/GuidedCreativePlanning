@@ -50,7 +50,7 @@ logger.info("DeepSeek client initialized.")
 MAX_DEPTH = 5
 KEEP_LAST_N = 5  # how many summaries to keep for context
 
-PROFILE_MANAGER_URL = "http://localhost:5001/api"
+PROFILE_MANAGER_URL = "https://guidedcreativeplanning-pfm.onrender.com/api"
 
 SYSTEM_PROMPT = SYSTEM_PROMPT = """
 You are DeepSeek, a creative writing assistant that helps users track story entities, relationships, and events, and guide students through Creative Problem Solving (CPS) cycles for story planning.

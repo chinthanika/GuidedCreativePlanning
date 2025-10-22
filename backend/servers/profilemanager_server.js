@@ -13,7 +13,23 @@ import pmCache from "../servers/utils/ProfileManagerCache.js";
 
 const app = express();
 
-app.use(cors({ origin: "http://localhost:3000" })); // allow React dev server
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://guided-creative-planning-v11b-bqtgde5q3-chinthanikas-projects.vercel.app"
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(requestLogger);

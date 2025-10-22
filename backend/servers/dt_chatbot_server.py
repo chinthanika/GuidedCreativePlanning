@@ -87,7 +87,7 @@ client = openai.OpenAI(
     base_url="https://api.deepseek.com"
 )
 
-PROFILE_MANAGER_URL = "http://localhost:5001/api"
+PROFILE_MANAGER_URL = "https://guidedcreativeplanning-pfm.onrender.com/api"
 
 MAX_DEPTH = 5 # Max recursion for handle_action to avoid infinite loops
 
