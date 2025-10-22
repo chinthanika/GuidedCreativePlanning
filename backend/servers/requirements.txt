@@ -87,7 +87,7 @@ jiter==0.8.2
 joblib==1.2.0
 jsonpickle==3.0.1
 jsonpointer==2.3
-jsonschema==4.17.37
+jsonschema==4.17.3
 kiwisolver==1.4.4
 langcodes==3.3.0
 lxml==4.9.2
