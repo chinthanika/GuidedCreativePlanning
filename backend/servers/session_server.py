@@ -5,6 +5,7 @@ from firebase_admin import credentials, db
 import time
 import openai
 import os
+import json
 import logging
 import threading
 from logging.handlers import RotatingFileHandler
@@ -53,7 +54,14 @@ logger.info("=" * 50)
 logger.info("SESSION SERVER STARTING UP")
 logger.info("=" * 50)
 # ---------------- FIREBASE INIT ----------------
-cred = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
+firebase_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
+
+if not firebase_json:
+    raise ValueError("FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set")
+
+# Parse the JSON string into a dict
+cred = credentials.Certificate(json.loads(firebase_json))
+
 firebase_admin.initialize_app(cred, {
     'databaseURL': "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
 })
