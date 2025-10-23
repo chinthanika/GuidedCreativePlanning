@@ -53,7 +53,7 @@ logger.info("=" * 50)
 logger.info("SESSION SERVER STARTING UP")
 logger.info("=" * 50)
 # ---------------- FIREBASE INIT ----------------
-cred = credentials.Certificate("../Firebase/structuredcreativeplanning-fdea4acca240.json")
+cred = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
 firebase_admin.initialize_app(cred, {
     'databaseURL': "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
 })
