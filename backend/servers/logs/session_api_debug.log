@@ -14805,3 +14805,895 @@
 2025-10-21 18:13:16,323 [DEBUG] [SessionAPI] Request body: {'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'sessionID': '-Oc5FCajry5-gxnNEKz3', 'role': 'assistant', 'content': '<p>That childhood experience of surviving through theft is a powerful foundation for a character. To really understand how this shapes who they are now, could you tell me more about what specific goal or purpose drives them in the present day?</p>', 'mode': 'deepthinking', 'extra': {'stage': None, 'visible': True, 'summarised': False, 'action': None}}
 2025-10-21 18:13:16,324 [DEBUG] [SessionAPI] Fetching session: uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2, sessionID=-Oc5FCajry5-gxnNEKz3
 2025-10-21 18:13:16,324 [DEBUG] [SessionAPI] Fetching session: uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2, sessionID=-Oc5FCajry5-gxnNEKz3
+2025-10-24 13:33:13,194 [INFO] [SessionAPI] ==================================================
+2025-10-24 13:33:13,195 [INFO] [SessionAPI] SESSION SERVER STARTING UP
+2025-10-24 13:33:13,195 [INFO] [SessionAPI] ==================================================
+2025-10-24 13:34:30,594 [INFO] [SessionAPI] ==================================================
+2025-10-24 13:34:30,594 [INFO] [SessionAPI] SESSION SERVER STARTING UP
+2025-10-24 13:34:30,595 [INFO] [SessionAPI] ==================================================
+2025-10-24 13:34:38,123 [INFO] [SessionAPI] Incoming request: POST /session/create
+2025-10-24 13:34:38,123 [DEBUG] [SessionAPI] Request body: {'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2'}
+2025-10-24 13:34:45,124 [INFO] [SessionModule] Created session -OcJhZqcn1fCS0D5OB9v with metadata: {'shared': {'createdAt': 1761284084616, 'updatedAt': 1761284084616}, 'deepthinking': {'currentCategory': None, 'currentAngle': None, 'asked': [], 'depth': 0, 'followUpCount': 0}, 'brainstorming': {'stage': 'Clarify', 'parentSessionId': None, 'hmwQuestions': {}, 'stageHistory': [], 'fluencyScore': 'Low', 'flexibilityCategories': []}}
+2025-10-24 13:34:45,125 [INFO] [SessionAPI] Created new session: uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2, sessionID=-OcJhZqcn1fCS0D5OB9v
+2025-10-24 13:34:45,126 [DEBUG] [SessionAPI] Response: 200 OK {"sessionID":"-OcJhZqcn1fCS0D5OB9v"}
+
+2025-10-24 13:35:21,783 [INFO] [SessionAPI] Incoming request: POST /session/create
+2025-10-24 13:35:21,783 [DEBUG] [SessionAPI] Request body: {'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2'}
+2025-10-24 13:35:22,550 [INFO] [SessionModule] Created session -OcJhhzSLtXCb-TYK7LR with metadata: {'shared': {'createdAt': 1761284122047, 'updatedAt': 1761284122047}, 'deepthinking': {'currentCategory': None, 'currentAngle': None, 'asked': [], 'depth': 0, 'followUpCount': 0}, 'brainstorming': {'stage': 'Clarify', 'parentSessionId': None, 'hmwQuestions': {}, 'stageHistory': [], 'fluencyScore': 'Low', 'flexibilityCategories': []}}
+2025-10-24 13:35:22,551 [INFO] [SessionAPI] Created new session: uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2, sessionID=-OcJhhzSLtXCb-TYK7LR
+2025-10-24 13:35:22,553 [DEBUG] [SessionAPI] Response: 200 OK {"sessionID":"-OcJhhzSLtXCb-TYK7LR"}
+
+2025-10-24 13:35:47,011 [INFO] [SessionAPI] Incoming request: POST /session/create
+2025-10-24 13:35:47,012 [DEBUG] [SessionAPI] Request body: {'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2'}
+2025-10-24 13:35:47,774 [INFO] [SessionModule] Created session -OcJho8Rhfw57E8MuIHp with metadata: {'shared': {'createdAt': 1761284147266, 'updatedAt': 1761284147266}, 'deepthinking': {'currentCategory': None, 'currentAngle': None, 'asked': [], 'depth': 0, 'followUpCount': 0}, 'brainstorming': {'stage': 'Clarify', 'parentSessionId': None, 'hmwQuestions': {}, 'stageHistory': [], 'fluencyScore': 'Low', 'flexibilityCategories': []}}
+2025-10-24 13:35:47,775 [INFO] [SessionAPI] Created new session: uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2, sessionID=-OcJho8Rhfw57E8MuIHp
+2025-10-24 13:35:47,776 [DEBUG] [SessionAPI] Response: 200 OK {"sessionID":"-OcJho8Rhfw57E8MuIHp"}
+
+2025-10-24 13:36:03,291 [INFO] [SessionAPI] Incoming request: POST /session/create
+2025-10-24 13:36:03,292 [DEBUG] [SessionAPI] Request body: {'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2'}
+2025-10-24 13:36:04,060 [INFO] [SessionModule] Created session -OcJhs6s9VFXN48KKiCg with metadata: {'shared': {'createdAt': 1761284163550, 'updatedAt': 1761284163550}, 'deepthinking': {'currentCategory': None, 'currentAngle': None, 'asked': [], 'depth': 0, 'followUpCount': 0}, 'brainstorming': {'stage': 'Clarify', 'parentSessionId': None, 'hmwQuestions': {}, 'stageHistory': [], 'fluencyScore': 'Low', 'flexibilityCategories': []}}
+2025-10-24 13:36:04,060 [INFO] [SessionAPI] Created new session: uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2, sessionID=-OcJhs6s9VFXN48KKiCg
+2025-10-24 13:36:04,060 [DEBUG] [SessionAPI] Response: 200 OK {"sessionID":"-OcJhs6s9VFXN48KKiCg"}
+
+2025-10-24 13:36:10,544 [INFO] [SessionAPI] Incoming request: POST /session/create
+2025-10-24 13:36:10,545 [DEBUG] [SessionAPI] Request body: {'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2'}
+2025-10-24 13:36:11,316 [INFO] [SessionModule] Created session -OcJhttD_dQyHjLNNUOO with metadata: {'shared': {'createdAt': 1761284170804, 'updatedAt': 1761284170804}, 'deepthinking': {'currentCategory': None, 'currentAngle': None, 'asked': [], 'depth': 0, 'followUpCount': 0}, 'brainstorming': {'stage': 'Clarify', 'parentSessionId': None, 'hmwQuestions': {}, 'stageHistory': [], 'fluencyScore': 'Low', 'flexibilityCategories': []}}
+2025-10-24 13:36:11,317 [INFO] [SessionAPI] Created new session: uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2, sessionID=-OcJhttD_dQyHjLNNUOO
+2025-10-24 13:36:11,318 [DEBUG] [SessionAPI] Response: 200 OK {"sessionID":"-OcJhttD_dQyHjLNNUOO"}
+
+2025-10-24 13:36:17,453 [INFO] [SessionAPI] Incoming request: POST /session/create
+2025-10-24 13:36:17,453 [DEBUG] [SessionAPI] Request body: {'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2'}
+2025-10-24 13:36:18,220 [INFO] [SessionModule] Created session -OcJhv_7s8pscopgaf6J with metadata: {'shared': {'createdAt': 1761284177708, 'updatedAt': 1761284177708}, 'deepthinking': {'currentCategory': None, 'currentAngle': None, 'asked': [], 'depth': 0, 'followUpCount': 0}, 'brainstorming': {'stage': 'Clarify', 'parentSessionId': None, 'hmwQuestions': {}, 'stageHistory': [], 'fluencyScore': 'Low', 'flexibilityCategories': []}}
+2025-10-24 13:36:18,221 [INFO] [SessionAPI] Created new session: uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2, sessionID=-OcJhv_7s8pscopgaf6J
+2025-10-24 13:36:18,221 [DEBUG] [SessionAPI] Response: 200 OK {"sessionID":"-OcJhv_7s8pscopgaf6J"}
+
+2025-10-24 13:36:24,392 [INFO] [SessionAPI] Incoming request: POST /session/create
+2025-10-24 13:36:24,393 [DEBUG] [SessionAPI] Request body: {'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2'}
+2025-10-24 13:36:25,152 [INFO] [SessionModule] Created session -OcJhxGadGzH1RBUCSq4 with metadata: {'shared': {'createdAt': 1761284184652, 'updatedAt': 1761284184652}, 'deepthinking': {'currentCategory': None, 'currentAngle': None, 'asked': [], 'depth': 0, 'followUpCount': 0}, 'brainstorming': {'stage': 'Clarify', 'parentSessionId': None, 'hmwQuestions': {}, 'stageHistory': [], 'fluencyScore': 'Low', 'flexibilityCategories': []}}
+2025-10-24 13:36:25,153 [INFO] [SessionAPI] Created new session: uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2, sessionID=-OcJhxGadGzH1RBUCSq4
+2025-10-24 13:36:25,153 [DEBUG] [SessionAPI] Response: 200 OK {"sessionID":"-OcJhxGadGzH1RBUCSq4"}
+
+2025-10-24 13:37:00,521 [INFO] [SessionAPI] Incoming request: POST /session/create
+2025-10-24 13:37:00,522 [DEBUG] [SessionAPI] Request body: {'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2'}
+2025-10-24 13:37:01,285 [INFO] [SessionModule] Created session -OcJi552W2BbR9a5F6pt with metadata: {'shared': {'createdAt': 1761284220783, 'updatedAt': 1761284220783}, 'deepthinking': {'currentCategory': None, 'currentAngle': None, 'asked': [], 'depth': 0, 'followUpCount': 0}, 'brainstorming': {'stage': 'Clarify', 'parentSessionId': None, 'hmwQuestions': {}, 'stageHistory': [], 'fluencyScore': 'Low', 'flexibilityCategories': []}}
+2025-10-24 13:37:01,286 [INFO] [SessionAPI] Created new session: uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2, sessionID=-OcJi552W2BbR9a5F6pt
+2025-10-24 13:37:01,286 [DEBUG] [SessionAPI] Response: 200 OK {"sessionID":"-OcJi552W2BbR9a5F6pt"}
+
+2025-10-24 13:37:07,789 [INFO] [SessionAPI] Incoming request: POST /session/create
+2025-10-24 13:37:07,789 [DEBUG] [SessionAPI] Request body: {'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2'}
+2025-10-24 13:37:08,546 [INFO] [SessionModule] Created session -OcJi6rYaM5H0B2CxHuo with metadata: {'shared': {'createdAt': 1761284228032, 'updatedAt': 1761284228032}, 'deepthinking': {'currentCategory': None, 'currentAngle': None, 'asked': [], 'depth': 0, 'followUpCount': 0}, 'brainstorming': {'stage': 'Clarify', 'parentSessionId': None, 'hmwQuestions': {}, 'stageHistory': [], 'fluencyScore': 'Low', 'flexibilityCategories': []}}
+2025-10-24 13:37:08,546 [INFO] [SessionAPI] Created new session: uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2, sessionID=-OcJi6rYaM5H0B2CxHuo
+2025-10-24 13:37:08,546 [DEBUG] [SessionAPI] Response: 200 OK {"sessionID":"-OcJi6rYaM5H0B2CxHuo"}
+
+2025-10-24 13:37:15,209 [INFO] [SessionAPI] Incoming request: POST /session/create
+2025-10-24 13:37:15,210 [DEBUG] [SessionAPI] Request body: {'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2'}
+2025-10-24 13:37:15,981 [INFO] [SessionModule] Created session -OcJi8f_5zWzYqi1fV1e with metadata: {'shared': {'createdAt': 1761284235469, 'updatedAt': 1761284235469}, 'deepthinking': {'currentCategory': None, 'currentAngle': None, 'asked': [], 'depth': 0, 'followUpCount': 0}, 'brainstorming': {'stage': 'Clarify', 'parentSessionId': None, 'hmwQuestions': {}, 'stageHistory': [], 'fluencyScore': 'Low', 'flexibilityCategories': []}}
+2025-10-24 13:37:15,982 [INFO] [SessionAPI] Created new session: uid=04E9XYnVi8QD3yHAIXeBHCRp2sN2, sessionID=-OcJi8f_5zWzYqi1fV1e
+2025-10-24 13:37:15,982 [DEBUG] [SessionAPI] Response: 200 OK {"sessionID":"-OcJi8f_5zWzYqi1fV1e"}
+
+2025-10-24 13:39:30,729 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 13:39:31,576 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 13:39:31,821 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 13:39:32,072 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 13:39:32,332 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 13:39:32,592 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 13:39:32,841 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 13:39:33,088 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 13:39:33,333 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 13:39:33,586 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 13:39:33,833 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 13:44:30,733 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 13:44:31,853 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 13:44:32,105 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 13:44:32,350 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 13:44:32,603 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 13:44:32,855 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 13:44:33,105 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 13:44:33,355 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 13:44:33,607 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 13:44:33,863 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 13:44:34,110 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 13:49:30,734 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 13:49:31,693 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 13:49:31,942 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 13:49:32,192 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 13:49:32,443 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 13:49:32,691 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 13:49:32,938 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 13:49:33,185 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 13:49:33,431 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 13:49:33,680 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 13:49:33,932 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 13:54:30,731 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 13:54:31,613 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 13:54:31,865 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 13:54:32,116 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 13:54:32,365 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 13:54:32,618 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 13:54:32,863 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 13:54:33,111 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 13:54:33,371 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 13:54:33,621 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 13:54:33,879 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 13:59:30,729 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 13:59:31,598 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 13:59:31,844 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 13:59:32,103 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 13:59:32,362 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 13:59:32,612 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 13:59:32,868 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 13:59:33,118 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 13:59:33,371 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 13:59:33,618 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 13:59:33,869 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 14:04:31,561 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 14:04:34,892 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 14:04:35,346 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 14:04:35,770 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 14:04:36,020 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 14:04:36,269 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 14:04:36,515 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 14:04:36,759 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 14:04:37,086 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 14:04:37,326 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 14:04:37,581 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 14:20:03,184 [INFO] [SessionAPI] ==================================================
+2025-10-24 14:20:03,189 [INFO] [SessionAPI] SESSION SERVER STARTING UP
+2025-10-24 14:20:03,189 [INFO] [SessionAPI] ==================================================
+2025-10-24 14:25:03,840 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 14:25:05,014 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 14:25:05,270 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 14:25:05,531 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 14:25:05,782 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 14:25:06,032 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 14:25:06,290 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 14:25:06,544 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 14:25:06,791 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 14:25:07,047 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 14:25:07,301 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 14:30:03,723 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 14:30:05,399 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 14:30:05,667 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 14:30:05,926 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 14:30:06,187 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 14:30:06,444 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 14:30:06,713 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 14:30:06,966 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 14:30:07,219 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 14:30:07,482 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 14:30:07,736 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 14:30:07,989 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 14:30:08,248 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 14:30:08,505 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 14:30:08,758 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 14:30:09,017 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 14:30:09,282 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 14:30:09,538 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 14:35:03,786 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 14:35:04,975 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 14:35:05,233 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 14:35:05,492 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 14:35:05,767 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 14:35:06,021 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 14:35:06,278 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 14:35:06,537 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 14:35:06,798 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 14:35:07,055 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 14:35:07,331 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 14:35:07,591 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 14:35:07,854 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 14:35:08,115 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 14:35:08,402 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 14:35:08,664 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 14:35:08,927 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 14:35:09,189 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 14:35:09,441 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 14:35:09,696 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 14:35:09,957 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 14:35:10,211 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 14:35:10,473 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 14:35:10,745 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 14:35:11,002 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 14:35:11,261 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 14:35:11,515 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 14:35:11,775 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 14:40:03,682 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 14:40:04,728 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 14:40:04,981 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 14:40:05,228 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 14:40:05,481 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 14:40:05,724 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 14:40:05,974 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 14:40:06,225 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 14:40:06,475 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 14:40:06,724 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 14:40:06,975 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 14:40:07,224 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 14:40:07,481 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 14:40:07,730 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 14:40:07,981 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 14:40:08,243 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 14:40:08,512 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 14:40:08,763 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 14:40:09,013 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 14:40:09,269 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 14:40:09,532 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 14:40:09,788 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 14:40:10,044 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 14:40:10,296 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 14:40:10,550 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 14:40:10,796 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 14:40:11,051 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 14:40:11,314 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 14:40:11,572 [DEBUG] [SessionAPI] Session -OcJwRCDLYPFhvRmVrED has only 1 unsummarised messages, skipping
+2025-10-24 14:40:11,826 [DEBUG] [SessionAPI] Session -OcJwSIcH51twJvAgBno has only 1 unsummarised messages, skipping
+2025-10-24 14:40:12,097 [DEBUG] [SessionAPI] Session -OcJwTESVND4Dnk1JtPY has only 1 unsummarised messages, skipping
+2025-10-24 14:40:12,344 [DEBUG] [SessionAPI] Session -OcJwU8bt9Fxah5nI9pu has only 1 unsummarised messages, skipping
+2025-10-24 14:40:12,587 [DEBUG] [SessionAPI] Session -OcJwUqrlgLa_k6l3G3A has only 1 unsummarised messages, skipping
+2025-10-24 14:40:12,836 [DEBUG] [SessionAPI] Session -OcJwVYM_sibtBw6XoVz has only 1 unsummarised messages, skipping
+2025-10-24 14:40:13,080 [DEBUG] [SessionAPI] Session -OcJwWktykQ7rgajCf5a has only 1 unsummarised messages, skipping
+2025-10-24 14:45:03,708 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 14:45:04,848 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 14:45:05,101 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 14:45:05,359 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 14:45:05,614 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 14:45:05,876 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 14:45:06,137 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 14:45:06,394 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 14:45:06,670 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 14:45:06,943 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 14:45:07,197 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 14:45:07,446 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 14:45:07,707 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 14:45:07,965 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 14:45:08,220 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 14:45:08,471 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 14:45:08,720 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 14:45:08,974 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 14:45:09,224 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 14:45:09,474 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 14:45:09,745 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 14:45:10,008 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 14:45:10,257 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 14:45:10,503 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 14:45:10,754 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 14:45:11,007 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 14:45:11,261 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 14:45:11,516 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 14:45:11,773 [DEBUG] [SessionAPI] Session -OcJwRCDLYPFhvRmVrED has only 1 unsummarised messages, skipping
+2025-10-24 14:45:12,024 [DEBUG] [SessionAPI] Session -OcJwSIcH51twJvAgBno has only 1 unsummarised messages, skipping
+2025-10-24 14:45:12,283 [DEBUG] [SessionAPI] Session -OcJwTESVND4Dnk1JtPY has only 1 unsummarised messages, skipping
+2025-10-24 14:45:12,529 [DEBUG] [SessionAPI] Session -OcJwU8bt9Fxah5nI9pu has only 1 unsummarised messages, skipping
+2025-10-24 14:45:12,788 [DEBUG] [SessionAPI] Session -OcJwUqrlgLa_k6l3G3A has only 1 unsummarised messages, skipping
+2025-10-24 14:45:13,045 [DEBUG] [SessionAPI] Session -OcJwVYM_sibtBw6XoVz has only 1 unsummarised messages, skipping
+2025-10-24 14:45:13,294 [DEBUG] [SessionAPI] Session -OcJwWktykQ7rgajCf5a has only 1 unsummarised messages, skipping
+2025-10-24 14:45:13,545 [DEBUG] [SessionAPI] Session -OcJwacldn1nZKUBR2kX has only 1 unsummarised messages, skipping
+2025-10-24 14:45:13,796 [DEBUG] [SessionAPI] Session -OcJwvQYGMn7PyzIXvq5 has only 0 unsummarised messages, skipping
+2025-10-24 14:45:14,051 [DEBUG] [SessionAPI] Session -OcJwvctXYAF2zaIT8bX has only 1 unsummarised messages, skipping
+2025-10-24 14:45:14,301 [DEBUG] [SessionAPI] Session -OcJwweeW98P468lFBhs has only 1 unsummarised messages, skipping
+2025-10-24 14:45:14,552 [DEBUG] [SessionAPI] Session -OcJwxZJbWmbXjvCH1Tv has only 1 unsummarised messages, skipping
+2025-10-24 14:45:14,799 [DEBUG] [SessionAPI] Session -OcJwyTL0ISfLUkRekcj has only 4 unsummarised messages, skipping
+2025-10-24 14:45:15,071 [DEBUG] [SessionAPI] Session -OcJx14O3TrTJ601OyZv has only 1 unsummarised messages, skipping
+2025-10-24 14:50:03,665 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 14:50:04,533 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 14:50:04,786 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 14:50:05,041 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 14:50:05,285 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 14:50:05,547 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 14:50:05,817 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 14:50:06,072 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 14:50:06,325 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 14:50:06,571 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 14:50:06,826 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 14:50:07,086 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 14:50:07,340 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 14:50:07,594 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 14:50:07,865 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 14:50:08,118 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 14:50:08,374 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 14:50:08,625 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 14:50:08,880 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 14:50:09,134 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 14:50:09,379 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 14:50:09,632 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 14:50:09,886 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 14:50:10,136 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 14:50:10,393 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 14:50:10,639 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 14:50:10,886 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 14:50:11,137 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 14:50:11,391 [DEBUG] [SessionAPI] Session -OcJwRCDLYPFhvRmVrED has only 1 unsummarised messages, skipping
+2025-10-24 14:50:11,642 [DEBUG] [SessionAPI] Session -OcJwSIcH51twJvAgBno has only 1 unsummarised messages, skipping
+2025-10-24 14:50:11,897 [DEBUG] [SessionAPI] Session -OcJwTESVND4Dnk1JtPY has only 1 unsummarised messages, skipping
+2025-10-24 14:50:12,154 [DEBUG] [SessionAPI] Session -OcJwU8bt9Fxah5nI9pu has only 1 unsummarised messages, skipping
+2025-10-24 14:50:12,406 [DEBUG] [SessionAPI] Session -OcJwUqrlgLa_k6l3G3A has only 1 unsummarised messages, skipping
+2025-10-24 14:50:12,657 [DEBUG] [SessionAPI] Session -OcJwVYM_sibtBw6XoVz has only 1 unsummarised messages, skipping
+2025-10-24 14:50:12,916 [DEBUG] [SessionAPI] Session -OcJwWktykQ7rgajCf5a has only 1 unsummarised messages, skipping
+2025-10-24 14:50:13,170 [DEBUG] [SessionAPI] Session -OcJwacldn1nZKUBR2kX has only 1 unsummarised messages, skipping
+2025-10-24 14:50:13,445 [DEBUG] [SessionAPI] Session -OcJwvQYGMn7PyzIXvq5 has only 0 unsummarised messages, skipping
+2025-10-24 14:50:13,688 [DEBUG] [SessionAPI] Session -OcJwvctXYAF2zaIT8bX has only 1 unsummarised messages, skipping
+2025-10-24 14:50:13,942 [DEBUG] [SessionAPI] Session -OcJwweeW98P468lFBhs has only 1 unsummarised messages, skipping
+2025-10-24 14:50:14,190 [DEBUG] [SessionAPI] Session -OcJwxZJbWmbXjvCH1Tv has only 1 unsummarised messages, skipping
+2025-10-24 14:50:14,438 [DEBUG] [SessionAPI] Session -OcJwyTL0ISfLUkRekcj has only 4 unsummarised messages, skipping
+2025-10-24 14:50:14,693 [DEBUG] [SessionAPI] Session -OcJx14O3TrTJ601OyZv has only 1 unsummarised messages, skipping
+2025-10-24 14:50:14,949 [DEBUG] [SessionAPI] Session -OcJyIu4tGuvsxfPlKPv has only 0 unsummarised messages, skipping
+2025-10-24 14:50:15,205 [DEBUG] [SessionAPI] Session -OcJyJ5oABJODjpcFYzE has only 2 unsummarised messages, skipping
+2025-10-24 14:50:15,451 [DEBUG] [SessionAPI] Session -OcJyManrPdIBJSwm7wf has only 2 unsummarised messages, skipping
+2025-10-24 14:50:15,704 [DEBUG] [SessionAPI] Session -OcJyQQNxVh8mn8GKZmQ has only 6 unsummarised messages, skipping
+2025-10-24 14:50:15,978 [DEBUG] [SessionAPI] Session -OcJy_zzcNYnC0AT41-f has only 8 unsummarised messages, skipping
+2025-10-24 14:55:03,665 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 14:55:04,815 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 14:55:05,072 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 14:55:05,320 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 14:55:05,572 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 14:55:05,818 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 14:55:06,065 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 14:55:06,311 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 14:55:06,554 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 14:55:06,799 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 14:55:07,043 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 14:55:07,291 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 14:55:07,541 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 14:55:07,790 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 14:55:08,047 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 14:55:08,305 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 14:55:08,555 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 14:55:08,807 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 14:55:09,056 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 14:55:09,307 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 14:55:09,558 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 14:55:09,806 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 14:55:10,055 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 14:55:10,297 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 14:55:10,543 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 14:55:10,787 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 14:55:11,030 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 14:55:11,290 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 14:55:11,536 [DEBUG] [SessionAPI] Session -OcJwRCDLYPFhvRmVrED has only 1 unsummarised messages, skipping
+2025-10-24 14:55:11,784 [DEBUG] [SessionAPI] Session -OcJwSIcH51twJvAgBno has only 1 unsummarised messages, skipping
+2025-10-24 14:55:12,035 [DEBUG] [SessionAPI] Session -OcJwTESVND4Dnk1JtPY has only 1 unsummarised messages, skipping
+2025-10-24 14:55:12,279 [DEBUG] [SessionAPI] Session -OcJwU8bt9Fxah5nI9pu has only 1 unsummarised messages, skipping
+2025-10-24 14:55:12,525 [DEBUG] [SessionAPI] Session -OcJwUqrlgLa_k6l3G3A has only 1 unsummarised messages, skipping
+2025-10-24 14:55:12,770 [DEBUG] [SessionAPI] Session -OcJwVYM_sibtBw6XoVz has only 1 unsummarised messages, skipping
+2025-10-24 14:55:13,017 [DEBUG] [SessionAPI] Session -OcJwWktykQ7rgajCf5a has only 1 unsummarised messages, skipping
+2025-10-24 14:55:13,263 [DEBUG] [SessionAPI] Session -OcJwacldn1nZKUBR2kX has only 1 unsummarised messages, skipping
+2025-10-24 14:55:13,509 [DEBUG] [SessionAPI] Session -OcJwvQYGMn7PyzIXvq5 has only 0 unsummarised messages, skipping
+2025-10-24 14:55:13,753 [DEBUG] [SessionAPI] Session -OcJwvctXYAF2zaIT8bX has only 1 unsummarised messages, skipping
+2025-10-24 14:55:14,000 [DEBUG] [SessionAPI] Session -OcJwweeW98P468lFBhs has only 1 unsummarised messages, skipping
+2025-10-24 14:55:14,244 [DEBUG] [SessionAPI] Session -OcJwxZJbWmbXjvCH1Tv has only 1 unsummarised messages, skipping
+2025-10-24 14:55:14,495 [DEBUG] [SessionAPI] Session -OcJwyTL0ISfLUkRekcj has only 4 unsummarised messages, skipping
+2025-10-24 14:55:14,736 [DEBUG] [SessionAPI] Session -OcJx14O3TrTJ601OyZv has only 1 unsummarised messages, skipping
+2025-10-24 14:55:14,983 [DEBUG] [SessionAPI] Session -OcJyIu4tGuvsxfPlKPv has only 0 unsummarised messages, skipping
+2025-10-24 14:55:15,230 [DEBUG] [SessionAPI] Session -OcJyJ5oABJODjpcFYzE has only 2 unsummarised messages, skipping
+2025-10-24 14:55:15,476 [DEBUG] [SessionAPI] Session -OcJyManrPdIBJSwm7wf has only 2 unsummarised messages, skipping
+2025-10-24 14:55:15,719 [DEBUG] [SessionAPI] Session -OcJyQQNxVh8mn8GKZmQ has only 6 unsummarised messages, skipping
+2025-10-24 14:55:15,968 [DEBUG] [SessionAPI] Session -OcJy_zzcNYnC0AT41-f has only 8 unsummarised messages, skipping
+2025-10-24 14:55:16,223 [DEBUG] [SessionAPI] Session -OcJyofq_C9FihZyFVz- has only 2 unsummarised messages, skipping
+2025-10-24 15:00:03,679 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 15:00:04,706 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 15:00:04,961 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 15:00:05,223 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 15:00:05,534 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 15:00:05,787 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 15:00:06,042 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 15:00:06,292 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 15:00:06,553 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 15:00:06,811 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 15:00:07,072 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 15:00:07,327 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 15:00:07,604 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 15:00:07,857 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 15:00:08,106 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 15:00:08,352 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 15:00:08,614 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 15:00:08,865 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 15:00:09,139 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 15:00:09,399 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 15:00:09,652 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 15:00:09,913 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 15:00:10,167 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 15:00:10,413 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 15:00:10,670 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 15:00:10,922 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 15:00:11,181 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 15:00:11,438 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 15:00:11,684 [DEBUG] [SessionAPI] Session -OcJwRCDLYPFhvRmVrED has only 1 unsummarised messages, skipping
+2025-10-24 15:00:11,931 [DEBUG] [SessionAPI] Session -OcJwSIcH51twJvAgBno has only 1 unsummarised messages, skipping
+2025-10-24 15:00:12,184 [DEBUG] [SessionAPI] Session -OcJwTESVND4Dnk1JtPY has only 1 unsummarised messages, skipping
+2025-10-24 15:00:12,432 [DEBUG] [SessionAPI] Session -OcJwU8bt9Fxah5nI9pu has only 1 unsummarised messages, skipping
+2025-10-24 15:00:12,681 [DEBUG] [SessionAPI] Session -OcJwUqrlgLa_k6l3G3A has only 1 unsummarised messages, skipping
+2025-10-24 15:00:12,939 [DEBUG] [SessionAPI] Session -OcJwVYM_sibtBw6XoVz has only 1 unsummarised messages, skipping
+2025-10-24 15:00:13,209 [DEBUG] [SessionAPI] Session -OcJwWktykQ7rgajCf5a has only 1 unsummarised messages, skipping
+2025-10-24 15:00:13,454 [DEBUG] [SessionAPI] Session -OcJwacldn1nZKUBR2kX has only 1 unsummarised messages, skipping
+2025-10-24 15:00:13,704 [DEBUG] [SessionAPI] Session -OcJwvQYGMn7PyzIXvq5 has only 0 unsummarised messages, skipping
+2025-10-24 15:00:13,951 [DEBUG] [SessionAPI] Session -OcJwvctXYAF2zaIT8bX has only 1 unsummarised messages, skipping
+2025-10-24 15:00:14,196 [DEBUG] [SessionAPI] Session -OcJwweeW98P468lFBhs has only 1 unsummarised messages, skipping
+2025-10-24 15:00:14,451 [DEBUG] [SessionAPI] Session -OcJwxZJbWmbXjvCH1Tv has only 1 unsummarised messages, skipping
+2025-10-24 15:00:14,704 [DEBUG] [SessionAPI] Session -OcJwyTL0ISfLUkRekcj has only 4 unsummarised messages, skipping
+2025-10-24 15:00:14,952 [DEBUG] [SessionAPI] Session -OcJx14O3TrTJ601OyZv has only 1 unsummarised messages, skipping
+2025-10-24 15:00:15,195 [DEBUG] [SessionAPI] Session -OcJyIu4tGuvsxfPlKPv has only 0 unsummarised messages, skipping
+2025-10-24 15:00:15,441 [DEBUG] [SessionAPI] Session -OcJyJ5oABJODjpcFYzE has only 2 unsummarised messages, skipping
+2025-10-24 15:00:15,686 [DEBUG] [SessionAPI] Session -OcJyManrPdIBJSwm7wf has only 2 unsummarised messages, skipping
+2025-10-24 15:00:15,934 [DEBUG] [SessionAPI] Session -OcJyQQNxVh8mn8GKZmQ has only 6 unsummarised messages, skipping
+2025-10-24 15:00:16,189 [DEBUG] [SessionAPI] Session -OcJy_zzcNYnC0AT41-f has only 8 unsummarised messages, skipping
+2025-10-24 15:00:16,447 [DEBUG] [SessionAPI] Session -OcJyofq_C9FihZyFVz- has only 2 unsummarised messages, skipping
+2025-10-24 15:05:03,673 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 15:05:04,840 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 15:05:05,094 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 15:05:05,343 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 15:05:05,596 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 15:05:05,848 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 15:05:06,096 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 15:05:06,367 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 15:05:06,615 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 15:05:06,867 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 15:05:07,123 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 15:05:07,398 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 15:05:07,657 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 15:05:07,911 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 15:05:08,160 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 15:05:08,421 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 15:05:08,684 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 15:05:08,934 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 15:05:09,187 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 15:05:09,433 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 15:05:09,684 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 15:05:09,933 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 15:05:10,191 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 15:05:10,442 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 15:05:10,696 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 15:05:10,944 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 15:05:11,201 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 15:05:11,449 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 15:05:11,698 [DEBUG] [SessionAPI] Session -OcJwRCDLYPFhvRmVrED has only 1 unsummarised messages, skipping
+2025-10-24 15:05:11,950 [DEBUG] [SessionAPI] Session -OcJwSIcH51twJvAgBno has only 1 unsummarised messages, skipping
+2025-10-24 15:05:12,196 [DEBUG] [SessionAPI] Session -OcJwTESVND4Dnk1JtPY has only 1 unsummarised messages, skipping
+2025-10-24 15:05:12,448 [DEBUG] [SessionAPI] Session -OcJwU8bt9Fxah5nI9pu has only 1 unsummarised messages, skipping
+2025-10-24 15:05:12,815 [DEBUG] [SessionAPI] Session -OcJwUqrlgLa_k6l3G3A has only 1 unsummarised messages, skipping
+2025-10-24 15:05:13,066 [DEBUG] [SessionAPI] Session -OcJwVYM_sibtBw6XoVz has only 1 unsummarised messages, skipping
+2025-10-24 15:05:13,315 [DEBUG] [SessionAPI] Session -OcJwWktykQ7rgajCf5a has only 1 unsummarised messages, skipping
+2025-10-24 15:05:13,567 [DEBUG] [SessionAPI] Session -OcJwacldn1nZKUBR2kX has only 1 unsummarised messages, skipping
+2025-10-24 15:05:13,814 [DEBUG] [SessionAPI] Session -OcJwvQYGMn7PyzIXvq5 has only 0 unsummarised messages, skipping
+2025-10-24 15:05:14,065 [DEBUG] [SessionAPI] Session -OcJwvctXYAF2zaIT8bX has only 1 unsummarised messages, skipping
+2025-10-24 15:05:14,313 [DEBUG] [SessionAPI] Session -OcJwweeW98P468lFBhs has only 1 unsummarised messages, skipping
+2025-10-24 15:05:14,561 [DEBUG] [SessionAPI] Session -OcJwxZJbWmbXjvCH1Tv has only 1 unsummarised messages, skipping
+2025-10-24 15:05:14,800 [DEBUG] [SessionAPI] Session -OcJwyTL0ISfLUkRekcj has only 4 unsummarised messages, skipping
+2025-10-24 15:05:15,049 [DEBUG] [SessionAPI] Session -OcJx14O3TrTJ601OyZv has only 1 unsummarised messages, skipping
+2025-10-24 15:05:15,305 [DEBUG] [SessionAPI] Session -OcJyIu4tGuvsxfPlKPv has only 0 unsummarised messages, skipping
+2025-10-24 15:05:15,551 [DEBUG] [SessionAPI] Session -OcJyJ5oABJODjpcFYzE has only 2 unsummarised messages, skipping
+2025-10-24 15:05:15,805 [DEBUG] [SessionAPI] Session -OcJyManrPdIBJSwm7wf has only 2 unsummarised messages, skipping
+2025-10-24 15:05:16,056 [DEBUG] [SessionAPI] Session -OcJyQQNxVh8mn8GKZmQ has only 6 unsummarised messages, skipping
+2025-10-24 15:05:16,311 [DEBUG] [SessionAPI] Session -OcJy_zzcNYnC0AT41-f has only 8 unsummarised messages, skipping
+2025-10-24 15:05:16,563 [DEBUG] [SessionAPI] Session -OcJyofq_C9FihZyFVz- has only 2 unsummarised messages, skipping
+2025-10-24 15:10:03,662 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 15:10:04,479 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 15:10:04,734 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 15:10:04,986 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 15:10:05,241 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 15:10:05,489 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 15:10:05,739 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 15:10:05,987 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 15:10:06,240 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 15:10:06,503 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 15:10:06,771 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 15:10:07,022 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 15:10:07,274 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 15:10:07,520 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 15:10:07,772 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 15:10:08,032 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 15:10:08,275 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 15:10:08,524 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 15:10:08,773 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 15:10:09,029 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 15:10:09,300 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 15:10:09,546 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 15:10:09,792 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 15:10:10,036 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 15:10:10,278 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 15:10:10,530 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 15:10:10,786 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 15:10:11,054 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 15:10:11,297 [DEBUG] [SessionAPI] Session -OcJwRCDLYPFhvRmVrED has only 1 unsummarised messages, skipping
+2025-10-24 15:10:11,542 [DEBUG] [SessionAPI] Session -OcJwSIcH51twJvAgBno has only 1 unsummarised messages, skipping
+2025-10-24 15:10:11,787 [DEBUG] [SessionAPI] Session -OcJwTESVND4Dnk1JtPY has only 1 unsummarised messages, skipping
+2025-10-24 15:10:12,032 [DEBUG] [SessionAPI] Session -OcJwU8bt9Fxah5nI9pu has only 1 unsummarised messages, skipping
+2025-10-24 15:10:12,277 [DEBUG] [SessionAPI] Session -OcJwUqrlgLa_k6l3G3A has only 1 unsummarised messages, skipping
+2025-10-24 15:10:12,526 [DEBUG] [SessionAPI] Session -OcJwVYM_sibtBw6XoVz has only 1 unsummarised messages, skipping
+2025-10-24 15:10:12,776 [DEBUG] [SessionAPI] Session -OcJwWktykQ7rgajCf5a has only 1 unsummarised messages, skipping
+2025-10-24 15:10:13,027 [DEBUG] [SessionAPI] Session -OcJwacldn1nZKUBR2kX has only 1 unsummarised messages, skipping
+2025-10-24 15:10:13,287 [DEBUG] [SessionAPI] Session -OcJwvQYGMn7PyzIXvq5 has only 0 unsummarised messages, skipping
+2025-10-24 15:10:13,551 [DEBUG] [SessionAPI] Session -OcJwvctXYAF2zaIT8bX has only 1 unsummarised messages, skipping
+2025-10-24 15:10:13,791 [DEBUG] [SessionAPI] Session -OcJwweeW98P468lFBhs has only 1 unsummarised messages, skipping
+2025-10-24 15:10:14,047 [DEBUG] [SessionAPI] Session -OcJwxZJbWmbXjvCH1Tv has only 1 unsummarised messages, skipping
+2025-10-24 15:10:14,292 [DEBUG] [SessionAPI] Session -OcJwyTL0ISfLUkRekcj has only 4 unsummarised messages, skipping
+2025-10-24 15:10:14,536 [DEBUG] [SessionAPI] Session -OcJx14O3TrTJ601OyZv has only 1 unsummarised messages, skipping
+2025-10-24 15:10:14,780 [DEBUG] [SessionAPI] Session -OcJyIu4tGuvsxfPlKPv has only 0 unsummarised messages, skipping
+2025-10-24 15:10:15,028 [DEBUG] [SessionAPI] Session -OcJyJ5oABJODjpcFYzE has only 2 unsummarised messages, skipping
+2025-10-24 15:10:15,282 [DEBUG] [SessionAPI] Session -OcJyManrPdIBJSwm7wf has only 2 unsummarised messages, skipping
+2025-10-24 15:10:15,527 [DEBUG] [SessionAPI] Session -OcJyQQNxVh8mn8GKZmQ has only 6 unsummarised messages, skipping
+2025-10-24 15:10:15,791 [DEBUG] [SessionAPI] Session -OcJy_zzcNYnC0AT41-f has only 8 unsummarised messages, skipping
+2025-10-24 15:10:16,030 [DEBUG] [SessionAPI] Session -OcJyofq_C9FihZyFVz- has only 2 unsummarised messages, skipping
+2025-10-24 15:15:03,663 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 15:15:05,039 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 15:15:05,286 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 15:15:05,537 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 15:15:05,801 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 15:15:06,056 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 15:15:06,537 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 15:15:06,786 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 15:15:07,042 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 15:15:07,298 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 15:15:07,547 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 15:15:07,802 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 15:15:08,062 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 15:15:08,312 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 15:15:08,562 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 15:15:08,807 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 15:15:09,057 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 15:15:09,317 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 15:15:09,567 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 15:15:09,816 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 15:15:10,069 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 15:15:10,317 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 15:15:10,574 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 15:15:10,819 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 15:15:11,059 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 15:15:11,302 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 15:15:11,554 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 15:15:11,803 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 15:15:12,054 [DEBUG] [SessionAPI] Session -OcJwRCDLYPFhvRmVrED has only 1 unsummarised messages, skipping
+2025-10-24 15:15:12,310 [DEBUG] [SessionAPI] Session -OcJwSIcH51twJvAgBno has only 1 unsummarised messages, skipping
+2025-10-24 15:15:12,566 [DEBUG] [SessionAPI] Session -OcJwTESVND4Dnk1JtPY has only 1 unsummarised messages, skipping
+2025-10-24 15:15:12,815 [DEBUG] [SessionAPI] Session -OcJwU8bt9Fxah5nI9pu has only 1 unsummarised messages, skipping
+2025-10-24 15:15:13,066 [DEBUG] [SessionAPI] Session -OcJwUqrlgLa_k6l3G3A has only 1 unsummarised messages, skipping
+2025-10-24 15:15:13,317 [DEBUG] [SessionAPI] Session -OcJwVYM_sibtBw6XoVz has only 1 unsummarised messages, skipping
+2025-10-24 15:15:13,562 [DEBUG] [SessionAPI] Session -OcJwWktykQ7rgajCf5a has only 1 unsummarised messages, skipping
+2025-10-24 15:15:13,812 [DEBUG] [SessionAPI] Session -OcJwacldn1nZKUBR2kX has only 1 unsummarised messages, skipping
+2025-10-24 15:15:14,060 [DEBUG] [SessionAPI] Session -OcJwvQYGMn7PyzIXvq5 has only 0 unsummarised messages, skipping
+2025-10-24 15:15:14,306 [DEBUG] [SessionAPI] Session -OcJwvctXYAF2zaIT8bX has only 1 unsummarised messages, skipping
+2025-10-24 15:15:14,551 [DEBUG] [SessionAPI] Session -OcJwweeW98P468lFBhs has only 1 unsummarised messages, skipping
+2025-10-24 15:15:14,811 [DEBUG] [SessionAPI] Session -OcJwxZJbWmbXjvCH1Tv has only 1 unsummarised messages, skipping
+2025-10-24 15:15:15,062 [DEBUG] [SessionAPI] Session -OcJwyTL0ISfLUkRekcj has only 4 unsummarised messages, skipping
+2025-10-24 15:15:15,313 [DEBUG] [SessionAPI] Session -OcJx14O3TrTJ601OyZv has only 1 unsummarised messages, skipping
+2025-10-24 15:15:15,571 [DEBUG] [SessionAPI] Session -OcJyIu4tGuvsxfPlKPv has only 0 unsummarised messages, skipping
+2025-10-24 15:15:15,832 [DEBUG] [SessionAPI] Session -OcJyJ5oABJODjpcFYzE has only 2 unsummarised messages, skipping
+2025-10-24 15:15:16,079 [DEBUG] [SessionAPI] Session -OcJyManrPdIBJSwm7wf has only 2 unsummarised messages, skipping
+2025-10-24 15:15:16,382 [DEBUG] [SessionAPI] Session -OcJyQQNxVh8mn8GKZmQ has only 6 unsummarised messages, skipping
+2025-10-24 15:15:16,642 [DEBUG] [SessionAPI] Session -OcJy_zzcNYnC0AT41-f has only 8 unsummarised messages, skipping
+2025-10-24 15:15:16,901 [DEBUG] [SessionAPI] Session -OcJyofq_C9FihZyFVz- has only 2 unsummarised messages, skipping
+2025-10-24 15:20:03,672 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 15:20:04,583 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 15:20:04,844 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 15:20:05,105 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 15:20:05,369 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 15:20:05,626 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 15:20:05,883 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 15:20:06,135 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 15:20:06,385 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 15:20:06,652 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 15:20:06,918 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 15:20:07,178 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 15:20:07,433 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 15:20:07,686 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 15:20:07,944 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 15:20:08,196 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 15:20:08,445 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 15:20:08,711 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 15:20:08,971 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 15:20:09,236 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 15:20:09,494 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 15:20:09,747 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 15:20:10,000 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 15:20:10,251 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 15:20:10,503 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 15:20:10,758 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 15:20:11,016 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 15:20:11,268 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 15:20:11,519 [DEBUG] [SessionAPI] Session -OcJwRCDLYPFhvRmVrED has only 1 unsummarised messages, skipping
+2025-10-24 15:20:11,779 [DEBUG] [SessionAPI] Session -OcJwSIcH51twJvAgBno has only 1 unsummarised messages, skipping
+2025-10-24 15:20:12,032 [DEBUG] [SessionAPI] Session -OcJwTESVND4Dnk1JtPY has only 1 unsummarised messages, skipping
+2025-10-24 15:20:12,285 [DEBUG] [SessionAPI] Session -OcJwU8bt9Fxah5nI9pu has only 1 unsummarised messages, skipping
+2025-10-24 15:20:12,535 [DEBUG] [SessionAPI] Session -OcJwUqrlgLa_k6l3G3A has only 1 unsummarised messages, skipping
+2025-10-24 15:20:12,790 [DEBUG] [SessionAPI] Session -OcJwVYM_sibtBw6XoVz has only 1 unsummarised messages, skipping
+2025-10-24 15:20:13,040 [DEBUG] [SessionAPI] Session -OcJwWktykQ7rgajCf5a has only 1 unsummarised messages, skipping
+2025-10-24 15:20:13,304 [DEBUG] [SessionAPI] Session -OcJwacldn1nZKUBR2kX has only 1 unsummarised messages, skipping
+2025-10-24 15:20:13,560 [DEBUG] [SessionAPI] Session -OcJwvQYGMn7PyzIXvq5 has only 0 unsummarised messages, skipping
+2025-10-24 15:20:13,838 [DEBUG] [SessionAPI] Session -OcJwvctXYAF2zaIT8bX has only 1 unsummarised messages, skipping
+2025-10-24 15:20:14,094 [DEBUG] [SessionAPI] Session -OcJwweeW98P468lFBhs has only 1 unsummarised messages, skipping
+2025-10-24 15:20:14,355 [DEBUG] [SessionAPI] Session -OcJwxZJbWmbXjvCH1Tv has only 1 unsummarised messages, skipping
+2025-10-24 15:20:14,619 [DEBUG] [SessionAPI] Session -OcJwyTL0ISfLUkRekcj has only 4 unsummarised messages, skipping
+2025-10-24 15:20:14,865 [DEBUG] [SessionAPI] Session -OcJx14O3TrTJ601OyZv has only 1 unsummarised messages, skipping
+2025-10-24 15:20:15,115 [DEBUG] [SessionAPI] Session -OcJyIu4tGuvsxfPlKPv has only 0 unsummarised messages, skipping
+2025-10-24 15:20:15,368 [DEBUG] [SessionAPI] Session -OcJyJ5oABJODjpcFYzE has only 2 unsummarised messages, skipping
+2025-10-24 15:20:15,622 [DEBUG] [SessionAPI] Session -OcJyManrPdIBJSwm7wf has only 2 unsummarised messages, skipping
+2025-10-24 15:20:15,876 [DEBUG] [SessionAPI] Session -OcJyQQNxVh8mn8GKZmQ has only 6 unsummarised messages, skipping
+2025-10-24 15:20:16,137 [DEBUG] [SessionAPI] Session -OcJy_zzcNYnC0AT41-f has only 8 unsummarised messages, skipping
+2025-10-24 15:20:16,387 [DEBUG] [SessionAPI] Session -OcJyofq_C9FihZyFVz- has only 2 unsummarised messages, skipping
+2025-10-24 15:25:03,673 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 15:25:04,730 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 15:25:04,980 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 15:25:05,226 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 15:25:05,480 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 15:25:05,731 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 15:25:05,981 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 15:25:06,230 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 15:25:06,481 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 15:25:06,732 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 15:25:06,976 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 15:25:07,229 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 15:25:07,478 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 15:25:07,733 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 15:25:07,979 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 15:25:08,230 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 15:25:08,477 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 15:25:08,731 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 15:25:08,988 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 15:25:09,251 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 15:25:09,509 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 15:25:09,757 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 15:25:10,011 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 15:25:10,263 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 15:25:10,506 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 15:25:10,754 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 15:25:11,004 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 15:25:11,249 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 15:25:11,493 [DEBUG] [SessionAPI] Session -OcJwRCDLYPFhvRmVrED has only 1 unsummarised messages, skipping
+2025-10-24 15:25:11,744 [DEBUG] [SessionAPI] Session -OcJwSIcH51twJvAgBno has only 1 unsummarised messages, skipping
+2025-10-24 15:25:11,993 [DEBUG] [SessionAPI] Session -OcJwTESVND4Dnk1JtPY has only 1 unsummarised messages, skipping
+2025-10-24 15:25:12,249 [DEBUG] [SessionAPI] Session -OcJwU8bt9Fxah5nI9pu has only 1 unsummarised messages, skipping
+2025-10-24 15:25:12,508 [DEBUG] [SessionAPI] Session -OcJwUqrlgLa_k6l3G3A has only 1 unsummarised messages, skipping
+2025-10-24 15:25:12,757 [DEBUG] [SessionAPI] Session -OcJwVYM_sibtBw6XoVz has only 1 unsummarised messages, skipping
+2025-10-24 15:25:13,007 [DEBUG] [SessionAPI] Session -OcJwWktykQ7rgajCf5a has only 1 unsummarised messages, skipping
+2025-10-24 15:25:13,255 [DEBUG] [SessionAPI] Session -OcJwacldn1nZKUBR2kX has only 1 unsummarised messages, skipping
+2025-10-24 15:25:13,514 [DEBUG] [SessionAPI] Session -OcJwvQYGMn7PyzIXvq5 has only 0 unsummarised messages, skipping
+2025-10-24 15:25:13,767 [DEBUG] [SessionAPI] Session -OcJwvctXYAF2zaIT8bX has only 1 unsummarised messages, skipping
+2025-10-24 15:25:14,029 [DEBUG] [SessionAPI] Session -OcJwweeW98P468lFBhs has only 1 unsummarised messages, skipping
+2025-10-24 15:25:14,293 [DEBUG] [SessionAPI] Session -OcJwxZJbWmbXjvCH1Tv has only 1 unsummarised messages, skipping
+2025-10-24 15:25:14,542 [DEBUG] [SessionAPI] Session -OcJwyTL0ISfLUkRekcj has only 4 unsummarised messages, skipping
+2025-10-24 15:25:14,796 [DEBUG] [SessionAPI] Session -OcJx14O3TrTJ601OyZv has only 1 unsummarised messages, skipping
+2025-10-24 15:25:15,038 [DEBUG] [SessionAPI] Session -OcJyIu4tGuvsxfPlKPv has only 0 unsummarised messages, skipping
+2025-10-24 15:25:15,286 [DEBUG] [SessionAPI] Session -OcJyJ5oABJODjpcFYzE has only 2 unsummarised messages, skipping
+2025-10-24 15:25:15,535 [DEBUG] [SessionAPI] Session -OcJyManrPdIBJSwm7wf has only 2 unsummarised messages, skipping
+2025-10-24 15:25:15,796 [DEBUG] [SessionAPI] Session -OcJyQQNxVh8mn8GKZmQ has only 6 unsummarised messages, skipping
+2025-10-24 15:25:16,062 [DEBUG] [SessionAPI] Session -OcJy_zzcNYnC0AT41-f has only 8 unsummarised messages, skipping
+2025-10-24 15:25:16,310 [DEBUG] [SessionAPI] Session -OcJyofq_C9FihZyFVz- has only 2 unsummarised messages, skipping
+2025-10-24 15:30:03,681 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 15:30:04,549 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 15:30:04,804 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 15:30:05,059 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 15:30:05,312 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 15:30:05,560 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 15:30:05,812 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 15:30:06,059 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 15:30:06,301 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 15:30:06,550 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 15:30:06,800 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 15:30:07,052 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 15:30:07,297 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 15:30:07,550 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 15:30:07,798 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 15:30:08,059 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 15:30:08,303 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 15:30:08,548 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 15:30:08,804 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 15:30:09,054 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 15:30:09,308 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 15:30:09,552 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 15:30:09,794 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 15:30:10,041 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 15:30:10,311 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 15:30:10,559 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 15:30:10,807 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 15:30:11,056 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 15:30:11,303 [DEBUG] [SessionAPI] Session -OcJwRCDLYPFhvRmVrED has only 1 unsummarised messages, skipping
+2025-10-24 15:30:11,547 [DEBUG] [SessionAPI] Session -OcJwSIcH51twJvAgBno has only 1 unsummarised messages, skipping
+2025-10-24 15:30:11,792 [DEBUG] [SessionAPI] Session -OcJwTESVND4Dnk1JtPY has only 1 unsummarised messages, skipping
+2025-10-24 15:30:12,036 [DEBUG] [SessionAPI] Session -OcJwU8bt9Fxah5nI9pu has only 1 unsummarised messages, skipping
+2025-10-24 15:30:12,273 [DEBUG] [SessionAPI] Session -OcJwUqrlgLa_k6l3G3A has only 1 unsummarised messages, skipping
+2025-10-24 15:30:12,518 [DEBUG] [SessionAPI] Session -OcJwVYM_sibtBw6XoVz has only 1 unsummarised messages, skipping
+2025-10-24 15:30:12,763 [DEBUG] [SessionAPI] Session -OcJwWktykQ7rgajCf5a has only 1 unsummarised messages, skipping
+2025-10-24 15:30:13,012 [DEBUG] [SessionAPI] Session -OcJwacldn1nZKUBR2kX has only 1 unsummarised messages, skipping
+2025-10-24 15:30:13,258 [DEBUG] [SessionAPI] Session -OcJwvQYGMn7PyzIXvq5 has only 0 unsummarised messages, skipping
+2025-10-24 15:30:13,505 [DEBUG] [SessionAPI] Session -OcJwvctXYAF2zaIT8bX has only 1 unsummarised messages, skipping
+2025-10-24 15:30:13,749 [DEBUG] [SessionAPI] Session -OcJwweeW98P468lFBhs has only 1 unsummarised messages, skipping
+2025-10-24 15:30:13,995 [DEBUG] [SessionAPI] Session -OcJwxZJbWmbXjvCH1Tv has only 1 unsummarised messages, skipping
+2025-10-24 15:30:14,239 [DEBUG] [SessionAPI] Session -OcJwyTL0ISfLUkRekcj has only 4 unsummarised messages, skipping
+2025-10-24 15:30:14,487 [DEBUG] [SessionAPI] Session -OcJx14O3TrTJ601OyZv has only 1 unsummarised messages, skipping
+2025-10-24 15:30:14,734 [DEBUG] [SessionAPI] Session -OcJyIu4tGuvsxfPlKPv has only 0 unsummarised messages, skipping
+2025-10-24 15:30:14,979 [DEBUG] [SessionAPI] Session -OcJyJ5oABJODjpcFYzE has only 2 unsummarised messages, skipping
+2025-10-24 15:30:15,222 [DEBUG] [SessionAPI] Session -OcJyManrPdIBJSwm7wf has only 2 unsummarised messages, skipping
+2025-10-24 15:30:15,469 [DEBUG] [SessionAPI] Session -OcJyQQNxVh8mn8GKZmQ has only 6 unsummarised messages, skipping
+2025-10-24 15:30:15,727 [DEBUG] [SessionAPI] Session -OcJy_zzcNYnC0AT41-f has only 8 unsummarised messages, skipping
+2025-10-24 15:30:15,977 [DEBUG] [SessionAPI] Session -OcJyofq_C9FihZyFVz- has only 2 unsummarised messages, skipping
+2025-10-24 15:35:03,863 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 15:35:04,699 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 15:35:04,952 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 15:35:05,200 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 15:35:05,446 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 15:35:05,702 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 15:35:05,977 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 15:35:06,229 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 15:35:06,484 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 15:35:06,745 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 15:35:07,034 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 15:35:07,291 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 15:35:07,539 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 15:35:07,797 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 15:35:08,045 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 15:35:08,294 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 15:35:08,550 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 15:35:08,795 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 15:35:09,044 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 15:35:09,294 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 15:35:09,554 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 15:35:09,801 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 15:35:10,058 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 15:35:10,309 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 15:35:10,556 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 15:35:10,802 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 15:35:11,052 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 15:35:11,301 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 15:35:11,546 [DEBUG] [SessionAPI] Session -OcJwRCDLYPFhvRmVrED has only 1 unsummarised messages, skipping
+2025-10-24 15:35:11,795 [DEBUG] [SessionAPI] Session -OcJwSIcH51twJvAgBno has only 1 unsummarised messages, skipping
+2025-10-24 15:35:12,050 [DEBUG] [SessionAPI] Session -OcJwTESVND4Dnk1JtPY has only 1 unsummarised messages, skipping
+2025-10-24 15:35:12,294 [DEBUG] [SessionAPI] Session -OcJwU8bt9Fxah5nI9pu has only 1 unsummarised messages, skipping
+2025-10-24 15:35:12,546 [DEBUG] [SessionAPI] Session -OcJwUqrlgLa_k6l3G3A has only 1 unsummarised messages, skipping
+2025-10-24 15:35:12,791 [DEBUG] [SessionAPI] Session -OcJwVYM_sibtBw6XoVz has only 1 unsummarised messages, skipping
+2025-10-24 15:35:13,038 [DEBUG] [SessionAPI] Session -OcJwWktykQ7rgajCf5a has only 1 unsummarised messages, skipping
+2025-10-24 15:35:13,290 [DEBUG] [SessionAPI] Session -OcJwacldn1nZKUBR2kX has only 1 unsummarised messages, skipping
+2025-10-24 15:35:13,604 [DEBUG] [SessionAPI] Session -OcJwvQYGMn7PyzIXvq5 has only 0 unsummarised messages, skipping
+2025-10-24 15:35:13,858 [DEBUG] [SessionAPI] Session -OcJwvctXYAF2zaIT8bX has only 1 unsummarised messages, skipping
+2025-10-24 15:35:14,114 [DEBUG] [SessionAPI] Session -OcJwweeW98P468lFBhs has only 1 unsummarised messages, skipping
+2025-10-24 15:35:14,358 [DEBUG] [SessionAPI] Session -OcJwxZJbWmbXjvCH1Tv has only 1 unsummarised messages, skipping
+2025-10-24 15:35:14,607 [DEBUG] [SessionAPI] Session -OcJwyTL0ISfLUkRekcj has only 4 unsummarised messages, skipping
+2025-10-24 15:35:14,853 [DEBUG] [SessionAPI] Session -OcJx14O3TrTJ601OyZv has only 1 unsummarised messages, skipping
+2025-10-24 15:35:15,102 [DEBUG] [SessionAPI] Session -OcJyIu4tGuvsxfPlKPv has only 0 unsummarised messages, skipping
+2025-10-24 15:35:15,348 [DEBUG] [SessionAPI] Session -OcJyJ5oABJODjpcFYzE has only 2 unsummarised messages, skipping
+2025-10-24 15:35:15,603 [DEBUG] [SessionAPI] Session -OcJyManrPdIBJSwm7wf has only 2 unsummarised messages, skipping
+2025-10-24 15:35:15,854 [DEBUG] [SessionAPI] Session -OcJyQQNxVh8mn8GKZmQ has only 6 unsummarised messages, skipping
+2025-10-24 15:35:16,111 [DEBUG] [SessionAPI] Session -OcJy_zzcNYnC0AT41-f has only 8 unsummarised messages, skipping
+2025-10-24 15:35:16,407 [DEBUG] [SessionAPI] Session -OcJyofq_C9FihZyFVz- has only 2 unsummarised messages, skipping
+2025-10-24 15:40:03,668 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 15:40:04,607 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 15:40:04,879 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 15:40:05,156 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 15:40:05,415 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 15:40:05,668 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 15:40:06,165 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 15:40:06,427 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 15:40:06,679 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 15:40:06,933 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 15:40:07,181 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 15:40:07,584 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 15:40:07,847 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 15:40:08,110 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 15:40:08,366 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 15:40:08,620 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 15:40:08,878 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 15:40:09,138 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 15:40:09,395 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 15:40:09,661 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 15:40:09,922 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 15:40:10,183 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 15:40:10,440 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 15:40:10,690 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 15:40:10,944 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 15:40:11,204 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 15:40:11,463 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 15:40:11,725 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 15:40:11,977 [DEBUG] [SessionAPI] Session -OcJwRCDLYPFhvRmVrED has only 1 unsummarised messages, skipping
+2025-10-24 15:40:12,230 [DEBUG] [SessionAPI] Session -OcJwSIcH51twJvAgBno has only 1 unsummarised messages, skipping
+2025-10-24 15:40:12,490 [DEBUG] [SessionAPI] Session -OcJwTESVND4Dnk1JtPY has only 1 unsummarised messages, skipping
+2025-10-24 15:40:12,742 [DEBUG] [SessionAPI] Session -OcJwU8bt9Fxah5nI9pu has only 1 unsummarised messages, skipping
+2025-10-24 15:40:12,991 [DEBUG] [SessionAPI] Session -OcJwUqrlgLa_k6l3G3A has only 1 unsummarised messages, skipping
+2025-10-24 15:40:13,231 [DEBUG] [SessionAPI] Session -OcJwVYM_sibtBw6XoVz has only 1 unsummarised messages, skipping
+2025-10-24 15:40:13,480 [DEBUG] [SessionAPI] Session -OcJwWktykQ7rgajCf5a has only 1 unsummarised messages, skipping
+2025-10-24 15:40:13,746 [DEBUG] [SessionAPI] Session -OcJwacldn1nZKUBR2kX has only 1 unsummarised messages, skipping
+2025-10-24 15:40:14,005 [DEBUG] [SessionAPI] Session -OcJwvQYGMn7PyzIXvq5 has only 0 unsummarised messages, skipping
+2025-10-24 15:40:14,255 [DEBUG] [SessionAPI] Session -OcJwvctXYAF2zaIT8bX has only 1 unsummarised messages, skipping
+2025-10-24 15:40:14,506 [DEBUG] [SessionAPI] Session -OcJwweeW98P468lFBhs has only 1 unsummarised messages, skipping
+2025-10-24 15:40:14,768 [DEBUG] [SessionAPI] Session -OcJwxZJbWmbXjvCH1Tv has only 1 unsummarised messages, skipping
+2025-10-24 15:40:15,017 [DEBUG] [SessionAPI] Session -OcJwyTL0ISfLUkRekcj has only 4 unsummarised messages, skipping
+2025-10-24 15:40:15,267 [DEBUG] [SessionAPI] Session -OcJx14O3TrTJ601OyZv has only 1 unsummarised messages, skipping
+2025-10-24 15:40:15,535 [DEBUG] [SessionAPI] Session -OcJyIu4tGuvsxfPlKPv has only 0 unsummarised messages, skipping
+2025-10-24 15:40:15,795 [DEBUG] [SessionAPI] Session -OcJyJ5oABJODjpcFYzE has only 2 unsummarised messages, skipping
+2025-10-24 15:40:16,052 [DEBUG] [SessionAPI] Session -OcJyManrPdIBJSwm7wf has only 2 unsummarised messages, skipping
+2025-10-24 15:40:16,308 [DEBUG] [SessionAPI] Session -OcJyQQNxVh8mn8GKZmQ has only 6 unsummarised messages, skipping
+2025-10-24 15:40:16,561 [DEBUG] [SessionAPI] Session -OcJy_zzcNYnC0AT41-f has only 8 unsummarised messages, skipping
+2025-10-24 15:40:16,815 [DEBUG] [SessionAPI] Session -OcJyofq_C9FihZyFVz- has only 2 unsummarised messages, skipping
+2025-10-24 15:50:03,664 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 15:50:04,660 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 15:50:04,908 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 15:50:05,167 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 15:50:05,427 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 15:50:05,676 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 15:50:05,924 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 15:50:06,175 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 15:50:06,420 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 15:50:06,678 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 15:50:06,926 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 15:50:07,176 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 15:50:07,435 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 15:50:07,683 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 15:50:07,935 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 15:50:08,193 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 15:50:08,440 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 15:50:08,690 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 15:50:08,938 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 15:50:09,191 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 15:50:09,438 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 15:50:09,681 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 15:50:09,940 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 15:50:10,188 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 15:50:10,433 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 15:50:10,679 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 15:50:10,930 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 15:50:11,179 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 15:50:11,427 [DEBUG] [SessionAPI] Session -OcJwRCDLYPFhvRmVrED has only 1 unsummarised messages, skipping
+2025-10-24 15:50:11,681 [DEBUG] [SessionAPI] Session -OcJwSIcH51twJvAgBno has only 1 unsummarised messages, skipping
+2025-10-24 15:50:11,930 [DEBUG] [SessionAPI] Session -OcJwTESVND4Dnk1JtPY has only 1 unsummarised messages, skipping
+2025-10-24 15:50:12,173 [DEBUG] [SessionAPI] Session -OcJwU8bt9Fxah5nI9pu has only 1 unsummarised messages, skipping
+2025-10-24 15:50:12,419 [DEBUG] [SessionAPI] Session -OcJwUqrlgLa_k6l3G3A has only 1 unsummarised messages, skipping
+2025-10-24 15:50:12,670 [DEBUG] [SessionAPI] Session -OcJwVYM_sibtBw6XoVz has only 1 unsummarised messages, skipping
+2025-10-24 15:50:12,923 [DEBUG] [SessionAPI] Session -OcJwWktykQ7rgajCf5a has only 1 unsummarised messages, skipping
+2025-10-24 15:50:13,170 [DEBUG] [SessionAPI] Session -OcJwacldn1nZKUBR2kX has only 1 unsummarised messages, skipping
+2025-10-24 15:50:13,421 [DEBUG] [SessionAPI] Session -OcJwvQYGMn7PyzIXvq5 has only 0 unsummarised messages, skipping
+2025-10-24 15:50:13,666 [DEBUG] [SessionAPI] Session -OcJwvctXYAF2zaIT8bX has only 1 unsummarised messages, skipping
+2025-10-24 15:50:13,909 [DEBUG] [SessionAPI] Session -OcJwweeW98P468lFBhs has only 1 unsummarised messages, skipping
+2025-10-24 15:50:14,163 [DEBUG] [SessionAPI] Session -OcJwxZJbWmbXjvCH1Tv has only 1 unsummarised messages, skipping
+2025-10-24 15:50:14,405 [DEBUG] [SessionAPI] Session -OcJwyTL0ISfLUkRekcj has only 4 unsummarised messages, skipping
+2025-10-24 15:50:14,647 [DEBUG] [SessionAPI] Session -OcJx14O3TrTJ601OyZv has only 1 unsummarised messages, skipping
+2025-10-24 15:50:14,897 [DEBUG] [SessionAPI] Session -OcJyIu4tGuvsxfPlKPv has only 0 unsummarised messages, skipping
+2025-10-24 15:50:15,167 [DEBUG] [SessionAPI] Session -OcJyJ5oABJODjpcFYzE has only 2 unsummarised messages, skipping
+2025-10-24 15:50:15,418 [DEBUG] [SessionAPI] Session -OcJyManrPdIBJSwm7wf has only 2 unsummarised messages, skipping
+2025-10-24 15:50:15,663 [DEBUG] [SessionAPI] Session -OcJyQQNxVh8mn8GKZmQ has only 6 unsummarised messages, skipping
+2025-10-24 15:50:15,944 [DEBUG] [SessionAPI] Session -OcJy_zzcNYnC0AT41-f has only 8 unsummarised messages, skipping
+2025-10-24 15:50:16,188 [DEBUG] [SessionAPI] Session -OcJyofq_C9FihZyFVz- has only 2 unsummarised messages, skipping
+2025-10-24 15:55:05,460 [INFO] [SessionAPI] [SessionAPI] Running scheduled summarisation job for all active sessions
+2025-10-24 15:55:08,162 [DEBUG] [SessionAPI] Session -OcJhZqcn1fCS0D5OB9v has only 0 unsummarised messages, skipping
+2025-10-24 15:55:08,422 [DEBUG] [SessionAPI] Session -OcJhhzSLtXCb-TYK7LR has only 0 unsummarised messages, skipping
+2025-10-24 15:55:08,695 [DEBUG] [SessionAPI] Session -OcJho8Rhfw57E8MuIHp has only 1 unsummarised messages, skipping
+2025-10-24 15:55:09,003 [DEBUG] [SessionAPI] Session -OcJhs6s9VFXN48KKiCg has only 1 unsummarised messages, skipping
+2025-10-24 15:55:09,278 [DEBUG] [SessionAPI] Session -OcJhttD_dQyHjLNNUOO has only 1 unsummarised messages, skipping
+2025-10-24 15:55:09,531 [DEBUG] [SessionAPI] Session -OcJhv_7s8pscopgaf6J has only 1 unsummarised messages, skipping
+2025-10-24 15:55:10,342 [DEBUG] [SessionAPI] Session -OcJhxGadGzH1RBUCSq4 has only 1 unsummarised messages, skipping
+2025-10-24 15:55:10,591 [DEBUG] [SessionAPI] Session -OcJi552W2BbR9a5F6pt has only 1 unsummarised messages, skipping
+2025-10-24 15:55:10,857 [DEBUG] [SessionAPI] Session -OcJi6rYaM5H0B2CxHuo has only 1 unsummarised messages, skipping
+2025-10-24 15:55:11,488 [DEBUG] [SessionAPI] Session -OcJi8f_5zWzYqi1fV1e has only 1 unsummarised messages, skipping
+2025-10-24 15:55:11,736 [DEBUG] [SessionAPI] Session -OcJtfUqm87kai8Ne0cI has only 1 unsummarised messages, skipping
+2025-10-24 15:55:11,984 [DEBUG] [SessionAPI] Session -OcJtgNwXY8C-pKAh8r_ has only 1 unsummarised messages, skipping
+2025-10-24 15:55:12,235 [DEBUG] [SessionAPI] Session -OcJth5g9oVjTwpHUteO has only 1 unsummarised messages, skipping
+2025-10-24 15:55:12,809 [DEBUG] [SessionAPI] Session -OcJthoeWCtoKP-k4opQ has only 1 unsummarised messages, skipping
+2025-10-24 15:55:13,064 [DEBUG] [SessionAPI] Session -OcJtoDAnFeYdQcnvoY1 has only 1 unsummarised messages, skipping
+2025-10-24 15:55:13,314 [DEBUG] [SessionAPI] Session -OcJtp1RxbBRRAkI4f8m has only 1 unsummarised messages, skipping
+2025-10-24 15:55:13,566 [DEBUG] [SessionAPI] Session -OcJtptc-gu8NwL0CpPq has only 1 unsummarised messages, skipping
+2025-10-24 15:55:14,240 [DEBUG] [SessionAPI] Session -OcJuQ2gsyPE2iabJomg has only 1 unsummarised messages, skipping
+2025-10-24 15:55:14,494 [DEBUG] [SessionAPI] Session -OcJuZFXrz5CcIg0UeUa has only 1 unsummarised messages, skipping
+2025-10-24 15:55:14,741 [DEBUG] [SessionAPI] Session -OcJu_5kaTwLE49fz6rr has only 1 unsummarised messages, skipping
+2025-10-24 15:55:14,997 [DEBUG] [SessionAPI] Session -OcJu_up9wt289PNmQwt has only 1 unsummarised messages, skipping
+2025-10-24 15:55:15,249 [DEBUG] [SessionAPI] Session -OcJuals_ydnRmtw8JGf has only 1 unsummarised messages, skipping
+2025-10-24 15:55:15,501 [DEBUG] [SessionAPI] Session -OcJubTmyadIopD04vwc has only 1 unsummarised messages, skipping
+2025-10-24 15:55:15,753 [DEBUG] [SessionAPI] Session -OcJucC2JBDslJS-Zw_J has only 1 unsummarised messages, skipping
+2025-10-24 15:55:15,997 [DEBUG] [SessionAPI] Session -OcJuimC8bQve4d3r1Rk has only 1 unsummarised messages, skipping
+2025-10-24 15:55:16,242 [DEBUG] [SessionAPI] Session -OcJujnG6XTuiqN9nlMe has only 1 unsummarised messages, skipping
+2025-10-24 15:55:16,490 [DEBUG] [SessionAPI] Session -OcJul828W3tdWxVfWO5 has only 1 unsummarised messages, skipping
+2025-10-24 15:55:16,748 [DEBUG] [SessionAPI] Session -OcJwRCDLYPFhvRmVrED has only 1 unsummarised messages, skipping
+2025-10-24 15:55:16,996 [DEBUG] [SessionAPI] Session -OcJwSIcH51twJvAgBno has only 1 unsummarised messages, skipping
+2025-10-24 15:55:17,252 [DEBUG] [SessionAPI] Session -OcJwTESVND4Dnk1JtPY has only 1 unsummarised messages, skipping
+2025-10-24 15:55:17,517 [DEBUG] [SessionAPI] Session -OcJwU8bt9Fxah5nI9pu has only 1 unsummarised messages, skipping
+2025-10-24 15:55:17,771 [DEBUG] [SessionAPI] Session -OcJwUqrlgLa_k6l3G3A has only 1 unsummarised messages, skipping
+2025-10-24 15:55:18,023 [DEBUG] [SessionAPI] Session -OcJwVYM_sibtBw6XoVz has only 1 unsummarised messages, skipping
+2025-10-24 15:55:18,269 [DEBUG] [SessionAPI] Session -OcJwWktykQ7rgajCf5a has only 1 unsummarised messages, skipping
+2025-10-24 15:55:18,514 [DEBUG] [SessionAPI] Session -OcJwacldn1nZKUBR2kX has only 1 unsummarised messages, skipping
+2025-10-24 15:55:18,755 [DEBUG] [SessionAPI] Session -OcJwvQYGMn7PyzIXvq5 has only 0 unsummarised messages, skipping
+2025-10-24 15:55:19,005 [DEBUG] [SessionAPI] Session -OcJwvctXYAF2zaIT8bX has only 1 unsummarised messages, skipping
+2025-10-24 15:55:19,265 [DEBUG] [SessionAPI] Session -OcJwweeW98P468lFBhs has only 1 unsummarised messages, skipping
+2025-10-24 15:55:19,523 [DEBUG] [SessionAPI] Session -OcJwxZJbWmbXjvCH1Tv has only 1 unsummarised messages, skipping
+2025-10-24 15:55:19,772 [DEBUG] [SessionAPI] Session -OcJwyTL0ISfLUkRekcj has only 4 unsummarised messages, skipping
+2025-10-24 15:55:20,021 [DEBUG] [SessionAPI] Session -OcJx14O3TrTJ601OyZv has only 1 unsummarised messages, skipping
+2025-10-24 15:55:20,274 [DEBUG] [SessionAPI] Session -OcJyIu4tGuvsxfPlKPv has only 0 unsummarised messages, skipping
+2025-10-24 15:55:20,521 [DEBUG] [SessionAPI] Session -OcJyJ5oABJODjpcFYzE has only 2 unsummarised messages, skipping
+2025-10-24 15:55:20,772 [DEBUG] [SessionAPI] Session -OcJyManrPdIBJSwm7wf has only 2 unsummarised messages, skipping
+2025-10-24 15:55:21,021 [DEBUG] [SessionAPI] Session -OcJyQQNxVh8mn8GKZmQ has only 6 unsummarised messages, skipping
+2025-10-24 15:55:21,272 [DEBUG] [SessionAPI] Session -OcJy_zzcNYnC0AT41-f has only 8 unsummarised messages, skipping
+2025-10-24 15:55:21,522 [DEBUG] [SessionAPI] Session -OcJyofq_C9FihZyFVz- has only 2 unsummarised messages, skipping
