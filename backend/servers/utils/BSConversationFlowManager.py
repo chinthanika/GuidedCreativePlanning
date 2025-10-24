@@ -27,7 +27,7 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(rotating_handler)
 
 # ------------------ CONFIG ------------------
-SESSION_API_URL = "http://localhost:4000"
+SESSION_API_URL = "https://guidedcreativeplanning-session.onrender.com"
 
 RATING_MAP = {"Low": 1, "Medium": 2, "High": 3}
 REVERSE_MAP = {1: "Low", 2: "Medium", 3: "High"}
