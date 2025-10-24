@@ -40,7 +40,7 @@ follow_up = question_bank.get("follow_up", {})
 meta_transitions = question_bank.get("meta_transitions", {})
 
 # ------------------ CONFIG ------------------
-SESSION_API_URL = "http://localhost:4000"
+SESSION_API_URL = "https://guidedcreativeplanning-session.onrender.com"
 KEEP_LAST_N = 10
 
 
