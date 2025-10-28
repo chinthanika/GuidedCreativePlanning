@@ -1,24 +1,13 @@
-/* Reset and base styles */
-html,
-body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
 * {
   box-sizing: border-box;
 }
-
 /* Card Grid Container */
 .timeline-card-grid {
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
   font-family: 'system-ui', '-apple-system', 'segoe-ui', sans-serif;
-  height: 100%;
-  overflow-y: auto;
+  min-height: 100vh;
 }
 
 /* Header and Button Styles */
@@ -155,6 +144,7 @@ body {
   border-radius: 12px;
   z-index: 1;
   pointer-events: none;
+  backface-visibility: hidden;
 }
 
 .card-front-content {
@@ -243,6 +233,7 @@ body {
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
+  z-index: 2;
 }
 
 .card-back-header {
@@ -267,6 +258,7 @@ body {
   gap: 0.5rem;
   margin-top: 1rem;
   flex-shrink: 0;
+  z-index: 10;
 }
 
 .btn-edit,
@@ -285,6 +277,7 @@ body {
   justify-content: center;
   min-height: 40px;
   text-align: center;
+  pointer-events: auto;
 }
 
 .btn-edit:active,

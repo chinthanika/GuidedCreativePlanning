@@ -20874,3 +20874,909 @@ requests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://guid
 2025-10-24 16:14:27,781 [DEBUG] [STAGE] Current stage: Clarify
 2025-10-24 16:14:27,782 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
 2025-10-24 16:14:28,377 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcKH7atKdNv2Gt1aeI2
+2025-10-27 12:53:34,138 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZ-tbLjM4-pDzeFjF7
+2025-10-27 12:53:44,549 [ERROR] [HTTP POST] /session/get_metadata failed: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10.0) | payload={'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'sessionID': '-OcZ-tbLjM4-pDzeFjF7'}
+Traceback (most recent call last):
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 449, in _make_request
+    six.raise_from(e, None)
+  File "<string>", line 3, in raise_from
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 444, in _make_request
+    httplib_response = conn.getresponse()
+                       ^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\http\client.py", line 1374, in getresponse
+    response.begin()
+  File "C:\Python311\Lib\http\client.py", line 318, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\http\client.py", line 279, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\socket.py", line 705, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\ssl.py", line 1278, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\ssl.py", line 1134, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python311\Lib\site-packages\requests\adapters.py", line 489, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 787, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\util\retry.py", line 550, in increment
+    raise six.reraise(type(error), error, _stacktrace)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\packages\six.py", line 770, in reraise
+    raise value
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 703, in urlopen
+    httplib_response = self._make_request(
+                       ^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 451, in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 340, in _raise_timeout
+    raise ReadTimeoutError(
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10.0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 75, in _post
+    r = requests.post(self._url(path), json=payload, timeout=timeout)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\api.py", line 115, in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\sessions.py", line 587, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\sessions.py", line 701, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\adapters.py", line 578, in send
+    raise ReadTimeout(e, request=request)
+requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10.0)
+2025-10-27 12:53:44,626 [ERROR] [SESSION INIT] Failed to connect to Session API: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10.0)
+Traceback (most recent call last):
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 449, in _make_request
+    six.raise_from(e, None)
+  File "<string>", line 3, in raise_from
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 444, in _make_request
+    httplib_response = conn.getresponse()
+                       ^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\http\client.py", line 1374, in getresponse
+    response.begin()
+  File "C:\Python311\Lib\http\client.py", line 318, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\http\client.py", line 279, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\socket.py", line 705, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\ssl.py", line 1278, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\ssl.py", line 1134, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python311\Lib\site-packages\requests\adapters.py", line 489, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 787, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\util\retry.py", line 550, in increment
+    raise six.reraise(type(error), error, _stacktrace)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\packages\six.py", line 770, in reraise
+    raise value
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 703, in urlopen
+    httplib_response = self._make_request(
+                       ^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 451, in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 340, in _raise_timeout
+    raise ReadTimeoutError(
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10.0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 52, in __init__
+    self._refresh_metadata_cache()
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 134, in _refresh_metadata_cache
+    res = self._post("/session/get_metadata", payload)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 75, in _post
+    r = requests.post(self._url(path), json=payload, timeout=timeout)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\api.py", line 115, in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\sessions.py", line 587, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\sessions.py", line 701, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\adapters.py", line 578, in send
+    raise ReadTimeout(e, request=request)
+requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10.0)
+2025-10-27 12:53:44,634 [DEBUG] [SESSION CREATE] Sending payload: {'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'metadata_shared': {'title': 'New Chat'}, 'metadata_dt': {'currentCategory': None, 'currentAngle': None, 'asked': [], 'depth': 0, 'followUpCount': 0}, 'metadata_bs': {'stage': 'Clarify', 'parentSessionId': None, 'hmwQuestions': {}, 'stageHistory': [], 'fluencyScore': 'Low', 'flexibilityCategories': []}}
+2025-10-27 13:03:39,063 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:03:40,239 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:03:40,608 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 13:03:40,609 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 13:03:40,951 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 13:03:40,958 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:03:40,963 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:03:41,073 [INFO] [TIMING] Metadata fetch took 0.108s
+2025-10-27 13:03:41,078 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:03:41,082 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:03:41,083 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 13:03:41,088 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:03:41,088 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:03:41,090 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:03:41,093 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 13:03:41,095 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 13:03:41,731 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZ2DrcxTCtoVFgmiwM
+2025-10-27 13:03:41,736 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:03:42,093 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 13:03:42,206 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:03:42,551 [DEBUG] [CACHE HIT] Summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:03:42,894 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 13:03:42,895 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:03:42,896 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 13:03:42,897 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 13:03:48,986 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:03:48,986 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:03:48,987 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:03:48,988 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 13:03:49,639 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZ2FmwsvuQAhNthTAN
+2025-10-27 13:04:21,854 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:22,193 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:04:22,547 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 13:04:22,547 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 13:04:22,887 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 13:04:22,889 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:04:22,891 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:23,020 [INFO] [TIMING] Metadata fetch took 0.128s
+2025-10-27 13:04:23,020 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:04:23,026 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:23,027 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 13:04:23,032 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:04:23,032 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:23,034 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:04:23,037 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 13:04:23,039 [DEBUG] [CACHE HIT] Summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:23,697 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZ2O5iz-s5qgvR78sY
+2025-10-27 13:04:23,940 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 13:04:24,057 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:04:24,394 [DEBUG] [CACHE HIT] Summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:24,764 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 13:04:24,764 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:24,764 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 13:04:24,767 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 13:04:29,905 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:04:29,906 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:29,907 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:04:29,907 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 13:04:30,519 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZ2PmFiUbOsykhKZVO
+2025-10-27 13:04:42,055 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:42,432 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:04:42,788 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 13:04:42,790 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 13:04:43,137 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 13:04:43,140 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:04:43,140 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:43,142 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:04:43,142 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:43,144 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 13:04:43,148 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:04:43,149 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:43,149 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:04:43,151 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 13:04:43,153 [DEBUG] [CACHE HIT] Summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:43,523 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 13:04:43,993 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:04:43,999 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZ2T3gRBG8jEKOvyp6
+2025-10-27 13:04:44,363 [DEBUG] [CACHE HIT] Summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:44,727 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 13:04:44,727 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:44,730 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 13:04:44,731 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 13:04:53,950 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:04:53,950 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:54,295 [INFO] [TIMING] Metadata fetch took 0.344s
+2025-10-27 13:04:54,297 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:04:54,298 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 13:04:54,876 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZ2ViqyF5D96F8emn7
+2025-10-27 13:05:04,283 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:05:04,284 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:05:04,285 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:05:04,286 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 13:05:04,931 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZ2YB1NCF5LcQBvxXN
+2025-10-27 13:12:25,058 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZ4DfPhNIF_4MwE7u9
+2025-10-27 13:12:25,829 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:12:26,192 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 13:12:26,193 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 13:12:26,544 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 13:12:26,547 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:12:26,548 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ4DfPhNIF_4MwE7u9
+2025-10-27 13:12:26,701 [INFO] [TIMING] Metadata fetch took 0.152s
+2025-10-27 13:12:26,703 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:12:26,704 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 13:12:26,714 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 13:12:26,878 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:12:27,332 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZ4EBHB9PWE9S_Zmx4
+2025-10-27 13:12:27,572 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 13:12:27,590 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ4DfPhNIF_4MwE7u9
+2025-10-27 13:12:27,591 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 13:12:27,593 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 13:12:45,991 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:12:46,344 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 13:12:46,345 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:12:46,346 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ4DfPhNIF_4MwE7u9
+2025-10-27 13:12:46,347 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:12:46,348 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ4DfPhNIF_4MwE7u9
+2025-10-27 13:12:46,349 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 13:12:48,798 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:12:48,800 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ4DfPhNIF_4MwE7u9
+2025-10-27 13:12:48,801 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:12:48,802 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 13:12:49,855 [ERROR] [HTTP POST] /session/save_message failed: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/save_message | payload={'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'sessionID': '-OcZ4DfPhNIF_4MwE7u9', 'role': 'assistant', 'content': "<p>Hi! I'm here to help you with creative problem solving for your story. We're currently in the Clarify stage where we'll frame your challenge. What creative problem or story challenge would you like to explore?</p>", 'mode': 'brainstorming', 'extra': {'stage': 'Clarify', 'visible': True, 'summarised': False, 'action': None}}
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 76, in _post
+    r.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/save_message
+2025-10-27 13:12:50,022 [ERROR] [MESSAGE SAVE] Failed: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/save_message
+2025-10-27 13:13:20,835 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZ4DfPhNIF_4MwE7u9
+2025-10-27 13:13:21,003 [ERROR] [HTTP POST] /session/get_metadata failed: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/get_metadata | payload={'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'sessionID': '-OcZ4DfPhNIF_4MwE7u9'}
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 76, in _post
+    r.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/get_metadata
+2025-10-27 13:13:21,006 [ERROR] [SESSION INIT] Failed to connect to Session API: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/get_metadata
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 52, in __init__
+    self._refresh_metadata_cache()
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 134, in _refresh_metadata_cache
+    res = self._post("/session/get_metadata", payload)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 76, in _post
+    r.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/get_metadata
+2025-10-27 13:13:21,012 [DEBUG] [SESSION CREATE] Sending payload: {'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'metadata_shared': {'title': 'New Chat'}, 'metadata_dt': {'currentCategory': None, 'currentAngle': None, 'asked': [], 'depth': 0, 'followUpCount': 0}, 'metadata_bs': {'stage': 'Clarify', 'parentSessionId': None, 'hmwQuestions': {}, 'stageHistory': [], 'fluencyScore': 'Low', 'flexibilityCategories': []}}
+2025-10-27 13:16:07,824 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZ4DfPhNIF_4MwE7u9
+2025-10-27 13:16:08,975 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:16:09,340 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 13:16:09,341 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 13:16:09,583 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 13:16:09,586 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:16:09,587 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ4DfPhNIF_4MwE7u9
+2025-10-27 13:16:09,750 [ERROR] [HTTP POST] /session/get_metadata failed: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/get_metadata | payload={'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'sessionID': '-OcZ4DfPhNIF_4MwE7u9'}
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 76, in _post
+    r.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/get_metadata
+2025-10-27 13:18:16,994 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZ4DfPhNIF_4MwE7u9
+2025-10-27 13:18:17,222 [ERROR] [HTTP POST] /session/get_metadata failed: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/get_metadata | payload={'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'sessionID': '-OcZ4DfPhNIF_4MwE7u9'}
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 76, in _post
+    r.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/get_metadata
+2025-10-27 13:18:17,241 [ERROR] [SESSION INIT] Failed to connect to Session API: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/get_metadata
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 52, in __init__
+    self._refresh_metadata_cache()
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 134, in _refresh_metadata_cache
+    res = self._post("/session/get_metadata", payload)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 76, in _post
+    r.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/get_metadata
+2025-10-27 13:18:17,251 [DEBUG] [SESSION CREATE] Sending payload: {'uid': '04E9XYnVi8QD3yHAIXeBHCRp2sN2', 'metadata_shared': {'title': 'New Chat'}, 'metadata_dt': {'currentCategory': None, 'currentAngle': None, 'asked': [], 'depth': 0, 'followUpCount': 0}, 'metadata_bs': {'stage': 'Clarify', 'parentSessionId': None, 'hmwQuestions': {}, 'stageHistory': [], 'fluencyScore': 'Low', 'flexibilityCategories': []}}
+2025-10-27 13:35:47,388 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:35:47,738 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:35:48,095 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 13:35:48,096 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 13:35:48,446 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 13:35:48,448 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:35:48,449 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:35:48,590 [INFO] [TIMING] Metadata fetch took 0.140s
+2025-10-27 13:35:48,592 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:35:48,593 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 13:35:48,596 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 13:35:49,201 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZ9_QWKfD8n8klgnGS
+2025-10-27 13:35:49,209 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:35:49,557 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 13:35:49,560 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:35:49,560 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 13:35:49,563 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 13:35:54,691 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:35:55,026 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 13:35:55,027 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:35:55,027 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:35:55,029 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:35:55,030 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:35:55,032 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 13:35:55,036 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:35:55,036 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:35:55,037 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:35:55,038 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 13:35:55,618 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZ9azp5j57FHd0KdY6
+2025-10-27 13:36:09,118 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:36:09,462 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:36:09,862 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 13:36:09,862 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 13:36:10,209 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 13:36:10,213 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:36:10,214 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:36:10,214 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:36:10,216 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 13:36:10,218 [DEBUG] [CACHE HIT] Summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:36:10,809 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZ9egz8hIqYvqY-CC9
+2025-10-27 13:36:11,030 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 13:36:11,031 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:36:11,033 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 13:36:11,034 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 13:36:17,425 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 13:36:17,777 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 13:36:17,778 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:36:17,779 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:36:17,779 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:36:17,780 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:36:17,781 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 13:36:17,786 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:36:17,786 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:36:17,787 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:36:17,788 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 13:36:18,371 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZ9gYDnMvd7TkPzreW
+2025-10-27 13:39:03,823 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:39:04,381 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'deepthinking', 'title', 'updatedAt']
+2025-10-27 13:39:04,740 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 13:39:04,740 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 13:39:05,081 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 13:39:05,084 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:39:05,085 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:39:05,213 [INFO] [TIMING] Metadata fetch took 0.128s
+2025-10-27 13:39:05,214 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:39:05,215 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 13:39:05,217 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 13:39:05,355 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'deepthinking', 'title', 'updatedAt']
+2025-10-27 13:39:05,861 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZAKRMkcVaAcplhnKf
+2025-10-27 13:39:06,099 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 13:39:06,101 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:39:06,102 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 13:39:06,103 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 13:39:15,034 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'deepthinking', 'title', 'updatedAt']
+2025-10-27 13:39:15,592 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 13:39:15,593 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:39:15,593 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:39:15,593 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:39:15,596 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:39:15,598 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 13:39:15,604 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:39:15,604 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:39:15,616 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:39:15,618 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 13:39:16,234 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZAMyQo17xD7juemzM
+2025-10-27 13:39:24,278 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:39:24,279 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:39:24,281 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:39:24,282 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 13:39:24,958 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZAP5YYN_LlqN8j5mW
+2025-10-27 13:39:35,676 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 13:39:35,676 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZ9_AKS0YpGDwitEhJ
+2025-10-27 13:39:36,010 [INFO] [TIMING] Metadata fetch took 0.334s
+2025-10-27 13:39:36,013 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 13:39:36,014 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 13:39:36,597 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZARwXK7wLy2UJU3X4
+2025-10-27 14:23:24,219 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZKThx4qhi4QJ2Gt8C
+2025-10-27 14:23:25,080 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:23:25,414 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:23:26,531 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 14:23:27,021 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 14:23:27,246 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:23:27,246 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZKThx4qhi4QJ2Gt8C
+2025-10-27 14:23:27,329 [INFO] [TIMING] Metadata fetch took 0.084s
+2025-10-27 14:23:27,338 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:23:27,338 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 14:23:27,339 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 14:23:27,887 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZKUKHQOOg9QqLsexO
+2025-10-27 14:23:27,890 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:23:28,227 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 14:23:28,228 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZKThx4qhi4QJ2Gt8C
+2025-10-27 14:23:28,228 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:23:28,228 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 14:23:40,819 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:23:41,159 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:23:41,159 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:23:41,159 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZKThx4qhi4QJ2Gt8C
+2025-10-27 14:23:41,159 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:23:41,159 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZKThx4qhi4QJ2Gt8C
+2025-10-27 14:23:41,162 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:23:41,166 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:23:41,167 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZKThx4qhi4QJ2Gt8C
+2025-10-27 14:23:41,167 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:23:41,167 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:23:41,902 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZKXhlELadO7F3-R1b
+2025-10-27 14:24:22,990 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:24:22,991 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZKThx4qhi4QJ2Gt8C
+2025-10-27 14:24:23,439 [INFO] [TIMING] Metadata fetch took 0.449s
+2025-10-27 14:24:23,439 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:24:23,441 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:24:24,076 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZKh20vYgbb4Lholkw
+2025-10-27 14:24:37,698 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:24:37,698 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZKThx4qhi4QJ2Gt8C
+2025-10-27 14:24:37,698 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:24:37,698 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:24:39,086 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZKkhS4zQj4w7C9BP7
+2025-10-27 14:24:51,350 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:24:51,350 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZKThx4qhi4QJ2Gt8C
+2025-10-27 14:24:51,350 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:24:51,352 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:24:51,941 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZKnqao_-hZ6kG1DWC
+2025-10-27 14:25:03,927 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:25:03,929 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZKThx4qhi4QJ2Gt8C
+2025-10-27 14:25:04,292 [INFO] [TIMING] Metadata fetch took 0.363s
+2025-10-27 14:25:04,293 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:25:04,293 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:25:05,219 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZKr4Avk5980ccpUP6
+2025-10-27 14:25:17,264 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:25:17,264 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZKThx4qhi4QJ2Gt8C
+2025-10-27 14:25:17,266 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:25:17,266 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:25:17,811 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZKu9uwqk1hlWh20An
+2025-10-27 14:34:01,736 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZMtpl3pq6cdfEGx2T
+2025-10-27 14:34:02,557 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:34:02,915 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:34:02,916 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 14:34:03,244 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 14:34:03,245 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:34:03,245 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZMtpl3pq6cdfEGx2T
+2025-10-27 14:34:03,417 [INFO] [TIMING] Metadata fetch took 0.171s
+2025-10-27 14:34:03,419 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:34:03,421 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 14:34:03,427 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 14:34:04,007 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZMucDky2Fk8CUC-SO
+2025-10-27 14:34:04,011 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:34:04,370 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 14:34:04,371 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZMtpl3pq6cdfEGx2T
+2025-10-27 14:34:04,371 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:34:04,372 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 14:34:14,234 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:34:14,833 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:34:14,833 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:34:14,834 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZMtpl3pq6cdfEGx2T
+2025-10-27 14:34:14,834 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:34:14,834 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZMtpl3pq6cdfEGx2T
+2025-10-27 14:34:14,835 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:34:15,370 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:34:15,463 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZMtpl3pq6cdfEGx2T
+2025-10-27 14:34:15,463 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:34:15,463 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:34:16,381 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZMxdf-hPwGJ7_XauF
+2025-10-27 14:34:24,676 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:34:24,676 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZMtpl3pq6cdfEGx2T
+2025-10-27 14:34:24,678 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:34:24,678 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:34:25,284 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZMzoPRoHvhjuKrwzO
+2025-10-27 14:34:37,430 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:34:37,431 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZMtpl3pq6cdfEGx2T
+2025-10-27 14:34:37,746 [INFO] [TIMING] Metadata fetch took 0.315s
+2025-10-27 14:34:37,746 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:34:37,746 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:34:38,328 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZN2-HWlpA9crGFFgn
+2025-10-27 14:34:57,458 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:34:57,458 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZMtpl3pq6cdfEGx2T
+2025-10-27 14:34:57,458 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:34:57,460 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:34:58,068 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZN6oeIPxPrmAiBW8c
+2025-10-27 14:35:24,593 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZN7nCeWLO9oBNY1se
+2025-10-27 14:35:25,189 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:35:25,536 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:35:25,539 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 14:35:25,880 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 14:35:25,881 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:35:25,881 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZN7nCeWLO9oBNY1se
+2025-10-27 14:35:25,993 [INFO] [TIMING] Metadata fetch took 0.112s
+2025-10-27 14:35:25,993 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:35:25,993 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 14:35:25,993 [DEBUG] [CACHE HIT] Summaries for summaries:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZN7nCeWLO9oBNY1se
+2025-10-27 14:35:26,582 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZNDmDsmMrSi1uw4k3
+2025-10-27 14:35:26,812 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 14:35:26,812 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZN7nCeWLO9oBNY1se
+2025-10-27 14:35:26,812 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:35:26,812 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 14:35:35,229 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:35:35,555 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:35:35,556 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:35:35,556 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZN7nCeWLO9oBNY1se
+2025-10-27 14:35:35,556 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:35:35,556 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZN7nCeWLO9oBNY1se
+2025-10-27 14:35:35,556 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:35:35,556 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:35:35,556 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZN7nCeWLO9oBNY1se
+2025-10-27 14:35:35,556 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:35:35,556 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:35:36,107 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZNG6HYDsxL7e5Cz20
+2025-10-27 14:35:44,198 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:35:44,198 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZN7nCeWLO9oBNY1se
+2025-10-27 14:35:44,198 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:35:44,199 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:35:44,758 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZNIDX02po968JhSzk
+2025-10-27 14:35:56,111 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:35:56,111 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZN7nCeWLO9oBNY1se
+2025-10-27 14:35:56,468 [INFO] [TIMING] Metadata fetch took 0.356s
+2025-10-27 14:35:56,468 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:35:56,468 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:35:58,268 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZNLE3SBW5SpDtSYtn
+2025-10-27 14:36:13,215 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:36:13,216 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZN7nCeWLO9oBNY1se
+2025-10-27 14:36:13,216 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:36:13,217 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:36:13,828 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZNPJDwf81T_3CD18S
+2025-10-27 14:44:21,514 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZPGclNLPHoERiw7S_
+2025-10-27 14:44:22,201 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:44:22,583 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:44:22,583 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 14:44:22,959 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 14:44:22,960 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:44:22,960 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZPGclNLPHoERiw7S_
+2025-10-27 14:44:23,120 [INFO] [TIMING] Metadata fetch took 0.157s
+2025-10-27 14:44:23,120 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:44:23,121 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 14:44:23,123 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 14:44:23,733 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZPGv-e0ifwFu8-ZBq
+2025-10-27 14:44:23,734 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:44:24,390 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 14:44:24,390 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZPGclNLPHoERiw7S_
+2025-10-27 14:44:24,391 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:44:24,391 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 14:44:39,671 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:44:40,040 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:44:40,040 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:44:40,041 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZPGclNLPHoERiw7S_
+2025-10-27 14:44:40,041 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:44:40,041 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZPGclNLPHoERiw7S_
+2025-10-27 14:44:40,043 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:44:40,050 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:44:40,050 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZPGclNLPHoERiw7S_
+2025-10-27 14:44:40,051 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:44:40,051 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:44:40,673 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZPL2dpq6PWBSdDUDv
+2025-10-27 14:44:48,892 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:44:48,892 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZPGclNLPHoERiw7S_
+2025-10-27 14:44:48,892 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:44:48,892 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:44:49,599 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZPNE14oEP7tnoaKIR
+2025-10-27 14:44:56,572 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZPPHPvmkPMd2cuz6d
+2025-10-27 14:44:57,034 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:44:57,411 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:44:57,411 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 14:44:57,795 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 14:44:57,796 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:44:57,796 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZPPHPvmkPMd2cuz6d
+2025-10-27 14:44:57,931 [INFO] [TIMING] Metadata fetch took 0.134s
+2025-10-27 14:44:57,932 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:44:57,932 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 14:44:57,933 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 14:44:58,527 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZPPPmaQzLL48B6KGo
+2025-10-27 14:44:58,528 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:44:58,929 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 14:44:58,929 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZPPHPvmkPMd2cuz6d
+2025-10-27 14:44:58,929 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:44:58,929 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 14:45:10,755 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:45:11,125 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:45:11,125 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:45:11,126 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZPPHPvmkPMd2cuz6d
+2025-10-27 14:45:11,126 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:45:11,126 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZPPHPvmkPMd2cuz6d
+2025-10-27 14:45:11,128 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:45:11,130 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:45:11,130 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZPPHPvmkPMd2cuz6d
+2025-10-27 14:45:11,130 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:45:11,131 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:45:11,770 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZPSdmlQAvkyZbimoi
+2025-10-27 14:45:24,011 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:45:24,011 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZPPHPvmkPMd2cuz6d
+2025-10-27 14:45:24,011 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:45:24,012 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:45:24,584 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZPVmAP5htOCd9ILWk
+2025-10-27 14:45:32,349 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:45:32,350 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZPPHPvmkPMd2cuz6d
+2025-10-27 14:45:32,673 [INFO] [TIMING] Metadata fetch took 0.324s
+2025-10-27 14:45:32,675 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:45:32,675 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:45:33,263 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZPXtiiIgQo58hSKhH
+2025-10-27 14:45:45,351 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:45:45,351 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZPPHPvmkPMd2cuz6d
+2025-10-27 14:45:45,353 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:45:45,353 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:45:45,912 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZP_zNPUThPyGAEiL9
+2025-10-27 14:52:18,496 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZR4-tohO_vSDeyjxF
+2025-10-27 14:52:19,210 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:52:20,549 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:52:20,550 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 14:52:20,905 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 14:52:20,906 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:52:20,907 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZR4-tohO_vSDeyjxF
+2025-10-27 14:52:21,017 [INFO] [TIMING] Metadata fetch took 0.109s
+2025-10-27 14:52:21,018 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:52:21,019 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 14:52:21,021 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 14:52:21,617 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZR5_gvPWLEWa7_pst
+2025-10-27 14:52:21,645 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:52:22,190 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 14:52:22,191 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZR4-tohO_vSDeyjxF
+2025-10-27 14:52:22,192 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:52:22,193 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 14:52:33,004 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZR8SFTCgJDlflEnOO
+2025-10-27 14:52:33,010 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:52:33,341 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:52:33,342 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:52:33,343 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZR4-tohO_vSDeyjxF
+2025-10-27 14:52:33,343 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:52:33,344 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZR4-tohO_vSDeyjxF
+2025-10-27 14:52:33,344 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:52:33,353 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:52:33,354 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZR4-tohO_vSDeyjxF
+2025-10-27 14:52:33,354 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:52:33,355 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:52:33,580 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:52:34,048 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZR8c0od4RfDpxyjiD
+2025-10-27 14:52:34,275 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:52:34,276 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 14:52:34,643 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 14:52:34,643 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:52:34,644 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZR8SFTCgJDlflEnOO
+2025-10-27 14:52:34,795 [INFO] [TIMING] Metadata fetch took 0.151s
+2025-10-27 14:52:34,797 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:52:34,797 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 14:52:34,797 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 14:52:34,895 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:52:35,364 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZR8wdxc8t8tEYfKTW
+2025-10-27 14:52:35,607 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 14:52:35,607 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZR8SFTCgJDlflEnOO
+2025-10-27 14:52:35,608 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:52:35,608 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 14:52:44,578 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:52:44,578 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZR4-tohO_vSDeyjxF
+2025-10-27 14:52:44,578 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:52:45,024 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:52:45,396 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:52:45,396 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:52:45,397 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZR8SFTCgJDlflEnOO
+2025-10-27 14:52:45,397 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:52:45,398 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZR8SFTCgJDlflEnOO
+2025-10-27 14:52:45,398 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:52:45,402 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:52:45,402 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZR8SFTCgJDlflEnOO
+2025-10-27 14:52:45,403 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:52:45,403 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:52:46,036 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZRBYT5uGRSc0AMFTr
+2025-10-27 14:52:54,276 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:52:54,276 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZR8SFTCgJDlflEnOO
+2025-10-27 14:52:54,278 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:53:14,322 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZRIqbxiNMraEbRg3L
+2025-10-27 14:53:14,671 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:53:15,000 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:53:15,001 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 14:53:15,460 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 14:53:15,463 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:53:15,463 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRIqbxiNMraEbRg3L
+2025-10-27 14:53:15,590 [INFO] [TIMING] Metadata fetch took 0.127s
+2025-10-27 14:53:15,591 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:53:15,591 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 14:53:15,592 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 14:53:16,203 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZRIueODj3s01Y_p3w
+2025-10-27 14:53:16,204 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:53:16,549 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 14:53:16,550 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRIqbxiNMraEbRg3L
+2025-10-27 14:53:16,551 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:53:16,551 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 14:53:27,445 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:53:27,823 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:53:27,823 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:53:27,823 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRIqbxiNMraEbRg3L
+2025-10-27 14:53:27,823 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:53:27,825 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRIqbxiNMraEbRg3L
+2025-10-27 14:53:27,825 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:53:27,828 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:53:27,828 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRIqbxiNMraEbRg3L
+2025-10-27 14:53:27,828 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:53:27,828 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:53:28,420 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZRLtatBUrKT70BAhY
+2025-10-27 14:53:37,719 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:53:37,719 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRIqbxiNMraEbRg3L
+2025-10-27 14:53:37,720 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:53:45,843 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZRQdDxT3C1irdm7wH
+2025-10-27 14:53:46,187 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:53:46,524 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:53:46,526 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 14:53:46,879 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 14:53:46,879 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:53:46,881 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRQdDxT3C1irdm7wH
+2025-10-27 14:53:47,003 [INFO] [TIMING] Metadata fetch took 0.122s
+2025-10-27 14:53:47,003 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:53:47,003 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 14:53:47,003 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 14:53:47,123 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:53:47,606 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZRQ_AL0vl0qDPNAy2
+2025-10-27 14:53:47,817 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 14:53:47,817 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRQdDxT3C1irdm7wH
+2025-10-27 14:53:47,817 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:53:47,817 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 14:53:57,235 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:53:57,600 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:53:57,601 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:53:57,601 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRQdDxT3C1irdm7wH
+2025-10-27 14:53:57,602 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:53:57,602 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRQdDxT3C1irdm7wH
+2025-10-27 14:53:57,603 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:53:57,604 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:53:57,605 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRQdDxT3C1irdm7wH
+2025-10-27 14:53:57,605 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:53:57,605 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:53:58,180 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZRT9b794X5S6tLBV1
+2025-10-27 14:54:07,027 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:54:07,029 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRQdDxT3C1irdm7wH
+2025-10-27 14:54:07,029 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:54:32,530 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZRaekhrVZy_tDFkkT
+2025-10-27 14:54:32,904 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:54:33,284 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:54:33,285 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 14:54:33,643 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 14:54:33,645 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:54:33,646 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRaekhrVZy_tDFkkT
+2025-10-27 14:54:33,805 [INFO] [TIMING] Metadata fetch took 0.159s
+2025-10-27 14:54:33,806 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:54:33,807 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 14:54:33,808 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 14:54:33,953 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:54:34,417 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZRb-t9X9g10O8q4Al
+2025-10-27 14:54:34,677 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 14:54:34,678 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRaekhrVZy_tDFkkT
+2025-10-27 14:54:34,678 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:54:34,680 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 14:54:44,877 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 14:54:45,204 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 14:54:45,205 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:54:45,205 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRaekhrVZy_tDFkkT
+2025-10-27 14:54:45,205 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:54:45,206 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRaekhrVZy_tDFkkT
+2025-10-27 14:54:45,206 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 14:54:45,208 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:54:45,209 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRaekhrVZy_tDFkkT
+2025-10-27 14:54:45,209 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 14:54:45,210 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 14:54:45,812 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZRdmzxanJN1HZdxry
+2025-10-27 14:55:03,218 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 14:55:03,218 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZRaekhrVZy_tDFkkT
+2025-10-27 14:55:03,218 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 15:03:40,000 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZTf9irgC7WxinRQ6P
+2025-10-27 15:03:40,865 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 15:03:41,192 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 15:03:41,192 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 15:03:41,520 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 15:03:41,521 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 15:03:41,522 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZTf9irgC7WxinRQ6P
+2025-10-27 15:03:41,640 [INFO] [TIMING] Metadata fetch took 0.118s
+2025-10-27 15:03:41,641 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 15:03:41,641 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 15:03:41,642 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 15:03:42,222 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 15:03:42,242 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZTgjk9O6QlaIm7M-l
+2025-10-27 15:03:42,562 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 15:03:42,563 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZTf9irgC7WxinRQ6P
+2025-10-27 15:03:42,564 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 15:03:42,564 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 15:03:51,568 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'title', 'updatedAt']
+2025-10-27 15:03:51,921 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 15:03:51,921 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 15:03:51,921 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZTf9irgC7WxinRQ6P
+2025-10-27 15:03:51,921 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 15:03:51,921 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZTf9irgC7WxinRQ6P
+2025-10-27 15:03:51,921 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 15:03:52,029 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 15:03:52,029 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZTf9irgC7WxinRQ6P
+2025-10-27 15:03:52,031 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 15:03:52,031 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 15:03:52,617 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZTjHZl6H1HiEOa5uV
+2025-10-27 16:41:45,691 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-OcZm6tpYushBkfJhfvK
+2025-10-27 16:41:46,457 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'deepthinking', 'title', 'updatedAt']
+2025-10-27 16:41:46,825 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 16:41:46,827 [DEBUG] [SESSION INIT] Session API connection OK.
+2025-10-27 16:41:47,181 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2025-10-27 16:41:47,184 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 16:41:47,184 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZm6tpYushBkfJhfvK
+2025-10-27 16:41:47,312 [INFO] [TIMING] Metadata fetch took 0.124s
+2025-10-27 16:41:47,312 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 16:41:47,317 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Clarify, evals=False
+2025-10-27 16:41:47,317 [DEBUG] [CACHE MISS] Fetching summaries
+2025-10-27 16:41:47,932 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZp8d3OQsxGJ9-_RiL
+2025-10-27 16:41:47,938 [DEBUG] [CACHE] Metadata cache refreshed: keys=['createdAt', 'deepthinking', 'title', 'updatedAt']
+2025-10-27 16:41:48,345 [DEBUG] [SNAPSHOT] Generating session snapshot
+2025-10-27 16:41:48,347 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZm6tpYushBkfJhfvK
+2025-10-27 16:41:48,347 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 16:41:48,349 [DEBUG] [SNAPSHOT] Generated: stage=Clarify, progress=0/3 HMWs - Need 3 more, recentlyAdvanced=False
+2025-10-27 16:42:05,788 [DEBUG] [HMW ADD] Adding HMW question: How might we show Mickey's journey toward deeper emotional connection with Donald?
+2025-10-27 16:42:06,374 [DEBUG] [HMW ADD] HMW saved with ID -OcZpD8GedmQrJrZJ8Uq
+2025-10-27 16:42:06,376 [DEBUG] [HMW ADD] Invalidated cache for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZm6tpYushBkfJhfvK
+2025-10-27 16:42:07,079 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'deepthinking', 'title', 'updatedAt']
+2025-10-27 16:42:07,080 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZm6tpYushBkfJhfvK
+2025-10-27 16:42:07,229 [INFO] [TIMING] Metadata fetch took 0.148s
+2025-10-27 16:42:07,230 [DEBUG] [HMW ADD] HMW -OcZpD8GedmQrJrZJ8Uq confirmed after 1 attempts
+2025-10-27 16:42:07,231 [DEBUG] [HMW ADD] Total HMW questions now: 1
+2025-10-27 16:42:07,236 [DEBUG] [HMW ADD] Adding HMW question: How might we highlight the difference between meaningful and shallow conversations between Mickey and Donald?
+2025-10-27 16:42:07,828 [DEBUG] [HMW ADD] HMW saved with ID -OcZpDUwk1sXomDIWjlf
+2025-10-27 16:42:07,829 [DEBUG] [HMW ADD] Invalidated cache for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZm6tpYushBkfJhfvK
+2025-10-27 16:42:08,258 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'deepthinking', 'title', 'updatedAt']
+2025-10-27 16:42:08,260 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZm6tpYushBkfJhfvK
+2025-10-27 16:42:08,373 [INFO] [TIMING] Metadata fetch took 0.111s
+2025-10-27 16:42:08,375 [WARNING] [HMW ADD] HMW -OcZpDUwk1sXomDIWjlf not visible yet, retry 1/3
+2025-10-27 16:42:09,095 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'deepthinking', 'title', 'updatedAt']
+2025-10-27 16:42:09,096 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZm6tpYushBkfJhfvK
+2025-10-27 16:42:09,097 [WARNING] [HMW ADD] HMW -OcZpDUwk1sXomDIWjlf not visible yet, retry 2/3
+2025-10-27 16:42:10,140 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'deepthinking', 'title', 'updatedAt']
+2025-10-27 16:42:10,141 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZm6tpYushBkfJhfvK
+2025-10-27 16:42:10,143 [DEBUG] [HMW ADD] Total HMW questions now: 1
+2025-10-27 16:42:10,147 [DEBUG] [HMW ADD] Adding HMW question: How might we create moments where Mickey and Donald connect on a spiritual or emotional level?
+2025-10-27 16:42:10,770 [DEBUG] [HMW ADD] HMW saved with ID -OcZpECvRW4bHTUFuSE_
+2025-10-27 16:42:10,771 [DEBUG] [HMW ADD] Invalidated cache for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZm6tpYushBkfJhfvK
+2025-10-27 16:42:11,230 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'deepthinking', 'title', 'updatedAt']
+2025-10-27 16:42:11,230 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZm6tpYushBkfJhfvK
+2025-10-27 16:42:11,370 [INFO] [TIMING] Metadata fetch took 0.138s
+2025-10-27 16:42:11,370 [WARNING] [HMW ADD] HMW -OcZpECvRW4bHTUFuSE_ not visible yet, retry 1/3
+2025-10-27 16:42:12,340 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'deepthinking', 'title', 'updatedAt']
+2025-10-27 16:42:12,342 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZm6tpYushBkfJhfvK
+2025-10-27 16:42:12,343 [WARNING] [HMW ADD] HMW -OcZpECvRW4bHTUFuSE_ not visible yet, retry 2/3
+2025-10-27 16:42:13,408 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'deepthinking', 'title', 'updatedAt']
+2025-10-27 16:42:13,408 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZm6tpYushBkfJhfvK
+2025-10-27 16:42:13,408 [DEBUG] [HMW ADD] Total HMW questions now: 1
+2025-10-27 16:42:13,552 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'deepthinking', 'title', 'updatedAt']
+2025-10-27 16:42:13,900 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2025-10-27 16:42:13,905 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 16:42:13,905 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZm6tpYushBkfJhfvK
+2025-10-27 16:42:13,905 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 16:42:13,908 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZm6tpYushBkfJhfvK
+2025-10-27 16:42:13,908 [DEBUG] [IDEAS] Fetching all ideas
+2025-10-27 16:42:13,915 [DEBUG] [STAGE] Fetching current stage via metadata
+2025-10-27 16:42:13,917 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-OcZm6tpYushBkfJhfvK
+2025-10-27 16:42:13,917 [DEBUG] [STAGE] Current stage: Clarify
+2025-10-27 16:42:13,918 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Clarify, evals=False
+2025-10-27 16:42:14,550 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OcZpF7vfMA4kdcyy9yy

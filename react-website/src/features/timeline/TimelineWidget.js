@@ -346,7 +346,24 @@ const TimelineCardGrid = () => {
                                     backgroundImage: event.useImageAsBackground && event.imageUrl ? `url(${event.imageUrl})` : undefined,
                                 }}
                             >
-                                {/* ... front card content ... */}
+                                <div className="card-front-content">
+                                    <div className="card-header">
+                                        <div>
+                                            <h3 className="card-title">{event.title}</h3>
+                                            <p className="card-stage">{event.stage}</p>
+                                        </div>
+                                        {event.isMainEvent && (
+                                            <span className="badge-main">Main Event</span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="card-footer">
+                                    {event.date && (
+                                        <span className="card-date">{event.date}</span>
+                                    )}
+                                    <span className="card-number">#{event.order + 1}</span>
+                                </div>
                             </div>
 
                             <div className="card-back" style={{ borderTop: `4px solid ${stageColors[event.stage]}` }}>

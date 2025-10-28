@@ -9,6 +9,9 @@ export const Nav = styled.nav`
   height: 60px;
   background-color: #111111;
   padding: 0 20px;
+  position: sticky;  /* ADD THIS */
+  top: 0;            /* ADD THIS */
+  z-index: 1000;     /* ADD THIS */
 `;
   
 export const NavLink = styled(Link)`

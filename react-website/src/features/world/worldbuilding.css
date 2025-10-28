@@ -1,13 +1,4 @@
 /* World Hierarchical Builder Styles */
-
-/* Reset and base styles */
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -18,8 +9,7 @@ html, body {
     max-width: 1400px;
     margin: 0 auto;
     font-family: 'system-ui', '-apple-system', 'segoe-ui', sans-serif;
-    height: 100vh;
-    overflow-y: auto;
+    min-height: 100vh;
 }
 
 /* Header */

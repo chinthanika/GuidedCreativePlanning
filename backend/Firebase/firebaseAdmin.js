@@ -2,7 +2,8 @@ import admin from "firebase-admin";
 import { readFileSync } from "fs";
 
 // Load the service account key JSON file
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+const serviceAccount = ("../Firebase/structuredcreativeplanning-fdea4acca240.json")
+ ;
 const DATABASE_URL = "https://structuredcreativeplanning-default-rtdb.firebaseio.com";
 
 admin.initializeApp({

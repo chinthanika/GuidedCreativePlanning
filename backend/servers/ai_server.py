@@ -30,7 +30,15 @@ from prompts.mapping_system_prompt import MAPPING_SYSTEM_PROMPT
 from prompts.world_system_prompt import WORLD_SYSTEM_PROMPT
 
 app = Flask(__name__)
-CORS(app)
+
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:3000", "http://127.0.0.1:3000"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+})
 
 # ============================================
 # LOGGING SETUP
@@ -301,16 +309,26 @@ def deepthinking_chat():
 
     try:
         # Initialize session
+        session_init_start = time.time()
         if session_id:
-            session_ref = db.reference(f"chatSessions/{user_id}/{session_id}")
-            if session_ref.child("metadata").get():
-                cfm_session = DTConversationFlowManager(user_id, session_id)
-            else:
+            try:
+                session_ref = db.reference(f"chatSessions/{user_id}/{session_id}")
+                if session_ref.child("metadata").get():
+                    cfm_session = DTConversationFlowManager(user_id, session_id)
+                else:
+                    dt_logger.warning(f"[DT] Session {session_id} not found, creating new")
+                    cfm_session = DTConversationFlowManager.create_session(user_id)
+                    session_id = cfm_session.session_id
+            except Exception as e:
+                dt_logger.error(f"[DT] Session load failed: {e}, creating new")
                 cfm_session = DTConversationFlowManager.create_session(user_id)
                 session_id = cfm_session.session_id
         else:
             cfm_session = DTConversationFlowManager.create_session(user_id)
             session_id = cfm_session.session_id
+        
+        session_init_time = time.time() - session_init_start
+        dt_logger.info(f"[DT] Session init: {session_init_time:.3f}s")
 
         # Save user message
         cfm_session.save_message("user", user_message, visible=True)
@@ -336,11 +354,13 @@ def deepthinking_chat():
         bot_reply_raw = response.choices[0].message.content.strip()
         
         # Parse and separate actions
+        parse_start = time.time()
         parsed = parse_deepseek_json(bot_reply_raw)
         bot_reply_json_list = parsed or [{"action": "respond", "data": {"message": bot_reply_raw}}]
         
         respond_actions = []
         cfm_question_actions = []
+        immediate_actions = []  # NEW: for get_info/query that need immediate processing
         background_actions = []
         
         for obj in bot_reply_json_list:
@@ -351,11 +371,15 @@ def deepthinking_chat():
                     respond_actions.append(obj)
                 elif action_type in ["get_primary_question", "get_follow_up", "meta_transition"]:
                     cfm_question_actions.append(obj)
+                elif action_type in ["get_info", "query"]:
+                    immediate_actions.append(obj)  # Process in main thread
                 else:
                     background_actions.append(obj)
         
+        parse_time = time.time() - parse_start
         dt_logger.info(f"[DT] Parsed: {len(respond_actions)} respond, "
-                      f"{len(cfm_question_actions)} CFM, {len(background_actions)} background")
+                      f"{len(cfm_question_actions)} CFM, {len(immediate_actions)} immediate, "
+                      f"{len(background_actions)} background")
 
         # Generate immediate response
         chat_message = None
@@ -367,7 +391,31 @@ def deepthinking_chat():
                 chat_message = parse_markdown(msg, "html")
                 break
         
-        # Priority 2: Process CFM questions immediately
+        # Priority 2: Process immediate actions (get_info/query)
+        if not chat_message and immediate_actions:
+            immediate_start = time.time()
+            try:
+                dt_logger.info(f"[DT] Processing {len(immediate_actions)} immediate actions")
+                immediate_result = dt_handle_action(
+                    immediate_actions, 
+                    user_id, 
+                    deepseek_messages, 
+                    cfm_session, 
+                    depth=0
+                )
+                
+                # Extract response from immediate actions
+                if immediate_result.get("chat_message"):
+                    chat_message = immediate_result["chat_message"]
+                    dt_logger.debug(f"[DT] Got response from immediate actions")
+                
+                immediate_time = time.time() - immediate_start
+                dt_logger.info(f"[DT] Immediate actions: {immediate_time:.3f}s")
+            except Exception as e:
+                dt_logger.error(f"[DT] Immediate actions failed: {e}")
+                chat_message = "I tried to retrieve that information but encountered an issue. Could you rephrase your question?"
+        
+        # Priority 3: Process CFM questions
         if not chat_message and cfm_question_actions:
             for cfm_action in cfm_question_actions:
                 try:
@@ -493,7 +541,7 @@ Instructions:
                     chat_message = "Let me help you explore a different aspect. What would you like to focus on?"
                     break
         
-        # Priority 3: Fallback
+        # Priority 4: Fallback
         if not chat_message:
             stripped = bot_reply_raw.strip()
             if not (stripped.startswith("{") or stripped.startswith("[")):
@@ -505,9 +553,9 @@ Instructions:
         if chat_message:
             cfm_session.save_message("assistant", chat_message, visible=True)
 
-        # Start background thread
+        # Start background thread for remaining actions
         if background_actions:
-            dt_logger.info(f"[DT] Starting background thread")
+            dt_logger.info(f"[DT] Starting background thread for {len(background_actions)} actions")
             threading.Thread(
                 target=dt_background_handle_action,
                 args=(background_actions, user_id, deepseek_messages, cfm_session),
@@ -599,18 +647,16 @@ def extract_characters():
     char_logger.info(f"[CHAR] Processing {len(text)} characters, {len(text.split())} words")
 
     try:
-        # Strategy: For very long texts, use chunking with entity merging
-        # This preserves all content while avoiding timeouts
-        
-        MAX_CHUNK_SIZE = 8000  # tokens ≈ words * 1.3, so ~6000 words
+        # OPTIMIZED: Better chunking strategy
+        MAX_CHUNK_SIZE = 6000  # Reduced from 8000 for faster processing
         text_length = len(text)
         
         if text_length > MAX_CHUNK_SIZE:
             char_logger.info(f"[CHAR] Text exceeds {MAX_CHUNK_SIZE} chars, using chunked extraction")
             
-            # Split into overlapping chunks to catch cross-chunk relationships
+            # Smaller overlap, faster processing
             chunk_size = MAX_CHUNK_SIZE
-            overlap = 500  # Overlap to catch entities mentioned at boundaries
+            overlap = 300  # Reduced from 500
             chunks = []
             
             start = 0
@@ -619,7 +665,7 @@ def extract_characters():
                 # Try to break at sentence boundary
                 if end < text_length:
                     last_period = text[start:end].rfind('. ')
-                    if last_period > chunk_size - 1000:  # Only break if reasonably close to end
+                    if last_period > chunk_size - 800:  # Adjusted threshold
                         end = start + last_period + 2
                 
                 chunks.append(text[start:end])
@@ -627,58 +673,66 @@ def extract_characters():
             
             char_logger.info(f"[CHAR] Split into {len(chunks)} chunks")
             
-            # Process each chunk
-            all_entities = {}  # id -> entity
+            # Process each chunk with LONGER timeout
+            all_entities = {}
             all_relationships = []
             
             for i, chunk in enumerate(chunks):
                 char_logger.info(f"[CHAR] Processing chunk {i+1}/{len(chunks)}")
                 
-                response = client.chat.completions.create(
-                    model="deepseek-chat",
-                    messages=[
-                        {"role": "system", "content": MAPPING_SYSTEM_PROMPT},
-                        {"role": "user", "content": chunk}
-                    ],
-                    response_format={'type': 'json_object'},
-                    stream=False,
-                    timeout=45  # Longer timeout per chunk
-                )
-                
-                chunk_result = json.loads(response.choices[0].message.content)
-                
-                # Merge entities (deduplicate by ID)
-                for entity in chunk_result.get('entities', []):
-                    entity_id = entity.get('id')
-                    if entity_id in all_entities:
-                        # Merge attributes and aliases
-                        existing = all_entities[entity_id]
-                        
-                        # Merge aliases
-                        existing_aliases = set(existing.get('aliases', '').split(','))
-                        new_aliases = set(entity.get('aliases', '').split(','))
-                        merged_aliases = existing_aliases.union(new_aliases)
-                        existing['aliases'] = ','.join(a.strip() for a in merged_aliases if a.strip())
-                        
-                        # Merge attributes (take more detailed one)
-                        if len(entity.get('attributes', {})) > len(existing.get('attributes', {})):
-                            existing['attributes'].update(entity.get('attributes', {}))
-                    else:
-                        all_entities[entity_id] = entity
-                
-                # Add relationships (with deduplication)
-                for rel in chunk_result.get('relationships', []):
-                    # Create relationship key for deduplication
-                    rel_key = f"{rel['entity1_id']}:{rel['entity2_id']}:{rel['relationship']}"
+                try:
+                    response = client.chat.completions.create(
+                        model="deepseek-chat",
+                        messages=[
+                            {"role": "system", "content": MAPPING_SYSTEM_PROMPT},
+                            {"role": "user", "content": chunk}
+                        ],
+                        response_format={'type': 'json_object'},
+                        stream=False,
+                        timeout=90  # INCREASED from 45 to 90 seconds
+                    )
                     
-                    # Check if relationship already exists
-                    if not any(
-                        r['entity1_id'] == rel['entity1_id'] and 
-                        r['entity2_id'] == rel['entity2_id'] and 
-                        r['relationship'] == rel['relationship']
-                        for r in all_relationships
-                    ):
-                        all_relationships.append(rel)
+                    chunk_result = json.loads(response.choices[0].message.content)
+                    
+                    # Merge entities
+                    for entity in chunk_result.get('entities', []):
+                        entity_id = entity.get('id')
+                        if entity_id in all_entities:
+                            existing = all_entities[entity_id]
+                            
+                            # Merge aliases
+                            existing_aliases = set(existing.get('aliases', '').split(','))
+                            new_aliases = set(entity.get('aliases', '').split(','))
+                            merged_aliases = existing_aliases.union(new_aliases)
+                            existing['aliases'] = ','.join(a.strip() for a in merged_aliases if a.strip())
+                            
+                            # Merge attributes
+                            if len(entity.get('attributes', {})) > len(existing.get('attributes', {})):
+                                existing['attributes'].update(entity.get('attributes', {}))
+                        else:
+                            all_entities[entity_id] = entity
+                    
+                    # Add relationships
+                    for rel in chunk_result.get('relationships', []):
+                        if not any(
+                            r['entity1_id'] == rel['entity1_id'] and 
+                            r['entity2_id'] == rel['entity2_id'] and 
+                            r['relationship'] == rel['relationship']
+                            for r in all_relationships
+                        ):
+                            all_relationships.append(rel)
+                    
+                    char_logger.info(f"[CHAR] Chunk {i+1} done: "
+                                   f"{len(chunk_result.get('entities', []))} entities, "
+                                   f"{len(chunk_result.get('relationships', []))} relationships")
+                    
+                except openai.APITimeoutError as chunk_timeout:
+                    char_logger.warning(f"[CHAR] Chunk {i+1} timed out, skipping")
+                    continue  # Skip this chunk and continue with others
+                
+                except Exception as chunk_error:
+                    char_logger.error(f"[CHAR] Chunk {i+1} failed: {chunk_error}")
+                    continue  # Skip this chunk and continue with others
             
             result = {
                 'entities': list(all_entities.values()),
@@ -687,7 +741,9 @@ def extract_characters():
             
             char_logger.info(f"[CHAR] Merged results: {len(result['entities'])} entities, "
                            f"{len(result['relationships'])} relationships")
-        
+                           
+            char_logger.info(f"Entities: {result['entities']}")
+            char_logger.info(f"Relationships: {result['relationships']}")
         else:
             # Single extraction for normal-sized text
             response = client.chat.completions.create(
@@ -698,7 +754,7 @@ def extract_characters():
                 ],
                 response_format={'type': 'json_object'},
                 stream=False,
-                timeout=60  # Generous timeout for single extraction
+                timeout=90  # INCREASED timeout
             )
             
             result = json.loads(response.choices[0].message.content)
@@ -711,7 +767,8 @@ def extract_characters():
         char_logger.error("[CHAR] DeepSeek timeout")
         return jsonify({
             'error': 'Character extraction timed out',
-            'suggestion': 'Try extracting from smaller sections and combining results'
+            'suggestion': 'Try extracting from smaller sections',
+            'partial_results': False
         }), 504
     except Exception as e:
         char_logger.exception(f"[CHAR] Error: {e}")

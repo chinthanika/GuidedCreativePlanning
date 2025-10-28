@@ -107,7 +107,9 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
             msg = parse_markdown(data.get("message", ""), "html")
             if msg.strip():
                 current_stage = cfm_session.get_stage()
-                cfm_session.save_message("assistant", msg, stage=current_stage, visible=True)
+                if depth == 0:
+                    cfm_session.save_message("assistant", msg, stage=current_stage, visible=True)
+              
                 combined_result["chat_message"] += msg + "\n"
                 logger.debug(f"[ACTION] Responding with: {msg[:100]}...")
     
@@ -200,9 +202,13 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                 {"role": "system", "content": BS_SYSTEM_PROMPT},
                 {"role": "user", "content": f"User asked: {last_user_msg}"},
                 {"role": "assistant", "content": f"Reasoning: {reasoning}"},
-                {"role": "system", "content": f"Progress: {json.dumps(result)}"}
-            ]
+                {"role": "system", "content": f"""Retrieved info:
+            {info_summary}
 
+            CRITICAL: Do NOT request get_info again. The data is already provided above.If it is not there the user has never referenced it before and it does not exist in the system.
+            Respond with ONLY a 'respond' action that presents this information conversationally.
+            Format: {{"action": "respond", "data": {{"message": "formatted response"}}}}"""}
+            ]
             followup_resp = client.chat.completions.create(
                 model="deepseek-chat", messages=followup_messages, stream=False
             )
@@ -222,47 +228,120 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
         # -------------------------
         # Profile Manager actions
         # -------------------------
-        elif action in ["get_info", "query"]:
+        if action in ["get_info", "query"]:
             if update_status:
-                update_status("processing", "Retrieving data...")
+                update_status("processing", "Retrieving information from story database...")
             
+            logger.debug(f"[GET_INFO] Requests: {requests_list}")
+
             info_start = time.time()
 
             if len(requests_list) > 1:
                 profile_data_list = fetch_profile_data_batch(requests_list, user_id)
-                combined_result["profile_data"] = profile_data_list
+                result["profile_data"] = profile_data_list
+                logger.debug(f"[GET_INFO] Batch fetched {len(profile_data_list)} results")
             else:
                 for req in requests_list:
                     data = fetch_profile_data(req, user_id)
-                    combined_result["profile_data"].append({"request": req, "data": data})
+                    result["profile_data"].append({"request": req, "data": data})
+                    logger.debug(f"[GET_INFO] Single fetch: {req}")
             
             info_time = time.time() - info_start
-            logger.info(f"[TIMING] Data fetch: {info_time:.3f}s")
+            logger.info(f"[TIMING] Profile data fetch took {info_time:.3f}s for {len(requests_list)} requests")
             
-            if combined_result["profile_data"]:
-                info_summary = json.dumps(combined_result["profile_data"], indent=2)
-                followup_messages = [
-                    {"role": "system", "content": BS_SYSTEM_PROMPT},
-                    {"role": "user", "content": f"User asked: {last_user_msg}"},
-                    {"role": "assistant", "content": f"Reasoning: {reasoning}"},
-                    {"role": "system", "content": f"Retrieved info:\n{info_summary}"}
-                ]
-
-                followup_resp = client.chat.completions.create(
-                    model="deepseek-chat", messages=followup_messages, stream=False
-                )
+            logger.info(f"[GET_INFO] Raw profile_data: {json.dumps(result['profile_data'], indent=2)[:1000]}")
+            
+            if result["profile_data"]:
+                info_summary = json.dumps(result["profile_data"], indent=2)
                 
-                bot_reply_raw = followup_resp.choices[0].message.content.strip()
+                # Check if data is actually empty
+                has_actual_data = False
+                total_items = 0
+                
+                for item in result["profile_data"]:
+                    item_data = item.get("data", {})
+                    
+                    if isinstance(item_data, dict):
+                        # Profile Manager returns data as {firebaseId: object, ...}
+                        # Count non-empty objects
+                        for key, value in item_data.items():
+                            if value and isinstance(value, dict):
+                                total_items += 1
+                                has_actual_data = True
+                        
+                        if has_actual_data:
+                            logger.info(f"[GET_INFO] Found actual data - {total_items} items")
+                            break
+                
+                if not has_actual_data:
+                    logger.info("[GET_INFO] No data found in profile")
+                    result["chat_message"] = parse_markdown(
+                        "I don't have any previous information about Akio yet. Let's start building his character together! "
+                        "What would you like to tell me about him?", 
+                        "html"
+                    )
+                else:
+                    # Data found - format with DeepSeek
+                    logger.info(f"[GET_INFO] Has data ({total_items} items), sending to DeepSeek")
+                    
+                    followup_messages = [
+                        {"role": "system", "content": BS_SYSTEM_PROMPT},
+                        {"role": "user", "content": f"User asked: {last_user_msg}"},
+                        {"role": "assistant", "content": f"Your reasoning: {reasoning}"},
+                        {"role": "system", "content": f"Retrieved info:\n{info_summary}\n\nRespond conversationally to present this information."}
+                    ]
 
-                try:
-                    bot_reply_json = parse_deepseek_json(bot_reply_raw)
-                    bot_reply_json = normalize_deepseek_response(bot_reply_json)
-                except Exception:
-                    bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+                    followup_start = time.time()
+                    try:
+                        followup_resp = client.chat.completions.create(
+                            model="deepseek-chat",
+                            messages=followup_messages,
+                            stream=False,
+                            temperature=0.7
+                        )
+                        followup_time = time.time() - followup_start
+                        logger.info(f"[TIMING] Follow-up DeepSeek: {followup_time:.3f}s")
 
-                combined_result = bs_handle_action(bot_reply_json, user_id, recent_msgs, 
-                                                  cfm_session, depth=depth+1)
-        
+                        bot_reply_raw = followup_resp.choices[0].message.content.strip()
+                        logger.debug(f"[GET_INFO] DeepSeek response: {bot_reply_raw[:200]}...")
+                        
+                        try:
+                            bot_reply_json = parse_deepseek_json(bot_reply_raw)
+                            bot_reply_json = normalize_deepseek_response(bot_reply_json)
+                            logger.debug(f"[GET_INFO] Parsed JSON actions: {[obj.get('action') for obj in (bot_reply_json if isinstance(bot_reply_json, list) else [bot_reply_json])]}")
+                        except Exception as parse_err:
+                            logger.warning(f"[GET_INFO] JSON parse failed: {parse_err}")
+                            bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+
+                        # Recursively handle (will hit respond handler above)
+                        followup_result = bs_handle_action(bot_reply_json, user_id, recent_msgs, 
+                                                          cfm_session, depth=depth+1, update_status=update_status)
+                        
+                        # Merge results
+                        if followup_result.get("chat_message"):
+                            result["chat_message"] += followup_result["chat_message"]
+                            logger.info(f"[GET_INFO] Merged response (length: {len(result['chat_message'])})")
+                        else:
+                            logger.warning("[GET_INFO] No chat_message in followup")
+                            result["chat_message"] = parse_markdown(bot_reply_raw, "html")
+                        
+                        result["requests"].extend(followup_result.get("requests", []))
+                        result["staging_results"].extend(followup_result.get("staging_results", []))
+                        
+                    except Exception as e:
+                        logger.error(f"[GET_INFO] Follow-up failed: {e}")
+                        logger.error(traceback.format_exc())
+                        result["chat_message"] = parse_markdown(
+                            f"Here's what I found about Akio:\n\n{info_summary[:500]}",
+                            "html"
+                        )
+            else:
+                logger.warning("[GET_INFO] No profile data retrieved")
+                result["chat_message"] = parse_markdown(
+                    "I couldn't retrieve information about that character. Could you tell me more?",
+                    "html"
+                )
+
         elif action == "stage_change":
             if update_status:
                 update_status("processing", "Staging changes...")

@@ -3,6 +3,8 @@ import 'firebase/database';
 
 import TimelineWidget from '../../features/timeline/TimelineWidget';
 
+import "./timeline.css";
+
 function StoryTimeline() {
     return (
             <div className="timeline">
