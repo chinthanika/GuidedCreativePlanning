@@ -1,0 +1,1085 @@
+2025-10-24 13:30:49,438 [INFO] 
+======================================================================
+2025-10-24 13:30:49,440 [INFO]   CONSOLIDATED SERVER TEST SUITE
+2025-10-24 13:30:49,440 [INFO] ======================================================================
+2025-10-24 13:30:49,441 [INFO] Testing server at: http://localhost:5000
+2025-10-24 13:30:49,441 [INFO] Session API at: http://localhost:4000
+2025-10-24 13:30:51,756 [INFO] Health check response:
+2025-10-24 13:30:51,756 [INFO] {
+  "services": {
+    "brainstorming": "running",
+    "character_extraction": "running",
+    "deepthinking": "running",
+    "image_generation": "running",
+    "world_ai": "running"
+  },
+  "status": "ok"
+}
+2025-10-24 13:30:51,762 [INFO] 
+======================================================================
+2025-10-24 13:30:51,762 [INFO]   BRAINSTORMING TESTS
+2025-10-24 13:30:51,762 [INFO] ======================================================================
+2025-10-24 13:30:55,915 [ERROR] Traceback (most recent call last):
+  File "C:\Python311\Lib\site-packages\urllib3\connection.py", line 174, in _new_conn
+    conn = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\util\connection.py", line 95, in create_connection
+    raise err
+  File "C:\Python311\Lib\site-packages\urllib3\util\connection.py", line 85, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 703, in urlopen
+    httplib_response = self._make_request(
+                       ^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 398, in _make_request
+    conn.request(method, url, **httplib_request_kw)
+  File "C:\Python311\Lib\site-packages\urllib3\connection.py", line 239, in request
+    super(HTTPConnection, self).request(method, url, body=body, headers=headers)
+  File "C:\Python311\Lib\http\client.py", line 1282, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+  File "C:\Python311\Lib\http\client.py", line 1328, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+  File "C:\Python311\Lib\http\client.py", line 1277, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "C:\Python311\Lib\http\client.py", line 1037, in _send_output
+    self.send(msg)
+  File "C:\Python311\Lib\http\client.py", line 975, in send
+    self.connect()
+  File "C:\Python311\Lib\site-packages\urllib3\connection.py", line 205, in connect
+    conn = self._new_conn()
+           ^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\connection.py", line 186, in _new_conn
+    raise NewConnectionError(
+urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x000001DC61FD4A50>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python311\Lib\site-packages\requests\adapters.py", line 489, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 787, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\util\retry.py", line 592, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=4000): Max retries exceeded with url: /session/create (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001DC61FD4A50>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_consolidated_server.py", line 212, in test_bs_full_cps_loop
+    session_id = create_session()
+                 ^^^^^^^^^^^^^^^^
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_consolidated_server.py", line 85, in create_session
+    r = requests.post(f"{SESSION_API}/session/create", json={"uid": TEST_UID}, timeout=10)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\api.py", line 115, in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\sessions.py", line 587, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\sessions.py", line 701, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\adapters.py", line 565, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=4000): Max retries exceeded with url: /session/create (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001DC61FD4A50>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+
+2025-10-24 13:34:33,953 [INFO] 
+======================================================================
+2025-10-24 13:34:33,953 [INFO]   CONSOLIDATED SERVER TEST SUITE
+2025-10-24 13:34:33,953 [INFO] ======================================================================
+2025-10-24 13:34:33,954 [INFO] Testing server at: http://localhost:5000
+2025-10-24 13:34:33,954 [INFO] Session API at: http://localhost:4000
+2025-10-24 13:34:36,059 [INFO] Health check response:
+2025-10-24 13:34:36,060 [INFO] {
+  "services": {
+    "brainstorming": "running",
+    "character_extraction": "running",
+    "deepthinking": "running",
+    "image_generation": "running",
+    "world_ai": "running"
+  },
+  "status": "ok"
+}
+2025-10-24 13:34:36,083 [INFO] 
+======================================================================
+2025-10-24 13:34:36,084 [INFO]   BRAINSTORMING TESTS
+2025-10-24 13:34:36,084 [INFO] ======================================================================
+2025-10-24 13:34:45,127 [INFO] Created session: -OcJhZqcn1fCS0D5OB9v
+2025-10-24 13:34:45,128 [INFO] 
+[CLARIFY] Adding 3 HMW questions...
+2025-10-24 13:34:45,128 [INFO] [BS SEND] How might we make the betrayal surprising?...
+2025-10-24 13:35:19,717 [ERROR] Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_consolidated_server.py", line 224, in test_bs_full_cps_loop
+    send_bs_message(session_id, hmw)
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_consolidated_server.py", line 134, in send_bs_message
+    r.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 500 Server Error: INTERNAL SERVER ERROR for url: http://localhost:5000/chat/brainstorming
+
+2025-10-24 13:35:22,555 [INFO] [BS SEND] How might we X?...
+2025-10-24 13:35:47,778 [INFO] Adding 3 HMWs to trigger auto-advancement...
+2025-10-24 13:35:47,779 [INFO] [BS SEND] How might we solve problem 1?...
+2025-10-24 13:36:01,220 [INFO] 
+======================================================================
+2025-10-24 13:36:01,223 [INFO]   DEEP THINKING TESTS
+2025-10-24 13:36:01,224 [INFO] ======================================================================
+2025-10-24 13:36:04,071 [INFO] [DT SEND] I want to develop my character Marcus...
+2025-10-24 13:36:11,320 [INFO] [DT SEND] I want to develop my character Sarah...
+2025-10-24 13:36:18,224 [INFO] [DT SEND] I want to develop my protagonist Elena...
+2025-10-24 13:36:25,155 [INFO] [DT SEND] I want to develop Jamie...
+2025-10-24 13:36:29,136 [INFO] 
+======================================================================
+2025-10-24 13:36:29,136 [INFO]   AI FEATURE TESTS
+2025-10-24 13:36:29,137 [INFO] ======================================================================
+2025-10-24 13:36:29,139 [INFO] Sending character extraction request...
+2025-10-24 13:36:31,630 [INFO] Requesting template for magic system...
+2025-10-24 13:36:34,110 [INFO] Requesting image generation...
+2025-10-24 13:36:58,460 [INFO]   Generated URL: https://cdn.leonardo.ai/users/94f5cf86-ff23-4035-a1fd-1004a5b2e118/generations/5...
+2025-10-24 13:36:58,462 [INFO] 
+======================================================================
+2025-10-24 13:36:58,463 [INFO]   PERFORMANCE TESTS
+2025-10-24 13:36:58,463 [INFO] ======================================================================
+2025-10-24 13:37:01,288 [INFO] [BS SEND] How might we make the story compelling?...
+2025-10-24 13:37:08,555 [INFO] [BS SEND] How might we X?...
+2025-10-24 13:37:13,147 [INFO] 
+======================================================================
+2025-10-24 13:37:13,148 [INFO]   INTEGRATION TESTS
+2025-10-24 13:37:13,148 [INFO] ======================================================================
+2025-10-24 13:37:15,984 [INFO] Testing BS mode...
+2025-10-24 13:37:15,984 [INFO] [BS SEND] How might we solve X?...
+2025-10-24 13:37:20,585 [INFO] 
+======================================================================
+2025-10-24 13:37:20,586 [INFO]   TEST RESULTS SUMMARY
+2025-10-24 13:37:20,586 [INFO] ======================================================================
+2025-10-24 13:37:20,586 [INFO] 
+======================================================================
+2025-10-24 13:37:20,587 [INFO] DETAILED RESULTS:
+2025-10-24 13:37:20,587 [INFO] ======================================================================
+2025-10-24 13:37:20,622 [INFO] 
+======================================================================
+2025-10-24 13:37:20,623 [INFO] SUMMARY:
+2025-10-24 13:37:20,623 [INFO] ======================================================================
+2025-10-24 13:37:20,624 [INFO] Overall:  2/14 tests passed (14.3%)
+2025-10-24 13:37:20,624 [INFO] Critical: 1/5 critical tests passed
+2025-10-24 13:37:20,625 [ERROR] 
+======================================================================
+2025-10-24 13:37:20,632 [ERROR] ======================================================================
+2025-10-24 13:37:20,632 [ERROR] Failed critical tests:
+2025-10-24 13:37:20,633 [ERROR]   - BS - Full CPS Loop
+2025-10-24 13:37:20,635 [ERROR]   - DT - Scaffolding
+2025-10-24 13:37:20,635 [ERROR]   - Character Extraction
+2025-10-24 13:37:20,635 [ERROR]   - World AI Templates
+2025-10-24 13:37:20,636 [INFO] 
+======================================================================
+2025-10-24 13:37:20,636 [INFO] Some tests failed. Run diagnostics:
+2025-10-24 13:37:20,637 [INFO]   python test_consolidated_server.py diagnose
+2025-10-24 13:37:20,638 [INFO] ======================================================================
+2025-10-24 14:24:33,476 [INFO] 
+======================================================================
+2025-10-24 14:24:33,476 [INFO]   CONSOLIDATED SERVER TEST SUITE
+2025-10-24 14:24:33,476 [INFO] ======================================================================
+2025-10-24 14:24:33,476 [INFO] Testing server at: http://127.0.0.1:5000
+2025-10-24 14:24:33,481 [INFO] Session API at: https://guidedcreativeplanning-session.onrender.com
+2025-10-24 14:24:33,523 [INFO] Health check response:
+2025-10-24 14:24:33,524 [INFO] {
+  "services": {
+    "brainstorming": "running",
+    "character_extraction": "running",
+    "deepthinking": "running",
+    "image_generation": "running",
+    "world_ai": "running"
+  },
+  "status": "ok"
+}
+2025-10-24 14:24:33,525 [INFO] [PASS] [PASS] Health check passed
+2025-10-24 14:24:33,532 [INFO] 
+======================================================================
+2025-10-24 14:24:33,532 [INFO]   BRAINSTORMING TESTS
+2025-10-24 14:24:33,533 [INFO] ======================================================================
+2025-10-24 14:27:05,902 [INFO] 
+======================================================================
+2025-10-24 14:27:05,904 [INFO]   CONSOLIDATED SERVER TEST SUITE
+2025-10-24 14:27:05,906 [INFO] ======================================================================
+2025-10-24 14:27:05,907 [INFO] Testing server at: http://127.0.0.1:5000
+2025-10-24 14:27:05,908 [INFO] Session API at: https://guidedcreativeplanning-session.onrender.com
+2025-10-24 14:27:05,908 [INFO] [START TEST] START: TEST 0: Health Check
+2025-10-24 14:27:05,925 [INFO] Health check response:
+2025-10-24 14:27:05,927 [INFO] {
+  "services": {
+    "brainstorming": "running",
+    "character_extraction": "running",
+    "deepthinking": "running",
+    "image_generation": "running",
+    "world_ai": "running"
+  },
+  "status": "ok"
+}
+2025-10-24 14:27:05,928 [INFO] [PASS] [PASS] Health check passed
+2025-10-24 14:27:05,928 [INFO] [TIME]END: TEST 0: Health Check (took 0.021s)
+
+2025-10-24 14:27:05,930 [INFO] 
+======================================================================
+2025-10-24 14:27:05,930 [INFO]   BRAINSTORMING TESTS
+2025-10-24 14:27:05,930 [INFO] ======================================================================
+2025-10-24 14:27:05,930 [INFO] [START TEST] START: TEST 1: BS - Full CPS Loop
+2025-10-24 14:27:16,046 [ERROR] [WARN] [FAIL] BS - Error: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10)
+2025-10-24 14:27:16,074 [ERROR] Traceback (most recent call last):
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 449, in _make_request
+    six.raise_from(e, None)
+  File "<string>", line 3, in raise_from
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 444, in _make_request
+    httplib_response = conn.getresponse()
+                       ^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\http\client.py", line 1374, in getresponse
+    response.begin()
+  File "C:\Python311\Lib\http\client.py", line 318, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\http\client.py", line 279, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\socket.py", line 705, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\ssl.py", line 1278, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\ssl.py", line 1134, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python311\Lib\site-packages\requests\adapters.py", line 489, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 787, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\util\retry.py", line 550, in increment
+    raise six.reraise(type(error), error, _stacktrace)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\packages\six.py", line 770, in reraise
+    raise value
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 703, in urlopen
+    httplib_response = self._make_request(
+                       ^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 451, in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 340, in _raise_timeout
+    raise ReadTimeoutError(
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_consolidated_server.py", line 212, in test_bs_full_cps_loop
+    session_id = create_session()
+                 ^^^^^^^^^^^^^^^^
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_consolidated_server.py", line 85, in create_session
+    r = requests.post(f"{SESSION_API}/session/create", json={"uid": TEST_UID}, timeout=10)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\api.py", line 115, in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\sessions.py", line 587, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\sessions.py", line 701, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\adapters.py", line 578, in send
+    raise ReadTimeout(e, request=request)
+requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10)
+
+2025-10-24 14:27:16,075 [INFO] [TIME]END: TEST 1: BS - Full CPS Loop (took 10.144s)
+
+2025-10-24 14:27:16,076 [INFO] [START TEST] START: TEST 2: BS - Idea Evaluations
+2025-10-24 14:27:26,151 [ERROR] [WARN] [FAIL] BS - Error: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10)
+2025-10-24 14:27:26,152 [INFO] [TIME]END: TEST 2: BS - Idea Evaluations (took 10.076s)
+
+2025-10-24 14:27:26,152 [INFO] [START TEST] START: TEST 3: BS - Auto-Advancement
+2025-10-24 14:27:36,209 [ERROR] [WARN] [FAIL] BS - Error: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10)
+2025-10-24 14:27:36,210 [INFO] [TIME]END: TEST 3: BS - Auto-Advancement (took 10.058s)
+
+2025-10-24 14:27:36,212 [INFO] 
+======================================================================
+2025-10-24 14:27:36,212 [INFO]   DEEP THINKING TESTS
+2025-10-24 14:27:36,213 [INFO] ======================================================================
+2025-10-24 14:27:36,214 [INFO] [START TEST] START: TEST 4: DT - Scaffolding in Questions
+2025-10-24 14:27:37,688 [INFO] [DT SEND] I want to develop my character Marcus...
+2025-10-24 14:27:40,543 [ERROR] [WARN] [FAIL] DT - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://127.0.0.1:5000/chat/deepthinking
+2025-10-24 14:27:40,545 [INFO] [TIME]END: TEST 4: DT - Scaffolding in Questions (took 4.331s)
+
+2025-10-24 14:27:40,546 [INFO] [START TEST] START: TEST 5: DT - Precision Follow-up
+2025-10-24 14:27:41,331 [INFO] [DT SEND] I want to develop my character Sarah...
+2025-10-24 14:27:43,447 [ERROR] [WARN] [FAIL] DT - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://127.0.0.1:5000/chat/deepthinking
+2025-10-24 14:27:43,448 [INFO] [TIME]END: TEST 5: DT - Precision Follow-up (took 2.903s)
+
+2025-10-24 14:27:43,449 [INFO] [START TEST] START: TEST 6: DT - Angle Transitions
+2025-10-24 14:27:44,262 [INFO] [DT SEND] I want to develop my protagonist Elena...
+2025-10-24 14:27:46,421 [ERROR] [WARN] [FAIL] DT - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://127.0.0.1:5000/chat/deepthinking
+2025-10-24 14:27:46,422 [INFO] [TIME]END: TEST 6: DT - Angle Transitions (took 2.973s)
+
+2025-10-24 14:27:46,422 [INFO] [START TEST] START: TEST 7: DT - Follow-up Limit
+2025-10-24 14:27:47,207 [INFO] [DT SEND] I want to develop Jamie...
+2025-10-24 14:27:49,386 [ERROR] [WARN] [FAIL] DT - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://127.0.0.1:5000/chat/deepthinking
+2025-10-24 14:27:49,386 [INFO] [TIME]END: TEST 7: DT - Follow-up Limit (took 2.964s)
+
+2025-10-24 14:27:49,386 [INFO] 
+======================================================================
+2025-10-24 14:27:49,386 [INFO]   AI FEATURE TESTS
+2025-10-24 14:27:49,386 [INFO] ======================================================================
+2025-10-24 14:27:49,386 [INFO] [START TEST] START: TEST 8: Character Extraction
+2025-10-24 14:27:49,386 [INFO] Sending character extraction request...
+2025-10-24 14:27:49,870 [ERROR] [WARN] [FAIL] Character extraction error: 500 Server Error: INTERNAL SERVER ERROR for url: http://127.0.0.1:5000/characters/extract
+2025-10-24 14:27:49,870 [INFO] [TIME]END: TEST 8: Character Extraction (took 0.484s)
+
+2025-10-24 14:27:49,870 [INFO] [START TEST] START: TEST 9: World AI - Template Suggestions
+2025-10-24 14:27:49,886 [INFO] Requesting template for magic system...
+2025-10-24 14:27:50,325 [ERROR] [WARN] [FAIL] World AI error: 500 Server Error: INTERNAL SERVER ERROR for url: http://127.0.0.1:5000/worldbuilding/suggest-template
+2025-10-24 14:27:50,325 [INFO] [TIME]END: TEST 9: World AI - Template Suggestions (took 0.456s)
+
+2025-10-24 14:27:50,325 [INFO] [START TEST] START: TEST 10: Image Generation
+2025-10-24 14:27:50,325 [INFO] Requesting image generation...
+2025-10-24 14:28:12,585 [INFO] [PASS] [PASS] Image generation working
+2025-10-24 14:28:12,586 [INFO]   Generated URL: https://cdn.leonardo.ai/users/94f5cf86-ff23-4035-a1fd-1004a5b2e118/generations/a...
+2025-10-24 14:28:12,587 [INFO] [TIME]END: TEST 10: Image Generation (took 22.262s)
+
+2025-10-24 14:28:12,587 [INFO] 
+======================================================================
+2025-10-24 14:28:12,589 [INFO]   PERFORMANCE TESTS
+2025-10-24 14:28:12,590 [INFO] ======================================================================
+2025-10-24 14:28:12,591 [INFO] [START TEST] START: TEST 11: Response Time Performance
+2025-10-24 14:28:13,418 [INFO] [BS SEND] How might we make the story compelling?...
+2025-10-24 14:28:15,950 [ERROR] [WARN] [FAIL] Performance test error: 500 Server Error: INTERNAL SERVER ERROR for url: http://127.0.0.1:5000/chat/brainstorming
+2025-10-24 14:28:15,952 [INFO] [TIME]END: TEST 11: Response Time Performance (took 3.362s)
+
+2025-10-24 14:28:15,952 [INFO] [START TEST] START: TEST 12: Background Thread Separation
+2025-10-24 14:28:16,762 [INFO] [BS SEND] How might we X?...
+2025-10-24 14:28:19,457 [ERROR] [WARN] [FAIL] Background separation error: 500 Server Error: INTERNAL SERVER ERROR for url: http://127.0.0.1:5000/chat/brainstorming
+2025-10-24 14:28:19,458 [INFO] [TIME]END: TEST 12: Background Thread Separation (took 3.505s)
+
+2025-10-24 14:28:19,458 [INFO] 
+======================================================================
+2025-10-24 14:28:19,459 [INFO]   INTEGRATION TESTS
+2025-10-24 14:28:19,460 [INFO] ======================================================================
+2025-10-24 14:28:19,461 [INFO] [START TEST] START: TEST 13: Mode Switching
+2025-10-24 14:28:20,300 [INFO] Testing BS mode...
+2025-10-24 14:28:20,301 [INFO] [BS SEND] How might we solve X?...
+2025-10-24 14:28:23,088 [ERROR] [WARN] [FAIL] Mode switching error: 500 Server Error: INTERNAL SERVER ERROR for url: http://127.0.0.1:5000/chat/brainstorming
+2025-10-24 14:28:23,090 [INFO] [TIME]END: TEST 13: Mode Switching (took 3.628s)
+
+2025-10-24 14:28:23,090 [INFO] 
+======================================================================
+2025-10-24 14:28:23,090 [INFO]   TEST RESULTS SUMMARY
+2025-10-24 14:28:23,092 [INFO] ======================================================================
+2025-10-24 14:28:23,092 [INFO] 
+======================================================================
+2025-10-24 14:28:23,092 [INFO] DETAILED RESULTS:
+2025-10-24 14:28:23,092 [INFO] ======================================================================
+2025-10-24 14:28:23,092 [INFO] [PASS] [PASS] Health Check [CRITICAL]
+2025-10-24 14:28:23,095 [INFO] [WARN] [FAIL] BS - Full CPS Loop [CRITICAL]
+2025-10-24 14:28:23,095 [INFO] [WARN] [FAIL] BS - Idea Evaluations
+2025-10-24 14:28:23,097 [INFO] [WARN] [FAIL] BS - Auto-Advancement
+2025-10-24 14:28:23,098 [INFO] [WARN] [FAIL] DT - Scaffolding [CRITICAL]
+2025-10-24 14:28:23,098 [INFO] [WARN] [FAIL] DT - Precision Check
+2025-10-24 14:28:23,098 [INFO] [WARN] [FAIL] DT - Angle Transitions
+2025-10-24 14:28:23,100 [INFO] [WARN] [FAIL] DT - Follow-up Limit
+2025-10-24 14:28:23,100 [INFO] [WARN] [FAIL] Character Extraction [CRITICAL]
+2025-10-24 14:28:23,102 [INFO] [WARN] [FAIL] World AI Templates [CRITICAL]
+2025-10-24 14:28:23,102 [INFO] [PASS] [PASS] Image Generation
+2025-10-24 14:28:23,103 [INFO] [WARN] [FAIL] Response Times
+2025-10-24 14:28:23,105 [INFO] [WARN] [FAIL] Background Separation
+2025-10-24 14:28:23,106 [INFO] [WARN] [FAIL] Mode Switching
+2025-10-24 14:28:23,106 [INFO] 
+======================================================================
+2025-10-24 14:28:23,108 [INFO] SUMMARY:
+2025-10-24 14:28:23,108 [INFO] ======================================================================
+2025-10-24 14:28:23,110 [INFO] Overall:  2/14 tests passed (14.3%)
+2025-10-24 14:28:23,110 [INFO] Critical: 1/5 critical tests passed
+2025-10-24 14:28:23,112 [ERROR] 
+======================================================================
+2025-10-24 14:28:23,112 [ERROR] [WARN][WARN][WARN] CRITICAL TESTS FAILED [WARN][WARN][WARN]
+2025-10-24 14:28:23,114 [ERROR] ======================================================================
+2025-10-24 14:28:23,114 [ERROR] Failed critical tests:
+2025-10-24 14:28:23,114 [ERROR]   - BS - Full CPS Loop
+2025-10-24 14:28:23,116 [ERROR]   - DT - Scaffolding
+2025-10-24 14:28:23,116 [ERROR]   - Character Extraction
+2025-10-24 14:28:23,116 [ERROR]   - World AI Templates
+2025-10-24 14:28:23,119 [INFO] 
+======================================================================
+2025-10-24 14:28:23,120 [INFO] Some tests failed. Run diagnostics:
+2025-10-24 14:28:23,120 [INFO]   python test_consolidated_server.py diagnose
+2025-10-24 14:28:23,122 [INFO] ======================================================================
+2025-10-24 14:30:46,041 [INFO] 
+======================================================================
+2025-10-24 14:30:46,043 [INFO]   CONSOLIDATED SERVER TEST SUITE
+2025-10-24 14:30:46,044 [INFO] ======================================================================
+2025-10-24 14:30:46,046 [INFO] Testing server at: http://10.163.13.8:5000
+2025-10-24 14:30:46,048 [INFO] Session API at: https://guidedcreativeplanning-session.onrender.com
+2025-10-24 14:30:46,049 [INFO] [START TEST] START: TEST 0: Health Check
+2025-10-24 14:30:51,109 [ERROR] [WARN] [FAIL] Health check error: HTTPConnectionPool(host='10.163.13.8', port=5000): Read timed out. (read timeout=5)
+2025-10-24 14:30:51,111 [INFO] [TIME]END: TEST 0: Health Check (took 5.062s)
+
+2025-10-24 14:30:51,113 [INFO] 
+======================================================================
+2025-10-24 14:30:51,114 [INFO]   BRAINSTORMING TESTS
+2025-10-24 14:30:51,114 [INFO] ======================================================================
+2025-10-24 14:30:51,115 [INFO] [START TEST] START: TEST 1: BS - Full CPS Loop
+2025-10-24 14:30:52,900 [INFO] Created session: -OcJuQ2gsyPE2iabJomg
+2025-10-24 14:30:52,902 [INFO] 
+[CLARIFY] Adding 3 HMW questions...
+2025-10-24 14:30:52,903 [INFO] [BS SEND] How might we make the betrayal surprising?...
+2025-10-24 14:31:29,318 [ERROR] [WARN] [FAIL] BS - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/brainstorming
+2025-10-24 14:31:29,371 [ERROR] Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_consolidated_server.py", line 224, in test_bs_full_cps_loop
+    send_bs_message(session_id, hmw)
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_consolidated_server.py", line 134, in send_bs_message
+    r.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/brainstorming
+
+2025-10-24 14:31:29,372 [INFO] [TIME]END: TEST 1: BS - Full CPS Loop (took 38.257s)
+
+2025-10-24 14:31:29,373 [INFO] [START TEST] START: TEST 2: BS - Idea Evaluations
+2025-10-24 14:31:30,195 [INFO] [BS SEND] How might we X?...
+2025-10-24 14:31:32,857 [ERROR] [WARN] [FAIL] BS - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/brainstorming
+2025-10-24 14:31:32,860 [INFO] [TIME]END: TEST 2: BS - Idea Evaluations (took 3.487s)
+
+2025-10-24 14:31:32,861 [INFO] [START TEST] START: TEST 3: BS - Auto-Advancement
+2025-10-24 14:31:33,666 [INFO] Adding 3 HMWs to trigger auto-advancement...
+2025-10-24 14:31:33,667 [INFO] [BS SEND] How might we solve problem 1?...
+2025-10-24 14:31:36,176 [ERROR] [WARN] [FAIL] BS - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/brainstorming
+2025-10-24 14:31:36,177 [INFO] [TIME]END: TEST 3: BS - Auto-Advancement (took 3.316s)
+
+2025-10-24 14:31:36,178 [INFO] 
+======================================================================
+2025-10-24 14:31:36,179 [INFO]   DEEP THINKING TESTS
+2025-10-24 14:31:36,180 [INFO] ======================================================================
+2025-10-24 14:31:36,181 [INFO] [START TEST] START: TEST 4: DT - Scaffolding in Questions
+2025-10-24 14:31:37,008 [INFO] [DT SEND] I want to develop my character Marcus...
+2025-10-24 14:31:39,700 [ERROR] [WARN] [FAIL] DT - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/deepthinking
+2025-10-24 14:31:39,700 [INFO] [TIME]END: TEST 4: DT - Scaffolding in Questions (took 3.519s)
+
+2025-10-24 14:31:39,700 [INFO] [START TEST] START: TEST 5: DT - Precision Follow-up
+2025-10-24 14:31:40,512 [INFO] [DT SEND] I want to develop my character Sarah...
+2025-10-24 14:31:42,599 [ERROR] [WARN] [FAIL] DT - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/deepthinking
+2025-10-24 14:31:42,600 [INFO] [TIME]END: TEST 5: DT - Precision Follow-up (took 2.899s)
+
+2025-10-24 14:31:42,601 [INFO] [START TEST] START: TEST 6: DT - Angle Transitions
+2025-10-24 14:31:43,414 [INFO] [DT SEND] I want to develop my protagonist Elena...
+2025-10-24 14:31:45,539 [ERROR] [WARN] [FAIL] DT - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/deepthinking
+2025-10-24 14:31:45,540 [INFO] [TIME]END: TEST 6: DT - Angle Transitions (took 2.939s)
+
+2025-10-24 14:31:45,541 [INFO] [START TEST] START: TEST 7: DT - Follow-up Limit
+2025-10-24 14:31:46,349 [INFO] [DT SEND] I want to develop Jamie...
+2025-10-24 14:31:48,667 [ERROR] [WARN] [FAIL] DT - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/deepthinking
+2025-10-24 14:31:48,669 [INFO] [TIME]END: TEST 7: DT - Follow-up Limit (took 3.129s)
+
+2025-10-24 14:31:48,671 [INFO] 
+======================================================================
+2025-10-24 14:31:48,671 [INFO]   AI FEATURE TESTS
+2025-10-24 14:31:48,673 [INFO] ======================================================================
+2025-10-24 14:31:48,673 [INFO] [START TEST] START: TEST 8: Character Extraction
+2025-10-24 14:31:48,675 [INFO] Sending character extraction request...
+2025-10-24 14:31:49,169 [ERROR] [WARN] [FAIL] Character extraction error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/characters/extract
+2025-10-24 14:31:49,170 [INFO] [TIME]END: TEST 8: Character Extraction (took 0.497s)
+
+2025-10-24 14:31:49,172 [INFO] [START TEST] START: TEST 9: World AI - Template Suggestions
+2025-10-24 14:31:49,173 [INFO] Requesting template for magic system...
+2025-10-24 14:31:49,661 [ERROR] [WARN] [FAIL] World AI error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/worldbuilding/suggest-template
+2025-10-24 14:31:49,662 [INFO] [TIME]END: TEST 9: World AI - Template Suggestions (took 0.490s)
+
+2025-10-24 14:31:49,663 [INFO] [START TEST] START: TEST 10: Image Generation
+2025-10-24 14:31:49,664 [INFO] Requesting image generation...
+2025-10-24 14:32:12,259 [INFO] [PASS] [PASS] Image generation working
+2025-10-24 14:32:12,260 [INFO]   Generated URL: https://cdn.leonardo.ai/users/94f5cf86-ff23-4035-a1fd-1004a5b2e118/generations/9...
+2025-10-24 14:32:12,261 [INFO] [TIME]END: TEST 10: Image Generation (took 22.598s)
+
+2025-10-24 14:32:12,263 [INFO] 
+======================================================================
+2025-10-24 14:32:12,263 [INFO]   PERFORMANCE TESTS
+2025-10-24 14:32:12,264 [INFO] ======================================================================
+2025-10-24 14:32:12,265 [INFO] [START TEST] START: TEST 11: Response Time Performance
+2025-10-24 14:32:13,317 [INFO] [BS SEND] How might we make the story compelling?...
+2025-10-24 14:32:16,679 [ERROR] [WARN] [FAIL] Performance test error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/brainstorming
+2025-10-24 14:32:16,680 [INFO] [TIME]END: TEST 11: Response Time Performance (took 4.415s)
+
+2025-10-24 14:32:16,681 [INFO] [START TEST] START: TEST 12: Background Thread Separation
+2025-10-24 14:32:17,481 [INFO] [BS SEND] How might we X?...
+2025-10-24 14:32:22,141 [ERROR] [WARN] [FAIL] Background separation error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/brainstorming
+2025-10-24 14:32:22,142 [INFO] [TIME]END: TEST 12: Background Thread Separation (took 5.461s)
+
+2025-10-24 14:32:22,143 [INFO] 
+======================================================================
+2025-10-24 14:32:22,144 [INFO]   INTEGRATION TESTS
+2025-10-24 14:32:22,144 [INFO] ======================================================================
+2025-10-24 14:32:22,146 [INFO] [START TEST] START: TEST 13: Mode Switching
+2025-10-24 14:32:22,958 [INFO] Testing BS mode...
+2025-10-24 14:32:22,958 [INFO] [BS SEND] How might we solve X?...
+2025-10-24 14:32:25,647 [ERROR] [WARN] [FAIL] Mode switching error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/brainstorming
+2025-10-24 14:32:25,648 [INFO] [TIME]END: TEST 13: Mode Switching (took 3.502s)
+
+2025-10-24 14:32:25,649 [INFO] 
+======================================================================
+2025-10-24 14:32:25,651 [INFO]   TEST RESULTS SUMMARY
+2025-10-24 14:32:25,651 [INFO] ======================================================================
+2025-10-24 14:32:25,652 [INFO] 
+======================================================================
+2025-10-24 14:32:25,653 [INFO] DETAILED RESULTS:
+2025-10-24 14:32:25,654 [INFO] ======================================================================
+2025-10-24 14:32:25,654 [INFO] [WARN] [FAIL] Health Check [CRITICAL]
+2025-10-24 14:32:25,655 [INFO] [WARN] [FAIL] BS - Full CPS Loop [CRITICAL]
+2025-10-24 14:32:25,656 [INFO] [WARN] [FAIL] BS - Idea Evaluations
+2025-10-24 14:32:25,657 [INFO] [WARN] [FAIL] BS - Auto-Advancement
+2025-10-24 14:32:25,657 [INFO] [WARN] [FAIL] DT - Scaffolding [CRITICAL]
+2025-10-24 14:32:25,658 [INFO] [WARN] [FAIL] DT - Precision Check
+2025-10-24 14:32:25,659 [INFO] [WARN] [FAIL] DT - Angle Transitions
+2025-10-24 14:32:25,660 [INFO] [WARN] [FAIL] DT - Follow-up Limit
+2025-10-24 14:32:25,662 [INFO] [WARN] [FAIL] Character Extraction [CRITICAL]
+2025-10-24 14:32:25,663 [INFO] [WARN] [FAIL] World AI Templates [CRITICAL]
+2025-10-24 14:32:25,664 [INFO] [PASS] [PASS] Image Generation
+2025-10-24 14:32:25,665 [INFO] [WARN] [FAIL] Response Times
+2025-10-24 14:32:25,666 [INFO] [WARN] [FAIL] Background Separation
+2025-10-24 14:32:25,667 [INFO] [WARN] [FAIL] Mode Switching
+2025-10-24 14:32:25,667 [INFO] 
+======================================================================
+2025-10-24 14:32:25,668 [INFO] SUMMARY:
+2025-10-24 14:32:25,669 [INFO] ======================================================================
+2025-10-24 14:32:25,670 [INFO] Overall:  1/14 tests passed (7.1%)
+2025-10-24 14:32:25,671 [INFO] Critical: 0/5 critical tests passed
+2025-10-24 14:32:25,674 [ERROR] 
+======================================================================
+2025-10-24 14:32:25,675 [ERROR] [WARN][WARN][WARN] CRITICAL TESTS FAILED [WARN][WARN][WARN]
+2025-10-24 14:32:25,676 [ERROR] ======================================================================
+2025-10-24 14:32:25,677 [ERROR] Failed critical tests:
+2025-10-24 14:32:25,678 [ERROR]   - Health Check
+2025-10-24 14:32:25,680 [ERROR]   - BS - Full CPS Loop
+2025-10-24 14:32:25,681 [ERROR]   - DT - Scaffolding
+2025-10-24 14:32:25,682 [ERROR]   - Character Extraction
+2025-10-24 14:32:25,683 [ERROR]   - World AI Templates
+2025-10-24 14:32:25,683 [INFO] 
+======================================================================
+2025-10-24 14:32:25,684 [INFO] Some tests failed. Run diagnostics:
+2025-10-24 14:32:25,685 [INFO]   python test_consolidated_server.py diagnose
+2025-10-24 14:32:25,686 [INFO] ======================================================================
+2025-10-24 14:39:40,102 [INFO] 
+======================================================================
+2025-10-24 14:39:40,103 [INFO]   CONSOLIDATED SERVER TEST SUITE
+2025-10-24 14:39:40,105 [INFO] ======================================================================
+2025-10-24 14:39:40,106 [INFO] Testing server at: http://10.163.13.8:5000
+2025-10-24 14:39:40,107 [INFO] Session API at: https://guidedcreativeplanning-session.onrender.com
+2025-10-24 14:39:40,108 [INFO] [START TEST] START: TEST 0: Health Check
+2025-10-24 14:39:40,130 [INFO] Health check response:
+2025-10-24 14:39:40,131 [INFO] {
+  "services": {
+    "brainstorming": "running",
+    "character_extraction": "running",
+    "deepthinking": "running",
+    "image_generation": "running",
+    "world_ai": "running"
+  },
+  "status": "ok"
+}
+2025-10-24 14:39:40,132 [INFO] [PASS] [PASS] Health check passed
+2025-10-24 14:39:40,133 [INFO] [TIME]END: TEST 0: Health Check (took 0.025s)
+
+2025-10-24 14:39:40,134 [INFO] 
+======================================================================
+2025-10-24 14:39:40,135 [INFO]   BRAINSTORMING TESTS
+2025-10-24 14:39:40,136 [INFO] ======================================================================
+2025-10-24 14:39:40,136 [INFO] [START TEST] START: TEST 1: BS - Full CPS Loop
+2025-10-24 14:39:41,543 [INFO] Created session: -OcJwRCDLYPFhvRmVrED
+2025-10-24 14:39:41,546 [INFO] 
+[CLARIFY] Adding 3 HMW questions...
+2025-10-24 14:39:41,547 [INFO] [BS SEND] How might we make the betrayal surprising?...
+2025-10-24 14:39:45,204 [ERROR] [WARN] [FAIL] BS - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/brainstorming
+2025-10-24 14:39:45,214 [ERROR] Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_consolidated_server.py", line 224, in test_bs_full_cps_loop
+    send_bs_message(session_id, hmw)
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_consolidated_server.py", line 134, in send_bs_message
+    r.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/brainstorming
+
+2025-10-24 14:39:45,215 [INFO] [TIME]END: TEST 1: BS - Full CPS Loop (took 5.079s)
+
+2025-10-24 14:39:45,216 [INFO] [START TEST] START: TEST 2: BS - Idea Evaluations
+2025-10-24 14:39:46,032 [INFO] [BS SEND] How might we X?...
+2025-10-24 14:39:49,040 [ERROR] [WARN] [FAIL] BS - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/brainstorming
+2025-10-24 14:39:49,041 [INFO] [TIME]END: TEST 2: BS - Idea Evaluations (took 3.825s)
+
+2025-10-24 14:39:49,043 [INFO] [START TEST] START: TEST 3: BS - Auto-Advancement
+2025-10-24 14:39:49,848 [INFO] Adding 3 HMWs to trigger auto-advancement...
+2025-10-24 14:39:49,848 [INFO] [BS SEND] How might we solve problem 1?...
+2025-10-24 14:39:52,774 [ERROR] [WARN] [FAIL] BS - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/brainstorming
+2025-10-24 14:39:52,776 [INFO] [TIME]END: TEST 3: BS - Auto-Advancement (took 3.733s)
+
+2025-10-24 14:39:52,777 [INFO] 
+======================================================================
+2025-10-24 14:39:52,778 [INFO]   DEEP THINKING TESTS
+2025-10-24 14:39:52,778 [INFO] ======================================================================
+2025-10-24 14:39:52,779 [INFO] [START TEST] START: TEST 4: DT - Scaffolding in Questions
+2025-10-24 14:39:53,578 [INFO] [DT SEND] I want to develop my character Marcus...
+2025-10-24 14:39:55,676 [ERROR] [WARN] [FAIL] DT - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/deepthinking
+2025-10-24 14:39:55,676 [INFO] [TIME]END: TEST 4: DT - Scaffolding in Questions (took 2.897s)
+
+2025-10-24 14:39:55,677 [INFO] [START TEST] START: TEST 5: DT - Precision Follow-up
+2025-10-24 14:39:56,469 [INFO] [DT SEND] I want to develop my character Sarah...
+2025-10-24 14:39:58,519 [ERROR] [WARN] [FAIL] DT - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/deepthinking
+2025-10-24 14:39:58,520 [INFO] [TIME]END: TEST 5: DT - Precision Follow-up (took 2.843s)
+
+2025-10-24 14:39:58,521 [INFO] [START TEST] START: TEST 6: DT - Angle Transitions
+2025-10-24 14:39:59,337 [INFO] [DT SEND] I want to develop my protagonist Elena...
+2025-10-24 14:40:02,442 [ERROR] [WARN] [FAIL] DT - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/deepthinking
+2025-10-24 14:40:02,443 [INFO] [TIME]END: TEST 6: DT - Angle Transitions (took 3.922s)
+
+2025-10-24 14:40:02,444 [INFO] [START TEST] START: TEST 7: DT - Follow-up Limit
+2025-10-24 14:40:04,294 [INFO] [DT SEND] I want to develop Jamie...
+2025-10-24 14:40:06,394 [ERROR] [WARN] [FAIL] DT - Error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/chat/deepthinking
+2025-10-24 14:40:06,396 [INFO] [TIME]END: TEST 7: DT - Follow-up Limit (took 3.952s)
+
+2025-10-24 14:40:06,398 [INFO] 
+======================================================================
+2025-10-24 14:40:06,398 [INFO]   AI FEATURE TESTS
+2025-10-24 14:40:06,400 [INFO] ======================================================================
+2025-10-24 14:40:06,401 [INFO] [START TEST] START: TEST 8: Character Extraction
+2025-10-24 14:40:06,402 [INFO] Sending character extraction request...
+2025-10-24 14:40:06,851 [ERROR] [WARN] [FAIL] Character extraction error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/characters/extract
+2025-10-24 14:40:06,851 [INFO] [TIME]END: TEST 8: Character Extraction (took 0.450s)
+
+2025-10-24 14:40:06,851 [INFO] [START TEST] START: TEST 9: World AI - Template Suggestions
+2025-10-24 14:40:06,851 [INFO] Requesting template for magic system...
+2025-10-24 14:40:07,303 [ERROR] [WARN] [FAIL] World AI error: 500 Server Error: INTERNAL SERVER ERROR for url: http://10.163.13.8:5000/worldbuilding/suggest-template
+2025-10-24 14:40:07,303 [INFO] [TIME]END: TEST 9: World AI - Template Suggestions (took 0.452s)
+
+2025-10-24 14:40:07,305 [INFO] [START TEST] START: TEST 10: Image Generation
+2025-10-24 14:40:07,305 [INFO] Requesting image generation...
+2025-10-24 14:40:23,401 [ERROR] [WARN] [FAIL] Image generation error: ('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))
+2025-10-24 14:40:23,404 [INFO] [TIME]END: TEST 10: Image Generation (took 16.098s)
+
+2025-10-24 14:40:23,404 [INFO] 
+======================================================================
+2025-10-24 14:40:23,405 [INFO]   PERFORMANCE TESTS
+2025-10-24 14:40:23,406 [INFO] ======================================================================
+2025-10-24 14:40:23,406 [INFO] [START TEST] START: TEST 11: Response Time Performance
+2025-10-24 14:40:24,270 [INFO] [BS SEND] How might we make the story compelling?...
+2025-10-24 14:40:30,241 [INFO] [TIME]END: TEST 11: Response Time Performance (took 6.835s)
+
+2025-10-24 15:42:23,945 [INFO] 
+======================================================================
+2025-10-24 15:42:23,945 [INFO]   CONSOLIDATED SERVER TEST SUITE
+2025-10-24 15:42:23,946 [INFO] ======================================================================
+2025-10-24 15:42:23,946 [INFO] Testing server at: http://10.163.13.8:5000
+2025-10-24 15:42:23,946 [INFO] Session API at: https://guidedcreativeplanning-session.onrender.com
+2025-10-24 15:42:23,947 [INFO] [START TEST] START: TEST 0: Health Check
+2025-10-24 15:42:24,020 [INFO] Health check response:
+2025-10-24 15:42:24,021 [INFO] {
+  "services": {
+    "brainstorming": "running",
+    "character_extraction": "running",
+    "deepthinking": "running",
+    "image_generation": "running",
+    "world_ai": "running"
+  },
+  "status": "ok"
+}
+2025-10-24 15:42:24,021 [INFO] [PASS] [PASS] Health check passed
+2025-10-24 15:42:24,022 [INFO] [TIME]END: TEST 0: Health Check (took 0.075s)
+
+2025-10-24 15:42:24,022 [INFO] 
+======================================================================
+2025-10-24 15:42:24,023 [INFO]   BRAINSTORMING TESTS
+2025-10-24 15:42:24,023 [INFO] ======================================================================
+2025-10-24 15:42:24,023 [INFO] [START TEST] START: TEST 1: BS - Full CPS Loop
+2025-10-24 15:42:34,345 [ERROR] [WARN] [FAIL] BS - Error: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10)
+2025-10-24 15:42:34,370 [ERROR] Traceback (most recent call last):
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 449, in _make_request
+    six.raise_from(e, None)
+  File "<string>", line 3, in raise_from
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 444, in _make_request
+    httplib_response = conn.getresponse()
+                       ^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\http\client.py", line 1374, in getresponse
+    response.begin()
+  File "C:\Python311\Lib\http\client.py", line 318, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\http\client.py", line 279, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\socket.py", line 705, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\ssl.py", line 1278, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\ssl.py", line 1134, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python311\Lib\site-packages\requests\adapters.py", line 489, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 787, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\util\retry.py", line 550, in increment
+    raise six.reraise(type(error), error, _stacktrace)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\packages\six.py", line 770, in reraise
+    raise value
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 703, in urlopen
+    httplib_response = self._make_request(
+                       ^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 451, in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 340, in _raise_timeout
+    raise ReadTimeoutError(
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_consolidated_server.py", line 212, in test_bs_full_cps_loop
+    session_id = create_session()
+                 ^^^^^^^^^^^^^^^^
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_consolidated_server.py", line 85, in create_session
+    r = requests.post(f"{SESSION_API}/session/create", json={"uid": TEST_UID}, timeout=10)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\api.py", line 115, in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\sessions.py", line 587, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\sessions.py", line 701, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\adapters.py", line 578, in send
+    raise ReadTimeout(e, request=request)
+requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10)
+
+2025-10-24 15:42:34,372 [INFO] [TIME]END: TEST 1: BS - Full CPS Loop (took 10.349s)
+
+2025-10-24 15:42:34,372 [INFO] [START TEST] START: TEST 2: BS - Idea Evaluations
+2025-10-24 15:42:44,463 [ERROR] [WARN] [FAIL] BS - Error: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10)
+2025-10-24 15:42:44,464 [INFO] [TIME]END: TEST 2: BS - Idea Evaluations (took 10.092s)
+
+2025-10-24 15:42:44,464 [INFO] [START TEST] START: TEST 3: BS - Auto-Advancement
+2025-10-24 15:42:54,529 [ERROR] [WARN] [FAIL] BS - Error: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10)
+2025-10-24 15:42:54,530 [INFO] [TIME]END: TEST 3: BS - Auto-Advancement (took 10.066s)
+
+2025-10-24 15:42:54,530 [INFO] 
+======================================================================
+2025-10-24 15:42:54,530 [INFO]   DEEP THINKING TESTS
+2025-10-24 15:42:54,530 [INFO] ======================================================================
+2025-10-24 15:42:54,532 [INFO] [START TEST] START: TEST 4: DT - Scaffolding in Questions
+2025-10-24 15:43:04,579 [ERROR] [WARN] [FAIL] DT - Error: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10)
+2025-10-24 15:43:04,579 [INFO] [TIME]END: TEST 4: DT - Scaffolding in Questions (took 10.047s)
+
+2025-10-24 15:43:04,581 [INFO] [START TEST] START: TEST 5: DT - Precision Follow-up
+2025-10-24 15:43:14,637 [ERROR] [WARN] [FAIL] DT - Error: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10)
+2025-10-24 15:43:14,638 [INFO] [TIME]END: TEST 5: DT - Precision Follow-up (took 10.057s)
+
+2025-10-24 15:43:14,638 [INFO] [START TEST] START: TEST 6: DT - Angle Transitions
+2025-10-24 15:43:24,685 [ERROR] [WARN] [FAIL] DT - Error: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10)
+2025-10-24 15:43:24,688 [INFO] [TIME]END: TEST 6: DT - Angle Transitions (took 10.050s)
+
+2025-10-24 15:43:24,689 [INFO] [START TEST] START: TEST 7: DT - Follow-up Limit
+2025-10-24 15:43:34,762 [ERROR] [WARN] [FAIL] DT - Error: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10)
+2025-10-24 15:43:34,763 [INFO] [TIME]END: TEST 7: DT - Follow-up Limit (took 10.074s)
+
+2025-10-24 15:43:34,764 [INFO] 
+======================================================================
+2025-10-24 15:43:34,764 [INFO]   AI FEATURE TESTS
+2025-10-24 15:43:34,765 [INFO] ======================================================================
+2025-10-24 15:43:34,765 [INFO] [START TEST] START: TEST 8: Character Extraction
+2025-10-24 15:43:34,766 [INFO] Sending character extraction request...
+2025-10-24 15:44:04,796 [INFO] [TIME]END: TEST 8: Character Extraction (took 30.031s)
+
+2025-10-24 16:04:32,335 [INFO] 
+======================================================================
+2025-10-24 16:04:32,337 [INFO]   CONSOLIDATED SERVER TEST SUITE
+2025-10-24 16:04:32,338 [INFO] ======================================================================
+2025-10-24 16:04:32,339 [INFO] Testing server at: http://10.163.13.8:5000
+2025-10-24 16:04:32,340 [INFO] Session API at: https://guidedcreativeplanning-session.onrender.com
+2025-10-24 16:04:32,340 [INFO] [START TEST] START: TEST 0: Health Check
+2025-10-24 16:04:32,354 [INFO] Health check response:
+2025-10-24 16:04:32,355 [INFO] {
+  "services": {
+    "brainstorming": "running",
+    "character_extraction": "running",
+    "deepthinking": "running",
+    "image_generation": "running",
+    "world_ai": "running"
+  },
+  "status": "ok"
+}
+2025-10-24 16:04:32,355 [INFO] [PASS] [PASS] Health check passed
+2025-10-24 16:04:32,356 [INFO] [TIME]END: TEST 0: Health Check (took 0.016s)
+
+2025-10-24 16:04:32,358 [INFO] 
+======================================================================
+2025-10-24 16:04:32,359 [INFO]   BRAINSTORMING TESTS
+2025-10-24 16:04:32,359 [INFO] ======================================================================
+2025-10-24 16:04:32,361 [INFO] [START TEST] START: TEST 1: BS - Full CPS Loop
+2025-10-24 16:04:33,637 [INFO] Created session: -OcKErL_z57k8N4tlzCG
+2025-10-24 16:04:33,638 [INFO] 
+[CLARIFY] Adding 3 HMW questions...
+2025-10-24 16:04:33,640 [INFO] [BS SEND] How might we make the betrayal surprising?...
+2025-10-24 16:04:45,909 [INFO] [BS RECV] <p>Great start! 'How might we make the betrayal surprising?' focuses on creating unexpected twists. <strong>Progress:</strong> 1/3 HMWs - Need 2 more....
+2025-10-24 16:04:45,910 [INFO] [BS SEND] How might we foreshadow it effectively?...
+2025-10-24 16:04:58,390 [INFO] [BS RECV] <p>Excellent! Foreshadowing is crucial for making betrayals feel earned rather than random. I've added 'How might we foreshadow the betrayal effective...
+2025-10-24 16:04:58,391 [INFO] [BS SEND] How might we show the mentor's internal conflict?...
+2025-10-24 16:05:14,396 [INFO] [BS RECV] <p>Perfect! That's three distinct HMW questions. We've covered surprise, foreshadowing, and now internal conflict - giving us a well-rounded foundatio...
+2025-10-24 16:05:14,537 [INFO] [PASS] Advanced to Ideate stage
+2025-10-24 16:05:14,538 [INFO] 
+[IDEATE] Generating 5+ diverse ideas...
+2025-10-24 16:05:15,639 [INFO] [BS SEND] The mentor's jealousy of the hero's growing power (character...
+2025-10-24 16:05:29,727 [INFO] [BS RECV] <p>Great character-driven motivation! Jealousy adds psychological depth to the mentor. <strong>Progress:</strong> 1/5 ideas, 1/2 categories - Need: 4 ...
+2025-10-24 16:05:30,544 [INFO] [POLL] [PASS] at least 1 ideas met after 0.82s (1 attempts)
+2025-10-24 16:05:30,871 [INFO] [BS SEND] A deal the villain made with the mentor (plot)...
+2025-10-24 16:05:46,075 [INFO] [BS RECV] <p>Interesting! A deal with the villain adds external pressure to the betrayal. <strong>Progress:</strong> 2/5 ideas, 2/2 categories - Need: 3 more id...
+2025-10-24 16:05:46,922 [INFO] [POLL] [PASS] at least 2 ideas met after 0.85s (1 attempts)
+2025-10-24 16:05:47,275 [INFO] [BS SEND] The mentor's love for someone the hero betrayed (theme)...
+2025-10-24 16:06:01,701 [INFO] [BS RECV] <p>Ooh, that's powerful! The mentor's love creating a moral dilemma adds rich thematic complexity. <strong>Progress:</strong> 3/5 ideas, 3/3 categorie...
+2025-10-24 16:06:02,524 [INFO] [POLL] [PASS] at least 3 ideas met after 0.82s (1 attempts)
+2025-10-24 16:06:02,867 [INFO] [BS SEND] Ancient magic forcing the mentor's hand (mechanics)...
+2025-10-24 16:06:17,309 [INFO] [BS RECV] <p>Excellent! Ancient magic as compulsion adds a supernatural constraint to the betrayal. <strong>Progress:</strong> 4/5 ideas, 4/4 categories - Need:...
+2025-10-24 16:06:18,153 [INFO] [POLL] [PASS] at least 4 ideas met after 0.84s (1 attempts)
+2025-10-24 16:06:18,494 [INFO] [BS SEND] A prophecy that requires the betrayal (setting)...
+2025-10-24 16:06:33,966 [INFO] [BS RECV] <p>Perfect! A prophecy-driven betrayal adds cosmic stakes to the story. We've now reached 5 ideas across character, plot, theme, mechanics, and settin...
+2025-10-24 16:06:34,298 [INFO] [POLL] [PASS] at least 5 ideas met after 0.33s (1 attempts)
+2025-10-24 16:06:34,766 [INFO] [PASS] Advanced to Develop stage
+2025-10-24 16:06:34,767 [INFO] 
+[DEVELOP] Refining ideas...
+2025-10-24 16:06:34,768 [INFO] [BS SEND] Which ideas are strongest? Let's refine and combine the best...
+2025-10-24 16:07:07,449 [INFO] [BS RECV] <p>Excellent! Here's my assessment:</p>
+<p><strong>Strongest Ideas:</strong>
+- <strong>Love motivation</strong> (High originality/elaboration): Create...
+2025-10-24 16:07:10,802 [INFO] Total ideas: 5, Refined: 0
+2025-10-24 16:07:10,802 [INFO] 
+[IMPLEMENT] Creating action plan...
+2025-10-24 16:07:10,804 [INFO] [BS SEND] How would we implement the strongest idea? What are the step...
+2025-10-24 16:07:37,982 [INFO] [BS RECV] <p>Perfect! Let's outline implementation steps for the layered resentment betrayal:</p>
+<p><strong>IMPLEMENTATION PLAN:</strong>
+1. <strong>Foreshadow...
+2025-10-24 16:07:38,548 [INFO] 
+[FINAL] Stage: Develop, Ideas: 5
+2025-10-24 16:07:38,548 [INFO] [PASS] [PASS] BS - Full CPS loop completed
+2025-10-24 16:07:38,550 [INFO] [TIME]END: TEST 1: BS - Full CPS Loop (took 186.189s)
+
+2025-10-24 16:07:38,550 [INFO] [START TEST] START: TEST 2: BS - Idea Evaluations
+2025-10-24 16:07:39,355 [INFO] [BS SEND] How might we X?...
+2025-10-24 16:07:52,083 [INFO] [BS RECV] <p>I see you're starting with 'How might we X?' - that's the right approach for the Clarify stage! To create meaningful HMW questions, could you tell ...
+2025-10-24 16:07:52,084 [INFO] [BS SEND] How might we Y?...
+2025-10-24 16:08:03,461 [INFO] [BS RECV] <p>Great! 'How might we Y?' is another good framing question. We're getting closer to having enough problem statements to start brainstorming. Just on...
+2025-10-24 16:08:03,462 [INFO] [BS SEND] How might we Z?...
+2025-10-24 16:08:15,032 [INFO] [BS RECV] <p>Perfect! With three 'How might we' questions, we've completed the Clarify stage and can now move to Ideate. Let's start generating creative ideas. ...
+2025-10-24 16:08:17,351 [INFO] [BS SEND] The mentor betrays due to jealousy...
+2025-10-24 16:08:31,748 [INFO] [BS RECV] <p>Excellent start! Jealousy as the mentor's motivation creates immediate emotional stakes. I've logged this character-focused idea. Let's keep the id...
+2025-10-24 16:08:32,090 [INFO] [POLL] [PASS] at least 1 ideas met after 0.34s (1 attempts)
+2025-10-24 16:08:34,430 [INFO] [PASS] Found evaluations in idea -OcKFkrOHAJ508fElVbZ:
+2025-10-24 16:08:34,432 [INFO]   Category: Character
+2025-10-24 16:08:34,432 [INFO]   Elaboration: Low
+2025-10-24 16:08:34,433 [INFO]   Originality: Low
+2025-10-24 16:08:34,434 [INFO] [PASS] [PASS] BS - Evaluations stored correctly
+2025-10-24 16:08:34,434 [INFO] [TIME]END: TEST 2: BS - Idea Evaluations (took 55.885s)
+
+2025-10-24 16:08:34,436 [INFO] [START TEST] START: TEST 3: BS - Auto-Advancement
+2025-10-24 16:08:35,227 [INFO] Adding 3 HMWs to trigger auto-advancement...
+2025-10-24 16:08:35,227 [INFO] [BS SEND] How might we solve problem 1?...
+2025-10-24 16:08:48,562 [INFO] [BS RECV] <p>Great! You've started with 'How might we solve problem 1?' Let me help reframe that to make it more actionable. I've recorded: 'How might we clearl...
+2025-10-24 16:08:48,563 [INFO] [BS SEND] How might we solve problem 2?...
+2025-10-24 16:08:59,845 [INFO] [BS RECV] <p>Good! I've recorded your second HMW question. <strong>Progress:</strong> 2/3 HMWs - Need 1 more. Could you tell me what problem 2 is about? Underst...
+2025-10-24 16:08:59,845 [INFO] [BS SEND] How might we solve problem 3?...
+2025-10-24 16:09:16,133 [INFO] [BS RECV] <p>Excellent! We now have three 'How Might We' questions framed. <strong>Progress:</strong> We've automatically advanced to Ideate stage! Let's start ...
+2025-10-24 16:09:16,716 [INFO] [POLL] [PASS] auto-advancement to Ideate met after 0.58s (1 attempts)
+2025-10-24 16:09:16,717 [INFO] [PASS] [PASS] BS - Auto-advancement works
+2025-10-24 16:09:16,719 [INFO] [TIME]END: TEST 3: BS - Auto-Advancement (took 42.283s)
+
+2025-10-24 16:09:16,720 [INFO] 
+======================================================================
+2025-10-24 16:09:16,721 [INFO]   DEEP THINKING TESTS
+2025-10-24 16:09:16,723 [INFO] ======================================================================
+2025-10-24 16:09:16,723 [INFO] [START TEST] START: TEST 4: DT - Scaffolding in Questions
+2025-10-24 16:09:17,678 [INFO] [DT SEND] I want to develop my character Marcus...
+2025-10-24 16:09:30,381 [INFO] [DT RECV] <p>Great! Let's start by understanding what drives Marcus as a character. What's he ultimately trying to achieve in your story - what's his main goal ...
+2025-10-24 16:09:32,385 [INFO] Scaffolding check:
+2025-10-24 16:09:32,386 [INFO]   Has context: True
+2025-10-24 16:09:32,386 [INFO]   Has question: True
+2025-10-24 16:09:32,387 [INFO]   Has substance: True
+2025-10-24 16:09:32,388 [INFO] [PASS] [PASS] DT - Proper scaffolding
+2025-10-24 16:09:32,389 [INFO] [TIME]END: TEST 4: DT - Scaffolding in Questions (took 15.666s)
+
+2025-10-24 16:09:32,390 [INFO] [START TEST] START: TEST 5: DT - Precision Follow-up
+2025-10-24 16:09:33,269 [INFO] [DT SEND] I want to develop my character Sarah...
+2025-10-24 16:09:45,542 [INFO] [DT RECV] <p>Great! Let's start by getting to know Sarah. Every character has something driving them forward - whether it's a big dream, a secret desire, or som...
+2025-10-24 16:09:47,545 [INFO] [DT SEND] Sarah wants revenge....
+2025-10-24 16:10:00,516 [INFO] [DT RECV] <p>I can feel the intensity behind Sarah's desire for revenge - that's a powerful motivation that can really drive a story forward. To help bring this...
+2025-10-24 16:10:02,518 [INFO] [PASS] [PASS] DT - Precision check triggered
+2025-10-24 16:10:02,520 [INFO] [TIME]END: TEST 5: DT - Precision Follow-up (took 30.130s)
+
+2025-10-24 16:10:02,521 [INFO] [START TEST] START: TEST 6: DT - Angle Transitions
+2025-10-24 16:10:03,331 [INFO] [DT SEND] I want to develop my protagonist Elena...
+2025-10-24 16:10:14,876 [INFO] [DT RECV] <p>Great! Now that we're focusing on Elena, let's think about how she's perceived by others in your story. How might different characters—or even your...
+2025-10-24 16:10:17,014 [INFO] [DT SEND] Elena wants to expose corruption in her city's government. H...
+2025-10-24 16:10:28,438 [INFO] [DT RECV] <p>That's a powerful motivation for Elena—carrying on her father's unfinished work to expose corruption. Now let's think about what's at stake for her...
+2025-10-24 16:10:30,799 [INFO] Angle transition check:
+2025-10-24 16:10:30,804 [INFO]   Has bridge: False
+2025-10-24 16:10:30,805 [INFO] [PASS] [PASS] DT - Angle transitions working
+2025-10-24 16:10:30,805 [INFO] [TIME]END: TEST 6: DT - Angle Transitions (took 28.284s)
+
+2025-10-24 16:10:30,807 [INFO] [START TEST] START: TEST 7: DT - Follow-up Limit
+2025-10-24 16:10:31,650 [INFO] [DT SEND] I want to develop Jamie...
+2025-10-24 16:10:44,297 [INFO] [DT RECV] <p>Great! Let's start by getting to know Jamie. Every character has something they're striving for - it's what makes them compelling and drives the st...
+2025-10-24 16:10:46,299 [INFO] [DT SEND] Jamie is ambitious....
+2025-10-24 16:10:57,571 [INFO] [DT RECV] <p>I like that - ambition gives Jamie a strong driving force. To really bring this to life, could you tell me more about what Jamie's ambition looks l...
+2025-10-24 16:10:59,574 [INFO] [DT SEND] Jamie is ambitious....
+2025-10-24 16:11:08,604 [INFO] [DT RECV] <p>I notice we're circling back to the same description of Jamie being ambitious. Let's try approaching this from a different direction - sometimes lo...
+2025-10-24 16:11:10,605 [INFO] [DT SEND] Jamie is ambitious....
+2025-10-24 16:11:26,634 [INFO] [DT RECV] <p>I notice we keep coming back to Jamie's ambition, which tells me this is a really important part of who they are. Let's explore what might be fueli...
+2025-10-24 16:11:29,025 [INFO] Follow-up limit check:
+2025-10-24 16:11:29,026 [INFO]   Final count: 0
+2025-10-24 16:11:29,027 [INFO]   Transitioned: True
+2025-10-24 16:11:29,028 [INFO] [PASS] [PASS] DT - Follow-up limit enforced
+2025-10-24 16:11:29,028 [INFO] [TIME]END: TEST 7: DT - Follow-up Limit (took 58.221s)
+
+2025-10-24 16:11:29,029 [INFO] 
+======================================================================
+2025-10-24 16:11:29,030 [INFO]   AI FEATURE TESTS
+2025-10-24 16:11:29,030 [INFO] ======================================================================
+2025-10-24 16:11:29,034 [INFO] [START TEST] START: TEST 8: Character Extraction
+2025-10-24 16:11:29,035 [INFO] Sending character extraction request...
+2025-10-24 16:11:59,048 [ERROR] [WARN] [FAIL] Character extraction error: HTTPConnectionPool(host='10.163.13.8', port=5000): Read timed out. (read timeout=30)
+2025-10-24 16:11:59,050 [INFO] [TIME]END: TEST 8: Character Extraction (took 30.016s)
+
+2025-10-24 16:11:59,050 [INFO] [START TEST] START: TEST 9: World AI - Template Suggestions
+2025-10-24 16:11:59,052 [INFO] Requesting template for magic system...
+2025-10-24 16:12:10,716 [INFO] Template suggestion results:
+2025-10-24 16:12:10,717 [INFO]   Fields suggested: 7
+2025-10-24 16:12:10,717 [INFO]   Sample fields:
+2025-10-24 16:12:10,718 [INFO]     - Core Principles: Fundamental rules and logic governing how elementa
+2025-10-24 16:12:10,719 [INFO]     - Element Types: List of elements that can be bound (e.g., fire, wa
+2025-10-24 16:12:10,720 [INFO]     - Binding Methods: Techniques or rituals used to bind elements (e.g.,
+2025-10-24 16:12:10,722 [INFO] [PASS] [PASS] World AI - Template suggestion working
+2025-10-24 16:12:10,723 [INFO] [TIME]END: TEST 9: World AI - Template Suggestions (took 11.674s)
+
+2025-10-24 16:12:10,725 [INFO] [START TEST] START: TEST 10: Image Generation
+2025-10-24 16:12:10,726 [INFO] Requesting image generation...
+2025-10-24 16:12:33,301 [INFO] [PASS] [PASS] Image generation working
+2025-10-24 16:12:33,303 [INFO]   Generated URL: https://cdn.leonardo.ai/users/94f5cf86-ff23-4035-a1fd-1004a5b2e118/generations/c...
+2025-10-24 16:12:33,303 [INFO] [TIME]END: TEST 10: Image Generation (took 22.577s)
+
+2025-10-24 16:12:33,305 [INFO] 
+======================================================================
+2025-10-24 16:12:33,305 [INFO]   PERFORMANCE TESTS
+2025-10-24 16:12:33,307 [INFO] ======================================================================
+2025-10-24 16:12:33,307 [INFO] [START TEST] START: TEST 11: Response Time Performance
+2025-10-24 16:12:34,184 [INFO] [BS SEND] How might we make the story compelling?...
+2025-10-24 16:12:46,830 [INFO] [BS RECV] <p>Great starting point! 'How might we make the story compelling?' gets right to the heart of engaging storytelling. To build a strong foundation, let...
+2025-10-24 16:12:48,142 [INFO] [DT SEND] I want to develop my character...
+2025-10-24 16:12:59,768 [INFO] [DT RECV] <p>Great! Let's start by getting to know your character better. First, could you tell me who this character is and what they're like?</p>
+<p>Then, to ...
+2025-10-24 16:13:01,770 [INFO] Response times:
+2025-10-24 16:13:01,770 [INFO]   BS: 12.647s
+2025-10-24 16:13:01,770 [INFO]   DT: 13.627s
+2025-10-24 16:13:01,770 [INFO] [PASS] [PASS] Response times acceptable
+2025-10-24 16:13:01,770 [INFO] [TIME]END: TEST 11: Response Time Performance (took 28.463s)
+
+2025-10-24 16:13:01,770 [INFO] [START TEST] START: TEST 12: Background Thread Separation
+2025-10-24 16:13:02,586 [INFO] [BS SEND] How might we X?...
+2025-10-24 16:13:14,836 [INFO] [BS RECV] <p>I see you're starting with a 'How might we' question! To help frame this properly, could you tell me what specific story problem or challenge you'd...
+2025-10-24 16:13:14,837 [INFO] [BS SEND] Tell me about the character Akio...
+2025-10-24 16:13:26,316 [INFO] [BS RECV] <p>I'll look up information about the character Akio for you. While I search, could you tell me more about what you'd like to explore in your story? F...
+2025-10-24 16:13:28,318 [INFO] Background separation check:
+2025-10-24 16:13:28,318 [INFO]   Response time: 13.481s
+2025-10-24 16:13:28,318 [INFO]   Has immediate message: True
+2025-10-24 16:13:28,321 [INFO]   Background processing: True
+2025-10-24 16:13:28,322 [INFO] [PASS] [PASS] Background separation working
+2025-10-24 16:13:28,323 [INFO] [TIME]END: TEST 12: Background Thread Separation (took 26.553s)
+
+2025-10-24 16:13:28,325 [INFO] 
+======================================================================
+2025-10-24 16:13:28,325 [INFO]   INTEGRATION TESTS
+2025-10-24 16:13:28,326 [INFO] ======================================================================
+2025-10-24 16:13:28,326 [INFO] [START TEST] START: TEST 13: Mode Switching
+2025-10-24 16:13:29,177 [INFO] Testing BS mode...
+2025-10-24 16:13:29,178 [INFO] [BS SEND] How might we solve X?...
+2025-10-24 16:13:41,314 [INFO] [BS RECV] <p>Great start! 'How might we solve X?' gives us a broad direction. To make this more actionable for creative brainstorming, could you tell me more ab...
+2025-10-24 16:13:42,658 [INFO] Testing DT mode...
+2025-10-24 16:13:42,658 [INFO] [DT SEND] I want to develop Y...
+2025-10-24 16:13:57,005 [INFO] [DT RECV] <p>Great! Let's start by figuring out what kind of story element "Y" is. Is Y a character, a location, an organization, or perhaps a plot point? Once ...
+2025-10-24 16:13:59,007 [INFO] Mode check:
+2025-10-24 16:13:59,009 [INFO]   BS mode: brainstorming
+2025-10-24 16:13:59,010 [INFO]   DT mode: deepthinking
+2025-10-24 16:13:59,011 [INFO] [PASS] [PASS] Mode switching works
+2025-10-24 16:13:59,012 [INFO] [TIME]END: TEST 13: Mode Switching (took 30.686s)
+
+2025-10-24 16:13:59,013 [INFO] 
+======================================================================
+2025-10-24 16:13:59,014 [INFO]   TEST RESULTS SUMMARY
+2025-10-24 16:13:59,014 [INFO] ======================================================================
+2025-10-24 16:13:59,015 [INFO] 
+======================================================================
+2025-10-24 16:13:59,016 [INFO] DETAILED RESULTS:
+2025-10-24 16:13:59,017 [INFO] ======================================================================
+2025-10-24 16:13:59,019 [INFO] [PASS] [PASS] Health Check [CRITICAL]
+2025-10-24 16:13:59,020 [INFO] [PASS] [PASS] BS - Full CPS Loop [CRITICAL]
+2025-10-24 16:13:59,022 [INFO] [PASS] [PASS] BS - Idea Evaluations
+2025-10-24 16:13:59,023 [INFO] [PASS] [PASS] BS - Auto-Advancement
+2025-10-24 16:13:59,024 [INFO] [PASS] [PASS] DT - Scaffolding [CRITICAL]
+2025-10-24 16:13:59,025 [INFO] [PASS] [PASS] DT - Precision Check
+2025-10-24 16:13:59,026 [INFO] [PASS] [PASS] DT - Angle Transitions
+2025-10-24 16:13:59,027 [INFO] [PASS] [PASS] DT - Follow-up Limit
+2025-10-24 16:13:59,028 [INFO] [WARN] [FAIL] Character Extraction [CRITICAL]
+2025-10-24 16:13:59,029 [INFO] [PASS] [PASS] World AI Templates [CRITICAL]
+2025-10-24 16:13:59,030 [INFO] [PASS] [PASS] Image Generation
+2025-10-24 16:13:59,031 [INFO] [PASS] [PASS] Response Times
+2025-10-24 16:13:59,032 [INFO] [PASS] [PASS] Background Separation
+2025-10-24 16:13:59,033 [INFO] [PASS] [PASS] Mode Switching
+2025-10-24 16:13:59,034 [INFO] 
+======================================================================
+2025-10-24 16:13:59,035 [INFO] SUMMARY:
+2025-10-24 16:13:59,036 [INFO] ======================================================================
+2025-10-24 16:13:59,036 [INFO] Overall:  13/14 tests passed (92.9%)
+2025-10-24 16:13:59,037 [INFO] Critical: 4/5 critical tests passed
+2025-10-24 16:13:59,038 [ERROR] 
+======================================================================
+2025-10-24 16:13:59,039 [ERROR] [WARN][WARN][WARN] CRITICAL TESTS FAILED [WARN][WARN][WARN]
+2025-10-24 16:13:59,040 [ERROR] ======================================================================
+2025-10-24 16:13:59,040 [ERROR] Failed critical tests:
+2025-10-24 16:13:59,041 [ERROR]   - Character Extraction
+2025-10-24 16:13:59,042 [INFO] 
+======================================================================
+2025-10-24 16:13:59,043 [INFO] Some tests failed. Run diagnostics:
+2025-10-24 16:13:59,044 [INFO]   python test_consolidated_server.py diagnose
+2025-10-24 16:13:59,045 [INFO] ======================================================================

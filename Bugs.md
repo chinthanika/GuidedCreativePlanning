@@ -156,6 +156,67 @@
     - May need to recursively check for multiple levels of nesting
     - Could be related to how follow-up questions are handled after staging
 
+- [ ] **HIGH:** BS Chatbot accepts vague/nonsensical HMW questions without validation
+  - Severity: High
+  - Affected area: Brainstorming chatbot validation, bs_chatbot_server.py
+  - Summary: The brainstorming chatbot accepts and processes vague "How might we" questions (like "How might we X?") without requesting clarification or concrete details.
+  - Reproduction steps from test logs:
+    ```log
+    2025-10-24 16:07:39,355 [INFO] [BS SEND] How might we X?...
+    2025-10-24 16:07:52,083 [INFO] [BS RECV] <p>I see you're starting with 'How might we X?' - that's the right approach...
+    2025-10-24 16:07:52,084 [INFO] [BS SEND] How might we Y?...
+    2025-10-24 16:08:03,461 [INFO] [BS RECV] <p>Great! 'How might we Y?' is another good framing question...
+    2025-10-24 16:08:03,462 [INFO] [BS SEND] How might we Z?...
+    2025-10-24 16:08:15,032 [INFO] [BS RECV] <p>Perfect! With three 'How might we' questions...
+    ```
+  - Expected behavior:
+    1. Check HMW questions for concrete problem statements
+    2. Reject placeholder variables (X, Y, Z) or vague terms
+    3. Request specific details about the problem being addressed
+    4. Only add HMW to session after validation
+  - Actual behavior:
+    - Accepts literally any string prefixed with "How might we"
+    - Praises vague questions as "good framing"
+    - Counts placeholder variables toward HMW quota
+    - Advances stages with meaningless questions
+  - Suggested fixes:
+    1. Add validation rules in BS chatbot:
+    ````python
+    def validate_hmw_question(question):
+        """Validate HMW question content"""
+        # Remove HMW prefix for content check
+        content = question.lower().replace("how might we", "").strip()
+        
+        # Check for placeholder variables
+        if re.match(r'^[xyz][\?\s]*$', content):
+            return False, "Could you be more specific? What exactly are you trying to solve?"
+            
+        # Check for minimum content
+        if len(content.split()) < 3:
+            return False, "Please elaborate on your question. What specific problem or opportunity are you addressing?"
+            
+        return True, None
+
+    # In message handling:
+    if message.startswith("How might we"):
+        is_valid, error = validate_hmw_question(message)
+        if not is_valid:
+            return {"message": error}
+    ````
+    2. Add content guidelines to prompt:
+       - Require specific problem statements
+       - Reject single-word or variable placeholders
+       - Request clarification for vague terms
+    3. Add test cases for HMW validation
+  - Files to inspect:
+    - backend/servers/bs_chatbot_server.py
+    - backend/services/BSConversationFlowManager.py
+  - Priority: P1 (High - affects quality of brainstorming output)
+  - Notes:
+    - Consider adding minimum word count for HMW questions
+    - Add logging for rejected HMW attempts
+    - Update test suite to verify validation behavior
+
 - [ ] **MEDIUM:** Raw JSON visible during LLM processing instead of placeholder messages
   - Severity: Medium
   - Affected area: Chatbot server response handling, dt_chatbot_server.py

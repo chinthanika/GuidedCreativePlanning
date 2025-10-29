@@ -16,6 +16,7 @@ import firebase_admin
 from firebase_admin import credentials, db
 
 from utils.BSConversationFlowManager import BSConversationFlowManager
+from utils.chat_utils import DEEPSEEK_API_KEY
 
 app = Flask(__name__)
 CORS(app)
@@ -35,7 +36,7 @@ logger.addHandler(rotating_handler)
 logger.info("Flask app initialized, logging set up.")
 
 # -------------------- DEEPSEEK + PROFILE MANAGER --------------------
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+# DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 if not DEEPSEEK_API_KEY:
     logger.critical("DeepSeek API key not found. Exiting.")
     raise ValueError("DEEPSEEK_API_KEY environment variable is not set")
@@ -52,7 +53,7 @@ KEEP_LAST_N = 5  # how many summaries to keep for context
 
 PROFILE_MANAGER_URL = "https://guidedcreativeplanning-pfm.onrender.com/api"
 
-SYSTEM_PROMPT = SYSTEM_PROMPT = """
+SYSTEM_PROMPT = """
 You are DeepSeek, a creative writing assistant that helps users track story entities, relationships, and events, and guide students through Creative Problem Solving (CPS) cycles for story planning.
 
 Main goals:

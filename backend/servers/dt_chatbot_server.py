@@ -17,6 +17,7 @@ import firebase_admin
 from firebase_admin import credentials, db
 
 from utils.DTConversationFlowManager import DTConversationFlowManager
+from utils.chat_utils import DEEPSEEK_API_KEY
 
 app = Flask(__name__)
 CORS(app)
@@ -78,7 +79,7 @@ firebase_admin.initialize_app(cred, {
 })
 
 # DeepSeek API setup
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+# DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 if not DEEPSEEK_API_KEY:
     raise ValueError("DEEPSEEK_API_KEY environment variable is not set")
 

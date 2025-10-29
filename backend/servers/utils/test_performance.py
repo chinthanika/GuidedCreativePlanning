@@ -30,12 +30,12 @@ log.addHandler(rotating_handler)
 @contextmanager
 def log_duration(section_name):
     start = time.time()
-    log.info(f"▶ START: {section_name}")
+    log.info(f"[START TEST] START: {section_name}")
     try:
         yield
     finally:
         duration = time.time() - start
-        log.info(f"⏱ END: {section_name} (took {duration:.3f}s)\n")
+        log.info(f"[TIME]END: {section_name} (took {duration:.3f}s)\n")
 
 # ----- Endpoints (edit if needed) -----
 BASE_URL_DT = "http://10.163.2.53:5003"   # DeepThinker Flask server

@@ -24785,3 +24785,330 @@ requests.exceptions.HTTPError: 404 Client Error: NOT FOUND for url: http://local
 2025-10-17 17:36:21,090 [DEBUG] Markdown parsed to HTML.
 2025-10-17 17:36:23,505 [INFO] [TIMING] Total request time: 55.208s
 2025-10-17 17:36:23,507 [INFO] [CHAT] No background actions to process
+2025-10-27 12:47:51,155 [INFO] Flask app initialized, logging set up.
+2025-10-27 12:47:51,156 [CRITICAL] DeepSeek API key not found. Exiting.
+2025-10-27 12:49:22,460 [INFO] Flask app initialized, logging set up.
+2025-10-27 12:49:22,460 [CRITICAL] DeepSeek API key not found. Exiting.
+2025-10-27 12:49:57,075 [INFO] Flask app initialized, logging set up.
+2025-10-27 12:49:57,079 [CRITICAL] DeepSeek API key not found. Exiting.
+2025-10-27 12:50:37,988 [INFO] Flask app initialized, logging set up.
+2025-10-27 12:50:38,077 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-27 12:50:38,242 [INFO] DeepSeek client initialized.
+2025-10-27 12:50:38,248 [DEBUG] [SERVER] Starting Flask server
+2025-10-27 12:50:41,528 [INFO] Flask app initialized, logging set up.
+2025-10-27 12:50:41,530 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-27 12:50:41,657 [INFO] DeepSeek client initialized.
+2025-10-27 12:50:41,657 [DEBUG] [SERVER] Starting Flask server
+2025-10-27 12:53:34,128 [DEBUG] [CHAT] /chat endpoint called
+2025-10-27 12:53:44,634 [WARNING] [WARN] Invalid session_id -OcZ-tbLjM4-pDzeFjF7, creating new. Error: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10.0)
+2025-10-27 12:53:54,723 [ERROR] Failed to initialize BS session: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10.0)
+Traceback (most recent call last):
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 449, in _make_request
+    six.raise_from(e, None)
+  File "<string>", line 3, in raise_from
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 444, in _make_request
+    httplib_response = conn.getresponse()
+                       ^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\http\client.py", line 1374, in getresponse
+    response.begin()
+  File "C:\Python311\Lib\http\client.py", line 318, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\http\client.py", line 279, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\socket.py", line 705, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\ssl.py", line 1278, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\ssl.py", line 1134, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python311\Lib\site-packages\requests\adapters.py", line 489, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 787, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\util\retry.py", line 550, in increment
+    raise six.reraise(type(error), error, _stacktrace)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\packages\six.py", line 770, in reraise
+    raise value
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 703, in urlopen
+    httplib_response = self._make_request(
+                       ^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 451, in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
+  File "C:\Python311\Lib\site-packages\urllib3\connectionpool.py", line 340, in _raise_timeout
+    raise ReadTimeoutError(
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10.0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\bs_chatbot_server.py", line 1616, in chat
+    cfm_session = BSConversationFlowManager.create_session(user_id)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 121, in create_session
+    res = requests.post(f"{SESSION_API_URL}/session/create", json=payload, timeout=10.0)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\api.py", line 115, in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\sessions.py", line 587, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\sessions.py", line 701, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\site-packages\requests\adapters.py", line 578, in send
+    raise ReadTimeout(e, request=request)
+requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='guidedcreativeplanning-session.onrender.com', port=443): Read timed out. (read timeout=10.0)
+2025-10-27 13:03:39,055 [DEBUG] [CHAT] /chat endpoint called
+2025-10-27 13:03:40,955 [INFO] [TIMING] Session init took 1.891s
+2025-10-27 13:03:41,086 [DEBUG] [AUTO-CHECK] stage=Clarify, hmws=0, ideas=0, cats=0
+2025-10-27 13:03:41,087 [INFO] [TIMING] Auto-check took 0.130s (auto_advanced=False)
+2025-10-27 13:03:42,550 [INFO] [TIMING] Summary fetch took 1.456s
+2025-10-27 13:03:48,954 [INFO] [TIMING] DeepSeek API call took 6.055s
+2025-10-27 13:03:48,956 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "respond",
+    "reasoning": "User has started a new session in Clarify stage. Need to help them frame their creative problem with HMW questions.",
+    "data": {
+      "message": "Hi! I'm here to help you with creative problem solving for your story. We're starting in the Clarify stage, where we'll frame your challenge with \"How Might We...\" questions. What creative problem or story challenge would you like to explore?"
+    }
+  }
+]
+2025-10-27 13:03:48,957 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "respond",
+    "reasoning": "User has started a new session in Clarify stage. Need to help them frame their creative problem with HMW questions.",
+    "data": {
+      "message": "Hi! I'm here to help you with creative problem solving for your story. We're starting in the Clarify ...
+2025-10-27 13:03:48,959 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-27 13:03:48,960 [DEBUG] Normalizing DeepSeek response: [{'action': 'respond', 'reasoning': 'User has started a new session in Clarify stage. Need to help them frame their creative problem with HMW questions.', 'data': {'message': 'Hi! I\'m here to help you with creative problem solving for your story. We\'re starting in the Clarify stage, where we\'ll frame your challenge with "How Might We..." questions. What creative problem or story challenge would you like to explore?'}}]
+2025-10-27 13:03:48,961 [INFO] [TIMING] Response parsing took 0.004s
+2025-10-27 13:03:48,963 [INFO] [CHAT] Actions: 1 respond, 0 immediate, 0 background
+2025-10-27 13:03:48,964 [DEBUG] Parsing markdown. Output format: html
+2025-10-27 13:03:48,984 [DEBUG] Markdown parsed to HTML.
+2025-10-27 13:03:48,990 [INFO] [TIMING] Total request time: 9.935s
+2025-10-27 13:03:48,992 [INFO] [CHAT] No background actions to process
+2025-10-27 13:04:21,852 [DEBUG] [CHAT] /chat endpoint called
+2025-10-27 13:04:22,888 [INFO] [TIMING] Session init took 1.035s
+2025-10-27 13:04:23,030 [DEBUG] [AUTO-CHECK] stage=Clarify, hmws=0, ideas=0, cats=0
+2025-10-27 13:04:23,030 [INFO] [TIMING] Auto-check took 0.141s (auto_advanced=False)
+2025-10-27 13:04:24,392 [INFO] [TIMING] Summary fetch took 1.353s
+2025-10-27 13:04:29,894 [INFO] [TIMING] DeepSeek API call took 5.125s
+2025-10-27 13:04:29,895 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "respond",
+    "reasoning": "User wants to discuss character Akio - this could be part of story planning, so I'll engage while keeping CPS framework in mind",
+    "data": {
+      "message": "Great! Let's start by framing this as a creative challenge. What aspect of Akio would you like to explore or develop? For example: his backstory, motivations, relationships, or character arc?"
+    }
+  }
+]
+2025-10-27 13:04:29,897 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "respond",
+    "reasoning": "User wants to discuss character Akio - this could be part of story planning, so I'll engage while keeping CPS framework in mind",
+    "data": {
+      "message": "Great! Let's start by framing this as a creative challenge. What aspect of Akio would you...
+2025-10-27 13:04:29,898 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-27 13:04:29,899 [DEBUG] Normalizing DeepSeek response: [{'action': 'respond', 'reasoning': "User wants to discuss character Akio - this could be part of story planning, so I'll engage while keeping CPS framework in mind", 'data': {'message': "Great! Let's start by framing this as a creative challenge. What aspect of Akio would you like to explore or develop? For example: his backstory, motivations, relationships, or character arc?"}}]
+2025-10-27 13:04:29,900 [INFO] [TIMING] Response parsing took 0.003s
+2025-10-27 13:04:29,901 [INFO] [CHAT] Actions: 1 respond, 0 immediate, 0 background
+2025-10-27 13:04:29,902 [DEBUG] Parsing markdown. Output format: html
+2025-10-27 13:04:29,904 [DEBUG] Markdown parsed to HTML.
+2025-10-27 13:04:29,909 [INFO] [TIMING] Total request time: 8.058s
+2025-10-27 13:04:29,911 [INFO] [CHAT] No background actions to process
+2025-10-27 13:04:42,053 [DEBUG] [CHAT] /chat endpoint called
+2025-10-27 13:04:43,138 [INFO] [TIMING] Session init took 1.083s
+2025-10-27 13:04:43,144 [DEBUG] [AUTO-CHECK] stage=Clarify, hmws=0, ideas=0, cats=0
+2025-10-27 13:04:43,146 [INFO] [TIMING] Auto-check took 0.006s (auto_advanced=False)
+2025-10-27 13:04:44,361 [INFO] [TIMING] Summary fetch took 1.208s
+2025-10-27 13:04:53,940 [INFO] [TIMING] DeepSeek API call took 9.207s
+2025-10-27 13:04:53,941 [DEBUG] [CHAT] DeepSeek raw response: [
+  {
+    "action": "get_info",
+    "reasoning": "User is asking about previous mentions of character Akio. Need to check if this character exists in the profile manager before proceeding with CPS stages.",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "payload": {
+            "filters": {
+              "label": "Akio"
+            }
+          },
+          "message": "Searching for existing character Akio to understand what's already been established"
+        }
+      ]
+    }
+  },
+  {
+    "action": "respond",
+    "reasoning": "Acknowledge the request and explain we're checking for existing information about Akio",
+    "data": {
+      "message": "I'll check what we have recorded about Akio so far. While I do that, could you tell me what specific aspect of Akio you'd like to explore? This will help us frame our first 'How Might We...' question for character development."
+    }
+  }
+]
+2025-10-27 13:04:53,941 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "get_info",
+    "reasoning": "User is asking about previous mentions of character Akio. Need to check if this character exists in the profile manager before proceeding with CPS stages.",
+    "data": {
+      "requests": [
+        {
+          "target": "nodes",
+          "payload":...
+2025-10-27 13:04:53,942 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-27 13:04:53,943 [DEBUG] Normalizing DeepSeek response: [{'action': 'get_info', 'reasoning': 'User is asking about previous mentions of character Akio. Need to check if this character exists in the profile manager before proceeding with CPS stages.', 'data': {'requests': [{'target': 'nodes', 'payload': {'filters': {'label': 'Akio'}}, 'message': "Searching for existing character Akio to understand what's already been established"}]}}, {'action': 'respond', 'reasoning': "Acknowledge the request and explain we're checking for existing information about Akio", 'data': {'message': "I'll check what we have recorded about Akio so far. While I do that, could you tell me what specific aspect of Akio you'd like to explore? This will help us frame our first 'How Might We...' question for character development."}}]
+2025-10-27 13:04:53,945 [INFO] [TIMING] Response parsing took 0.004s
+2025-10-27 13:04:53,946 [INFO] [CHAT] Actions: 1 respond, 0 immediate, 1 background
+2025-10-27 13:04:53,947 [DEBUG] Parsing markdown. Output format: html
+2025-10-27 13:04:53,949 [DEBUG] Markdown parsed to HTML.
+2025-10-27 13:04:54,300 [INFO] [TIMING] Total request time: 12.247s
+2025-10-27 13:04:54,301 [DEBUG] [CHAT] Spawning background thread for 1 actions
+2025-10-27 13:04:54,306 [DEBUG] [CHAT] Background thread started
+2025-10-27 13:04:54,308 [INFO] [THREAD] Background thread started with 1 actions
+2025-10-27 13:04:54,312 [INFO] [THREAD] Session ID: -OcZ2CUrwd2Mt3hW3MWK
+2025-10-27 13:04:54,313 [INFO] [THREAD] User ID: 04E9XYnVi8QD3yHAIXeBHCRp2sN2
+2025-10-27 13:04:54,314 [INFO] [THREAD] Action 1/1: get_info
+2025-10-27 13:04:54,315 [DEBUG] [THREAD] Processing action 1/1: get_info
+2025-10-27 13:04:54,317 [DEBUG] [ACTION] handle_action called at depth=0
+2025-10-27 13:04:54,318 [DEBUG] [ACTION] Processing action: get_info, Data: {'requests': [{'target': 'nodes', 'payload': {'filters': {'label': 'Akio'}}, 'message': "Searching for existing character Akio to understand what's already been established"}]}
+2025-10-27 13:04:54,319 [DEBUG] Fetching profile data for user 04E9XYnVi8QD3yHAIXeBHCRp2sN2 with request: {'target': 'nodes', 'payload': {'filters': {'label': 'Akio'}}, 'message': "Searching for existing character Akio to understand what's already been established"}
+2025-10-27 13:04:54,320 [DEBUG] Sending GET request to Profile Manager: https://guidedcreativeplanning-pfm.onrender.com/api/nodes with filters {'label': 'Akio'}
+2025-10-27 13:04:54,728 [DEBUG] Profile Manager response: {'31': {'aliases': ['Futaba Akio', 'Akio Futaba', 'Akio'], 'attributes': {'age': 'young', 'character_arc': 'starts confused and uncertain, grows through encounters with others into someone who wants to use art to make a difference in the world', 'family': 'Futaba', 'hair_color': 'blue', 'initial_state': 'young, confused, seeking identity beyond family name', 'interests': 'comics, art', 'motivations': 'love of art, desire to transcend family name and make something of himself', 'occupation': 'aspiring artist', 'personality': 'polite, nervous, passionate about art'}, 'entity_id': '6ad50acb27ed004e9e1db193780430aa5696aec61578d4b2e37c23ff723963ba', 'group': 'Person', 'id': '6ad50acb27ed004e9e1db193780430aa5696aec61578d4b2e37c23ff723963ba', 'label': 'Akio'}}
+2025-10-27 13:04:54,729 [DEBUG] [GET_INFO] Single fetch: {'target': 'nodes', 'payload': {'filters': {'label': 'Akio'}}, 'message': "Searching for existing character Akio to understand what's already been established"}
+2025-10-27 13:04:54,730 [INFO] [TIMING] Profile data fetch took 0.411s for 1 requests
+2025-10-27 13:05:04,268 [INFO] [TIMING] Follow-up DeepSeek call took 9.537s
+2025-10-27 13:05:04,269 [DEBUG] [ACTION] DeepSeek follow-up raw reply: [
+  {
+    "action": "respond",
+    "reasoning": "User asked about previous mentions of Akio. Based on the profile manager data, I can summarize what we've established about this character.",
+    "data": {
+      "message": "Here's what we've established about Akio so far:\n\n**Akio Futaba** - A young aspiring artist with blue hair\n\n**Personality & State:**\n- Polite, nervous, but passionate about art\n- Starts confused and uncertain about his identity\n- Wants to transcend his family name and make something of himself\n\n**Interests & Motivations:**\n- Loves comics and art\n- Driven by his passion for art and desire to make a difference in the world\n\n**Character Arc:**\n- Begins confused and seeking identity\n- Grows through encounters with others\n- Develops into someone who wants to use art to make a difference\n\nHe's part of the Futaba family and seems to be on a journey of self-discovery through his artistic passion. Would you like to brainstorm more about his story development?"
+    }
+  }
+]
+2025-10-27 13:05:04,270 [DEBUG] Parsing DeepSeek raw response:
+[
+  {
+    "action": "respond",
+    "reasoning": "User asked about previous mentions of Akio. Based on the profile manager data, I can summarize what we've established about this character.",
+    "data": {
+      "message": "Here's what we've established about Akio so far:\n\n**Akio Futaba** - A young...
+2025-10-27 13:05:04,271 [DEBUG] Parsed raw string as JSON successfully.
+2025-10-27 13:05:04,272 [DEBUG] Normalizing DeepSeek response: [{'action': 'respond', 'reasoning': "User asked about previous mentions of Akio. Based on the profile manager data, I can summarize what we've established about this character.", 'data': {'message': "Here's what we've established about Akio so far:\n\n**Akio Futaba** - A young aspiring artist with blue hair\n\n**Personality & State:**\n- Polite, nervous, but passionate about art\n- Starts confused and uncertain about his identity\n- Wants to transcend his family name and make something of himself\n\n**Interests & Motivations:**\n- Loves comics and art\n- Driven by his passion for art and desire to make a difference in the world\n\n**Character Arc:**\n- Begins confused and seeking identity\n- Grows through encounters with others\n- Develops into someone who wants to use art to make a difference\n\nHe's part of the Futaba family and seems to be on a journey of self-discovery through his artistic passion. Would you like to brainstorm more about his story development?"}}]
+2025-10-27 13:05:04,273 [DEBUG] [ACTION] handle_action called at depth=1
+2025-10-27 13:05:04,275 [DEBUG] [ACTION] Processing respond action with data: {'message': "Here's what we've established about Akio so far:\n\n**Akio Futaba** - A young aspiring artist with blue hair\n\n**Personality & State:**\n- Polite, nervous, but passionate about art\n- Starts confused and uncertain about his identity\n- Wants to transcend his family name and make something of himself\n\n**Interests & Motivations:**\n- Loves comics and art\n- Driven by his passion for art and desire to make a difference in the world\n\n**Character Arc:**\n- Begins confused and seeking identity\n- Grows through encounters with others\n- Develops into someone who wants to use art to make a difference\n\nHe's part of the Futaba family and seems to be on a journey of self-discovery through his artistic passion. Would you like to brainstorm more about his story development?"}
+2025-10-27 13:05:04,276 [DEBUG] Parsing markdown. Output format: html
+2025-10-27 13:05:04,282 [DEBUG] Markdown parsed to HTML.
+2025-10-27 13:05:04,288 [DEBUG] [ACTION] Responding with: <p>Here's what we've established about Akio so far:</p>
+<p><strong>Akio Futaba</strong> - A young aspiring artist with blue hair</p>
+<p><strong>Personality &amp; State:</strong>
+- Polite, nervous, but passionate about art
+- Starts confused and uncertain about his identity
+- Wants to transcend his family name and make something of himself</p>
+<p><strong>Interests &amp; Motivations:</strong>
+- Loves comics and art
+- Driven by his passion for art and desire to make a difference in the world</p>
+<p><strong>Character Arc:</strong>
+- Begins confused and seeking identity
+- Grows through encounters with others
+- Develops into someone who wants to use art to make a difference</p>
+<p>He's part of the Futaba family and seems to be on a journey of self-discovery through his artistic passion. Would you like to brainstorm more about his story development?</p>, stage=Clarify
+2025-10-27 13:05:04,289 [INFO] [TIMING] handle_action completed in 0.016s at depth=1
+2025-10-27 13:05:04,292 [INFO] [TIMING] handle_action completed in 9.975s at depth=0
+2025-10-27 13:05:04,294 [INFO] [THREAD] Completed action get_info in 9.978s
+2025-10-27 13:05:04,295 [INFO] [THREAD] Background thread completed in 9.984s
+2025-10-27 13:18:16,986 [DEBUG] [CHAT] /chat endpoint called
+2025-10-27 13:18:17,248 [WARNING] [WARN] Invalid session_id -OcZ4DfPhNIF_4MwE7u9, creating new. Error: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/get_metadata
+2025-10-27 13:18:17,411 [ERROR] Failed to initialize BS session: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/create
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\bs_chatbot_server.py", line 1613, in chat
+    cfm_session = BSConversationFlowManager(user_id, session_id)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 52, in __init__
+    self._refresh_metadata_cache()
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 134, in _refresh_metadata_cache
+    res = self._post("/session/get_metadata", payload)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 76, in _post
+    r.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/get_metadata
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\bs_chatbot_server.py", line 1616, in chat
+    cfm_session = BSConversationFlowManager.create_session(user_id)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\BSConversationFlowManager.py", line 122, in create_session
+    res.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 502 Server Error: Bad Gateway for url: https://guidedcreativeplanning-session.onrender.com/session/create
+2025-10-27 13:49:02,838 [INFO] Flask app initialized, logging set up.
+2025-10-27 13:49:02,840 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-27 13:49:03,054 [INFO] DeepSeek client initialized.
+2025-10-27 13:49:03,059 [DEBUG] [SERVER] Starting Flask server
+2025-10-27 13:54:45,668 [INFO] Flask app initialized, logging set up.
+2025-10-27 13:54:45,669 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-27 13:54:45,871 [INFO] DeepSeek client initialized.
+2025-10-27 13:54:45,877 [DEBUG] [SERVER] Starting Flask server
+2025-10-27 14:05:13,401 [INFO] Flask app initialized, logging set up.
+2025-10-27 14:05:13,401 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-27 14:05:13,512 [INFO] DeepSeek client initialized.
+2025-10-27 14:05:13,514 [DEBUG] [SERVER] Starting Flask server
+2025-10-27 14:22:45,972 [INFO] Flask app initialized, logging set up.
+2025-10-27 14:22:45,973 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-27 14:22:46,086 [INFO] DeepSeek client initialized.
+2025-10-27 14:22:46,089 [DEBUG] [SERVER] Starting Flask server
+2025-10-27 14:23:14,171 [INFO] Flask app initialized, logging set up.
+2025-10-27 14:23:14,172 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-27 14:23:14,233 [INFO] DeepSeek client initialized.
+2025-10-27 14:23:14,236 [DEBUG] [SERVER] Starting Flask server
+2025-10-27 14:33:37,194 [INFO] Flask app initialized, logging set up.
+2025-10-27 14:33:37,195 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-27 14:33:37,318 [INFO] DeepSeek client initialized.
+2025-10-27 14:33:37,321 [DEBUG] [SERVER] Starting Flask server
+2025-10-27 14:44:16,249 [INFO] Flask app initialized, logging set up.
+2025-10-27 14:44:16,249 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-27 14:44:16,355 [INFO] DeepSeek client initialized.
+2025-10-27 14:44:16,358 [DEBUG] [SERVER] Starting Flask server
+2025-10-27 14:49:10,196 [INFO] Flask app initialized, logging set up.
+2025-10-27 14:49:10,196 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-27 14:49:10,275 [INFO] DeepSeek client initialized.
+2025-10-27 14:49:10,277 [DEBUG] [SERVER] Starting Flask server
+2025-10-27 14:52:05,985 [INFO] Flask app initialized, logging set up.
+2025-10-27 14:52:05,985 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-27 14:52:06,056 [INFO] DeepSeek client initialized.
+2025-10-27 14:52:06,057 [DEBUG] [SERVER] Starting Flask server
+2025-10-27 15:02:47,243 [INFO] Flask app initialized, logging set up.
+2025-10-27 15:02:47,244 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-27 15:02:47,394 [INFO] DeepSeek client initialized.
+2025-10-27 15:02:47,398 [DEBUG] [SERVER] Starting Flask server
+2025-10-27 15:03:26,454 [INFO] Flask app initialized, logging set up.
+2025-10-27 15:03:26,454 [DEBUG] Initializing DeepSeek OpenAI client...
+2025-10-27 15:03:26,536 [INFO] DeepSeek client initialized.
+2025-10-27 15:03:26,539 [DEBUG] [SERVER] Starting Flask server
