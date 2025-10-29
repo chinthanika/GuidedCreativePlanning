@@ -303,7 +303,8 @@ function deduplicateLinks(newLinks, existingLinks, idMapping) {
 }
 
 function MapGenerator() {
-  const url = 'http://10.163.7.106:5000/characters/extract';
+  const url_base = process.env.REACT_APP_AI_SERVER_URL || 'http://10.163.7.106:5000';
+  const url = `${url_base}/characters/extract`;
 
   const { currentUser } = useAuthValue()
   const [text, setText] = useState('')
