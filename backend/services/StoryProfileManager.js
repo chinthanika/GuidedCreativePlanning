@@ -434,9 +434,86 @@ class StoryProfileManager {
         }
         return { deleted: false, reason: `No event found with title '${title}'` };
     }
+    
     /* =========================
        WORLD-BUILDING (hierarchical data)
     ========================= */
+
+    async getWorldMetadata() {
+        const ref = child(this.baseRef, "world/metadata");
+        const snapshot = await get(ref);
+        return snapshot.exists() ? snapshot.val() : null;
+    }
+
+    async setWorldMetadata(metadata) {
+        const ref = child(this.baseRef, "world/metadata");
+        return set(ref, metadata);
+    }
+
+    async getAllWorldItems() {
+        const ref = child(this.baseRef, "world/items");
+        const snapshot = await get(ref);
+        return snapshot.exists() ? snapshot.val() : {};
+    }
+
+    async getWorldItem(itemId) {
+        const ref = child(this.baseRef, `world/items/${itemId}`);
+        const snapshot = await get(ref);
+        return snapshot.exists() ? { firebaseKey: itemId, ...snapshot.val() } : null;
+    }
+
+    async createWorldItem(data) {
+        const itemsRef = child(this.baseRef, "world/items");
+        const newRef = push(itemsRef);
+        await set(newRef, data);
+        return { firebaseKey: newRef.key, ...data };
+    }
+
+    async updateWorldItem(itemId, data) {
+        const ref = child(this.baseRef, `world/items/${itemId}`);
+        await set(ref, data);
+        return { firebaseKey: itemId, ...data };
+    }
+
+    async deleteWorldItem(itemId) {
+        // Get all items to find children
+        const allItems = await this.getAllWorldItems();
+
+        const deleteRecursive = async (currentId) => {
+            // Find and delete children
+            for (const [key, item] of Object.entries(allItems)) {
+                if (item?.parentId === currentId) {
+                    await deleteRecursive(key);
+                }
+            }
+
+            // Delete current item
+            const ref = child(this.baseRef, `world/items/${currentId}`);
+            await remove(ref);
+        };
+
+        await deleteRecursive(itemId);
+        return { deleted: true, itemId };
+    }
+
+    async getAllWorldTemplates() {
+        const ref = child(this.baseRef, "world/templates");
+        const snapshot = await get(ref);
+        return snapshot.exists() ? snapshot.val() : {};
+    }
+
+    async getWorldTemplate(templateId) {
+        const ref = child(this.baseRef, `world/templates/${templateId}`);
+        const snapshot = await get(ref);
+        return snapshot.exists() ? { firebaseKey: templateId, ...snapshot.val() } : null;
+    }
+
+    async createWorldTemplate(data) {
+        const templatesRef = child(this.baseRef, "world/templates");
+        const newRef = push(templatesRef);
+        await set(newRef, data);
+        return { firebaseKey: newRef.key, ...data };
+    }
 
     async getAllWorldBuilding() {
         const snapshot = await get(this.worldBuildingRef);

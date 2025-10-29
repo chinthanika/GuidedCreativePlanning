@@ -3866,3 +3866,57 @@
 [2025-10-29 14:54:12] [INFO] [DATA] Fetched 2 templates
 [2025-10-29 14:54:12] [INFO] [END] /api/world/templates at 2025-10-29T06:54:12.072Z (duration: 2ms)
 [2025-10-29 14:54:12] [INFO] [REQ] GET /api/world/templates?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (3ms)
+[2025-10-29 14:56:39] [INFO] [START] /api/world/metadata at 2025-10-29T06:56:39.187Z
+[2025-10-29 14:56:39] [INFO] [DATA] World metadata: My World
+[2025-10-29 14:56:39] [INFO] [END] /api/world/metadata at 2025-10-29T06:56:39.438Z (duration: 251ms)
+[2025-10-29 14:56:39] [INFO] [REQ] GET /api/world/metadata?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (253ms)
+[2025-10-29 14:56:39] [INFO] [START] /api/world/items at 2025-10-29T06:56:39.448Z
+[2025-10-29 14:56:39] [INFO] [DATA] Fetched 3 world items
+[2025-10-29 14:56:39] [INFO] [END] /api/world/items at 2025-10-29T06:56:39.451Z (duration: 3ms)
+[2025-10-29 14:56:39] [INFO] [REQ] GET /api/world/items?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (4ms)
+[2025-10-29 14:56:39] [INFO] [START] /api/world/templates at 2025-10-29T06:56:39.461Z
+[2025-10-29 14:56:39] [INFO] [DATA] Fetched 2 templates
+[2025-10-29 14:56:39] [INFO] [END] /api/world/templates at 2025-10-29T06:56:39.701Z (duration: 240ms)
+[2025-10-29 14:56:39] [INFO] [REQ] GET /api/world/templates?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (240ms)
+[2025-10-29 14:56:49] [INFO] [REQUEST] PUT /api/world/items/:itemId with body: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2","data":{"customFields":{"alliances":["f"],"culturalInfluences":"","currentConflicts":["aaaaaa"],"diplomaticRelations":"","economicSystems":"","majorPowers":["ddddd"],"resourceDistribution":"","tradeNetworks":""},"description":"The geopolitical situation of the world (starting)","name":"Geopolitics","parentId":"-OciPGTig2Ovlm-8lWoo","templateId":"-OciSR7ZXgn8cj9TqylO","type":"Geopolitics"}}
+[2025-10-29 14:56:50] [INFO] [DATA] Updated world item -OciSR3MxehNe6fAlvdH
+[2025-10-29 14:56:50] [INFO] [REQ] PUT /api/world/items/-OciSR3MxehNe6fAlvdH → 200 (686ms)
+[2025-10-29 14:56:50] [INFO] [REQUEST] POST /api/world/templates with body: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2","data":{"createdFor":"-OciSR3MxehNe6fAlvdH","fields":[{"accepted":true,"description":"List of dominant nations, empires, or factions shaping global politics","fieldName":"majorPowers","fieldType":"array","inherited":false,"required":false},{"accepted":true,"description":"Ongoing wars, disputes, or tensions between geopolitical entities","fieldName":"currentConflicts","fieldType":"array","inherited":false,"required":false},{"accepted":true,"description":"Key political or military alliances and their purposes","fieldName":"alliances","fieldType":"array","inherited":false,"required":false},{"accepted":true,"description":"Overview of dominant economic models and trade networks","fieldName":"economicSystems","fieldType":"text","inherited":false,"required":false},{"accepted":true,"description":"General state of diplomacy, treaties, and international cooperation","fieldName":"diplomaticRelations","fieldType":"text","inherited":false,"required":false}],"name":"Geopolitics Template"}}
+[2025-10-29 14:56:50] [INFO] [DATA] Created template -OcikIIhEKhzNJq_YXYI
+[2025-10-29 14:56:50] [INFO] [REQ] POST /api/world/templates → 200 (245ms)
+[2025-10-29 14:56:50] [INFO] [REQUEST] PUT /api/world/items/:itemId with body: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2","data":{"customFields":{"alliances":["f"],"culturalInfluences":"","currentConflicts":["aaaaaa"],"diplomaticRelations":"","economicSystems":"","majorPowers":["ddddd"],"resourceDistribution":"","tradeNetworks":""},"description":"The geopolitical situation of the world (starting)","name":"Geopolitics","parentId":"-OciPGTig2Ovlm-8lWoo","templateId":"-OcikIIhEKhzNJq_YXYI","type":"Geopolitics"}}
+[2025-10-29 14:56:51] [INFO] [DATA] Updated world item -OciSR3MxehNe6fAlvdH
+[2025-10-29 14:56:51] [INFO] [REQ] PUT /api/world/items/-OciSR3MxehNe6fAlvdH → 200 (730ms)
+[2025-10-29 14:56:51] [INFO] [START] /api/world/metadata at 2025-10-29T06:56:51.392Z
+[2025-10-29 14:56:51] [INFO] [DATA] World metadata: My World
+[2025-10-29 14:56:51] [INFO] [END] /api/world/metadata at 2025-10-29T06:56:51.395Z (duration: 3ms)
+[2025-10-29 14:56:51] [INFO] [REQ] GET /api/world/metadata?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (4ms)
+[2025-10-29 14:56:51] [INFO] [START] /api/world/items at 2025-10-29T06:56:51.405Z
+[2025-10-29 14:56:51] [INFO] [DATA] Fetched 3 world items
+[2025-10-29 14:56:51] [INFO] [END] /api/world/items at 2025-10-29T06:56:51.643Z (duration: 238ms)
+[2025-10-29 14:56:51] [INFO] [REQ] GET /api/world/items?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 200 (240ms)
+[2025-10-29 14:56:51] [INFO] [START] /api/world/templates at 2025-10-29T06:56:51.653Z
+[2025-10-29 14:56:51] [INFO] [DATA] Fetched 3 templates
+[2025-10-29 14:56:51] [INFO] [END] /api/world/templates at 2025-10-29T06:56:51.894Z (duration: 241ms)
+[2025-10-29 14:56:51] [INFO] [REQ] GET /api/world/templates?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 200 (242ms)
+[2025-10-29 14:57:26] [INFO] [REQUEST] PUT /api/world/items/:itemId with body: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2","data":{"customFields":{"alliances":["f"],"culturalInfluences":[],"currentConflicts":["aaaaaa"],"diplomaticRelations":"","economicSystems":"","majorPowers":["ddddd"],"resourceDistribution":"","tradeNetworks":"","strategicResources":[],"ideologicalBlocs":[],"colonialHistory":"","globalGovernance":"","demographicTrends":[],"environmentalIssues":[],"militaryCapabilities":""},"description":"The geopolitical situation of the world (starting)","name":"Geopolitics","parentId":"-OciPGTig2Ovlm-8lWoo","templateId":"-OcikIIhEKhzNJq_YXYI","type":"Geopolitics"}}
+[2025-10-29 14:57:26] [INFO] [DATA] Updated world item -OciSR3MxehNe6fAlvdH
+[2025-10-29 14:57:26] [INFO] [REQ] PUT /api/world/items/-OciSR3MxehNe6fAlvdH → 200 (698ms)
+[2025-10-29 14:57:26] [INFO] [REQUEST] POST /api/world/templates with body: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2","data":{"createdFor":"-OciSR3MxehNe6fAlvdH","fields":[{"accepted":true,"description":"List of dominant nations, empires, or factions shaping global politics","fieldName":"majorPowers","fieldType":"array","inherited":false,"required":false},{"accepted":true,"description":"Ongoing wars, disputes, or tensions between geopolitical entities","fieldName":"currentConflicts","fieldType":"array","inherited":false,"required":false},{"accepted":true,"description":"Key political or military alliances and their purposes","fieldName":"alliances","fieldType":"array","inherited":false,"required":false},{"accepted":true,"description":"Overview of dominant economic models and trade networks","fieldName":"economicSystems","fieldType":"text","inherited":false,"required":false},{"accepted":true,"description":"General state of diplomacy, treaties, and international cooperation","fieldName":"diplomaticRelations","fieldType":"text","inherited":false,"required":false},{"description":"Key natural or economic resources that influence global power dynamics","fieldName":"strategicResources","fieldType":"array","required":false},{"description":"Groups of nations aligned by shared political or philosophical beliefs","fieldName":"ideologicalBlocs","fieldType":"array","required":false},{"description":"Historical context of colonization and its lasting impacts on current borders and relations","fieldName":"colonialHistory","fieldType":"text","required":false},{"description":"International organizations, treaties, or systems that regulate global affairs","fieldName":"globalGovernance","fieldType":"text","required":false},{"description":"Population movements, growth rates, and diversity affecting political stability","fieldName":"demographicTrends","fieldType":"array","required":false},{"description":"Cross-border environmental challenges like climate change or resource depletion","fieldName":"environmentalIssues","fieldType":"array","required":false},{"description":"Overview of global military strengths, technologies, and doctrines","fieldName":"militaryCapabilities","fieldType":"text","required":false},{"description":"How culture, language, or religion shapes international relations and alliances","fieldName":"culturalInfluences","fieldType":"array","required":false}],"name":"Geopolitics Template"}}
+[2025-10-29 14:57:27] [INFO] [DATA] Created template -OcikRBTkqUCPNovgleE
+[2025-10-29 14:57:27] [INFO] [REQ] POST /api/world/templates → 200 (243ms)
+[2025-10-29 14:57:27] [INFO] [REQUEST] PUT /api/world/items/:itemId with body: {"userId":"04E9XYnVi8QD3yHAIXeBHCRp2sN2","data":{"customFields":{"alliances":["f"],"culturalInfluences":[],"currentConflicts":["aaaaaa"],"diplomaticRelations":"","economicSystems":"","majorPowers":["ddddd"],"resourceDistribution":"","tradeNetworks":"","strategicResources":[],"ideologicalBlocs":[],"colonialHistory":"","globalGovernance":"","demographicTrends":[],"environmentalIssues":[],"militaryCapabilities":""},"description":"The geopolitical situation of the world (starting)","name":"Geopolitics","parentId":"-OciPGTig2Ovlm-8lWoo","templateId":"-OcikRBTkqUCPNovgleE","type":"Geopolitics"}}
+[2025-10-29 14:57:27] [INFO] [DATA] Updated world item -OciSR3MxehNe6fAlvdH
+[2025-10-29 14:57:27] [INFO] [REQ] PUT /api/world/items/-OciSR3MxehNe6fAlvdH → 200 (686ms)
+[2025-10-29 14:57:27] [INFO] [START] /api/world/metadata at 2025-10-29T06:57:27.761Z
+[2025-10-29 14:57:27] [INFO] [DATA] World metadata: My World
+[2025-10-29 14:57:27] [INFO] [END] /api/world/metadata at 2025-10-29T06:57:27.763Z (duration: 2ms)
+[2025-10-29 14:57:27] [INFO] [REQ] GET /api/world/metadata?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 304 (4ms)
+[2025-10-29 14:57:27] [INFO] [START] /api/world/items at 2025-10-29T06:57:27.781Z
+[2025-10-29 14:57:28] [INFO] [DATA] Fetched 3 world items
+[2025-10-29 14:57:28] [INFO] [END] /api/world/items at 2025-10-29T06:57:28.020Z (duration: 239ms)
+[2025-10-29 14:57:28] [INFO] [REQ] GET /api/world/items?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 200 (240ms)
+[2025-10-29 14:57:28] [INFO] [START] /api/world/templates at 2025-10-29T06:57:28.032Z
+[2025-10-29 14:57:28] [INFO] [DATA] Fetched 4 templates
+[2025-10-29 14:57:28] [INFO] [END] /api/world/templates at 2025-10-29T06:57:28.269Z (duration: 237ms)
+[2025-10-29 14:57:28] [INFO] [REQ] GET /api/world/templates?userId=04E9XYnVi8QD3yHAIXeBHCRp2sN2 → 200 (238ms)
