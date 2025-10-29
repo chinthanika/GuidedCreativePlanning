@@ -31,14 +31,7 @@ from prompts.world_system_prompt import WORLD_SYSTEM_PROMPT
 
 app = Flask(__name__)
 
-CORS(app, resources={
-    r"/*": {
-        "origins": ["http://localhost:3000", "http://127.0.0.1:3000"],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True
-    }
-})
+CORS(app)
 
 # ============================================
 # LOGGING SETUP
@@ -854,11 +847,12 @@ def generate_image():
 # RUN SERVER
 # ============================================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+# ---------------- RUN ----------------
+if __name__ == "__main__":
     print(f"Starting AI Server on port {port}")
     print(f"   - Brainstorming: /chat/brainstorming")
     print(f"   - Deep Thinking: /chat/deepthinking")
     print(f"   - World AI: /worldbuilding/suggest-template")
     print(f"   - Characters: /characters/extract")
     print(f"   - Images: /images/generate")
-    app.run(host="0.0.0.0", port=port, debug=True, threaded=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
