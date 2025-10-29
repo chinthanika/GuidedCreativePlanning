@@ -2,7 +2,7 @@ import { database } from '../Firebase/firebase';
 import { ref, push } from "firebase/database";
 
 // Configuration
-const CONSOLIDATED_SERVER_URL = "http://10.163.8.118:5000";
+const CONSOLIDATED_SERVER_URL = process.env.REACT_APP_AI_SERVER_URL;
 
 let sessionID = null;
 
