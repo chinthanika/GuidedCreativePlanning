@@ -261,7 +261,7 @@ const TimelineCardGrid = () => {
 
     const handleGenerateImage = async (description) => {
         try {
-            const response = await axios.post('https://guidedcreativeplanning-1.onrender.com/images', {
+            const response = await axios.post(`${process.env.REACT_APP_AI_SERVER_URL}/images/generate`, {
                 description
             });
             return response.data.image_url;
