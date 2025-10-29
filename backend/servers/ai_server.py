@@ -582,26 +582,41 @@ Instructions:
 # ============================================
 @app.route('/worldbuilding/suggest-template', methods=['POST'])
 def suggest_world_template():
-    world_logger.info("[WORLD] Template request")
+    world_logger.info("[WORLD] Template suggestion request")
     
     data = request.json
     user_id = data.get('userId')
-    item_type = data.get('itemType')
     item_name = data.get('itemName', '')
-    parent_fields = data.get('parentFields', {})
-    existing_fields = data.get('existingFields', {})
+    item_type = data.get('itemType', '')
+    item_description = data.get('itemDescription', '')
+    parent_template_fields = data.get('parentTemplateFields', [])
+    existing_custom_fields = data.get('existingCustomFields', {})
 
     if not user_id or not item_type:
         return jsonify({'error': 'userId and itemType required'}), 400
 
-    user_prompt = f"Item Type: {item_type}"
+    # Build context for AI
+    context_parts = [f"Item Type: {item_type}"]
+    
     if item_name:
-        user_prompt += f"\nItem Name: {item_name}"
-    if parent_fields:
-        user_prompt += f"\n\nParent Fields: {json.dumps(list(parent_fields.keys()))}"
-    if existing_fields:
-        user_prompt += f"\n\nExisting Fields: {json.dumps(list(existing_fields.keys()))}"
-    user_prompt += "\n\nSuggest relevant custom fields."
+        context_parts.append(f"Item Name: {item_name}")
+    
+    if item_description:
+        context_parts.append(f"Description: {item_description}")
+    
+    if parent_template_fields:
+        # Extract field names from template field objects
+        inherited_field_names = [f['fieldName'] for f in parent_template_fields]
+        context_parts.append(f"\nInherited Fields (already included):\n{json.dumps(inherited_field_names, indent=2)}")
+    
+    if existing_custom_fields:
+        context_parts.append(f"\nExisting Custom Fields:\n{json.dumps(list(existing_custom_fields.keys()), indent=2)}")
+    
+    context_parts.append("\n\nSuggest ADDITIONAL relevant custom fields that complement the inherited/existing fields.")
+    context_parts.append("DO NOT duplicate inherited or existing fields.")
+    context_parts.append("Focus on fields that add new dimensions to this specific item.")
+    
+    user_prompt = "\n".join(context_parts)
 
     try:
         response = client.chat.completions.create(
@@ -611,23 +626,28 @@ def suggest_world_template():
                 {"role": "user", "content": user_prompt}
             ],
             response_format={'type': 'json_object'},
-            stream=False
+            stream=False,
+            timeout=30
         )
 
         result = json.loads(response.choices[0].message.content)
         suggested_fields = result.get('suggestedFields', [])
 
-        if parent_fields:
-            inherited = []
-            for field_name, field_data in parent_fields.items():
-                if field_name not in existing_fields:
-                    inherited.append({
-                        'fieldName': field_name,
-                        'fieldType': field_data.get('type', 'text'),
-                        'description': 'Inherited from parent'
+        # Prepend inherited fields with "inherited" flag
+        if parent_template_fields:
+            inherited_with_flag = []
+            for field in parent_template_fields:
+                # Check if not already in existing custom fields
+                if field['fieldName'] not in existing_custom_fields:
+                    inherited_with_flag.append({
+                        **field,
+                        'inherited': True,
+                        'description': field.get('description', '') + ' [Inherited from parent]'
                     })
-            suggested_fields = inherited + suggested_fields
+            suggested_fields = inherited_with_flag + suggested_fields
 
+        world_logger.info(f"[WORLD] Suggested {len(suggested_fields)} fields ({len(parent_template_fields)} inherited)")
+        
         return jsonify({'suggestedFields': suggested_fields})
 
     except Exception as e:

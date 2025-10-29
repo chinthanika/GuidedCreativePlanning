@@ -4,7 +4,7 @@ import bodyParser from "body-parser";
 import ConfirmationPipeline from "../services/ConfirmationPipeline.js";
 import cors from "cors";
 
-import { child, push, remove, set } from "firebase/database";
+import { child, push, remove, set, get, update } from "firebase/database";
 
 import logger from "./logger.js";
 import { requestLogger } from "./loggerMiddleware.js";
@@ -340,194 +340,327 @@ app.get("/api/events/:identifier", async (req, res) => {
   }
 });
 
-/**
- * Get all world-building data
- */
-app.get("/api/worldbuilding", async (req, res) => {
-  const endLog = logTimingStart("/api/worldbuilding");
+app.get("/api/world/metadata", async (req, res) => {
+  const endLog = logTimingStart("/api/world/metadata");
 
   try {
     const { userId } = req.query;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
     const pipeline = new ConfirmationPipeline({ uid: userId });
-    const worldBuilding = await pipeline.manager.getAllWorldBuilding();
+    let metadata = await getCachedWorldMetadata(userId, pipeline);
 
-    logger.info(`[DATA] World-building data fetched: ${Object.keys(worldBuilding).length} categories`);
+    if (!metadata) {
+      // Initialize if doesn't exist
+      const worldItemsRef = child(pipeline.manager.baseRef, "world/items");
+      const rootRef = push(worldItemsRef);
 
-    res.status(200).json(worldBuilding);
+      await set(rootRef, {
+        name: "My World",
+        type: "World",
+        description: "The root of your fictional world",
+        parentId: null,
+        templateId: null,
+        customFields: {}
+      });
+
+      metadata = {
+        name: "My World",
+        description: "The root of your fictional world",
+        rootId: rootRef.key
+      };
+
+      const metadataRef = child(pipeline.manager.baseRef, "world/metadata");
+      await set(metadataRef, metadata);
+
+      // Cache the new metadata
+      pmCache.set(userId, 'world_metadata', metadata);
+    }
+
+    logger.info(`[DATA] World metadata: ${metadata.name}`);
+    res.status(200).json(metadata);
     endLog();
   } catch (err) {
-    logger.error(`[ERROR] /api/worldbuilding: ${err}`);
+    logger.error(`[ERROR] /api/world/metadata: ${err}`);
     res.status(500).json({ error: err.message });
     endLog();
   }
 });
 
-/**
- * Get all items in a specific world-building category
- * Example: GET /api/worldbuilding/magicSystems?userId=abc123
- */
-app.get("/api/worldbuilding/:category", async (req, res) => {
-  const endLog = logTimingStart(`/api/worldbuilding/:category`);
-  logger.info(`[REQUEST] /api/worldbuilding/:category request with params: ${JSON.stringify(req.params)}, query: ${JSON.stringify(req.query)}`);
+// 2. NEW: Update world metadata
+app.post("/api/world/metadata", async (req, res) => {
+  logger.info(`[REQUEST] POST /api/world/metadata with body: ${JSON.stringify(req.body)}`);
+
+  try {
+    const { userId, name, description } = req.body;
+
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+    if (!name) return res.status(400).json({ error: "name is required" });
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    const metadataRef = child(pipeline.manager.baseRef, "world/metadata");
+
+    const updates = { name };
+    if (description !== undefined) updates.description = description;
+
+    await update(metadataRef, updates);
+
+    // Also update root item if it exists
+    const snapshot = await get(metadataRef);
+    if (snapshot.exists()) {
+      const metadata = snapshot.val();
+      if (metadata.rootId) {
+        const rootRef = child(pipeline.manager.baseRef, `world/items/${metadata.rootId}`);
+        await update(rootRef, updates);
+      }
+    }
+    pmCache.invalidate(userId, 'world_metadata');
+    pmCache.invalidate(userId, 'world_items');
+    pmCache.invalidateAll(userId);
+
+    logger.info(`[DATA] Updated world metadata: ${name}`);
+    res.status(200).json({ success: true, ...updates });
+  } catch (err) {
+    logger.error(`[ERROR] POST /api/world/metadata: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/world/items", async (req, res) => {
+  const endLog = logTimingStart("/api/world/items");
 
   try {
     const { userId } = req.query;
-    const { category } = req.params;
-
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
-    const validCategories = ["magicSystems", "cultures", "locations", "technology", "history", "organizations"];
-    if (!validCategories.includes(category)) {
-      return res.status(400).json({
-        error: `Invalid category: ${category}. Must be one of: ${validCategories.join(", ")}`
-      });
-    }
-
     const pipeline = new ConfirmationPipeline({ uid: userId });
-    let items = await pipeline.manager.getWorldBuildingCategory(category);
+    const items = await getCachedWorldItems(userId, pipeline);
 
-    logger.info(`[DATA] Items fetched in category '${category}': ${Object.keys(items).length}`);
-
-    if (req.query.parentKey !== undefined) {
-      // Handle both "null" string and actual null
-      const parentKey = req.query.parentKey === "null" || req.query.parentKey === "" ? null : req.query.parentKey;
-      items = Object.fromEntries(
-        Object.entries(items).filter(([_, item]) => {
-          // Check parentKey field (Firebase key reference)
-          const itemParentKey = item?.parentKey === "null" || item?.parentKey === undefined ? null : item?.parentKey;
-          return itemParentKey === parentKey;
-        })
-      );
-      logger.info(`[DATA] Filtered by parentKey '${parentKey}': ${Object.keys(items).length} items`);
-    }
-
-    // Optional filtering by name (fuzzy search)
-    if (req.query.name) {
-      const searchName = req.query.name.toLowerCase();
-      items = Object.fromEntries(
-        Object.entries(items).filter(([_, item]) =>
-          item?.name?.toLowerCase().includes(searchName)
-        )
-      );
-      logger.info(`[DATA] Filtered by name '${req.query.name}': ${Object.keys(items).length} items`);
-    }
-
-    logger.info(`[DATA] Returning world-building items: ${Object.keys(items)}`);
+    logger.info(`[DATA] Fetched ${Object.keys(items).length} world items`);
     res.status(200).json(items);
     endLog();
   } catch (err) {
-    logger.error(`[ERROR] /api/worldbuilding/:category: ${err}`);
+    logger.error(`[ERROR] /api/world/items: ${err}`);
     res.status(500).json({ error: err.message });
     endLog();
   }
 });
 
-/**
- * Get a specific world-building item by ID or name
- * Example: GET /api/worldbuilding/magicSystems/magic_001?userId=abc123
- */
-app.get("/api/worldbuilding/:category/:identifier", async (req, res) => {
-  logger.info(`[REQUEST] /api/worldbuilding/:category/:identifier request with params: ${JSON.stringify(req.params)}, query: ${JSON.stringify(req.query)}`);
+app.get("/api/world/items/:itemId", async (req, res) => {
+  logger.info(`[REQUEST] /api/world/items/:itemId with params: ${JSON.stringify(req.params)}`);
 
   try {
     const { userId } = req.query;
-    const { category, identifier } = req.params;
+    const { itemId } = req.params;
 
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
-    const validCategories = ["magicSystems", "cultures", "locations", "technology", "history", "organizations"];
-    if (!validCategories.includes(category)) {
-      return res.status(400).json({
-        error: `Invalid category: ${category}. Must be one of: ${validCategories.join(", ")}`
-      });
-    }
-
     const pipeline = new ConfirmationPipeline({ uid: userId });
+    const itemRef = child(pipeline.manager.baseRef, `world/items/${itemId}`);
+    const snapshot = await get(itemRef);
 
-    // Try by ID first, then by name
-    let item = await pipeline.manager.getWorldBuildingItem(category, identifier);
-    if (!item) {
-      item = await pipeline.manager.resolveWorldBuildingItemByName(category, identifier);
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Item not found" });
     }
 
-    if (!item) {
-      return res.status(404).json({
-        error: `Item not found in category '${category}' with identifier: ${identifier}`
-      });
-    }
-
-    res.status(200).json(item);
+    res.status(200).json({ firebaseKey: itemId, ...snapshot.val() });
   } catch (err) {
-    logger.error(`[ERROR] /api/worldbuilding/:category/:identifier: ${err}`);
+    logger.error(`[ERROR] /api/world/items/:itemId: ${err}`);
     res.status(500).json({ error: err.message });
   }
 });
 
-/**
- * Get children of a specific world-building item
- * Example: GET /api/worldbuilding/magicSystems/magic_001/children?userId=abc123
- */
-app.get("/api/worldbuilding/:category/:identifier/children", async (req, res) => {
-  logger.info(`[REQUEST] /api/worldbuilding/:category/:identifier/children request with params: ${JSON.stringify(req.params)}, query: ${JSON.stringify(req.query)}`);
+// 5. NEW: Create item
+app.post("/api/world/items", async (req, res) => {
+  logger.info(`[REQUEST] POST /api/world/items with body: ${JSON.stringify(req.body)}`);
 
   try {
-    const { userId } = req.query;
-    const { category, identifier } = req.params;
+    const { userId, data } = req.body;
 
     if (!userId) return res.status(400).json({ error: "userId is required" });
-
-    const validCategories = ["magicSystems", "cultures", "locations", "technology", "history", "organizations"];
-    if (!validCategories.includes(category)) {
-      return res.status(400).json({
-        error: `Invalid category: ${category}. Must be one of: ${validCategories.join(", ")}`
-      });
+    if (!data) return res.status(400).json({ error: "data is required" });
+    if (!data.name || !data.type || !data.description) {
+      return res.status(400).json({ error: "name, type, and description are required" });
     }
 
     const pipeline = new ConfirmationPipeline({ uid: userId });
 
-    // Get parent item to verify it exists
-    let parent = await pipeline.manager.getWorldBuildingItem(category, identifier);
-    if (!parent) {
-      parent = await pipeline.manager.resolveWorldBuildingItemByName(category, identifier);
+    // Validate parentId exists if provided
+    if (data.parentId) {
+      const parentRef = child(pipeline.manager.baseRef, `world/items/${data.parentId}`);
+      const parentSnapshot = await get(parentRef);
+      if (!parentSnapshot.exists()) {
+        return res.status(400).json({ error: `Parent item not found: ${data.parentId}` });
+      }
     }
 
-    if (!parent) {
-      return res.status(404).json({
-        error: `Parent item not found in category '${category}' with identifier: ${identifier}`
-      });
-    }
+    const itemsRef = child(pipeline.manager.baseRef, "world/items");
+    const newItemRef = push(itemsRef);
 
-    // The parent object from getWorldBuildingItem includes the Firebase key
-    const parentFirebaseKey = parent.key; // This is the Firebase key
-    
-    // Filter items where parentKey matches this Firebase key
-    const allItems = await pipeline.manager.getWorldBuildingCategory(category);
-    const children = Object.fromEntries(
-      Object.entries(allItems).filter(([_, item]) => item?.parentKey === parentFirebaseKey)
-    );
+    await set(newItemRef, data);
 
-    logger.info(`[DATA] Children found for '${identifier}': ${Object.keys(children).length}`);
-    res.status(200).json(children);
+    pmCache.invalidate(userId, 'world_items');
+    pmCache.invalidateAll(userId);
+
+    logger.info(`[DATA] Created world item ${newItemRef.key}`);
+    res.status(200).json({
+      success: true,
+      firebaseKey: newItemRef.key,
+      data
+    });
   } catch (err) {
-    logger.error(`[ERROR] /api/worldbuilding/:category/:identifier/children: ${err}`);
+    logger.error(`[ERROR] POST /api/world/items: ${err}`);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.get("/api/world-metadata", async (req, res) => {
-  const { userId } = req.query;
-  const pipeline = new ConfirmationPipeline({ uid: userId });
-  const worldName = await pipeline.manager.getWorldName() || "My World";
-  res.json({ name: worldName });
+// 6. NEW: Update item
+app.put("/api/world/items/:itemId", async (req, res) => {
+  logger.info(`[REQUEST] PUT /api/world/items/:itemId with body: ${JSON.stringify(req.body)}`);
+
+  try {
+    const { userId, data } = req.body;
+    const { itemId } = req.params;
+
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+    if (!data) return res.status(400).json({ error: "data is required" });
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    const itemRef = child(pipeline.manager.baseRef, `world/items/${itemId}`);
+
+    // Check item exists
+    const snapshot = await get(itemRef);
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Item not found" });
+    }
+
+    // Validate parentId if being updated
+    if (data.parentId && data.parentId !== itemId) {
+      const parentRef = child(pipeline.manager.baseRef, `world/items/${data.parentId}`);
+      const parentSnapshot = await get(parentRef);
+      if (!parentSnapshot.exists()) {
+        return res.status(400).json({ error: `Parent item not found: ${data.parentId}` });
+      }
+    }
+
+    await set(itemRef, data);
+
+    pmCache.invalidate(userId, 'world_items');
+    pmCache.invalidateAll(userId);
+
+    logger.info(`[DATA] Updated world item ${itemId}`);
+    res.status(200).json({ success: true, firebaseKey: itemId, data });
+  } catch (err) {
+    logger.error(`[ERROR] PUT /api/world/items/:itemId: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.post("/api/world-metadata", async (req, res) => {
-  const { userId, name } = req.body;
-  const pipeline = new ConfirmationPipeline({ uid: userId });
-  await pipeline.manager.setWorldName(name);
-  res.json({ success: true });
+// 7. NEW: Delete item (cascade to children)
+app.delete("/api/world/items/:itemId", async (req, res) => {
+  logger.info(`[REQUEST] DELETE /api/world/items/:itemId`);
+
+  try {
+    const { userId } = req.query;
+    const { itemId } = req.params;
+
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+
+    // Get all items to find children
+    const itemsRef = child(pipeline.manager.baseRef, "world/items");
+    const snapshot = await get(itemsRef);
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "No items found" });
+    }
+
+    const allItems = snapshot.val();
+
+    if (!allItems[itemId]) {
+      return res.status(404).json({ error: "Item not found" });
+    }
+
+    // Recursive delete function
+    const deleteRecursive = async (currentId) => {
+      // Find and delete all children
+      for (const [key, item] of Object.entries(allItems)) {
+        if (item?.parentId === currentId) {
+          await deleteRecursive(key);
+        }
+      }
+
+      // Delete current item
+      const itemRef = child(pipeline.manager.baseRef, `world/items/${currentId}`);
+      await remove(itemRef);
+      logger.info(`[DATA] Deleted world item ${currentId}`);
+    };
+
+    await deleteRecursive(itemId);
+
+    pmCache.invalidate(userId, 'world_items');
+    pmCache.invalidateAll(userId);
+
+    res.status(200).json({ success: true, deleted: itemId });
+  } catch (err) {
+    logger.error(`[ERROR] DELETE /api/world/items/:itemId: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/world/templates", async (req, res) => {
+  const endLog = logTimingStart("/api/world/templates");
+
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    const templates = await getCachedWorldTemplates(userId, pipeline);
+
+    logger.info(`[DATA] Fetched ${Object.keys(templates).length} templates`);
+    res.status(200).json(templates);
+    endLog();
+  } catch (err) {
+    logger.error(`[ERROR] /api/world/templates: ${err}`);
+    res.status(500).json({ error: err.message });
+    endLog();
+  }
+});
+
+
+// Create template
+app.post("/api/world/templates", async (req, res) => {
+  logger.info(`[REQUEST] POST /api/world/templates with body: ${JSON.stringify(req.body)}`);
+
+  try {
+    const { userId, data } = req.body;
+
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+    if (!data) return res.status(400).json({ error: "data is required" });
+    if (!data.name || !data.fields) {
+      return res.status(400).json({ error: "name and fields are required" });
+    }
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    const templatesRef = child(pipeline.manager.baseRef, "world/templates");
+    const newTemplateRef = push(templatesRef);
+
+    await set(newTemplateRef, data);
+
+    pmCache.invalidate(userId, 'world_templates');
+
+    logger.info(`[DATA] Created template ${newTemplateRef.key}`);
+    res.status(200).json({
+      success: true,
+      firebaseKey: newTemplateRef.key,
+      data
+    });
+  } catch (err) {
+    logger.error(`[ERROR] POST /api/world/templates: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /**
@@ -707,229 +840,70 @@ app.post("/api/events/delete", async (req, res) => {
  */
 
 app.post("/api/events/batch-update", async (req, res) => {
-    logger.info(`[REQUEST] /api/events/batch-update with body: ${JSON.stringify(req.body)}`);
-
-    try {
-        const { userId, updates } = req.body;
-
-        if (!userId) return res.status(400).json({ error: "userId is required" });
-        if (!Array.isArray(updates)) return res.status(400).json({ error: "updates must be an array" });
-        if (updates.length === 0) return res.status(400).json({ error: "updates array cannot be empty" });
-
-        const pipeline = new ConfirmationPipeline({ uid: userId });
-        const allEvents = await pipeline.manager.getAllEvents();
-        const eventCount = Object.keys(allEvents).length;
-
-        // Validate all updates first
-        for (const update of updates) {
-            if (!update.eventId) {
-                return res.status(400).json({ error: "Each update must have an eventId (Firebase key)" });
-            }
-
-            const event = await pipeline.manager.getEvent(update.eventId);
-            if (!event) {
-                return res.status(404).json({ error: `Event not found: ${update.eventId}` });
-            }
-
-            if (update.order !== undefined) {
-                if (!Number.isInteger(update.order) || update.order < 0 || update.order >= eventCount) {
-                    return res.status(400).json({
-                        error: `Invalid order for event ${update.eventId}: ${update.order}`
-                    });
-                }
-            }
-
-            if (update.stage !== undefined) {
-                const validStages = ["introduction", "rising action", "climax", "falling action", "resolution"];
-                if (!validStages.includes(update.stage)) {
-                    return res.status(400).json({
-                        error: `Invalid stage for event ${update.eventId}: ${update.stage}`
-                    });
-                }
-            }
-        }
-
-        // Perform updates
-        const results = [];
-        for (const update of updates) {
-            const event = await pipeline.manager.getEvent(update.eventId);
-            const updatedEvent = { ...event, ...update };
-            // Remove eventId from the update object since it's the key
-            const { eventId, ...cleanUpdate } = updatedEvent;
-            const result = await pipeline.manager.upsertEvent(update.eventId, cleanUpdate);
-            results.push(result);
-            logger.info(`[DATA] Event ${update.eventId} batch updated`);
-        }
-
-        pmCache.invalidateAll(userId);
-
-        res.status(200).json({
-            success: true,
-            count: results.length,
-            updated: results
-        });
-
-    } catch (err) {
-        logger.error(`[ERROR] /api/events/batch-update: ${err}`);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-/**
- * Direct world-building item creation/update (no staging required)
- * POST /api/worldbuilding/update
- * Body: {
- *   userId: string,
- *   category: string,
- *   firebaseKey?: string, // Optional - only for updates
- *   data: { name, type, description, parentKey, ... }
- * }
- */
-app.post("/api/worldbuilding/update", async (req, res) => {
-  logger.info(`[REQUEST] /api/worldbuilding/update with body: ${JSON.stringify(req.body)}`);
+  logger.info(`[REQUEST] /api/events/batch-update with body: ${JSON.stringify(req.body)}`);
 
   try {
-    const { userId, category, firebaseKey, data } = req.body;
+    const { userId, updates } = req.body;
 
     if (!userId) return res.status(400).json({ error: "userId is required" });
-    if (!category) return res.status(400).json({ error: "category is required" });
-    if (!data) return res.status(400).json({ error: "data object is required" });
-
-    const validCategories = ["magicSystems", "cultures", "locations", "technology", "history", "organizations"];
-    if (!validCategories.includes(category)) {
-      return res.status(400).json({
-        error: `Invalid category: ${category}. Must be one of: ${validCategories.join(", ")}`
-      });
-    }
+    if (!Array.isArray(updates)) return res.status(400).json({ error: "updates must be an array" });
+    if (updates.length === 0) return res.status(400).json({ error: "updates array cannot be empty" });
 
     const pipeline = new ConfirmationPipeline({ uid: userId });
+    const allEvents = await pipeline.manager.getAllEvents();
+    const eventCount = Object.keys(allEvents).length;
 
-    // Validate parentKey if provided
-    if (data.parentKey) {
-      const allItems = await pipeline.manager.getWorldBuildingCategory(category);
-      const parent = allItems[data.parentKey]; // Direct lookup by Firebase key
-      if (!parent) {
-        return res.status(400).json({
-          error: `Parent item with firebaseKey '${data.parentKey}' not found in category '${category}'`
-        });
+    // Validate all updates first
+    for (const update of updates) {
+      if (!update.eventId) {
+        return res.status(400).json({ error: "Each update must have an eventId (Firebase key)" });
+      }
+
+      const event = await pipeline.manager.getEvent(update.eventId);
+      if (!event) {
+        return res.status(404).json({ error: `Event not found: ${update.eventId}` });
+      }
+
+      if (update.order !== undefined) {
+        if (!Number.isInteger(update.order) || update.order < 0 || update.order >= eventCount) {
+          return res.status(400).json({
+            error: `Invalid order for event ${update.eventId}: ${update.order}`
+          });
+        }
+      }
+
+      if (update.stage !== undefined) {
+        const validStages = ["introduction", "rising action", "climax", "falling action", "resolution"];
+        if (!validStages.includes(update.stage)) {
+          return res.status(400).json({
+            error: `Invalid stage for event ${update.eventId}: ${update.stage}`
+          });
+        }
       }
     }
 
-    // Remove any old parentId field if it exists
-    const cleanData = { ...data };
-    delete cleanData.parentId;
-
-    if (firebaseKey) {
-      // Update existing item
-      const currentItem = await pipeline.manager.getEvent(firebaseKey); // Using same pattern as events
-      const categoryRef = child(pipeline.manager.worldBuildingRef, `${category}/${firebaseKey}`);
-      await set(categoryRef, cleanData);
-      
-      logger.info(`[DATA] World-building item '${firebaseKey}' in '${category}' updated`);
-      res.status(200).json({
-        success: true,
-        category,
-        firebaseKey,
-        data: cleanData
-      });
-    } else {
-      // Create new item - let Firebase generate the key
-      const categoryRef = child(pipeline.manager.worldBuildingRef, category);
-      const newItemRef = push(categoryRef); // This generates a unique Firebase key
-      const newFirebaseKey = newItemRef.key;
-      
-      await set(newItemRef, cleanData);
-      
-      logger.info(`[DATA] World-building item '${newFirebaseKey}' in '${category}' created`);
-      res.status(200).json({
-        success: true,
-        created: true,
-        category,
-        firebaseKey: newFirebaseKey,
-        data: cleanData
-      });
+    // Perform updates
+    const results = [];
+    for (const update of updates) {
+      const event = await pipeline.manager.getEvent(update.eventId);
+      const updatedEvent = { ...event, ...update };
+      // Remove eventId from the update object since it's the key
+      const { eventId, ...cleanUpdate } = updatedEvent;
+      const result = await pipeline.manager.upsertEvent(update.eventId, cleanUpdate);
+      results.push(result);
+      logger.info(`[DATA] Event ${update.eventId} batch updated`);
     }
 
-    // Invalidate cache
-    pmCache.invalidate(userId, `worldbuilding_${category}`);
     pmCache.invalidateAll(userId);
 
-  } catch (err) {
-    logger.error(`[ERROR] /api/worldbuilding/update: ${err}`);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-/**
- * Direct world-building item deletion (no staging required)
- */
-app.post("/api/worldbuilding/delete", async (req, res) => {
-  logger.info(`[REQUEST] /api/worldbuilding/delete with body: ${JSON.stringify(req.body)}`);
-
-  try {
-    const { userId, category, firebaseKey } = req.body;
-
-    if (!userId) return res.status(400).json({ error: "userId is required" });
-    if (!category) return res.status(400).json({ error: "category is required" });
-    if (!firebaseKey) return res.status(400).json({ error: "firebaseKey is required" });
-
-    const validCategories = ["magicSystems", "cultures", "locations", "technology", "history", "organizations"];
-    if (!validCategories.includes(category)) {
-      return res.status(400).json({
-        error: `Invalid category: ${category}. Must be one of: ${validCategories.join(", ")}`
-      });
-    }
-
-    const pipeline = new ConfirmationPipeline({ uid: userId });
-
-    // Get all items to find children
-    const allItems = await pipeline.manager.getWorldBuildingCategory(category);
-    const item = allItems[firebaseKey];
-    
-    if (!item) {
-      return res.status(404).json({
-        error: `Item not found with firebaseKey: ${firebaseKey} in category '${category}'`
-      });
-    }
-
-    // Delete the item
-    const itemRef = child(pipeline.manager.worldBuildingRef, `${category}/${firebaseKey}`);
-    await remove(itemRef);
-
-    // Delete all children recursively (using parentKey now)
-    const childrenToDelete = Object.entries(allItems).filter(
-      ([_, i]) => i?.parentKey === firebaseKey
-    );
-    
-    for (const [childKey, child] of childrenToDelete) {
-      const childRef = child(pipeline.manager.worldBuildingRef, `${category}/${childKey}`);
-      await remove(childRef);
-      
-      // Recursively delete grandchildren
-      const grandchildren = Object.entries(allItems).filter(
-        ([_, gc]) => gc?.parentKey === childKey
-      );
-      for (const [gcKey, _] of grandchildren) {
-        const gcRef = child(pipeline.manager.worldBuildingRef, `${category}/${gcKey}`);
-        await remove(gcRef);
-      }
-    }
-
-    // Invalidate cache
-    pmCache.invalidate(userId, `worldbuilding_${category}`);
-    pmCache.invalidateAll(userId);
-
-    logger.info(`[DATA] World-building item '${firebaseKey}' in '${category}' deleted with ${childrenToDelete.length} children`);
     res.status(200).json({
       success: true,
-      category,
-      firebaseKey,
-      deleted: true,
-      childrenDeleted: childrenToDelete.length
+      count: results.length,
+      updated: results
     });
 
   } catch (err) {
-    logger.error(`[ERROR] /api/worldbuilding/delete: ${err}`);
+    logger.error(`[ERROR] /api/events/batch-update: ${err}`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -1045,7 +1019,7 @@ app.post("/api/stage-change", async (req, res) => {
     if (entityType.startsWith("worldBuilding-")) {
       const category = entityType.replace("worldBuilding-", "");
       const validCategories = ["magicSystems", "cultures", "locations", "technology", "history", "organizations"];
-      
+
       if (!validCategories.includes(category)) {
         return res.status(400).json({
           error: `Invalid world-building category: ${category}. Must be one of: ${validCategories.join(", ")}`
@@ -1063,7 +1037,7 @@ app.post("/api/stage-change", async (req, res) => {
       if (newData.parentKey !== undefined && newData.parentKey !== null) {
         const pipeline = new ConfirmationPipeline({ uid: userId });
         const allItems = await pipeline.manager.getWorldBuildingCategory(category);
-        
+
         if (!allItems[newData.parentKey]) {
           return res.status(400).json({
             error: `Parent item with Firebase key '${newData.parentKey}' not found in category '${category}'`
@@ -1289,6 +1263,27 @@ app.post("/api/batch", async (req, res) => {
           console.log(`[BATCH ${i + 1}] World-building '${category}' returned: ${Object.keys(items).length} in ${reqTime}ms`);
           results.push({ data: items });
         }
+        else if (target === "world_items") {
+          const items = await getCachedWorldItems(userId, pipeline);
+
+          // Optional: filter by parentId
+          if (filters.parentId !== undefined) {
+            const filtered = Object.fromEntries(
+              Object.entries(items).filter(([_, item]) => item?.parentId === filters.parentId)
+            );
+            results.push({ data: filtered });
+          } else {
+            results.push({ data: items });
+          }
+        }
+        else if (target === "world_templates") {
+          const templates = await getCachedWorldTemplates(userId, pipeline);
+          results.push({ data: templates });
+        }
+        else if (target === "world_metadata") {
+          const metadata = await getCachedWorldMetadata(userId, pipeline);
+          results.push({ data: metadata });
+        }
 
         // ============ EVENTS ============
         else if (target === "events") {
@@ -1340,32 +1335,32 @@ app.post("/api/batch", async (req, res) => {
 });
 
 app.post("/api/events/cleanup-fields", async (req, res) => {
-    logger.info(`[REQUEST] /api/events/cleanup-fields`);
-    
-    try {
-        const { userId } = req.body;
-        
-        if (!userId) {
-            return res.status(400).json({ error: "userId is required" });
-        }
-        
-        const pipeline = new ConfirmationPipeline({ uid: userId });
-        const result = await pipeline.manager.cleanupEventFields();
-        
-        // Invalidate cache after cleanup
-        pmCache.invalidateAll(userId);
-        
-        logger.info(`[DATA] Cleaned ${result.cleanedCount} events, skipped ${result.skippedCount}`);
-        
-        res.status(200).json({
-            success: true,
-            ...result
-        });
-        
-    } catch (err) {
-        logger.error(`[ERROR] /api/events/cleanup-fields: ${err}`);
-        res.status(500).json({ error: err.message });
+  logger.info(`[REQUEST] /api/events/cleanup-fields`);
+
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
     }
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    const result = await pipeline.manager.cleanupEventFields();
+
+    // Invalidate cache after cleanup
+    pmCache.invalidateAll(userId);
+
+    logger.info(`[DATA] Cleaned ${result.cleanedCount} events, skipped ${result.skippedCount}`);
+
+    res.status(200).json({
+      success: true,
+      ...result
+    });
+
+  } catch (err) {
+    logger.error(`[ERROR] /api/events/cleanup-fields: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // --- SSE Support ---
@@ -1446,19 +1441,72 @@ async function getCachedEvents(userId, pipeline) {
   return events;
 }
 
-async function getCachedWorldBuilding(userId, pipeline, category) {
-  const cacheKey = `worldbuilding_${category}`;
+async function getCachedWorldItems(userId, pipeline) {
+  const cacheKey = 'world_items';
   let items = pmCache.get(userId, cacheKey);
 
   if (!items) {
     const fetchStart = Date.now();
-    items = await pipeline.manager.getWorldBuildingCategory(category);
+    const itemsRef = child(pipeline.manager.baseRef, "world/items");
+    const snapshot = await get(itemsRef);
+    items = snapshot.exists() ? snapshot.val() : {};
     const fetchTime = Date.now() - fetchStart;
-    console.log(`[TIMING] Firebase world-building '${category}' fetch took ${fetchTime}ms`);
+    console.log(`[TIMING] Firebase world items fetch took ${fetchTime}ms`);
     pmCache.set(userId, cacheKey, items);
   }
 
   return items;
+}
+
+// Helper: Get cached or fetch world templates
+async function getCachedWorldTemplates(userId, pipeline) {
+  const cacheKey = 'world_templates';
+  let templates = pmCache.get(userId, cacheKey);
+
+  if (!templates) {
+    const fetchStart = Date.now();
+    const templatesRef = child(pipeline.manager.baseRef, "world/templates");
+    const snapshot = await get(templatesRef);
+    templates = snapshot.exists() ? snapshot.val() : {};
+    const fetchTime = Date.now() - fetchStart;
+    console.log(`[TIMING] Firebase world templates fetch took ${fetchTime}ms`);
+    pmCache.set(userId, cacheKey, templates);
+  }
+
+  return templates;
+}
+
+async function getCachedWorldBuilding(userId, pipeline, category) {
+    const cacheKey = `worldbuilding_${category}`;
+    let items = pmCache.get(userId, cacheKey);
+
+    if (!items) {
+        const fetchStart = Date.now();
+        items = await pipeline.manager.getWorldBuildingCategory(category);
+        const fetchTime = Date.now() - fetchStart;
+        console.log(`[TIMING] Firebase world-building '${category}' fetch took ${fetchTime}ms`);
+        pmCache.set(userId, cacheKey, items);
+    }
+
+    return items;
+}
+
+// Helper: Get cached or fetch world metadata
+async function getCachedWorldMetadata(userId, pipeline) {
+  const cacheKey = 'world_metadata';
+  let metadata = pmCache.get(userId, cacheKey);
+
+  if (!metadata) {
+    const fetchStart = Date.now();
+    const metadataRef = child(pipeline.manager.baseRef, "world/metadata");
+    const snapshot = await get(metadataRef);
+    metadata = snapshot.val();
+    const fetchTime = Date.now() - fetchStart;
+    console.log(`[TIMING] Firebase world metadata fetch took ${fetchTime}ms`);
+    pmCache.set(userId, cacheKey, metadata);
+  }
+
+  return metadata;
 }
 
 const PORT = process.env.PORT || 5001;
