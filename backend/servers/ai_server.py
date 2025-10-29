@@ -847,8 +847,6 @@ def generate_image():
 # RUN SERVER
 # ============================================
 if __name__ == "__main__":
-# ---------------- RUN ----------------
-if __name__ == "__main__":
     print(f"Starting AI Server on port {port}")
     print(f"   - Brainstorming: /chat/brainstorming")
     print(f"   - Deep Thinking: /chat/deepthinking")
