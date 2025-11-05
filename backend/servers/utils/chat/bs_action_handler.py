@@ -6,18 +6,17 @@ import threading
 import queue
 import traceback
 
-import firebase_admin
-from firebase_admin import credentials, db
+from firebase_admin import db
 
-from utils.chat_utils import MAX_DEPTH, parse_markdown, parse_deepseek_json, normalize_deepseek_response, process_event_request, process_link_request, process_node_request, process_worldbuilding_request, fetch_profile_data, fetch_profile_data_batch, fetch_profile_data_sequential, DEEPSEEK_API_KEY, DEEPSEEK_URL
+from utils.chat.chat_utils import MAX_DEPTH, parse_markdown, parse_deepseek_json, normalize_deepseek_response, process_event_request, process_link_request, process_node_request, process_worldbuilding_request, fetch_profile_data, fetch_profile_data_batch, fetch_profile_data_sequential, DEEPSEEK_API_KEY, DEEPSEEK_URL
 
-from prompts.dt_system_prompt import DT_SYSTEM_PROMPT
+from prompts.bs_system_prompt import BS_SYSTEM_PROMPT
 import logging
 from logging.handlers import RotatingFileHandler
 
 # -------------------- SETUP LOGGING --------------------
 os.makedirs("logs", exist_ok=True)
-log_file = "logs/dt_actions_debug.log"
+log_file = "logs/bs_actions_debug.log"
 rotating_handler = RotatingFileHandler(
     log_file, mode='a', maxBytes=5*1024*1024, backupCount=3
 )
@@ -34,8 +33,8 @@ client = openai.OpenAI(
     base_url=DEEPSEEK_URL
 )
 
-def dt_background_handle_action(actions, user_id, deepseek_messages, cfm_session):
-    """Background handler for DT - delegates to dt_handle_action"""
+def bs_background_handle_action(actions, user_id, deepseek_messages, cfm_session):
+    """Background handler for BS - delegates to bs_handle_action"""
     thread_start = time.time()
     task_ref = db.reference(f"backgroundTasks/{user_id}")
     task_id = str(int(time.time() * 1000))
@@ -52,16 +51,16 @@ def dt_background_handle_action(actions, user_id, deepseek_messages, cfm_session
 
     try:
         update_status("processing", f"Starting {len(actions)} background actions...")
-        logger.info(f"[DT-THREAD] Processing {len(actions)} actions")
+        logger.info(f"[BS-THREAD] Processing {len(actions)} actions")
 
         for i, act in enumerate(actions):
             action_name = act.get("action", "unknown") if isinstance(act, dict) else "unknown"
             try:
-                dt_handle_action(act, user_id, deepseek_messages, cfm_session,
+                bs_handle_action(act, user_id, deepseek_messages, cfm_session, 
                                depth=0, update_status=update_status)
-                logger.info(f"[DT-THREAD] Completed {action_name}")
+                logger.info(f"[BS-THREAD] Completed {action_name}")
             except Exception as e:
-                logger.error(f"[DT-THREAD] {action_name} failed: {e}")
+                logger.error(f"[BS-THREAD] {action_name} failed: {e}")
                 continue
 
         update_status("done", "All actions completed")
@@ -71,33 +70,34 @@ def dt_background_handle_action(actions, user_id, deepseek_messages, cfm_session
         })
         
         thread_time = time.time() - thread_start
-        logger.info(f"[DT-THREAD] Completed in {thread_time:.3f}s")
+        logger.info(f"[BS-THREAD] Completed in {thread_time:.3f}s")
 
     except Exception as e:
-        logger.error(f"[DT-THREAD] Crashed: {e}")
+        logger.error(f"[BS-THREAD] Crashed: {e}")
         update_status("error", str(e))
 
+# -------------------- ACTION HANDLER --------------------
+def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0, update_status=None):
+    """Recursively handle DeepSeek actions for Brainstorming mode."""
+    action_start = time.time()
+    logger.debug(f"[ACTION] bs_handle_action called at depth={depth}")
 
-# -------------------- ACTION HANDLER DEEPTHINKING --------------------
-def dt_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0, update_status=None):
-    action_start = time.time()  # START TIMING
-    logger.debug(f"[ACTION] dt_handle_action called at depth={depth}")
-    
     if depth > MAX_DEPTH:
-        logger.warning("[ACTION] Max recursion depth reached, aborting further handling")
+        logger.debug("[ACTION] Maximum recursion depth exceeded")
         return {"chat_message": "Error: recursion depth exceeded", "requests": []}
-    
+
+    # Normalize to list
     if isinstance(deepseek_response, dict):
         responses = [deepseek_response]
     elif isinstance(deepseek_response, list):
         responses = deepseek_response
     else:
-        logger.error(f"[ACTION] Unexpected deepseek_response type: {type(deepseek_response)}")
-        return {"chat_message": "", "requests": [], "staging_results": [], "profile_data": []}
+        logger.warning(f"[ACTION] Unexpected response type: {type(deepseek_response)}")
+        return {"chat_message": "(Error: invalid DeepSeek response)", "requests": []}
 
-    result = {"chat_message": "", "requests": [], "staging_results": [], "profile_data": []}
-    last_user_msg = recent_msgs[-1]["content"] if recent_msgs else ""
+    combined_result = {"chat_message": "", "requests": [], "staging_results": [], "profile_data": []}
 
+    # First pass: handle respond actions
     for resp in responses:
         action = resp.get("action")
         data = resp.get("data", {}) or {}
@@ -106,30 +106,128 @@ def dt_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
             logger.debug(f"[ACTION] Processing respond action")
             msg = parse_markdown(data.get("message", ""), "html")
             if msg.strip():
+                current_stage = cfm_session.get_stage()
                 if depth == 0:
-                    cfm_session.save_message("assistant", msg, visible=True)
-                
-                result["chat_message"] += msg + "\n"
+                    cfm_session.save_message("assistant", msg, stage=current_stage, visible=True)
+              
+                combined_result["chat_message"] += msg + "\n"
                 logger.debug(f"[ACTION] Responding with: {msg[:100]}...")
-
-    # SECOND PASS: Handle all other actions
+    
+    # Second pass: handle all other actions
     for resp in responses:
         action = resp.get("action")
-        
         if action == "respond":
             continue  # Already handled
-        
-        # Reject CFM actions in background thread (but NOT respond!)
-        if action in ["get_primary_question", "get_follow_up", "meta_transition"]:
-            logger.warning(f"[ACTION] Unexpected CFM action '{action}' in handler - should be in main thread")
-            continue
-        
+
         reasoning = resp.get("reasoning", "")
         data = resp.get("data", {}) or {}
         requests_list = data.get("requests", [])
+        last_user_msg = recent_msgs[-1]["content"] if recent_msgs else ""
 
         logger.debug(f"[ACTION] Processing action: {action}")
 
+        # -------------------------
+        # Core conversational actions
+        # -------------------------
+        if action == "log_stage":
+            if update_status:
+                update_status("processing", f"Logging stage: {data.get('stage')}")
+            to_stage = data.get("stage")
+            if to_stage:
+                cfm_session.update_metadata({"stage": to_stage})
+                logger.debug(f"[ACTION] Stage updated to {to_stage}")
+
+        # -------------------------
+        # CPS-specific actions
+        # -------------------------
+        elif action == "add_hmw":
+            if update_status:
+                update_status("processing", "Adding HMW question")
+            q = data.get("hmwQuestion")
+            if q:
+                hmw_count = cfm_session.add_hmw_question(q)
+                logger.debug(f"[ACTION] Added HMW: {q}, count: {hmw_count}")
+                
+        elif action == "log_idea":
+            if update_status:
+                update_status("processing", "Logging idea")
+            idea_text = data.get("idea")
+            evals = data.get("evaluations", {})
+            if idea_text:
+                idea_id = cfm_session.log_idea(idea_text, evals)
+                logger.debug(f"[ACTION] Logged idea {idea_id}")
+                
+        elif action == "evaluate_idea":
+            if update_status:
+                update_status("processing", "Evaluating idea")
+            idea_id = data.get("ideaId")
+            evals = data.get("evaluations", {})
+            if idea_id and evals:
+                eval_result = cfm_session.evaluate_idea(idea_id, evals)
+                combined_result["profile_data"].append(eval_result)
+                logger.debug(f"[ACTION] Evaluated idea {idea_id}")
+
+        elif action == "refine_idea":
+            if update_status:
+                update_status("processing", "Refining idea")
+            source_ids = data.get("sourceIdeaIds", [])
+            new_idea = data.get("newIdea", {})
+            if source_ids and new_idea:
+                refine_result = cfm_session.refine_idea(source_ids, new_idea)
+                combined_result["profile_data"].append(refine_result)
+                logger.debug(f"[ACTION] Refined idea")
+
+        elif action == "switch_stage":
+            if update_status:
+                update_status("processing", "Switching stage")
+            to_stage = data.get("toStage")
+            if to_stage:
+                cfm_session.update_metadata({"stage": to_stage})
+                logger.debug(f"[ACTION] Stage switched to {to_stage}")
+        
+        elif action == "check_progress":
+            if update_status:
+                update_status("processing", "Checking progress")
+            result = cfm_session.check_stage_progress()
+            logger.debug(f"[ACTION] Progress check: {result}")
+
+            if result.get("ready"):
+                suggested = result.get("suggestedNext")
+                if suggested:
+                    cfm_session.update_metadata({"stage": suggested})
+                    logger.debug(f"[ACTION] Auto-advanced to {suggested}")
+
+            # Follow-up with DeepSeek
+            followup_messages = [
+                {"role": "system", "content": BS_SYSTEM_PROMPT},
+                {"role": "user", "content": f"User asked: {last_user_msg}"},
+                {"role": "assistant", "content": f"Reasoning: {reasoning}"},
+                {"role": "system", "content": f"""Retrieved info:
+            {info_summary}
+
+            CRITICAL: Do NOT request get_info again. The data is already provided above.If it is not there the user has never referenced it before and it does not exist in the system.
+            Respond with ONLY a 'respond' action that presents this information conversationally.
+            Format: {{"action": "respond", "data": {{"message": "formatted response"}}}}"""}
+            ]
+            followup_resp = client.chat.completions.create(
+                model="deepseek-chat", messages=followup_messages, stream=False
+            )
+            
+            bot_reply_raw = followup_resp.choices[0].message.content.strip()
+            
+            try:
+                bot_reply_json = parse_deepseek_json(bot_reply_raw)
+                bot_reply_json = normalize_deepseek_response(bot_reply_json)
+            except Exception as e:
+                logger.warning(f"[ACTION] Parse failed: {e}")
+                bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+
+            combined_result = bs_handle_action(bot_reply_json, user_id, recent_msgs, 
+                                              cfm_session, depth=depth+1)
+
+        # -------------------------
+        # Profile Manager actions
+        # -------------------------
         if action in ["get_info", "query"]:
             if update_status:
                 update_status("processing", "Retrieving information from story database...")
@@ -187,7 +285,7 @@ def dt_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                     logger.info(f"[GET_INFO] Has data ({total_items} items), sending to DeepSeek")
                     
                     followup_messages = [
-                        {"role": "system", "content": DT_SYSTEM_PROMPT},
+                        {"role": "system", "content": BS_SYSTEM_PROMPT},
                         {"role": "user", "content": f"User asked: {last_user_msg}"},
                         {"role": "assistant", "content": f"Your reasoning: {reasoning}"},
                         {"role": "system", "content": f"Retrieved info:\n{info_summary}\n\nRespond conversationally to present this information."}
@@ -216,7 +314,7 @@ def dt_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                             bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
 
                         # Recursively handle (will hit respond handler above)
-                        followup_result = dt_handle_action(bot_reply_json, user_id, recent_msgs, 
+                        followup_result = bs_handle_action(bot_reply_json, user_id, recent_msgs, 
                                                           cfm_session, depth=depth+1, update_status=update_status)
                         
                         # Merge results
@@ -245,89 +343,42 @@ def dt_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                 )
 
         elif action == "stage_change":
-            logger.debug(f"[STAGE_CHANGE] Requests: {requests_list}")
-            
             if update_status:
-                update_status("processing", "Staging changes to story database...")
-
+                update_status("processing", "Staging changes...")
+            
             staging_start = time.time()
             staged_summaries = []
-            duplicate_detected = False
-
+            
             for req in requests_list:
                 etype = req.get("entityType")
+                
                 if etype == "node":
                     resp = process_node_request(req, user_id)
                 elif etype == "link":
                     resp = process_link_request(req, user_id)
                 elif etype == "event":
                     resp = process_event_request(req, user_id)
+                elif etype and etype.startswith("worldBuilding-"):
+                    resp = process_worldbuilding_request(req, user_id, etype)
                 else:
-                    resp = {"error": f"Unknown entityType {etype}"}
-
-                if isinstance(resp, dict) and "error" in resp:
-                    if "pending" in resp["error"].lower() or "already exists" in resp["error"].lower():
-                        logger.debug(f"[STAGE_CHANGE] Duplicate detected: {resp['error']}")
-                        duplicate_detected = True
-
+                    resp = {"error": f"Unknown entityType: {etype}"}
+                
                 staged_summaries.append(resp)
+                logger.debug(f"[STAGING] Staged {etype}")
 
             staging_time = time.time() - staging_start
-            logger.info(f"[TIMING] Staging operations took {staging_time:.3f}s")
+            logger.info(f"[TIMING] Staging: {staging_time:.3f}s")
 
             for s in staged_summaries:
-                cfm_session.save_message(
-                    "system",
-                    f"STAGING RESULT: {json.dumps(s)}",
-                    action="stage_result",
-                    visible=False
-                )
+                cfm_session.save_message("system", f"STAGING RESULT: {json.dumps(s)}", 
+                                        action="stage_result", visible=False)
 
-            result["staging_results"] = staged_summaries
+            combined_result["staging_results"] = staged_summaries
 
-            summary = json.dumps(staged_summaries, indent=2)
-            followup_messages = [
-                {"role": "system", "content": DT_SYSTEM_PROMPT},
-                {"role": "assistant", "content": f"Your reasoning when requesting this stage change was: {reasoning}"},
-                {"role": "system", "content": f"Changes staged successfully. Proceed conversationally based on this."}
-            ]
-
-            followup_start = time.time()
-            try:
-                followup_resp = client.chat.completions.create(
-                    model="deepseek-chat",
-                    messages=followup_messages,
-                    stream=False
-                )
-                followup_time = time.time() - followup_start
-                logger.info(f"[TIMING] Follow-up DeepSeek call took {followup_time:.3f}s")
-
-                bot_reply_raw = followup_resp.choices[0].message.content.strip()
-                logger.debug(f"[LLM] Raw staging follow-up: {bot_reply_raw}")
-
-                parse_start = time.time()
-                try:
-                    bot_reply_json = parse_deepseek_json(bot_reply_raw)
-                    bot_reply_json = normalize_deepseek_response(bot_reply_json)
-                    logger.debug(f"[HANDLE ACTION] [STAGE_CHANGE] Parsed JSON: {bot_reply_json}")
-                except Exception:
-                    bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
-                    logger.warning("[HANDLE ACTION] [STAGE_CHANGE] JSON parse failed, fallback to respond.")
-                
-                parse_time = time.time() - parse_start
-                logger.info(f"[TIMING] Response parsing took {parse_time:.3f}s")
-
-                followup_result = dt_handle_action(bot_reply_json, user_id, recent_msgs, cfm_session, depth=depth+1, update_status=update_status)
-                result.update(followup_result)
-
-            except Exception as e:
-                logger.warning(f"[STAGE_CHANGE] Error triggering follow-up: {e}")
-                if duplicate_detected:
-                    result["chat_message"] = "That entity is already staged and pending confirmation. I'll note it and we can continue the conversation."
-                else:
-                    result["chat_message"] = "I staged the requested changes. Let's continue."
+        else:
+            logger.debug(f"[ACTION] Unknown action: {action}")
 
     action_time = time.time() - action_start
-    logger.info(f"[TIMING] dt_handle_action completed in {action_time:.3f}s at depth={depth}")
+    logger.info(f"[TIMING] bs_handle_action: {action_time:.3f}s at depth={depth}")
     
-    return result
+    return combined_result

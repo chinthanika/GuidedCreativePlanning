@@ -1,0 +1,387 @@
+2025-11-04 14:12:54 [INFO] ======================================================================
+2025-11-04 14:12:54 [INFO] Starting Story Extraction Test Suite
+2025-11-04 14:12:54 [INFO] ======================================================================
+2025-11-04 14:12:54 [INFO] 
+======================================================================
+2025-11-04 14:12:54 [INFO]   STORY EXTRACTION TEST SUITE
+2025-11-04 14:12:54 [INFO] ======================================================================
+2025-11-04 14:12:54 [INFO] Testing server at: http://localhost:5000
+2025-11-04 14:12:54 [INFO] Session API at: https://guidedcreativeplanning-session.onrender.com
+2025-11-04 14:12:54 [INFO] Logging to: logs/story_extraction_tests.log
+2025-11-04 14:12:54 [INFO] 
+======================================================================
+2025-11-04 14:12:54 [INFO]   TEST 1: Rich Fantasy Story Extraction
+2025-11-04 14:12:54 [INFO] ======================================================================
+2025-11-04 14:12:56 [INFO] [HELPER] Created session: -OdCUnMKyE0sWyAnw_Nx
+2025-11-04 14:13:01 [INFO] [HELPER] Seeded 7 messages
+2025-11-04 14:13:01 [INFO] [TEST1] Calling extraction endpoint...
+2025-11-04 14:13:03 [ERROR] <!doctype html>
+<html lang=en>
+<title>404 Not Found</title>
+<h1>Not Found</h1>
+<p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>
+
+2025-11-04 14:13:03 [INFO] 
+======================================================================
+2025-11-04 14:13:03 [INFO]   TEST 2: Moderate Sci-Fi Story Extraction
+2025-11-04 14:13:03 [INFO] ======================================================================
+2025-11-04 14:13:04 [INFO] [HELPER] Created session: -OdCUpLbL3KQREzk8sEq
+2025-11-04 14:13:07 [INFO] [HELPER] Seeded 5 messages
+2025-11-04 14:13:09 [INFO] 
+======================================================================
+2025-11-04 14:13:09 [INFO]   TEST 3: Minimal Conversation Extraction
+2025-11-04 14:13:09 [INFO] ======================================================================
+2025-11-04 14:13:10 [INFO] [HELPER] Created session: -OdCUqw1a8YZw0e5cLy7
+2025-11-04 14:13:12 [INFO] [HELPER] Seeded 3 messages
+2025-11-04 14:13:14 [INFO] 
+======================================================================
+2025-11-04 14:13:14 [INFO]   TEST 4: Vague Conversation (Fallback Test)
+2025-11-04 14:13:14 [INFO] ======================================================================
+2025-11-04 14:13:15 [INFO] [HELPER] Created session: -OdCUsA8aPxa-vYrCo4v
+2025-11-04 14:13:19 [INFO] [HELPER] Seeded 3 messages
+2025-11-04 14:13:21 [INFO] 
+======================================================================
+2025-11-04 14:13:21 [INFO]   TEST 5: Detailed Dystopian Story Extraction
+2025-11-04 14:13:21 [INFO] ======================================================================
+2025-11-04 14:13:22 [INFO] [HELPER] Created session: -OdCUtsorKfTs2SQkG9m
+2025-11-04 14:13:27 [INFO] [HELPER] Seeded 7 messages
+2025-11-04 14:13:29 [INFO] 
+======================================================================
+2025-11-04 14:13:29 [INFO]   TEST 6: Book Recommendations Integration
+2025-11-04 14:13:29 [INFO] ======================================================================
+2025-11-04 14:13:30 [INFO] [HELPER] Created session: -OdCUvlBblZ-5oYDVHka
+2025-11-04 14:13:36 [INFO] [HELPER] Seeded 7 messages
+2025-11-04 14:13:36 [INFO] [TEST6] Requesting book recommendations...
+2025-11-04 14:13:47 [INFO] [TEST6] Books Returned: 3
+2025-11-04 14:13:47 [INFO] [TEST6] Genre: None
+2025-11-04 14:13:47 [INFO] [TEST6] Themes: []
+2025-11-04 14:13:47 [INFO] [TEST6] Search Queries: ['fantasy young adult identity power', 'reluctant hero identity', 'fantasy dark fantasy']
+2025-11-04 14:13:47 [INFO] 
+======================================================================
+2025-11-04 14:13:47 [INFO]   TEST 7: Extraction Performance
+2025-11-04 14:13:47 [INFO] ======================================================================
+2025-11-04 14:13:47 [INFO] [HELPER] Created session: -OdCV-1YCMjCPA9PURIT
+2025-11-04 14:13:53 [INFO] [HELPER] Seeded 7 messages
+2025-11-04 14:13:55 [INFO] 
+======================================================================
+2025-11-04 14:13:55 [INFO]   TEST 8: Insufficient Conversation Handling
+2025-11-04 14:13:55 [INFO] ======================================================================
+2025-11-04 14:13:56 [INFO] [HELPER] Created session: -OdCV10_GP3D1cprJEey
+2025-11-04 14:13:56 [INFO] [HELPER] Seeded 1 messages
+2025-11-04 14:13:58 [INFO] 
+======================================================================
+2025-11-04 14:13:58 [INFO]   TEST RESULTS SUMMARY
+2025-11-04 14:13:58 [INFO] ======================================================================
+2025-11-04 14:13:59 [INFO] 
+======================================================================
+2025-11-04 14:13:59 [INFO] OVERALL: 0/8 tests passed (0.0%)
+2025-11-04 14:13:59 [INFO] ======================================================================
+2025-11-04 14:13:59 [INFO] 
+======================================================================
+2025-11-04 14:13:59 [INFO] Some tests failed. Check logs/story_extraction_tests.log for details.
+2025-11-04 14:13:59 [INFO] ======================================================================
+2025-11-04 14:15:08 [INFO] ======================================================================
+2025-11-04 14:15:08 [INFO] Starting Story Extraction Test Suite
+2025-11-04 14:15:08 [INFO] ======================================================================
+2025-11-04 14:15:08 [INFO] 
+======================================================================
+2025-11-04 14:15:08 [INFO]   STORY EXTRACTION TEST SUITE
+2025-11-04 14:15:08 [INFO] ======================================================================
+2025-11-04 14:15:08 [INFO] Testing server at: http://localhost:5000
+2025-11-04 14:15:08 [INFO] Session API at: https://guidedcreativeplanning-session.onrender.com
+2025-11-04 14:15:08 [INFO] Logging to: logs/story_extraction_tests.log
+2025-11-04 14:15:08 [INFO] 
+======================================================================
+2025-11-04 14:15:08 [INFO]   TEST 1: Rich Fantasy Story Extraction
+2025-11-04 14:15:08 [INFO] ======================================================================
+2025-11-04 14:15:09 [INFO] [HELPER] Created session: -OdCVIyTpnyHUIJr4Y7R
+2025-11-04 14:15:14 [INFO] [HELPER] Seeded 7 messages
+2025-11-04 14:15:14 [INFO] [TEST1] Calling extraction endpoint...
+2025-11-04 14:15:16 [ERROR] [TEST1] FAIL: Extraction failed: 404
+2025-11-04 14:15:16 [ERROR] <!doctype html>
+<html lang=en>
+<title>404 Not Found</title>
+<h1>Not Found</h1>
+<p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>
+
+2025-11-04 14:15:16 [INFO] 
+======================================================================
+2025-11-04 14:15:16 [INFO]   TEST 2: Moderate Sci-Fi Story Extraction
+2025-11-04 14:15:16 [INFO] ======================================================================
+2025-11-04 14:15:17 [INFO] [HELPER] Created session: -OdCVKtO4xWezvDQ9Dxm
+2025-11-04 14:15:20 [INFO] [HELPER] Seeded 5 messages
+2025-11-04 14:15:23 [ERROR] [TEST2] FAIL: 404 Client Error: NOT FOUND for url: http://localhost:5000/api/story-elements/extract
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_story_extraction.py", line 383, in test_extraction_scifi_moderate
+    response.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 404 Client Error: NOT FOUND for url: http://localhost:5000/api/story-elements/extract
+2025-11-04 14:15:23 [INFO] 
+======================================================================
+2025-11-04 14:15:23 [INFO]   TEST 3: Minimal Conversation Extraction
+2025-11-04 14:15:23 [INFO] ======================================================================
+2025-11-04 14:15:24 [INFO] [HELPER] Created session: -OdCVMgvCaLSH5kIRRLv
+2025-11-04 14:15:27 [INFO] [HELPER] Seeded 3 messages
+2025-11-04 14:15:29 [ERROR] [TEST3] FAIL: 404 Client Error: NOT FOUND for url: http://localhost:5000/api/story-elements/extract
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_story_extraction.py", line 423, in test_extraction_minimal_conversation
+    response.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 404 Client Error: NOT FOUND for url: http://localhost:5000/api/story-elements/extract
+2025-11-04 14:15:29 [INFO] 
+======================================================================
+2025-11-04 14:15:29 [INFO]   TEST 4: Vague Conversation (Fallback Test)
+2025-11-04 14:15:29 [INFO] ======================================================================
+2025-11-04 14:15:30 [INFO] [HELPER] Created session: -OdCVNwzogPm6eifgCV5
+2025-11-04 14:15:32 [INFO] [HELPER] Seeded 3 messages
+2025-11-04 14:15:34 [ERROR] [TEST4] FAIL: 404 Client Error: NOT FOUND for url: http://localhost:5000/api/story-elements/extract
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_story_extraction.py", line 456, in test_extraction_vague_conversation
+    response.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 404 Client Error: NOT FOUND for url: http://localhost:5000/api/story-elements/extract
+2025-11-04 14:15:34 [INFO] 
+======================================================================
+2025-11-04 14:15:34 [INFO]   TEST 5: Detailed Dystopian Story Extraction
+2025-11-04 14:15:34 [INFO] ======================================================================
+2025-11-04 14:15:35 [INFO] [HELPER] Created session: -OdCVPAMX_UWNkcZ7t-8
+2025-11-04 14:15:39 [INFO] [HELPER] Seeded 7 messages
+2025-11-04 14:15:42 [ERROR] [TEST5] FAIL: 404 Client Error: NOT FOUND for url: http://localhost:5000/api/story-elements/extract
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_story_extraction.py", line 491, in test_extraction_dystopian_detailed
+    response.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 404 Client Error: NOT FOUND for url: http://localhost:5000/api/story-elements/extract
+2025-11-04 14:15:42 [INFO] 
+======================================================================
+2025-11-04 14:15:42 [INFO]   TEST 6: Book Recommendations Integration
+2025-11-04 14:15:42 [INFO] ======================================================================
+2025-11-04 14:15:42 [INFO] [HELPER] Created session: -OdCVR5R-2Fpg5I3YIQs
+2025-11-04 14:16:07 [INFO] ======================================================================
+2025-11-04 14:16:07 [INFO] Starting Story Extraction Test Suite
+2025-11-04 14:16:07 [INFO] ======================================================================
+2025-11-04 14:16:07 [INFO] 
+======================================================================
+2025-11-04 14:16:07 [INFO]   STORY EXTRACTION TEST SUITE
+2025-11-04 14:16:07 [INFO] ======================================================================
+2025-11-04 14:16:07 [INFO] Testing server at: http://10.163.2.105:5000
+2025-11-04 14:16:07 [INFO] Session API at: https://guidedcreativeplanning-session.onrender.com
+2025-11-04 14:16:07 [INFO] Logging to: logs/story_extraction_tests.log
+2025-11-04 14:16:07 [INFO] 
+======================================================================
+2025-11-04 14:16:07 [INFO]   TEST 1: Rich Fantasy Story Extraction
+2025-11-04 14:16:07 [INFO] ======================================================================
+2025-11-04 14:16:08 [INFO] [HELPER] Created session: -OdCVXGbuhRDRA86WVFP
+2025-11-04 14:16:13 [INFO] [HELPER] Seeded 7 messages
+2025-11-04 14:16:13 [INFO] [TEST1] Calling extraction endpoint...
+2025-11-04 14:16:13 [ERROR] [TEST1] FAIL: Extraction failed: 404
+2025-11-04 14:16:13 [ERROR] <!doctype html>
+<html lang=en>
+<title>404 Not Found</title>
+<h1>Not Found</h1>
+<p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>
+
+2025-11-04 14:16:13 [INFO] 
+======================================================================
+2025-11-04 14:16:13 [INFO]   TEST 2: Moderate Sci-Fi Story Extraction
+2025-11-04 14:16:13 [INFO] ======================================================================
+2025-11-04 14:16:13 [INFO] [HELPER] Created session: -OdCVYgR-qtdxzBxnp0g
+2025-11-04 14:16:17 [INFO] [HELPER] Seeded 5 messages
+2025-11-04 14:16:17 [ERROR] [TEST2] FAIL: 404 Client Error: NOT FOUND for url: http://10.163.2.105:5000/api/story-elements/extract
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_story_extraction.py", line 383, in test_extraction_scifi_moderate
+    response.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 404 Client Error: NOT FOUND for url: http://10.163.2.105:5000/api/story-elements/extract
+2025-11-04 14:16:17 [INFO] 
+======================================================================
+2025-11-04 14:16:17 [INFO]   TEST 3: Minimal Conversation Extraction
+2025-11-04 14:16:17 [INFO] ======================================================================
+2025-11-04 14:16:18 [INFO] [HELPER] Created session: -OdCVZlEiQogkSHNErMu
+2025-11-04 14:16:20 [INFO] [HELPER] Seeded 3 messages
+2025-11-04 14:16:20 [ERROR] [TEST3] FAIL: 404 Client Error: NOT FOUND for url: http://10.163.2.105:5000/api/story-elements/extract
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_story_extraction.py", line 423, in test_extraction_minimal_conversation
+    response.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 404 Client Error: NOT FOUND for url: http://10.163.2.105:5000/api/story-elements/extract
+2025-11-04 14:16:20 [INFO] 
+======================================================================
+2025-11-04 14:16:20 [INFO]   TEST 4: Vague Conversation (Fallback Test)
+2025-11-04 14:16:20 [INFO] ======================================================================
+2025-11-04 14:16:21 [INFO] [HELPER] Created session: -OdCV_UTN-Z5jDYPyQ9Z
+2025-11-04 14:16:23 [INFO] [HELPER] Seeded 3 messages
+2025-11-04 14:16:23 [ERROR] [TEST4] FAIL: 404 Client Error: NOT FOUND for url: http://10.163.2.105:5000/api/story-elements/extract
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_story_extraction.py", line 456, in test_extraction_vague_conversation
+    response.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 404 Client Error: NOT FOUND for url: http://10.163.2.105:5000/api/story-elements/extract
+2025-11-04 14:16:23 [INFO] 
+======================================================================
+2025-11-04 14:16:23 [INFO]   TEST 5: Detailed Dystopian Story Extraction
+2025-11-04 14:16:23 [INFO] ======================================================================
+2025-11-04 14:16:24 [INFO] [HELPER] Created session: -OdCVaC5Uy5fZGU6l8pX
+2025-11-04 14:16:30 [INFO] [HELPER] Seeded 7 messages
+2025-11-04 14:16:30 [ERROR] [TEST5] FAIL: 404 Client Error: NOT FOUND for url: http://10.163.2.105:5000/api/story-elements/extract
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_story_extraction.py", line 491, in test_extraction_dystopian_detailed
+    response.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 404 Client Error: NOT FOUND for url: http://10.163.2.105:5000/api/story-elements/extract
+2025-11-04 14:16:30 [INFO] 
+======================================================================
+2025-11-04 14:16:30 [INFO]   TEST 6: Book Recommendations Integration
+2025-11-04 14:16:30 [INFO] ======================================================================
+2025-11-04 14:16:30 [INFO] [HELPER] Created session: -OdCVbprhfSDmOcVlXup
+2025-11-04 14:16:36 [INFO] [HELPER] Seeded 7 messages
+2025-11-04 14:16:36 [INFO] [TEST6] Requesting book recommendations...
+2025-11-04 14:16:45 [INFO] [TEST6] Books Returned: 3
+2025-11-04 14:16:45 [INFO] [TEST6] Genre: None
+2025-11-04 14:16:45 [INFO] [TEST6] Themes: []
+2025-11-04 14:16:45 [INFO] [TEST6] Search Queries: ['fantasy young adult identity power', 'reluctant hero identity', 'fantasy dark fantasy']
+2025-11-04 14:16:45 [ERROR] [TEST6] FAIL: No recommendations or elements returned
+2025-11-04 14:16:45 [INFO] 
+======================================================================
+2025-11-04 14:16:45 [INFO]   TEST 7: Extraction Performance
+2025-11-04 14:16:45 [INFO] ======================================================================
+2025-11-04 14:16:46 [INFO] [HELPER] Created session: -OdCVfaS-cyLRJlZELH3
+2025-11-04 14:16:51 [INFO] [HELPER] Seeded 7 messages
+2025-11-04 14:16:51 [ERROR] [TEST7] FAIL: 404 Client Error: NOT FOUND for url: http://10.163.2.105:5000/api/story-elements/extract
+Traceback (most recent call last):
+  File "C:\Users\soren\OneDrive\Documents\GitHub\GuidedCreativePlanning\backend\servers\utils\test_story_extraction.py", line 586, in test_extraction_performance
+    response.raise_for_status()
+  File "C:\Python311\Lib\site-packages\requests\models.py", line 1021, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 404 Client Error: NOT FOUND for url: http://10.163.2.105:5000/api/story-elements/extract
+2025-11-04 14:16:51 [INFO] 
+======================================================================
+2025-11-04 14:16:51 [INFO]   TEST 8: Insufficient Conversation Handling
+2025-11-04 14:16:51 [INFO] ======================================================================
+2025-11-04 14:16:52 [INFO] [HELPER] Created session: -OdCVh2j1IG5Uv20ZsZM
+2025-11-04 14:16:53 [INFO] [HELPER] Seeded 1 messages
+2025-11-04 14:16:53 [ERROR] [TEST8] FAIL: Expected 400, got 404
+2025-11-04 14:16:53 [INFO] 
+======================================================================
+2025-11-04 14:16:53 [INFO]   TEST RESULTS SUMMARY
+2025-11-04 14:16:53 [INFO] ======================================================================
+2025-11-04 14:16:53 [INFO] 
+======================================================================
+2025-11-04 14:16:53 [INFO] OVERALL: 0/8 tests passed (0.0%)
+2025-11-04 14:16:53 [INFO] ======================================================================
+2025-11-04 14:16:53 [INFO] 
+======================================================================
+2025-11-04 14:16:53 [INFO] Some tests failed. Check logs/story_extraction_tests.log for details.
+2025-11-04 14:16:53 [INFO] ======================================================================
+2025-11-04 14:20:33 [INFO] ======================================================================
+2025-11-04 14:20:33 [INFO] Starting Story Extraction Test Suite
+2025-11-04 14:20:33 [INFO] ======================================================================
+2025-11-04 14:20:33 [INFO] 
+======================================================================
+2025-11-04 14:20:33 [INFO]   STORY EXTRACTION TEST SUITE
+2025-11-04 14:20:33 [INFO] ======================================================================
+2025-11-04 14:20:33 [INFO] Testing server at: http://10.163.2.105:5000
+2025-11-04 14:20:33 [INFO] Session API at: https://guidedcreativeplanning-session.onrender.com
+2025-11-04 14:20:33 [INFO] Logging to: logs/story_extraction_tests.log
+2025-11-04 14:20:33 [INFO] 
+======================================================================
+2025-11-04 14:20:33 [INFO]   TEST 1: Rich Fantasy Story Extraction
+2025-11-04 14:20:33 [INFO] ======================================================================
+2025-11-04 14:20:35 [INFO] [HELPER] Created session: -OdCWYS8ep2gTFT9R1Ew
+2025-11-04 14:20:40 [INFO] [HELPER] Seeded 7 messages
+2025-11-04 14:20:40 [INFO] [TEST1] Calling extraction endpoint...
+2025-11-04 14:21:14 [INFO] [TEST1] Extraction Results:
+2025-11-04 14:21:14 [INFO]   Genre: fantasy (conf: 1.00)
+2025-11-04 14:21:14 [INFO]   Themes: ['identity', 'power', 'fear']
+2025-11-04 14:21:14 [INFO]   Characters: ['hero', 'shadow']
+2025-11-04 14:21:14 [INFO]   Tone: dark
+2025-11-04 14:21:14 [INFO]   Overall Confidence: 0.78
+2025-11-04 14:21:14 [INFO]   Search Queries: ['fantasy young adult identity power', 'coming-of-age identity', 'hero self']
+2025-11-04 14:21:14 [INFO] [TEST1] PASS: Rich fantasy extraction successful
+2025-11-04 14:21:14 [INFO] 
+======================================================================
+2025-11-04 14:21:14 [INFO]   TEST 2: Moderate Sci-Fi Story Extraction
+2025-11-04 14:21:14 [INFO] ======================================================================
+2025-11-04 14:21:15 [INFO] [HELPER] Created session: -OdCWhCudF2lLBmlQxwZ
+2025-11-04 14:21:20 [INFO] [HELPER] Seeded 5 messages
+2025-11-04 14:21:51 [INFO] [TEST2] Genre: sci-fi
+2025-11-04 14:21:51 [INFO] [TEST2] Conflicts: ['character vs technology', 'character vs self']
+2025-11-04 14:21:51 [INFO] [TEST2] PASS: Sci-fi extraction successful
+2025-11-04 14:21:51 [INFO] 
+======================================================================
+2025-11-04 14:21:51 [INFO]   TEST 3: Minimal Conversation Extraction
+2025-11-04 14:21:51 [INFO] ======================================================================
+2025-11-04 14:21:52 [INFO] [HELPER] Created session: -OdCWqL1RhKHFETolLXY
+2025-11-04 14:21:54 [INFO] [HELPER] Seeded 3 messages
+2025-11-04 14:22:22 [INFO] [TEST3] Overall Confidence: 0.68
+2025-11-04 14:22:22 [INFO] [TEST3] PASS: Correctly identified minimal conversation (low confidence)
+2025-11-04 14:22:22 [INFO] 
+======================================================================
+2025-11-04 14:22:22 [INFO]   TEST 4: Vague Conversation (Fallback Test)
+2025-11-04 14:22:22 [INFO] ======================================================================
+2025-11-04 14:22:23 [INFO] [HELPER] Created session: -OdCWxpXd5Qen4IKTIUz
+2025-11-04 14:22:31 [INFO] [HELPER] Seeded 3 messages
+2025-11-04 14:22:50 [INFO] [TEST4] Overall Confidence: 0.42
+2025-11-04 14:22:50 [INFO] [TEST4] Fallback Used: False
+2025-11-04 14:22:50 [INFO] [TEST4] PASS: Handled vague conversation appropriately
+2025-11-04 14:22:50 [INFO] 
+======================================================================
+2025-11-04 14:22:50 [INFO]   TEST 5: Detailed Dystopian Story Extraction
+2025-11-04 14:22:50 [INFO] ======================================================================
+2025-11-04 14:22:51 [INFO] [HELPER] Created session: -OdCX3lv5N2LW84g6xX6
+2025-11-04 14:22:56 [INFO] [HELPER] Seeded 7 messages
+2025-11-04 14:23:26 [INFO] [TEST5] Overall Confidence: 0.80
+2025-11-04 14:23:26 [INFO] [TEST5] Themes: ['freedom', 'identity', 'power']
+2025-11-04 14:23:26 [INFO] [TEST5] Subgenres: ['dystopian', 'coming-of-age']
+2025-11-04 14:23:26 [INFO] [TEST5] Conflicts: ['character vs self', 'character vs society']
+2025-11-04 14:23:26 [INFO] [TEST5] PASS: Dystopian extraction successful
+2025-11-04 14:23:26 [INFO] 
+======================================================================
+2025-11-04 14:23:26 [INFO]   TEST 6: Book Recommendations Integration
+2025-11-04 14:23:26 [INFO] ======================================================================
+2025-11-04 14:23:27 [INFO] [HELPER] Created session: -OdCXCVWGJLQX2zbberR
+2025-11-04 14:23:32 [INFO] [HELPER] Seeded 7 messages
+2025-11-04 14:23:32 [INFO] [TEST6] Requesting book recommendations...
+2025-11-04 14:24:04 [INFO] [TEST6] Books Returned: 3
+2025-11-04 14:24:04 [INFO] [TEST6] Genre: fantasy
+2025-11-04 14:24:04 [INFO] [TEST6] Themes: ['identity', 'power', 'redemption']
+2025-11-04 14:24:04 [INFO] [TEST6] Search Queries: ['fantasy young adult identity power', 'coming-of-age identity', 'hero self']
+2025-11-04 14:24:04 [INFO] [TEST6] PASS: Book recommendations integration successful
+2025-11-04 14:24:04 [INFO] [TEST6] Sample Book: The Name of the Wind by Patrick Rothfuss
+2025-11-04 14:24:04 [INFO] [TEST6] Relevance Score: 78.0
+2025-11-04 14:24:04 [INFO] 
+======================================================================
+2025-11-04 14:24:04 [INFO]   TEST 7: Extraction Performance
+2025-11-04 14:24:04 [INFO] ======================================================================
+2025-11-04 14:24:06 [INFO] [HELPER] Created session: -OdCXLw53DHC1ghXhH-d
+2025-11-04 14:24:10 [INFO] [HELPER] Seeded 7 messages
+2025-11-04 14:24:40 [INFO] [TEST7] Total Request Time: 29.721s
+2025-11-04 14:24:40 [INFO] [TEST7] Server Processing Time: 29.706s
+2025-11-04 14:24:40 [INFO] 
+======================================================================
+2025-11-04 14:24:40 [INFO]   TEST 8: Insufficient Conversation Handling
+2025-11-04 14:24:40 [INFO] ======================================================================
+2025-11-04 14:24:41 [INFO] [HELPER] Created session: -OdCXU_ZEp3q5CBOsrAs
+2025-11-04 14:24:42 [INFO] [HELPER] Seeded 1 messages
+2025-11-04 14:24:42 [INFO] [TEST8] Error Response: Insufficient conversation
+2025-11-04 14:24:42 [INFO] [TEST8] PASS: Correctly rejected insufficient conversation
+2025-11-04 14:24:42 [INFO] 
+======================================================================
+2025-11-04 14:24:42 [INFO]   TEST RESULTS SUMMARY
+2025-11-04 14:24:42 [INFO] ======================================================================
+2025-11-04 14:24:42 [INFO] 
+======================================================================
+2025-11-04 14:24:42 [INFO] OVERALL: 8/8 tests passed (100.0%)
+2025-11-04 14:24:42 [INFO] ======================================================================
+2025-11-04 14:24:42 [INFO] 
+======================================================================
+2025-11-04 14:24:42 [INFO] All tests completed successfully!
+2025-11-04 14:24:42 [INFO] ======================================================================

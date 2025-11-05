@@ -1,0 +1,82 @@
+{
+  "coming_of_age": [
+    {
+      "id": "coa_1",
+      "title": "The Perks of Being a Wallflower",
+      "author": "Stephen Chbosky",
+      "year": 1999,
+      "rating": 4.2,
+      "coverUrl": "https://covers.openlibrary.org/b/id/8235937-L.jpg",
+      "description": "A coming-of-age story about friendship, self-discovery, and finding your place in the world.",
+      "categories": [
+        "Contemporary",
+        "Young Adult",
+        "Coming of Age"
+      ]
+    }
+  ],
+  "fantasy_worldbuilding": [
+    {
+      "id": "fbx_1",
+      "title": "The Name of the Wind",
+      "author": "Patrick Rothfuss",
+      "year": 2007,
+      "rating": 4.5,
+      "coverUrl": "https://covers.openlibrary.org/b/id/8235937-L.jpg",
+      "description": "A legendary hero tells his own story in a richly detailed fantasy world with complex magic.",
+      "categories": [
+        "Fantasy",
+        "Young Adult",
+        "Magic"
+      ]
+    }
+  ],
+  "dystopian": [
+    {
+      "id": "dys_1",
+      "title": "The Hunger Games",
+      "author": "Suzanne Collins",
+      "year": 2008,
+      "rating": 4.3,
+      "coverUrl": "https://covers.openlibrary.org/b/id/7833604-L.jpg",
+      "description": "A girl fights for survival in a brutal televised competition in a dystopian future.",
+      "categories": [
+        "Dystopian",
+        "Young Adult",
+        "Action"
+      ]
+    }
+  ],
+  "unreliable_narrators": [
+    {
+      "id": "un_1",
+      "title": "We Were Liars",
+      "author": "E. Lockhart",
+      "year": 2014,
+      "rating": 3.8,
+      "coverUrl": "https://covers.openlibrary.org/b/id/8235937-L.jpg",
+      "description": "A mysterious story with an unreliable narrator and shocking revelations.",
+      "categories": [
+        "Mystery",
+        "Young Adult",
+        "Thriller"
+      ]
+    }
+  ],
+  "character_driven": [
+    {
+      "id": "cd_1",
+      "title": "The Fault in Our Stars",
+      "author": "John Green",
+      "year": 2012,
+      "rating": 4.3,
+      "coverUrl": "https://covers.openlibrary.org/b/id/8235937-L.jpg",
+      "description": "A deeply emotional character-driven story about two teenagers facing illness.",
+      "categories": [
+        "Contemporary",
+        "Young Adult",
+        "Romance"
+      ]
+    }
+  ]
+}
