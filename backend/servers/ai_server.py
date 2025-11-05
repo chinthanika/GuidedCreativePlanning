@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import os, json, time, hashlib, requests
 import openai
+import time
 import threading
 import random
 import re
@@ -12,22 +13,28 @@ from firebase_admin import credentials, db
 import logging
 from logging.handlers import RotatingFileHandler
 
-from utils.BSConversationFlowManager import BSConversationFlowManager
-from utils.DTConversationFlowManager import DTConversationFlowManager
+from utils.chat.BSConversationFlowManager import BSConversationFlowManager
+from utils.chat.DTConversationFlowManager import DTConversationFlowManager
 
-from utils.bs_action_handler import bs_background_handle_action, bs_handle_action
-from utils.dt_action_handler import dt_background_handle_action, dt_handle_action
+from utils.chat.bs_action_handler import bs_background_handle_action, bs_handle_action
+from utils.chat.dt_action_handler import dt_background_handle_action, dt_handle_action
 
-from utils.chat_utils import (
+from utils.chat.chat_utils import (
     MAX_DEPTH, KEEP_LAST_N, PROFILE_MANAGER_URL, DEEPSEEK_URL, 
     DEEPSEEK_API_KEY, LEONARDO_API_KEY, parse_markdown, 
     parse_deepseek_json, normalize_deepseek_response
 )
 
+from utils.recommendations.theme_extractor import ThemeExtractor
+from utils.recommendations.book_sources import BookSourceManager
+from utils.recommendations.ranker import BookRanker
+from utils.recommendations.StoryElementExtractor import StoryElementExtractor
+
 from prompts.bs_system_prompt import BS_SYSTEM_PROMPT
 from prompts.dt_system_prompt import DT_SYSTEM_PROMPT
 from prompts.mapping_system_prompt import MAPPING_SYSTEM_PROMPT
 from prompts.world_system_prompt import WORLD_SYSTEM_PROMPT
+from prompts.element_extraction_prompt import STORY_EXTRACTION_PROMPT
 
 app = Flask(__name__)
 
@@ -38,10 +45,19 @@ CORS(app)
 # ============================================
 os.makedirs("logs", exist_ok=True)
 
+GOOGLE_BOOKS_API_KEY = "AQ.Ab8RN6Kuh2PfnTd4BOB-2xFNHChPxrbxln5PTSmH52mWFAQrHg"
+
 bs_logger = logging.getLogger("BS_CHAT")
 dt_logger = logging.getLogger("DT_CHAT")
 world_logger = logging.getLogger("WORLD_AI")
 char_logger = logging.getLogger("CHAR_EXTRACT")
+
+# Create logger for recommendations
+rec_logger = logging.getLogger("RECOMMENDATIONS")
+rec_handler = RotatingFileHandler("logs/recommendations.log", maxBytes=5*1024*1024, backupCount=3)
+rec_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+rec_logger.addHandler(rec_handler)
+rec_logger.setLevel(logging.DEBUG)
 
 for logger_instance in [bs_logger, dt_logger, world_logger, char_logger]:
     handler = RotatingFileHandler(
@@ -57,14 +73,19 @@ for logger_instance in [bs_logger, dt_logger, world_logger, char_logger]:
 # FIREBASE INIT
 # ============================================
 try:
-    firebase_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
+    # firebase_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
 
-    if not firebase_json:
-        raise ValueError("FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set")
+    # if not firebase_json:
+    #     raise ValueError("FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set")
     
-    # Parse the JSON string into a dict
-    cred = credentials.Certificate(json.loads(firebase_json))
+    # # Parse the JSON string into a dict
+    # cred = credentials.Certificate(json.loads(firebase_json))
     
+    # firebase_admin.initialize_app(cred, {
+    #     'databaseURL': "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
+    # })
+
+    cred = credentials.Certificate("../Firebase/structuredcreativeplanning-fdea4acca240.json")
     firebase_admin.initialize_app(cred, {
         'databaseURL': "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
     })
@@ -83,9 +104,15 @@ if not LEONARDO_API_KEY:
     raise ValueError("LEONARDO_API_KEY not set")
 if not PROFILE_MANAGER_URL:
     raise ValueError("PROFILE_MANAGER_URL not set")
+if not GOOGLE_BOOKS_API_KEY:
+    raise ValueError("GOOGLE_BOOKS_API_KEY not set")
 
 client = openai.OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_URL)
 
+theme_extractor = ThemeExtractor(client)
+book_source_manager = BookSourceManager()
+book_ranker = BookRanker()
+story_extractor = StoryElementExtractor()
 # ============================================
 # ROUTE: HEALTH CHECK
 # ============================================
@@ -852,13 +879,642 @@ def generate_image():
         return jsonify({'error': str(e)}), 500
 
 # ============================================
+# BOOK RECOMMENDATIONS ENDPOINTS (CONSOLIDATED)
+# ============================================
+
+@app.route('/api/book-recommendations', methods=['POST'])
+def get_book_recommendations():
+    """
+    Generate book recommendations using enhanced story element extraction.
+    Now uses comprehensive extraction instead of simple theme extraction.
+    """
+    request_start = time.time()
+    rec_logger.info("[REC] Incoming recommendation request")
+    
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        session_id = data.get('sessionId')
+        mode = data.get('mode', 'brainstorming')
+        filters = data.get('filters', {})
+        limit = data.get('limit', 5)
+        
+        if not user_id or not session_id:
+            return jsonify({
+                'error': 'Missing required fields',
+                'details': 'userId and sessionId are required'
+            }), 400
+        
+        rec_logger.info(f"[REC] Request for user={user_id}, session={session_id}")
+        
+        # Fetch conversation from Session API
+        try:
+            session_api_url = "https://guidedcreativeplanning-session.onrender.com"
+            
+            messages_response = requests.post(
+                f"{session_api_url}/session/get_messages",
+                json={"uid": user_id, "sessionID": session_id},
+                timeout=10
+            )
+            
+            if messages_response.status_code != 200:
+                return jsonify({
+                    'error': 'Session not found',
+                    'sessionId': session_id
+                }), 404
+            
+            messages_data = messages_response.json()
+            messages_snapshot = messages_data.get('messages', {})
+            
+            if not messages_snapshot:
+                return jsonify({
+                    'error': 'No conversation found',
+                    'sessionId': session_id,
+                    'hint': 'Start chatting about your story'
+                }), 400
+            
+            # Convert to list
+            conversation_history = []
+            for msg_id, msg_data in messages_snapshot.items():
+                if isinstance(msg_data, dict) and msg_data.get('role') == 'user':
+                    conversation_history.append({
+                        'role': msg_data.get('role'),
+                        'content': msg_data.get('content', ''),
+                        'timestamp': msg_data.get('timestamp', 0)
+                    })
+            
+            conversation_history = sorted(
+                conversation_history, 
+                key=lambda x: x.get('timestamp', 0)
+            )
+            
+            rec_logger.info(f"[REC] Loaded {len(conversation_history)} user messages")
+            
+        except Exception as e:
+            rec_logger.error(f"[REC] Failed to fetch conversation: {e}")
+            return jsonify({
+                'error': 'Failed to fetch conversation',
+                'details': str(e)
+            }), 500
+        
+        if len(conversation_history) < 3:
+            return jsonify({
+                'error': 'Insufficient conversation history',
+                'currentMessageCount': len(conversation_history),
+                'hint': 'Keep chatting about your story'
+            }), 400
+        
+        # Step 1: Extract comprehensive story elements (replaces simple theme extraction)
+        extraction_start = time.time()
+        rec_logger.info("[REC] Extracting story elements")
+        
+        try:
+            # Format conversation
+            conversation_text = story_extractor.format_conversation(conversation_history)
+            
+            # Build prompt
+            prompt = STORY_EXTRACTION_PROMPT.format(conversation_text=conversation_text)
+            
+            # Call DeepSeek
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "You are an expert at analyzing creative writing conversations."},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={'type': 'json_object'},
+                stream=False,
+                timeout=45,
+                temperature=0.3
+            )
+            
+            elements_text = response.choices[0].message.content.strip()
+            story_elements = json.loads(elements_text)
+            
+            # Validate
+            if not story_extractor.validate_extraction(story_elements):
+                rec_logger.warning("[REC] Extraction validation failed, using fallback")
+                story_elements = story_extractor.keyword_extraction_fallback(conversation_history)
+            
+            extraction_time = time.time() - extraction_start
+            rec_logger.info(f"[REC] Story extraction: {extraction_time:.3f}s")
+            
+        except Exception as e:
+            rec_logger.error(f"[REC] Story extraction failed: {e}, using fallback")
+            story_elements = story_extractor.keyword_extraction_fallback(conversation_history)
+        
+        # Check confidence
+        if story_elements.get('overallConfidence', 0) < 0.3:
+            rec_logger.warning(f"[REC] Low confidence: {story_elements.get('overallConfidence', 0)}")
+            return jsonify({
+                'error': 'Unable to extract story elements',
+                'details': 'Conversation too vague. Try discussing genre, themes, or characters.',
+                'confidence': story_elements.get('overallConfidence', 0)
+            }), 400
+        
+        # Step 2: Query book sources using enhanced search queries
+        source_start = time.time()
+        rec_logger.info("[REC] Querying book sources")
+        
+        try:
+            # Use enhanced search queries from story elements
+            search_queries = story_extractor.build_search_queries(story_elements)
+            
+            # Build backward-compatible themes dict for book sources
+            compat_themes = {
+                'genre': story_elements.get('genre', {}).get('primary', 'fiction'),
+                'themes': [t['name'] for t in story_elements.get('themes', [])],
+                'characterTypes': [c['archetype'] for c in story_elements.get('characterArchetypes', [])],
+                'plotStructures': story_elements.get('plotStructure', {}).get('primaryStructure', ''),
+                'tone': story_elements.get('tone', {}).get('primary', ''),
+                'ageGroup': story_elements.get('ageAppropriate', {}).get('targetAge', '12-16'),
+                'settingType': f"{story_elements.get('settingType', {}).get('temporal', '')} {story_elements.get('settingType', {}).get('spatial', '')}".strip(),
+                '_searchQueries': search_queries
+            }
+            
+            books = book_source_manager.get_books_from_sources(compat_themes, filters, limit * 2)
+            source_time = time.time() - source_start
+            rec_logger.info(f"[REC] Book sources: {source_time:.3f}s, found {len(books)} books")
+            
+        except Exception as e:
+            rec_logger.error(f"[REC] Book source query failed: {e}")
+            return jsonify({
+                'error': 'Book source query failed',
+                'details': str(e)
+            }), 500
+        
+        if not books:
+            rec_logger.warning("[REC] No books found")
+            return jsonify({
+                'error': 'No books found',
+                'extractedElements': story_elements,
+                'searchQueries': search_queries
+            }), 200
+        
+        # Step 3: Rank and deduplicate
+        rank_start = time.time()
+        rec_logger.info("[REC] Ranking books")
+        
+        try:
+            ranked_books = book_ranker.rank_and_deduplicate_books(books, compat_themes, limit)
+            rank_time = time.time() - rank_start
+            rec_logger.info(f"[REC] Ranking: {rank_time:.3f}s, selected {len(ranked_books)} books")
+        except Exception as e:
+            rec_logger.error(f"[REC] Ranking failed: {e}")
+            ranked_books = books[:limit]
+        
+        # Build response
+        processing_time = int((time.time() - request_start) * 1000)
+        
+        response = {
+            'recommendations': [
+                {
+                    'id': book.get('id'),
+                    'title': book.get('title'),
+                    'author': book.get('author'),
+                    'year': book.get('year'),
+                    'coverUrl': book.get('coverUrl'),
+                    'rating': book.get('rating'),
+                    'description': book.get('description'),
+                    'categories': book.get('categories', []),
+                    'source': book.get('source'),
+                    'relevance_score': book.get('relevance_score', 0)
+                }
+                for book in ranked_books
+            ],
+            'extractedElements': {
+                'genre': story_elements.get('genre', {}).get('primary'),
+                'subgenres': [sg['name'] for sg in story_elements.get('subgenres', [])],
+                'themes': [t['name'] for t in story_elements.get('themes', [])],
+                'characterArchetypes': [c['archetype'] for c in story_elements.get('characterArchetypes', [])],
+                'tone': story_elements.get('tone', {}).get('primary'),
+                'overallConfidence': story_elements.get('overallConfidence', 0)
+            },
+            'searchQueries': search_queries,
+            'processingTime': processing_time,
+            'sessionId': session_id
+        }
+        
+        # Log metrics (non-blocking)
+        def log_metrics():
+            try:
+                metrics_data = {
+                    'timestamp': int(time.time() * 1000),
+                    'booksDisplayed': len(ranked_books),
+                    'processingTime': processing_time,
+                    'extractionConfidence': story_elements.get('overallConfidence', 0),
+                    'genre': story_elements.get('genre', {}).get('primary'),
+                    'themes': [t['name'] for t in story_elements.get('themes', [])[:3]],
+                    'sources': {
+                        'google_books': sum(1 for b in ranked_books if b.get('source') == 'google_books'),
+                        'open_library': sum(1 for b in ranked_books if b.get('source') == 'open_library'),
+                        'curated': sum(1 for b in ranked_books if b.get('source') == 'curated')
+                    }
+                }
+                
+                requests.post(
+                    f"{session_api_url}/session/update_metadata",
+                    json={
+                        "uid": user_id,
+                        "sessionID": session_id,
+                        "updates": {"lastRecommendation": metrics_data},
+                        "mode": "shared"
+                    },
+                    timeout=5
+                )
+            except Exception as e:
+                rec_logger.warning(f"[REC] Failed to log metrics: {e}")
+        
+        threading.Thread(target=log_metrics, daemon=True).start()
+        
+        total_time = time.time() - request_start
+        rec_logger.info(f"[REC] Total: {total_time:.2f}s, returned {len(ranked_books)} books")
+        
+        return jsonify(response), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[REC] Unexpected error: {e}")
+        return jsonify({
+            'error': 'Recommendation generation failed',
+            'details': str(e)
+        }), 500
+    
+@app.route('/api/book-recommendations/save', methods=['POST'])
+def save_book_recommendation():
+    """
+    Save a book to user's saved collection.
+    
+    Request body:
+    {
+        "userId": "string",
+        "sessionId": "string",
+        "book": {
+            "id": "string",
+            "title": "string",
+            "author": "string",
+            "source": "string"
+        }
+    }
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        session_id = data.get('sessionId')
+        book = data.get('book')
+        
+        if not user_id or not session_id or not book:
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        # Save to Firebase
+        session_ref = db.reference(f"chatSessions/{user_id}/{session_id}")
+        saved_books_ref = session_ref.child('savedBooks')
+        
+        saved_book_data = {
+            **book,
+            'savedAt': int(time.time() * 1000)
+        }
+        
+        result = saved_books_ref.push(saved_book_data)
+        
+        # Get total count
+        all_saved = saved_books_ref.get() or {}
+        total_saved = len(all_saved)
+        
+        rec_logger.info(f"[REC] Book saved: {book.get('title')} by {book.get('author')}")
+        
+        return jsonify({
+            'success': True,
+            'savedBookId': result.key,
+            'totalSaved': total_saved
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[REC] Save failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/curated-collections', methods=['GET'])
+def get_curated_collections():
+    """
+    Get list of curated book collections for browse mode.
+    """
+    try:
+        collections = book_source_manager.curated_collections
+        
+        # Build response with metadata
+        response = {
+            'collections': []
+        }
+        
+        for collection_id, books in collections.items():
+            if books:
+                response['collections'].append({
+                    'id': collection_id,
+                    'name': collection_id.replace('_', ' ').title(),
+                    'bookCount': len(books),
+                    'coverImages': [b.get('coverUrl', '') for b in books[:3] if b.get('coverUrl')]
+                })
+        
+        rec_logger.info(f"[COLLECTIONS] Returning {len(response['collections'])} collections")
+        return jsonify(response), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[COLLECTIONS] Failed to get collections: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/story-elements/extract', methods=['POST'])
+def extract_story_elements():
+    """
+    Extract comprehensive story elements from conversation.
+    AI call happens here in the server (like chat endpoints).
+    """
+    request_start = time.time()
+    rec_logger.info("[STORY_EXTRACT] Incoming extraction request")
+    
+    try:
+        # Parse request
+        data = request.json
+        user_id = data.get('userId')
+        session_id = data.get('sessionId')
+        
+        if not user_id or not session_id:
+            return jsonify({
+                'error': 'Missing required fields',
+                'details': 'userId and sessionId are required'
+            }), 400
+        
+        # Fetch conversation from Session API
+        session_api_url = "https://guidedcreativeplanning-session.onrender.com"
+        
+        messages_response = requests.post(
+            f"{session_api_url}/session/get_messages",
+            json={"uid": user_id, "sessionID": session_id},
+            timeout=10
+        )
+        
+        if messages_response.status_code != 200:
+            return jsonify({
+                'error': 'Session not found',
+                'sessionId': session_id
+            }), 404
+        
+        messages_snapshot = messages_response.json().get('messages', {})
+        
+        if not messages_snapshot:
+            return jsonify({
+                'error': 'No conversation found',
+                'sessionId': session_id
+            }), 400
+        
+        # Convert to list
+        conversation_history = []
+        for msg_id, msg_data in messages_snapshot.items():
+            if isinstance(msg_data, dict):
+                conversation_history.append({
+                    'role': msg_data.get('role'),
+                    'content': msg_data.get('content', ''),
+                    'timestamp': msg_data.get('timestamp', 0)
+                })
+        
+        conversation_history = sorted(
+            conversation_history,
+            key=lambda x: x.get('timestamp', 0)
+        )
+        
+        rec_logger.info(f"[STORY_EXTRACT] Loaded {len(conversation_history)} messages")
+        
+        # Check minimum
+        if len(conversation_history) < 3:
+            return jsonify({
+                'error': 'Insufficient conversation',
+                'details': f'Need 3+ messages. Current: {len(conversation_history)}'
+            }), 400
+        
+        # Format conversation using utility
+        conversation_text = story_extractor.format_conversation(conversation_history)
+        
+        # Build prompt
+        prompt = STORY_EXTRACTION_PROMPT.format(conversation_text=conversation_text)
+        
+        # AI CALL HAPPENS HERE (like chat endpoints)
+        extraction_start = time.time()
+        rec_logger.info("[STORY_EXTRACT] Calling DeepSeek")
+        
+        max_retries = 2
+        elements = None
+        
+        for attempt in range(max_retries):
+            try:
+                response = client.chat.completions.create(
+                    model="deepseek-chat",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are an expert at analyzing creative writing conversations."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    response_format={'type': 'json_object'},
+                    stream=False,
+                    timeout=45,
+                    temperature=0.3
+                )
+                
+                # Parse
+                elements_text = response.choices[0].message.content.strip()
+                elements = json.loads(elements_text)
+                
+                # Validate using utility
+                if story_extractor.validate_extraction(elements):
+                    extraction_time = time.time() - extraction_start
+                    rec_logger.info(
+                        f"[STORY_EXTRACT] Success in {extraction_time:.2f}s "
+                        f"(confidence: {elements.get('overallConfidence', 0):.2f})"
+                    )
+                    
+                    # Add metadata
+                    elements['_metadata'] = {
+                        'messageCount': len(conversation_history),
+                        'userMessages': sum(1 for m in conversation_history if m.get('role') == 'user'),
+                        'extractionAttempt': attempt + 1,
+                        'extractionTime': extraction_time
+                    }
+                    
+                    break  # Success
+                else:
+                    rec_logger.warning(f"[STORY_EXTRACT] Validation failed (attempt {attempt + 1})")
+                    
+            except openai.APITimeoutError:
+                rec_logger.warning(f"[STORY_EXTRACT] Timeout on attempt {attempt + 1}")
+                if attempt == max_retries - 1:
+                    elements = story_extractor.keyword_extraction_fallback(conversation_history)
+                    break
+
+            except json.JSONDecodeError as e:
+                rec_logger.error(f"[STORY_EXTRACT] JSON parse error: {e}")
+                if attempt == max_retries - 1:
+                    elements = story_extractor.keyword_extraction_fallback(conversation_history)
+                    break
+        
+        # If all failed, use fallback
+        if elements is None:
+            elements = story_extractor.keyword_extraction_fallback(conversation_history)
+        # Generate search queries
+        search_queries = story_extractor.build_search_queries(elements)
+        
+        # Build response
+        total_time = time.time() - request_start
+        rec_logger.info(f"[STORY_EXTRACT] Total: {total_time:.2f}s")
+        
+        return jsonify({
+            'elements': elements,
+            'searchQueries': search_queries,
+            'processingTime': int(total_time * 1000),
+            'sessionId': session_id
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[STORY_EXTRACT] Error: {e}")
+        return jsonify({
+            'error': 'Story extraction failed',
+            'details': str(e)
+        }), 500
+
+
+@app.route('/api/book-recommendations/debug', methods=['POST'])
+def debug_book_sources():
+    """
+    Debug endpoint to test each book source individually.
+    """
+    try:
+        data = request.json or {}
+        test_themes = data.get('themes') or {
+            'genre': 'fantasy',
+            'themes': ['magic', 'coming-of-age'],
+            'characterTypes': ['reluctant hero'],
+            'plotStructures': ['hero journey'],
+            'tone': 'dark',
+            'ageGroup': '12-16',
+            'settingType': 'medieval fantasy',
+            '_searchQueries': ['fantasy young adult magic coming-of-age']
+        }
+        
+        filters = data.get('filters', {})
+        limit = data.get('limit', 5)
+        
+        results = {
+            'google_books': {'status': 'pending', 'books': [], 'error': None},
+            'open_library': {'status': 'pending', 'books': [], 'error': None},
+            'curated': {'status': 'pending', 'books': [], 'error': None}
+        }
+        
+        # Test Google Books
+        rec_logger.info("[DEBUG] Testing Google Books API")
+        if GOOGLE_BOOKS_API_KEY:
+            try:
+                google_books = book_source_manager._fetch_google_books(test_themes, limit)
+                results['google_books'] = {
+                    'status': 'success',
+                    'books': google_books,
+                    'count': len(google_books),
+                    'error': None
+                }
+                rec_logger.info(f"[DEBUG] Google Books: {len(google_books)} books")
+            except Exception as e:
+                results['google_books'] = {
+                    'status': 'error',
+                    'books': [],
+                    'count': 0,
+                    'error': str(e)
+                }
+                rec_logger.error(f"[DEBUG] Google Books error: {e}")
+        else:
+            results['google_books'] = {
+                'status': 'disabled',
+                'books': [],
+                'count': 0,
+                'error': 'API key not configured'
+            }
+        
+        # Test Open Library
+        rec_logger.info("[DEBUG] Testing Open Library API")
+        try:
+            openlibrary_books = book_source_manager._fetch_openlibrary_books(test_themes, limit)
+            results['open_library'] = {
+                'status': 'success',
+                'books': openlibrary_books,
+                'count': len(openlibrary_books),
+                'error': None
+            }
+            rec_logger.info(f"[DEBUG] Open Library: {len(openlibrary_books)} books")
+        except Exception as e:
+            results['open_library'] = {
+                'status': 'error',
+                'books': [],
+                'count': 0,
+                'error': str(e)
+            }
+            rec_logger.error(f"[DEBUG] Open Library error: {e}")
+        
+        # Test Curated Collections
+        rec_logger.info("[DEBUG] Testing Curated Collections")
+        try:
+            curated_books = book_source_manager._match_curated_books(test_themes, limit)
+            results['curated'] = {
+                'status': 'success',
+                'books': curated_books,
+                'count': len(curated_books),
+                'error': None,
+                'available_collections': list(book_source_manager.curated_collections.keys()),
+                'total_curated_books': sum(len(v) for v in book_source_manager.curated_collections.values())
+            }
+            rec_logger.info(f"[DEBUG] Curated: {len(curated_books)} books")
+        except Exception as e:
+            results['curated'] = {
+                'status': 'error',
+                'books': [],
+                'count': 0,
+                'error': str(e),
+                'available_collections': list(book_source_manager.curated_collections.keys()),
+                'total_curated_books': sum(len(v) for v in book_source_manager.curated_collections.values())
+            }
+            rec_logger.error(f"[DEBUG] Curated error: {e}")
+        
+        # Summary
+        total_books = sum(r.get('count', 0) for r in results.values())
+        
+        return jsonify({
+            'test_themes': test_themes,
+            'results': results,
+            'summary': {
+                'total_books': total_books,
+                'sources_working': sum(1 for r in results.values() if r['status'] == 'success'),
+                'sources_failed': sum(1 for r in results.values() if r['status'] == 'error')
+            },
+            'config': {
+                'google_books_api_key_set': bool(GOOGLE_BOOKS_API_KEY),
+                'curated_collections_loaded': bool(book_source_manager.curated_collections),
+                'curated_collections_count': len(book_source_manager.curated_collections)
+            }
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[DEBUG] Debug endpoint error: {e}")
+        return jsonify({'error': str(e)}), 500
+    
+# ============================================
 # RUN SERVER
 # ============================================
 if __name__ == "__main__":
-    print(f"Starting AI Server on port {port}")
+    print(f"Starting AI Server on port {os.environ.get('PORT', 5000)}")
     print(f"   - Brainstorming: /chat/brainstorming")
     print(f"   - Deep Thinking: /chat/deepthinking")
     print(f"   - World AI: /worldbuilding/suggest-template")
     print(f"   - Characters: /characters/extract")
     print(f"   - Images: /images/generate")
+    print(f"   - Book Recommendations: /api/book-recommendations")
+    print(f"   - Story Extraction: /api/story-elements/extract")
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
