@@ -2,8 +2,9 @@ import { database } from '../Firebase/firebase';
 import { ref, push } from "firebase/database";
 
 // Configuration
-const CONSOLIDATED_SERVER_URL = process.env.REACT_APP_AI_SERVER_URL;
-
+// const CONSOLIDATED_SERVER_URL = process.env.REACT_APP_AI_SERVER_URL;
+//const CONSOLIDATED_SERVER_URL = "https://guidedcreativeplanning-ai.onrender.com"; // adjust if deployed
+const CONSOLIDATED_SERVER_URL = "http://localhost:5000"; // adjust if deployed
 let sessionID = null;
 
 /**

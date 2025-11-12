@@ -5,7 +5,7 @@ import os
 import requests
 import threading
 
-from backend.servers.utils.cache import (
+from utils.cache import (
     metadata_cache, summaries_cache, cache_stats,
     metadata_lock, summaries_lock,
     invalidate_metadata, invalidate_summaries

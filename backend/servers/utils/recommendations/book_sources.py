@@ -1,15 +1,17 @@
 """
-Book source integrations: Google Books, Open Library, Curated Collections.
-Implements three-tier hybrid fallback approach.
+Book source integrations: Google Books, Enhanced Open Library, Curated Collections.
+Updated with improved Open Library subject mapping and quality analysis.
 """
 
 import os
 import json
 import logging
 import requests
+import time
 from typing import List, Dict, Any
+from .SubjectMapper import SubjectMapper
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("RECOMMENDATIONS")
 
 GOOGLE_BOOKS_API_KEY = os.getenv('GOOGLE_BOOKS_API_KEY')
 GOOGLE_BOOKS_URL = 'https://www.googleapis.com/books/v1/volumes'
@@ -17,140 +19,172 @@ OPENLIBRARY_URL = 'https://openlibrary.org/search.json'
 
 
 class BookSourceManager:
-    """Manages fetching books from multiple sources with fallback logic."""
+    """Manages fetching books from multiple sources with enhanced Open Library integration."""
     
     def __init__(self, curated_collections_path=None):
         """
-        Initialize book source manager.
+        Initialize book source manager with enhanced Open Library client.
         
         Args:
-            curated_collections_path: Path to curated collections JSON file.
-                                     If None, looks in multiple default locations.
+            curated_collections_path: Path to curated collections JSON file
         """
         self.curated_collections = {}
+        self._load_curated_collections(curated_collections_path)
         
-        # Try multiple possible paths if no path specified
-        if curated_collections_path is None:
+        # Initialize Open Library subject mappings
+        self.subject_mapper = SubjectMapper()
+
+        logger.info(
+            f"[BOOKS] Subject mapping: "
+            f"{'Dynamic + Fallback' if self.subject_mapper.enable_dynamic else 'Fallback Only'}"
+        )
+
+        # Session for requests
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'GuidedCreativePlanning/1.0 (Educational Research)'
+        })
+    
+    def _load_curated_collections(self, path):
+        """Load curated collections from file."""
+        if path is None:
             possible_paths = [
                 'curated_collections.json',
                 'data/curated_collections.json',
                 '../data/curated_collections.json',
                 'utils/recommendations/curated_collections.json',
-                'utils/recommendations/data/curated_collections.json',  # ADDED: Actual location
                 os.path.join(os.path.dirname(__file__), 'curated_collections.json'),
-                os.path.join(os.path.dirname(__file__), 'data', 'curated_collections.json'),  # ADDED
-                os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'curated_collections.json'),
+                os.path.join(os.path.dirname(__file__), 'data', 'curated_collections.json'),
             ]
             
-            for path in possible_paths:
-                abs_path = os.path.abspath(path)
-                if os.path.exists(abs_path):
-                    curated_collections_path = abs_path
-                    logger.info(f"[BOOKS] Found curated collections at: {path}")
-                    logger.info(f"[BOOKS] Absolute path: {abs_path}")
+            for p in possible_paths:
+                if os.path.exists(p):
+                    path = p
                     break
-            
-            if curated_collections_path is None:
-                logger.warning("[BOOKS] Curated collections file not found in any default location")
-                logger.warning(f"[BOOKS] Searched paths: {possible_paths}")
-                logger.warning(f"[BOOKS] Current directory: {os.getcwd()}")
-                logger.warning(f"[BOOKS] Script directory: {os.path.dirname(__file__)}")
-                # Create default structure
-                self.curated_collections = self._get_default_collections()
-                return
         
         try:
-            if os.path.exists(curated_collections_path):
-                with open(curated_collections_path, 'r', encoding='utf-8') as f:
+            if path and os.path.exists(path):
+                with open(path, 'r', encoding='utf-8') as f:
                     self.curated_collections = json.load(f)
-                logger.info(f"[BOOKS] Loaded curated collections from: {curated_collections_path}")
-                logger.info(f"[BOOKS] Collections: {list(self.curated_collections.keys())}")
-                logger.info(f"[BOOKS] Total books: {sum(len(v) for v in self.curated_collections.values())}")
+                logger.info(f"[BOOKS] Loaded curated collections: {list(self.curated_collections.keys())}")
             else:
-                logger.warning(f"[BOOKS] Curated collections not found: {curated_collections_path}")
                 self.curated_collections = self._get_default_collections()
         except Exception as e:
             logger.error(f"[BOOKS] Failed to load curated collections: {e}")
             self.curated_collections = self._get_default_collections()
     
     def _get_default_collections(self):
-        """Return minimal default collections as fallback."""
-        logger.info("[BOOKS] Using default fallback collections")
+        """Return minimal default collections."""
         return {
-            'coming_of_age': [
-                {
-                    "id": "coa_1",
-                    "title": "The Perks of Being a Wallflower",
-                    "author": "Stephen Chbosky",
-                    "year": 1999,
-                    "rating": 4.2,
-                    "coverUrl": "https://covers.openlibrary.org/b/id/8235937-L.jpg",
-                    "description": "A coming-of-age story about friendship, self-discovery, and finding your place in the world.",
-                    "categories": ["Contemporary", "Young Adult", "Coming of Age"]
-                }
-            ],
-            'fantasy_worldbuilding': [
-                {
-                    "id": "fbx_1",
-                    "title": "The Name of the Wind",
-                    "author": "Patrick Rothfuss",
-                    "year": 2007,
-                    "rating": 4.5,
-                    "coverUrl": "https://covers.openlibrary.org/b/id/8235937-L.jpg",
-                    "description": "A legendary hero tells his own story in a richly detailed fantasy world with complex magic.",
-                    "categories": ["Fantasy", "Young Adult", "Magic"]
-                }
-            ],
-            'dystopian': [
-                {
-                    "id": "dys_1",
-                    "title": "The Hunger Games",
-                    "author": "Suzanne Collins",
-                    "year": 2008,
-                    "rating": 4.3,
-                    "coverUrl": "https://covers.openlibrary.org/b/id/7833604-L.jpg",
-                    "description": "A girl fights for survival in a brutal televised competition in a dystopian future.",
-                    "categories": ["Dystopian", "Young Adult", "Action"]
-                }
-            ],
-            'unreliable_narrators': [
-                {
-                    "id": "un_1",
-                    "title": "We Were Liars",
-                    "author": "E. Lockhart",
-                    "year": 2014,
-                    "rating": 3.8,
-                    "coverUrl": "https://covers.openlibrary.org/b/id/8235937-L.jpg",
-                    "description": "A mysterious story with an unreliable narrator and shocking revelations.",
-                    "categories": ["Mystery", "Young Adult", "Thriller"]
-                }
-            ],
-            'character_driven': [
-                {
-                    "id": "cd_1",
-                    "title": "The Fault in Our Stars",
-                    "author": "John Green",
-                    "year": 2012,
-                    "rating": 4.3,
-                    "coverUrl": "https://covers.openlibrary.org/b/id/8235937-L.jpg",
-                    "description": "A deeply emotional character-driven story about two teenagers facing illness.",
-                    "categories": ["Contemporary", "Young Adult", "Romance"]
-                }
-            ]
+            'coming_of_age': [{
+                "id": "coa_1",
+                "title": "The Perks of Being a Wallflower",
+                "author": "Stephen Chbosky",
+                "year": 1999,
+                "rating": 4.2,
+                "coverUrl": "https://covers.openlibrary.org/b/id/8235937-L.jpg",
+                "description": "A coming-of-age story about friendship and self-discovery.",
+                "categories": ["Contemporary", "Young Adult", "Coming of Age"]
+            }]
         }
     
+    def _parse_openlibrary_book_enhanced(self, doc: Dict) -> Dict[str, Any]:
+        """Parse with subject mapping."""
+        if not doc.get('title'):
+            return None
+        
+        # Get basic info
+        title = doc.get('title', 'Unknown')
+        author_name = doc.get('author_name', ['Unknown'])
+        author = author_name[0] if isinstance(author_name, list) else author_name
+        year = doc.get('first_publish_year')
+        
+        # Cover
+        cover_id = doc.get('cover_i')
+        cover_url = (
+            f"https://covers.openlibrary.org/b/id/{cover_id}-L.jpg"
+            if cover_id else ''
+        )
+        
+        # HYBRID MAPPING (replaces _map_subjects_to_categories)
+        raw_subjects = doc.get('subject', [])
+        query_context = getattr(self, '_current_query', '')  # Set during search
+        
+        mapped_categories, relevance_boost, method = self.subject_mapper.map_subjects(
+            raw_subjects,
+            query_context=query_context
+        )
+        
+        # Rating
+        rating = doc.get('ratings_average')
+        
+        return {
+            'id': doc.get('key', '').replace('/works/', 'ol_'),
+            'title': title,
+            'author': author,
+            'description': '',
+            'coverUrl': cover_url,
+            'rating': rating,
+            'year': year,
+            'categories': mapped_categories,
+            'raw_subjects': raw_subjects[:10],
+            'source': 'open_library',
+            '_relevance_boost': relevance_boost,
+            '_mapping_method': method  # Track which method was used
+        }
+    
+    def _query_openlibrary_api_enhanced(
+        self,
+        query: str,
+        limit: int
+    ) -> List[Dict[str, Any]]:
+        """Query with context tracking."""
+        # Store current query for context
+        self._current_query = query
+        
+        try:
+            params = {
+                'q': query,
+                'limit': min(limit, 100),
+                'fields': 'key,title,author_name,first_publish_year,'
+                        'cover_i,subject,ratings_average',
+                'sort': 'rating desc'
+            }
+            
+            response = self.session.get(OPENLIBRARY_URL, params=params, timeout=15)
+            response.raise_for_status()
+            
+            data = response.json()
+            docs = data.get('docs', [])
+            
+            books = []
+            for doc in docs:
+                book = self._parse_openlibrary_book_enhanced(doc)
+                if book:
+                    books.append(book)
+            
+            return books
+        
+        finally:
+            # Always clear context, even on exception
+            self._current_query = ''
+    
+    def get_mapping_metrics(self) -> Dict[str, Any]:
+        """Get subject mapper metrics for monitoring."""
+        return self.subject_mapper.get_metrics()
+    
     def get_books_from_sources(
-        self, 
-        themes: Dict[str, Any], 
+        self,
+        themes: Dict[str, Any],
         filters: Dict[str, Any],
         limit: int = 10
     ) -> List[Dict[str, Any]]:
         """
-        Fetch books using three-tier hybrid approach.
+        Fetch books using three-tier subject approach with enhanced Open Library.
         
         Args:
             themes: Extracted themes from conversation
-            filters: User-applied filters (ageRange, pubDate, minRating)
+            filters: User filters (ageRange, pubDate, minRating)
             limit: Number of books to fetch
             
         Returns:
@@ -162,30 +196,28 @@ class BookSourceManager:
         if GOOGLE_BOOKS_API_KEY:
             try:
                 logger.info("[BOOKS] Trying Google Books (Tier 1)")
-                google_books = self._fetch_google_books(themes, limit)
+                google_books = self._fetch_google_books_with_retry(themes, limit)
                 books.extend(google_books)
-                logger.info(f"[BOOKS] Google Books returned {len(google_books)} books")
+                logger.info(f"[BOOKS] Google Books: {len(google_books)} books")
             except Exception as e:
                 logger.warning(f"[BOOKS] Google Books failed: {e}")
-        else:
-            logger.info("[BOOKS] Skipping Google Books (no API key)")
         
-        # Tier 2: Open Library (if Google Books insufficient)
+        # Tier 2: Enhanced Open Library (always try)
         if len(books) < 3:
             try:
                 logger.info("[BOOKS] Trying Open Library (Tier 2)")
-                openlibrary_books = self._fetch_openlibrary_books(themes, limit)
+                openlibrary_books = self._fetch_openlibrary_enhanced(themes, limit)
                 books.extend(openlibrary_books)
-                logger.info(f"[BOOKS] Open Library returned {len(openlibrary_books)} books")
+                logger.info(f"[BOOKS] Open Library: {len(openlibrary_books)} books")
             except Exception as e:
                 logger.warning(f"[BOOKS] Open Library failed: {e}")
         
-        # Tier 3: Curated Collections (always try as fallback)
+        # Tier 3: Curated Collections (fallback)
         if len(books) < 3:
             logger.info("[BOOKS] Using Curated Collections (Tier 3)")
             curated_books = self._match_curated_books(themes, limit)
             books.extend(curated_books)
-            logger.info(f"[BOOKS] Curated collections returned {len(curated_books)} books")
+            logger.info(f"[BOOKS] Curated: {len(curated_books)} books")
         
         # Apply filters
         filtered_books = self._apply_filters(books, filters)
@@ -193,57 +225,100 @@ class BookSourceManager:
         logger.info(f"[BOOKS] Total: {len(books)} fetched, {len(filtered_books)} after filters")
         return filtered_books
     
-    def _fetch_google_books(self, themes: Dict[str, Any], limit: int) -> List[Dict[str, Any]]:
-        """Fetch books from Google Books API."""
-        books = []
+    # ============================================
+    # GOOGLE BOOKS (Unchanged)
+    # ============================================
+    
+    def _fetch_google_books_with_retry(
+        self,
+        themes: Dict[str, Any],
+        limit: int,
+        max_retries: int = 3
+    ) -> List[Dict[str, Any]]:
+        """Fetch from Google Books with retry logic."""
         search_queries = themes.get('_searchQueries', [])
         
         if not search_queries:
-            logger.warning("[GOOGLE] No search queries provided")
-            return books
+            genre = themes.get('genre', 'fiction')
+            search_queries = [f"{genre} young adult"]
         
-        # Try first query (most specific)
-        query = search_queries[0]
+        books = []
         
-        try:
-            params = {
-                'q': query,
-                'key': GOOGLE_BOOKS_API_KEY,
-                'maxResults': limit,
-                'orderBy': 'relevance',
-            }
-            
-            response = requests.get(GOOGLE_BOOKS_URL, params=params, timeout=10)
-            response.raise_for_status()
-            
-            data = response.json()
-            items = data.get('items', [])
-            
-            for item in items:
-                book = self._parse_google_book(item)
-                if book:
-                    books.append(book)
-            
-            logger.debug(f"[GOOGLE] Query '{query}' returned {len(books)} books")
-            
-        except requests.RequestException as e:
-            logger.error(f"[GOOGLE] API request failed: {e}")
-            raise
+        for query_idx, query in enumerate(search_queries):
+            for attempt in range(max_retries):
+                try:
+                    query_books = self._query_google_books_api(query, limit)
+                    
+                    if query_books:
+                        logger.info(f"[GOOGLE] Query {query_idx + 1} succeeded: {len(query_books)} books")
+                        logger.debug(f"[GOOGLE_BOOKS] Raw API response: {json.dumps(query_books, indent=2)}")
+                        books.extend(query_books)
+                        
+                        if len(books) >= limit:
+                            return books[:limit]
+                        break
+                    else:
+                        break
+                
+                except requests.Timeout:
+                    if attempt < max_retries - 1:
+                        time.sleep(2 ** attempt)
+                        continue
+                    break
+                
+                except requests.RequestException as e:
+                    if attempt < max_retries - 1:
+                        time.sleep(1)
+                        continue
+                    break
+        
+        # Fallback
+        if not books:
+            genre = themes.get('genre', 'fiction')
+            try:
+                books = self._query_google_books_api(f"{genre} young adult", limit)
+            except:
+                pass
+        
+        return books
+    
+    def _query_google_books_api(self, query: str, limit: int) -> List[Dict[str, Any]]:
+        """Make API call to Google Books."""
+        params = {
+            'q': query,
+            'maxResults': min(limit, 40),
+            'orderBy': 'relevance'
+        }
+        
+        if GOOGLE_BOOKS_API_KEY:
+            params['key'] = GOOGLE_BOOKS_API_KEY
+        
+        response = self.session.get(GOOGLE_BOOKS_URL, params=params, timeout=10)
+        response.raise_for_status()
+        
+        data = response.json()
+        items = data.get('items', [])
+        
+        books = []
+        for item in items:
+            book = self._parse_google_book(item)
+            if book:
+                books.append(book)
         
         return books
     
     def _parse_google_book(self, item: Dict) -> Dict[str, Any]:
-        """Parse Google Books API response item."""
+        """Parse Google Books item."""
         volume_info = item.get('volumeInfo', {})
         
-        # Skip books without basic info
         if not volume_info.get('title'):
             return None
-        
-        book = {
+        print(f"[GOOGLE] Parsing book: {volume_info}")
+        return {
             'id': item.get('id'),
             'title': volume_info.get('title', 'Unknown'),
-            'author': volume_info.get('authors', ['Unknown'])[0] if volume_info.get('authors') else 'Unknown',
+            'author': volume_info.get('authors', ['Unknown'])[0] 
+                     if volume_info.get('authors') else 'Unknown',
             'description': volume_info.get('description', ''),
             'coverUrl': volume_info.get('imageLinks', {}).get('thumbnail', ''),
             'rating': volume_info.get('averageRating'),
@@ -251,88 +326,106 @@ class BookSourceManager:
             'categories': volume_info.get('categories', []),
             'source': 'google_books'
         }
-        
-        return book
     
-    def _fetch_openlibrary_books(self, themes: Dict[str, Any], limit: int) -> List[Dict[str, Any]]:
-        """Fetch books from Open Library API."""
-        books = []
+    # ============================================
+    # ENHANCED OPEN LIBRARY
+    # ============================================
+    
+    def _fetch_openlibrary_enhanced(
+        self,
+        themes: Dict[str, Any],
+        limit: int,
+        max_retries: int = 3
+    ) -> List[Dict[str, Any]]:
+        """
+        Enhanced Open Library fetching with improved subject mapping.
+        
+        Args:
+            themes: Story themes with search queries
+            limit: Max books to fetch
+            max_retries: Retry attempts
+            
+        Returns:
+            List of books with enhanced metadata
+        """
         search_queries = themes.get('_searchQueries', [])
         
         if not search_queries:
-            return books
+            genre = themes.get('genre', 'fiction')
+            search_queries = [f"{genre} young adult"]
         
-        query = search_queries[0]
+        books = []
         
-        try:
-            params = {
-                'q': query,
-                'limit': limit,
-                'fields': 'key,title,author_name,first_publish_year,cover_i,subject'
-            }
+        for query_idx, query in enumerate(search_queries):
+            logger.debug(f"[OPENLIBRARY] Query {query_idx + 1}: '{query}'")
             
-            response = requests.get(OPENLIBRARY_URL, params=params, timeout=10)
-            response.raise_for_status()
-            
-            data = response.json()
-            docs = data.get('docs', [])
-            
-            for doc in docs:
-                book = self._parse_openlibrary_book(doc)
-                if book:
-                    books.append(book)
-            
-            logger.debug(f"[OPENLIBRARY] Query '{query}' returned {len(books)} books")
-            
-        except requests.RequestException as e:
-            logger.error(f"[OPENLIBRARY] API request failed: {e}")
-            raise
+            for attempt in range(max_retries):
+                try:
+                    query_books = self._query_openlibrary_api_enhanced(query, limit)
+                    
+                    if query_books:
+                        logger.info(
+                            f"[OPENLIBRARY] Query {query_idx + 1} succeeded: "
+                            f"{len(query_books)} books"
+                        )
+                        logger.debug(f"[GOOGLE_BOOKS] Raw API response: {json.dumps(query_books, indent=2)}")
+                        books.extend(query_books)
+                        
+                        if len(books) >= limit:
+                            return books[:limit]
+                        break
+                    else:
+                        break
+                
+                except requests.Timeout:
+                    logger.warning(f"[OPENLIBRARY] Timeout (attempt {attempt + 1})")
+                    if attempt < max_retries - 1:
+                        time.sleep(2 ** attempt)
+                        continue
+                    break
+                
+                except requests.RequestException as e:
+                    logger.error(f"[OPENLIBRARY] Request failed: {e}")
+                    if attempt < max_retries - 1:
+                        time.sleep(1)
+                        continue
+                    break
         
+        # Fallback
+        if not books:
+            logger.info("[OPENLIBRARY] Trying genre fallback")
+            genre = themes.get('genre', 'fiction')
+            try:
+                books = self._query_openlibrary_api_enhanced(f"{genre} fiction", limit)
+            except:
+                pass
+        
+        print(f"[OPENLIBRARY] Books fetched: {books}")
         return books
+ 
+    # ============================================
+    # CURATED COLLECTIONS
+    # ============================================
     
-    def _parse_openlibrary_book(self, doc: Dict) -> Dict[str, Any]:
-        """Parse Open Library API response document."""
-        if not doc.get('title'):
-            return None
-        
-        cover_id = doc.get('cover_i')
-        cover_url = f"https://covers.openlibrary.org/b/id/{cover_id}-L.jpg" if cover_id else ''
-        
-        book = {
-            'id': doc.get('key', '').replace('/works/', 'ol_'),
-            'title': doc.get('title', 'Unknown'),
-            'author': doc.get('author_name', ['Unknown'])[0] if doc.get('author_name') else 'Unknown',
-            'description': '',  # Open Library often lacks descriptions
-            'coverUrl': cover_url,
-            'rating': None,
-            'year': doc.get('first_publish_year'),
-            'categories': doc.get('subject', [])[:3],  # Limit to top 3 subjects
-            'source': 'open_library'
-        }
-        
-        return book
-    
-    def _match_curated_books(self, themes: Dict[str, Any], limit: int) -> List[Dict[str, Any]]:
+    def _match_curated_books(
+        self,
+        themes: Dict[str, Any],
+        limit: int
+    ) -> List[Dict[str, Any]]:
         """Match themes to curated collections."""
         matched_books = []
         
-        # Simple keyword matching to collection names
         genre = themes.get('genre', '').lower()
         theme_list = [t.lower() for t in themes.get('themes', [])]
         
-        logger.debug(f"[CURATED] Matching genre='{genre}', themes={theme_list}")
-        logger.debug(f"[CURATED] Available collections: {list(self.curated_collections.keys())}")
-        
-        # Map themes to collections
         collection_keywords = {
-            'coming_of_age': ['identity', 'growing up', 'self-discovery', 'coming-of-age'],
-            'fantasy_worldbuilding': ['fantasy', 'magic', 'worldbuilding', 'magical'],
-            'unreliable_narrators': ['unreliable', 'mystery', 'twist', 'deception'],
-            'dystopian': ['dystopia', 'dystopian', 'totalitarian', 'rebellion', 'oppression'],
-            'character_driven': ['character', 'relationships', 'internal', 'emotional']
+            'coming_of_age': ['identity', 'growing up', 'self-discovery'],
+            'fantasy_worldbuilding': ['fantasy', 'magic', 'worldbuilding'],
+            'unreliable_narrators': ['unreliable', 'mystery', 'twist'],
+            'dystopian': ['dystopia', 'dystopian', 'rebellion'],
+            'character_driven': ['character', 'relationships', 'emotional']
         }
         
-        # Find matching collections
         matched_collections = []
         for collection_name, keywords in collection_keywords.items():
             if any(kw in genre for kw in keywords):
@@ -340,19 +433,14 @@ class BookSourceManager:
             elif any(kw in theme for kw in keywords for theme in theme_list):
                 matched_collections.append(collection_name)
         
-        # If no matches, use coming_of_age as default (most universal)
         if not matched_collections:
             matched_collections = ['coming_of_age']
         
-        logger.info(f"[CURATED] Matched collections: {matched_collections}")
-        
-        # Collect books from matched collections
         for collection_name in matched_collections:
             collection = self.curated_collections.get(collection_name, [])
-            logger.debug(f"[CURATED] Collection '{collection_name}' has {len(collection)} books")
             matched_books.extend(collection)
         
-        # Remove duplicates and limit
+        # Deduplicate
         seen_titles = set()
         unique_books = []
         for book in matched_books:
@@ -365,23 +453,22 @@ class BookSourceManager:
                     'id': f"curated_{book.get('title', '').replace(' ', '_')}"
                 })
         
-        logger.debug(f"[CURATED] Matched {len(matched_collections)} collections, "
-                    f"found {len(unique_books)} unique books")
-        
         return unique_books[:limit]
     
-    def _apply_filters(self, books: List[Dict], filters: Dict) -> List[Dict]:
-        """Apply user-specified filters to book list."""
+    # ============================================
+    # UTILITY METHODS
+    # ============================================
+    
+    def _apply_filters(
+        self,
+        books: List[Dict],
+        filters: Dict
+    ) -> List[Dict]:
+        """Apply user filters to book list."""
         if not filters:
             return books
         
         filtered = books
-        
-        # Age range filter
-        age_range = filters.get('ageRange')
-        if age_range and age_range != 'any':
-            # For now, skip age filtering (requires metadata we might not have)
-            pass
         
         # Publication date filter
         pub_date = filters.get('pubDate')
@@ -394,7 +481,7 @@ class BookSourceManager:
             elif pub_date == 'classic':
                 filtered = [b for b in filtered if b.get('year') and b['year'] < current_year - 20]
         
-        # Minimum rating filter
+        # Minimum rating
         min_rating = filters.get('minRating')
         if min_rating:
             filtered = [b for b in filtered if b.get('rating') and b['rating'] >= min_rating]
@@ -402,13 +489,10 @@ class BookSourceManager:
         return filtered
     
     def _extract_year(self, date_str: str) -> int:
-        """Extract year from various date formats."""
+        """Extract year from date string."""
         if not date_str:
             return None
-        
-        # Try to get first 4 digits
         try:
-            year_str = date_str[:4]
-            return int(year_str)
+            return int(date_str[:4])
         except (ValueError, IndexError):
             return None

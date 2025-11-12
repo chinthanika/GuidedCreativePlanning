@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import "./PendingChanges.css";
 
-const API_BASE = "http://localhost:5001/api"; // adjust if deployed
+const API_BASE = "https://guidedcreativeplanning-pfm.onrender.com/api"; // adjust if deployed
 
-const PendingChanges = ({ userId }) => {
+const PendingChanges = ({ isVisible, userId }) => {
   const [changes, setChanges] = useState({});
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({}); // track per-change action
@@ -105,6 +105,10 @@ const PendingChanges = ({ userId }) => {
     }
   };
 
+  if (!userId) return null;
+
+  if (!isVisible) return null;
+
   if (loading) return <div className="pending-changes">Loading pending changes...</div>;
 
   if (!Object.keys(changes).length) return <div className="pending-changes">No pending changes</div>;
@@ -134,6 +138,8 @@ const PendingChanges = ({ userId }) => {
             {/* Edit could open a modal, or redirect to edit page */}
             <button disabled>Edit</button>
           </div>
+
+
         </div>
       ))}
     </div>

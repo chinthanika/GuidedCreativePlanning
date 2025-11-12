@@ -2,9 +2,13 @@ import React, { useRef, useState, useEffect } from "react";
 import { database } from '../../Firebase/firebase';
 import { set, ref, onValue, push } from "firebase/database";
 import { useAuthValue } from '../../Firebase/AuthContext';
-
 import { sendMessage } from '../../services/chatbotAPI';
 import "./chatbot.css";
+
+import { BookOpen, Menu } from 'lucide-react';
+
+import RecommendationsPanel from "../../features/recommender/RecommendationPanel";
+import PendingChanges from "./PendingChanges";
 
 const ChatWindow = () => {
     const { currentUser } = useAuthValue();
@@ -15,6 +19,9 @@ const ChatWindow = () => {
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
     const [backgroundStatus, setBackgroundStatus] = useState(null);
+
+    const [showRecommendations, setShowRecommendations] = useState(false);
+    const [showPendingChanges, setShowPendingChanges] = useState(false);
 
     const messagesEndRef = useRef(null);
 
@@ -149,7 +156,7 @@ const ChatWindow = () => {
                 message: "Failed to send message. Please try again.",
                 type: "error"
             });
-            
+
             setTimeout(() => setBackgroundStatus(null), 5000);
         }
     };
@@ -171,7 +178,35 @@ const ChatWindow = () => {
                         Brainstorming
                     </button>
                 </div>
-
+                {/* Toggle Buttons */}
+                <div className="flex gap-2 p-2 border-b bg-gray-50">
+                    <button
+                        onClick={() => {
+                            setShowRecommendations(!showRecommendations);
+                            if (!showRecommendations) setShowPendingChanges(false);
+                        }}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium transition-colors ${showRecommendations
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                            }`}
+                    >
+                        <BookOpen className="w-4 h-4" />
+                        Recommend Books
+                    </button>
+                    <button
+                        onClick={() => {
+                            setShowPendingChanges(!showPendingChanges);
+                            if (!showPendingChanges) setShowRecommendations(false);
+                        }}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium transition-colors ${showPendingChanges
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                            }`}
+                    >
+                        <Menu className="w-4 h-4" />
+                        Pending Changes
+                    </button>
+                </div>
                 {/* Chat messages */}
                 <div className="chat-messages">
                     {messages
@@ -192,7 +227,7 @@ const ChatWindow = () => {
                                 </div>
                             </div>
                         ))}
-                    
+
                     {/* Loading indicator */}
                     {loading && (
                         <div className="message-wrapper assistant">
@@ -229,6 +264,22 @@ const ChatWindow = () => {
                     </button>
                 </div>
             </div>
+            {/* Side Panels */}
+            {showRecommendations && (
+                <RecommendationsPanel
+                    sessionId={sessionID}
+                    userId={uid}
+                    conversationHistory={messages.filter(m => m.role === 'user')}
+                    isVisible={showRecommendations}
+                    onToggle={() => setShowRecommendations(false)}
+                />
+            )}
+
+            {showPendingChanges && (
+                <PendingChanges
+                    userId={uid}
+                />
+            )}
         </div>
     );
 };
