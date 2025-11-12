@@ -1,0 +1,590 @@
+2025-11-12 15:26:36,972 [INFO] [BOOKS] Loaded curated collections: ['coming_of_age', 'fantasy_worldbuilding', 'dystopian', 'unreliable_narrators', 'character_driven']
+2025-11-12 15:26:37,004 [INFO] [BOOKS] Subject mapping: Dynamic + Fallback
+2025-11-12 15:27:18,387 [INFO] [BOOKS] Trying Open Library (Tier 2)
+2025-11-12 15:27:18,388 [DEBUG] [OPENLIBRARY] Query 1: 'sci-fi justice identity'
+2025-11-12 15:27:19,120 [DEBUG] [OPENLIBRARY] Query 2: 'dystopian justice'
+2025-11-12 15:27:36,230 [INFO] [OPENLIBRARY] Query 2 succeeded: 9 books
+2025-11-12 15:27:36,234 [DEBUG] [GOOGLE_BOOKS] Raw API response: [
+  {
+    "id": "ol_OL498463W",
+    "title": "Der Proce\u00df",
+    "author": "Franz Kafka",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/997423-L.jpg",
+    "rating": 4.1896553,
+    "year": 1825,
+    "categories": [
+      "Dystopian",
+      "Power",
+      "Dark"
+    ],
+    "raw_subjects": [
+      "Fiction",
+      "Alegorical fiction",
+      "Manuscripts",
+      "Facsimiles",
+      "Trials",
+      "Ficci\u00f3n",
+      "Procesos criminales",
+      "Fiction, psychological",
+      "Continental european fiction (fictional works by one author)",
+      "Psychological fiction"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.88,
+    "_mapping_method": "dynamic"
+  },
+  {
+    "id": "ol_OL24681805W",
+    "title": "Justice Forsakes Heroes",
+    "author": "Roo I MacLeod",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/11386589-L.jpg",
+    "rating": null,
+    "year": 2019,
+    "categories": [],
+    "raw_subjects": [],
+    "source": "open_library",
+    "_relevance_boost": 0.0,
+    "_mapping_method": "empty"
+  },
+  {
+    "id": "ol_OL25812178W",
+    "title": "Correctional",
+    "author": "N. J. Crosskey",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/14763264-L.jpg",
+    "rating": null,
+    "year": 2022,
+    "categories": [],
+    "raw_subjects": [],
+    "source": "open_library",
+    "_relevance_boost": 0.0,
+    "_mapping_method": "empty"
+  },
+  {
+    "id": "ol_OL36099518W",
+    "title": "Ned\u00e9 Rising Duology",
+    "author": "Jess Corban",
+    "description": "",
+    "coverUrl": "",
+    "rating": null,
+    "year": 2023,
+    "categories": [
+      "Dystopian",
+      "Action",
+      "Rebellion"
+    ],
+    "raw_subjects": [
+      "Young adult fiction, action & adventure, general",
+      "Young adult fiction, social themes, values & virtues",
+      "Young adult fiction, dystopian"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.9,
+    "_mapping_method": "dynamic"
+  },
+  {
+    "id": "ol_OL20063031W",
+    "title": "Justice: A Young Adult Dystopian Paranormal Urban Fantasy Romance (The Warrior Series Book 5)",
+    "author": "Rebecca Royce",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/8745856-L.jpg",
+    "rating": null,
+    "year": 2015,
+    "categories": [],
+    "raw_subjects": [],
+    "source": "open_library",
+    "_relevance_boost": 0.0,
+    "_mapping_method": "empty"
+  },
+  {
+    "id": "ol_OL42689813W",
+    "title": "Silence On The Plains",
+    "author": "Unknown",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/14850145-L.jpg",
+    "rating": null,
+    "year": 2019,
+    "categories": [
+      "Dystopian",
+      "Rebellion",
+      "Power",
+      "Sci-Fi",
+      "Dark"
+    ],
+    "raw_subjects": [
+      "dystopian",
+      "Red Glow",
+      "anthology",
+      "Billion",
+      "Bailout",
+      "Reverse",
+      "Robin Hood Effect",
+      "Credit Sludge",
+      "Feed Supply Side Monster",
+      "Unobstructed Playing Field"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.82,
+    "_mapping_method": "dynamic"
+  },
+  {
+    "id": "ol_OL42690038W",
+    "title": "Corporate Dictatorship",
+    "author": "Unknown",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/14850159-L.jpg",
+    "rating": null,
+    "year": 2022,
+    "categories": [
+      "Dystopian",
+      "Power",
+      "Rebellion",
+      "Sci-Fi"
+    ],
+    "raw_subjects": [
+      "Corporate Dictatorship",
+      "1%",
+      "dictator",
+      "book",
+      "despotism",
+      "cooperative",
+      "Megalomaniacs",
+      "dystopian",
+      "Red Glow",
+      "anthology"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.88,
+    "_mapping_method": "dynamic"
+  },
+  {
+    "id": "ol_OL42690147W",
+    "title": "Corporate Dictatorship",
+    "author": "Unknown",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/14850169-L.jpg",
+    "rating": null,
+    "year": 2022,
+    "categories": [
+      "Dystopian",
+      "Power",
+      "Rebellion",
+      "Sci-Fi"
+    ],
+    "raw_subjects": [
+      "Corporate Dictatorship",
+      "1%",
+      "dictator",
+      "book",
+      "despotism",
+      "cooperative",
+      "Megalomaniacs",
+      "dystopian",
+      "Red Glow",
+      "anthology"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.88,
+    "_mapping_method": "cached"
+  },
+  {
+    "id": "ol_OL42690265W",
+    "title": "Corporate Dictatorship",
+    "author": "Unknown",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/14850173-L.jpg",
+    "rating": null,
+    "year": 2022,
+    "categories": [
+      "Dystopian",
+      "Power",
+      "Rebellion",
+      "Sci-Fi"
+    ],
+    "raw_subjects": [
+      "Corporate Dictatorship",
+      "1%",
+      "dictator",
+      "book",
+      "despotism",
+      "cooperative",
+      "Megalomaniacs",
+      "dystopian",
+      "Red Glow",
+      "anthology"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.88,
+    "_mapping_method": "cached"
+  }
+]
+2025-11-12 15:27:36,238 [DEBUG] [OPENLIBRARY] Query 3: 'hero society'
+2025-11-12 15:28:36,338 [INFO] [OPENLIBRARY] Query 3 succeeded: 12 books
+2025-11-12 15:28:36,339 [DEBUG] [GOOGLE_BOOKS] Raw API response: [
+  {
+    "id": "ol_OL73385W",
+    "title": "Dragonsong",
+    "author": "Anne McCaffrey",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/8769648-L.jpg",
+    "rating": 4.5,
+    "year": 1976,
+    "categories": [
+      "Fantasy",
+      "Adventure",
+      "Coming-of-Age",
+      "Magic"
+    ],
+    "raw_subjects": [
+      "Harper Hall",
+      "Pern",
+      "Dragons",
+      "Fantasy",
+      "Fiction in English",
+      "Harpists",
+      "Juvenile fiction",
+      "Science fiction",
+      "Fiction",
+      "Fairy tales"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.88,
+    "_mapping_method": "dynamic"
+  },
+  {
+    "id": "ol_OL85892W",
+    "title": "Dracula",
+    "author": "Bram Stoker",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/12216503-L.jpg",
+    "rating": 4.0465117,
+    "year": 1897,
+    "categories": [
+      "Horror",
+      "Supernatural",
+      "Dark",
+      "Adventure",
+      "Fantasy"
+    ],
+    "raw_subjects": [
+      "English literature",
+      "Fiction",
+      "Horror",
+      "Horror stories",
+      "Horror tales",
+      "Monsters",
+      "Thriller",
+      "Vampires",
+      "Vampires in literature",
+      "Horror fiction"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.88,
+    "_mapping_method": "dynamic"
+  },
+  {
+    "id": "ol_OL61982W",
+    "title": "\u1f48\u03b4\u03cd\u03c3\u03c3\u03b5\u03b9\u03b1",
+    "author": "\u038c\u03bc\u03b7\u03c1\u03bf\u03c2",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/9045853-L.jpg",
+    "rating": 4.0536914,
+    "year": 1488,
+    "categories": [
+      "Historical",
+      "Adventure",
+      "Fantasy",
+      "Mythology"
+    ],
+    "raw_subjects": [
+      "great_books_of_the_western_world",
+      "Poetry",
+      "Fiction",
+      "Classical literature",
+      "Open Library Staff Picks",
+      "Juvenile literature",
+      "Horses",
+      "Mythology, Greek, in literature",
+      "Diseases",
+      "Greek Mythology"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.8,
+    "_mapping_method": "dynamic"
+  },
+  {
+    "id": "ol_OL244537W",
+    "title": "The Art of War",
+    "author": "\u5b59\u6b66",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/4849549-L.jpg",
+    "rating": 4.027972,
+    "year": 1900,
+    "categories": [
+      "Historical",
+      "Adventure",
+      "Power",
+      "Strategy",
+      "Action"
+    ],
+    "raw_subjects": [
+      "Open Library Staff Picks",
+      "Early works to 1800",
+      "Military art and science",
+      "great_books_of_the_western_world",
+      "Business",
+      "Self-Improvement",
+      "Philosophy",
+      "open_syllabus_project",
+      "Fiction",
+      "Nonfiction"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.82,
+    "_mapping_method": "dynamic"
+  },
+  {
+    "id": "ol_OL1317211W",
+    "title": "Meditations",
+    "author": "Marcus Aurelius",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/211529-L.jpg",
+    "rating": 4.015873,
+    "year": 1626,
+    "categories": [
+      "Historical",
+      "Philosophy",
+      "Realistic"
+    ],
+    "raw_subjects": [
+      "Early works to 1800",
+      "Philosophy",
+      "Stoics",
+      "Classic Literature",
+      "Fiction",
+      "Ethics",
+      "Conduct of life",
+      "Life",
+      "Meditations",
+      "Marcus aurelius, emperor of rome, 121-180"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.6,
+    "_mapping_method": "dynamic"
+  },
+  {
+    "id": "ol_OL17732W",
+    "title": "Bible",
+    "author": "Bible",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/12707846-L.jpg",
+    "rating": 3.945946,
+    "year": 1200,
+    "categories": [
+      "Contemporary",
+      "Family",
+      "Religion",
+      "Coming-of-Age",
+      "Realistic"
+    ],
+    "raw_subjects": [
+      "Manuscripts, Latin (Medieval and modern)",
+      "Glossaries, vocabularies",
+      "Early works to 1800",
+      "Bible",
+      "Religion",
+      "Bibles",
+      "Biblical Studies - General",
+      "Religion / Bible / General",
+      "Bible - General",
+      "Commentaries"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.3,
+    "_mapping_method": "dynamic"
+  },
+  {
+    "id": "ol_OL1089297W",
+    "title": "The Prince",
+    "author": "Niccol\u00f2 Machiavelli",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/12726168-L.jpg",
+    "rating": 3.8229167,
+    "year": 1515,
+    "categories": [
+      "Historical",
+      "Power",
+      "Realistic"
+    ],
+    "raw_subjects": [
+      "Political science, early works to 1800",
+      "Machiavel, Nicolas, 1469-1527. Prince",
+      "Classic Literature",
+      "Fiction",
+      "Ouvrages avant 1800",
+      "Science politique",
+      "Morale politique",
+      "Political science",
+      "Early works to 1800",
+      "Political ethics"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.8,
+    "_mapping_method": "dynamic"
+  },
+  {
+    "id": "ol_OL8662242W",
+    "title": "David Copperfield",
+    "author": "Charles Dickens",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/1048892-L.jpg",
+    "rating": 4.4615383,
+    "year": 1800,
+    "categories": [
+      "Historical",
+      "Coming-of-Age",
+      "Family",
+      "Realistic"
+    ],
+    "raw_subjects": [
+      "British and irish drama (dramatic works by one author)",
+      "Children's fiction",
+      "Orphans, fiction",
+      "England, fiction",
+      "Boys, fiction",
+      "Stepparents, fiction",
+      "Readers",
+      "British and irish fiction (fictional works by one author)",
+      "Fiction, coming of age",
+      "Fiction"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.8,
+    "_mapping_method": "dynamic"
+  },
+  {
+    "id": "ol_OL2021953W",
+    "title": "Robin Hood",
+    "author": "Howard Pyle",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/5913135-L.jpg",
+    "rating": 4.285714,
+    "year": 1883,
+    "categories": [
+      "Adventure",
+      "Historical",
+      "Legends",
+      "Action"
+    ],
+    "raw_subjects": [
+      "Children's fiction",
+      "Robin hood (legendary character), fiction",
+      "Adventure and adventurers, fiction",
+      "England, fiction",
+      "Fiction, action & adventure",
+      "Robin Hood (Legendary character)",
+      "Juvenile literature",
+      "Legends",
+      "Folklore",
+      "Robin Hood"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.8,
+    "_mapping_method": "dynamic"
+  },
+  {
+    "id": "ol_OL51831W",
+    "title": "\u03c0\u03bf\u03bb\u03b9\u03c4\u03b5\u03af\u03b1",
+    "author": "\u03a0\u03bb\u03ac\u03c4\u03c9\u03bd",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/14418448-L.jpg",
+    "rating": 3.7358491,
+    "year": 1554,
+    "categories": [
+      "Dystopian",
+      "Power",
+      "Rebellion"
+    ],
+    "raw_subjects": [
+      "Political science",
+      "Early works to 1800",
+      "Utopias",
+      "Ouvrages avant 1800",
+      "Science politique",
+      "Utopies",
+      "Ciencias pol\u00edticas",
+      "Early works to 1700",
+      "Education",
+      "Greek Education"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.8,
+    "_mapping_method": "dynamic"
+  },
+  {
+    "id": "ol_OL503666W",
+    "title": "Don Quijote de la Mancha",
+    "author": "Miguel de Cervantes Saavedra",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/14428305-L.jpg",
+    "rating": 3.7884614,
+    "year": 1600,
+    "categories": [
+      "Adventure",
+      "Historical",
+      "Humor",
+      "Romance",
+      "Coming-of-Age"
+    ],
+    "raw_subjects": [
+      "Don Quixote (Cervantes Saavedra, Miguel de)",
+      "Quotations",
+      "Knights and knighthood",
+      "Social life and customs",
+      "Fiction",
+      "Classic Literature",
+      "Don Quixote (Fictitious character)",
+      "Early works to 1800",
+      "Dictionaries",
+      "Literatura picaresca"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.7,
+    "_mapping_method": "dynamic"
+  },
+  {
+    "id": "ol_OL362691W",
+    "title": "Much Ado About Nothing",
+    "author": "William Shakespeare",
+    "description": "",
+    "coverUrl": "https://covers.openlibrary.org/b/id/8290853-L.jpg",
+    "rating": 4.3333335,
+    "year": 1600,
+    "categories": [
+      "Romance",
+      "Comedy",
+      "Historical",
+      "Humor",
+      "Love"
+    ],
+    "raw_subjects": [
+      "mistaken identities",
+      "performing arts",
+      "comedy",
+      "Drama",
+      "Conspiracies",
+      "Rejection (Psychology)",
+      "Courtship",
+      "Juvenile drama",
+      "Criticism and interpretation",
+      "Quartos"
+    ],
+    "source": "open_library",
+    "_relevance_boost": 0.7,
+    "_mapping_method": "dynamic"
+  }
+]
+2025-11-12 15:28:36,341 [INFO] [BOOKS] Open Library: 12 books
+2025-11-12 15:28:36,341 [INFO] [BOOKS] Total: 12 fetched, 4 after filters

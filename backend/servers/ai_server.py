@@ -29,6 +29,7 @@ from utils.recommendations.theme_extractor import ThemeExtractor
 from utils.recommendations.book_sources import BookSourceManager
 from utils.recommendations.ranker import BookRanker
 from utils.recommendations.StoryElementExtractor import StoryElementExtractor
+from utils.recommendations.book_explanation import BookExplanationGenerator
 
 from prompts.bs_system_prompt import BS_SYSTEM_PROMPT
 from prompts.dt_system_prompt import DT_SYSTEM_PROMPT
@@ -113,6 +114,7 @@ theme_extractor = ThemeExtractor(client)
 book_source_manager = BookSourceManager()
 book_ranker = BookRanker()
 story_extractor = StoryElementExtractor()
+explanation_generator = BookExplanationGenerator(client)
 # ============================================
 # ROUTE: HEALTH CHECK
 # ============================================
@@ -885,8 +887,8 @@ def generate_image():
 @app.route('/api/book-recommendations', methods=['POST'])
 def get_book_recommendations():
     """
-    Generate book recommendations using enhanced story element extraction.
-    Now uses comprehensive extraction instead of simple theme extraction.
+    Generate book recommendations with personalized explanations.
+    Uses enhanced ranker and explanation generator.
     """
     request_start = time.time()
     rec_logger.info("[REC] Incoming recommendation request")
@@ -898,6 +900,7 @@ def get_book_recommendations():
         mode = data.get('mode', 'brainstorming')
         filters = data.get('filters', {})
         limit = data.get('limit', 5)
+        generate_explanations = data.get('generateExplanations', True)  # NEW: Optional flag
         
         if not user_id or not session_id:
             return jsonify({
@@ -964,7 +967,7 @@ def get_book_recommendations():
                 'hint': 'Keep chatting about your story'
             }), 400
         
-        # Step 1: Extract comprehensive story elements (replaces simple theme extraction)
+        # Step 1: Extract comprehensive story elements
         extraction_start = time.time()
         rec_logger.info("[REC] Extracting story elements")
         
@@ -1012,7 +1015,7 @@ def get_book_recommendations():
                 'confidence': story_elements.get('overallConfidence', 0)
             }), 400
         
-        # Step 2: Query book sources using enhanced search queries
+        # Step 2: Query book sources
         source_start = time.time()
         rec_logger.info("[REC] Querying book sources")
         
@@ -1051,17 +1054,56 @@ def get_book_recommendations():
                 'searchQueries': search_queries
             }), 200
         
-        # Step 3: Rank and deduplicate
+        # Step 3: Rank and deduplicate (using ENHANCED ranker)
         rank_start = time.time()
-        rec_logger.info("[REC] Ranking books")
+        rec_logger.info("[REC] Ranking books with enhanced ranker")
         
         try:
             ranked_books = book_ranker.rank_and_deduplicate_books(books, compat_themes, limit)
             rank_time = time.time() - rank_start
             rec_logger.info(f"[REC] Ranking: {rank_time:.3f}s, selected {len(ranked_books)} books")
+            
+            # Log ranking summary
+            ranking_summary = book_ranker.get_ranking_summary(ranked_books)
+            rec_logger.debug(f"[REC] Ranking summary: avg_score={ranking_summary['avg_score']:.1f}")
+            
         except Exception as e:
             rec_logger.error(f"[REC] Ranking failed: {e}")
             ranked_books = books[:limit]
+        
+        # Step 4: Generate explanations (NEW!)
+        if generate_explanations and ranked_books:
+            explain_start = time.time()
+            rec_logger.info("[REC] Generating explanations")
+            
+            try:
+                explained_books = explanation_generator.generate_explanations(
+                    ranked_books, 
+                    story_elements,
+                    batch_size=min(len(ranked_books), 5)
+                )
+                
+                # Generate summary comparison
+                summary = explanation_generator.generate_summary_comparison(
+                    explained_books, 
+                    story_elements
+                )
+                
+                explain_time = time.time() - explain_start
+                rec_logger.info(f"[REC] Explanations: {explain_time:.3f}s")
+                
+            except Exception as e:
+                rec_logger.error(f"[REC] Explanation generation failed: {e}")
+                # Fall back to books without explanations
+                explained_books = ranked_books
+                summary = {
+                    'summary': f'Here are {len(ranked_books)} books that match your story interests.',
+                    'diversity_note': '',
+                    'exploration_tips': []
+                }
+        else:
+            explained_books = ranked_books
+            summary = None
         
         # Build response
         processing_time = int((time.time() - request_start) * 1000)
@@ -1078,9 +1120,13 @@ def get_book_recommendations():
                     'description': book.get('description'),
                     'categories': book.get('categories', []),
                     'source': book.get('source'),
-                    'relevance_score': book.get('relevance_score', 0)
+                    'relevance_score': book.get('relevance_score', 0),
+                    'score_breakdown': book.get('score_breakdown'),  # NEW: Include detailed scoring
+                    'explanation': book.get('explanation'),  # NEW: Personalized explanation
+                    'matchHighlights': book.get('matchHighlights', []),  # NEW: Match highlights
+                    'comparisonNote': book.get('comparisonNote', '')  # NEW: Comparison note
                 }
-                for book in ranked_books
+                for book in explained_books
             ],
             'extractedElements': {
                 'genre': story_elements.get('genre', {}).get('primary'),
@@ -1091,6 +1137,7 @@ def get_book_recommendations():
                 'overallConfidence': story_elements.get('overallConfidence', 0)
             },
             'searchQueries': search_queries,
+            'summary': summary,  # NEW: Overview comparison
             'processingTime': processing_time,
             'sessionId': session_id
         }
@@ -1100,16 +1147,17 @@ def get_book_recommendations():
             try:
                 metrics_data = {
                     'timestamp': int(time.time() * 1000),
-                    'booksDisplayed': len(ranked_books),
+                    'booksDisplayed': len(explained_books),
                     'processingTime': processing_time,
                     'extractionConfidence': story_elements.get('overallConfidence', 0),
                     'genre': story_elements.get('genre', {}).get('primary'),
                     'themes': [t['name'] for t in story_elements.get('themes', [])[:3]],
                     'sources': {
-                        'google_books': sum(1 for b in ranked_books if b.get('source') == 'google_books'),
-                        'open_library': sum(1 for b in ranked_books if b.get('source') == 'open_library'),
-                        'curated': sum(1 for b in ranked_books if b.get('source') == 'curated')
-                    }
+                        'google_books': sum(1 for b in explained_books if b.get('source') == 'google_books'),
+                        'open_library': sum(1 for b in explained_books if b.get('source') == 'open_library'),
+                        'curated': sum(1 for b in explained_books if b.get('source') == 'curated')
+                    },
+                    'explanationsGenerated': generate_explanations
                 }
                 
                 requests.post(
@@ -1128,7 +1176,7 @@ def get_book_recommendations():
         threading.Thread(target=log_metrics, daemon=True).start()
         
         total_time = time.time() - request_start
-        rec_logger.info(f"[REC] Total: {total_time:.2f}s, returned {len(ranked_books)} books")
+        rec_logger.info(f"[REC] Total: {total_time:.2f}s, returned {len(explained_books)} books with explanations")
         
         return jsonify(response), 200
         
@@ -1415,7 +1463,8 @@ def debug_book_sources():
         rec_logger.info("[DEBUG] Testing Google Books API")
         if GOOGLE_BOOKS_API_KEY:
             try:
-                google_books = book_source_manager._fetch_google_books(test_themes, limit)
+                # FIX: Use correct method name
+                google_books = book_source_manager._fetch_google_books_with_retry(test_themes, limit)
                 results['google_books'] = {
                     'status': 'success',
                     'books': google_books,
@@ -1442,7 +1491,8 @@ def debug_book_sources():
         # Test Open Library
         rec_logger.info("[DEBUG] Testing Open Library API")
         try:
-            openlibrary_books = book_source_manager._fetch_openlibrary_books(test_themes, limit)
+            # FIX: Use correct method name
+            openlibrary_books = book_source_manager._fetch_openlibrary_enhanced(test_themes, limit)
             results['open_library'] = {
                 'status': 'success',
                 'books': openlibrary_books,
@@ -1478,8 +1528,8 @@ def debug_book_sources():
                 'books': [],
                 'count': 0,
                 'error': str(e),
-                'available_collections': list(book_source_manager.curated_collections.keys()),
-                'total_curated_books': sum(len(v) for v in book_source_manager.curated_collections.values())
+                'available_collections': list(book_source_manager.curated_collections.keys()) if hasattr(book_source_manager, 'curated_collections') else [],
+                'total_curated_books': sum(len(v) for v in book_source_manager.curated_collections.values()) if hasattr(book_source_manager, 'curated_collections') else 0
             }
             rec_logger.error(f"[DEBUG] Curated error: {e}")
         
@@ -1505,6 +1555,36 @@ def debug_book_sources():
         rec_logger.exception(f"[DEBUG] Debug endpoint error: {e}")
         return jsonify({'error': str(e)}), 500
     
+@app.route('/api/debug/mapping-metrics', methods=['GET'])
+def get_mapping_metrics():
+    """Get subject mapping performance metrics."""
+    try:
+        metrics = book_source_manager.get_mapping_metrics()
+        
+        return jsonify({
+            'status': 'ok',
+            'metrics': metrics,
+            'timestamp': int(time.time() * 1000)
+        }), 200
+    except Exception as e:
+        rec_logger.exception(f"[METRICS] Failed to get mapping metrics: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/debug/clear-mapping-cache', methods=['POST'])
+def clear_mapping_cache():
+    """Clear subject mapping cache (admin only)."""
+    try:
+        book_source_manager.subject_mapper.clear_cache()
+        
+        return jsonify({
+            'status': 'ok',
+            'message': 'Mapping cache cleared'
+        }), 200
+    except Exception as e:
+        rec_logger.exception(f"[CACHE] Failed to clear cache: {e}")
+        return jsonify({'error': str(e)}), 500
+
 # ============================================
 # RUN SERVER
 # ============================================
