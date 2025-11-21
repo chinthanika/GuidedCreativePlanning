@@ -13,9 +13,6 @@ export default function Chatbot() {
       <div className="chat-window-container">
         <ChatWindow />
       </div>
-      <div className="pending-changes-container">
-        <PendingChanges userId={uid} />
-      </div>
     </div>
   );
 }
