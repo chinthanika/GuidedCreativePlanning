@@ -179,18 +179,15 @@ const ChatWindow = () => {
                     </button>
                 </div>
                 {/* Toggle Buttons */}
-                <div className="flex gap-2 p-2 border-b bg-gray-50">
+                <div className="panel-toggle-bar">
                     <button
                         onClick={() => {
                             setShowRecommendations(!showRecommendations);
                             if (!showRecommendations) setShowPendingChanges(false);
                         }}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium transition-colors ${showRecommendations
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                            }`}
+                        className={`panel-toggle-btn ${showRecommendations ? 'recommend-active' : ''}`}
                     >
-                        <BookOpen className="w-4 h-4" />
+                        <BookOpen />
                         Recommend Books
                     </button>
                     <button
@@ -198,12 +195,9 @@ const ChatWindow = () => {
                             setShowPendingChanges(!showPendingChanges);
                             if (!showPendingChanges) setShowRecommendations(false);
                         }}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium transition-colors ${showPendingChanges
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                            }`}
+                        className={`panel-toggle-btn ${showPendingChanges ? 'pending-active' : ''}`}
                     >
-                        <Menu className="w-4 h-4" />
+                        <Menu />
                         Pending Changes
                     </button>
                 </div>
@@ -278,6 +272,8 @@ const ChatWindow = () => {
             {showPendingChanges && (
                 <PendingChanges
                     userId={uid}
+                    isVisible={showPendingChanges}
+                    onToggle={() => setShowPendingChanges(false)}
                 />
             )}
         </div>

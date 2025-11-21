@@ -34,34 +34,33 @@ class BookRanker:
         limit: int = 5
     ) -> List[Dict[str, Any]]:
         """
-        Rank books by enhanced relevance scoring and deduplicate.
-        
-        Args:
-            books: List of book dictionaries from various sources
-            themes: Extracted themes from conversation
-            limit: Number of top books to return
-            
-        Returns:
-            List of top-ranked, deduplicated books with detailed scores
+        Rank books by relevance + filter preferences.
         """
         if not books:
             logger.warning("[RANKER] No books to rank")
             return []
         
-        # Step 1: Calculate relevance scores with breakdown
+        # Step 1: Calculate base relevance scores
         scored_books = []
         for book in books:
             score_breakdown = self._calculate_relevance_score_detailed(book, themes)
+            
+            # Add filter bonus if present
+            filter_bonus = book.get('_relevance_boost', 0.0)
+            
             scored_books.append({
                 **book,
-                'relevance_score': score_breakdown['total'],
-                'score_breakdown': score_breakdown
+                'relevance_score': score_breakdown['total'] + filter_bonus,
+                'score_breakdown': {
+                    **score_breakdown,
+                    'filter_bonus': filter_bonus  # Track separately
+                }
             })
         
         # Step 2: Deduplicate
         unique_books = self._deduplicate_books(scored_books)
         
-        # Step 3: Sort by score
+        # Step 3: Sort by total score (base + filter bonus)
         ranked_books = sorted(
             unique_books, 
             key=lambda b: b['relevance_score'], 
@@ -72,17 +71,9 @@ class BookRanker:
         diverse_books = self._enforce_diversity(ranked_books, limit)
         
         logger.info(
-            f"[RANKER] Ranked {len(books)} books -> {len(unique_books)} unique -> "
-            f"{len(diverse_books)} diverse (top {limit})"
+            f"[RANKER] Ranked {len(books)} -> {len(unique_books)} unique -> "
+            f"{len(diverse_books)} diverse"
         )
-        
-        # Log top scores for debugging
-        if diverse_books:
-            top_scores = [
-                f"{b['title']}: {b['relevance_score']:.1f}" 
-                for b in diverse_books[:3]
-            ]
-            logger.debug(f"[RANKER] Top scores: {', '.join(top_scores)}")
         
         return diverse_books[:limit]
     

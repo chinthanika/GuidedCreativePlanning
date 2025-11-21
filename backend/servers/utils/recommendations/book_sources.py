@@ -460,34 +460,143 @@ class BookSourceManager:
     # ============================================
     
     def _apply_filters(
-        self,
-        books: List[Dict],
+        self, 
+        books: List[Dict], 
         filters: Dict
     ) -> List[Dict]:
-        """Apply user filters to book list."""
+        """
+        Apply user filters as HARD filters, then add scoring bonuses.
+        Books that don't match filters are excluded.
+        
+        Args:
+            books: List of books to filter
+            filters: User preferences
+            
+        Returns:
+            Filtered books with adjusted relevance scores
+        """
         if not filters:
             return books
         
-        filtered = books
+        current_year = 2025
+        filtered = []
         
-        # Publication date filter
-        pub_date = filters.get('pubDate')
-        if pub_date and pub_date != 'any':
-            current_year = 2025
-            if pub_date == 'last5':
-                filtered = [b for b in filtered if b.get('year') and b['year'] >= current_year - 5]
-            elif pub_date == 'last10':
-                filtered = [b for b in filtered if b.get('year') and b['year'] >= current_year - 10]
-            elif pub_date == 'classic':
-                filtered = [b for b in filtered if b.get('year') and b['year'] < current_year - 20]
+        for book in books:
+            # Track if book should be included
+            include_book = True
+            filter_bonus = 0.0
+            
+            # 1. HARD FILTER: Publication date
+            pub_date = filters.get('pubDate')
+            if pub_date and pub_date != 'any' and book.get('year'):
+                year = book['year']
+                
+                if pub_date == 'last5':
+                    if year >= current_year - 5:
+                        filter_bonus += 5.0  # Bonus for match
+                    else:
+                        include_book = False  # EXCLUDE if doesn't match
+                        
+                elif pub_date == 'last10':
+                    if year >= current_year - 10:
+                        filter_bonus += 3.0
+                    else:
+                        include_book = False
+                        
+                elif pub_date == 'classic':
+                    if year < current_year - 20:
+                        filter_bonus += 4.0
+                    else:
+                        include_book = False
+            
+            # 2. HARD FILTER: Minimum rating
+            min_rating = filters.get('minRating')
+            if min_rating and min_rating > 0:  # Only filter if explicitly set
+                book_rating = book.get('rating')
+                
+                if book_rating is None:
+                    # No rating - treat as neutral (don't exclude unless rating required)
+                    pass
+                elif book_rating >= min_rating:
+                    # Bonus for exceeding minimum
+                    filter_bonus += (book_rating - min_rating) * 2.0
+                else:
+                    # Below minimum - EXCLUDE
+                    include_book = False
+            
+            # 3. SOFT FILTER: Age range (best-effort matching)
+            age_range = filters.get('ageRange')
+            if age_range and age_range != 'any':
+                age_match = self._check_age_match(book, age_range)
+                if age_match:
+                    filter_bonus += 3.0
+                # Don't exclude on age mismatch (too unreliable)
+            
+            # Only include book if it passed all filters
+            if include_book:
+                # Add filter bonus to existing relevance boost
+                if '_relevance_boost' in book:
+                    book['_relevance_boost'] += filter_bonus
+                else:
+                    book['_relevance_boost'] = filter_bonus
+                
+                # Track filter matching for transparency
+                book['_filter_match_score'] = filter_bonus
+                book['_filters_applied'] = {
+                    'pubDate': pub_date if pub_date != 'any' else None,
+                    'minRating': min_rating if min_rating > 0 else None,
+                    'ageRange': age_range if age_range != 'any' else None
+                }
+                
+                filtered.append(book)
         
-        # Minimum rating
-        min_rating = filters.get('minRating')
-        if min_rating:
-            filtered = [b for b in filtered if b.get('rating') and b['rating'] >= min_rating]
+        logger.info(
+            f"[BOOKS] Filtered: {len(books)} -> {len(filtered)} books "
+            f"(removed {len(books) - len(filtered)})"
+        )
         
+        # Log filter effectiveness
+        if filters.get('pubDate') and filters['pubDate'] != 'any':
+            logger.debug(f"[BOOKS] Publication filter '{filters['pubDate']}' applied")
+        if filters.get('minRating') and filters['minRating'] > 0:
+            logger.debug(f"[BOOKS] Rating filter>={filters['minRating']} applied")
+
         return filtered
-    
+
+    def _check_age_match(self, book: Dict, age_range: str) -> bool:
+        """
+        Check if book matches age preference (best-effort).
+        Returns True for positive match OR ambiguous cases.
+        """
+        age_keywords = {
+            '8-12': ['middle grade', 'children', 'juvenile', 'mg', 'ages 8-12', 'elementary'],
+            '12-16': ['young adult', 'teen', 'ya', 'adolescent', 'ages 12+', 'teenage'],
+            '16-18': ['older teen', 'mature ya', 'new adult', 'ages 16+', 'upper ya']
+        }
+        
+        target_keywords = age_keywords.get(age_range, [])
+        if not target_keywords:
+            return True  # Unknown age range = match everything
+        
+        # Build searchable text
+        categories_text = ' '.join(c.lower() for c in book.get('categories', []))
+        subjects_text = ' '.join(s.lower() for s in book.get('raw_subjects', []))
+        description = (book.get('description') or '').lower()
+        combined = f"{categories_text} {subjects_text} {description}"
+        
+        # Check for positive match
+        has_match = any(keyword in combined for keyword in target_keywords)
+        
+        if has_match:
+            return True
+        
+        # If no match, check if book has ANY age indicator
+        all_age_keywords = [kw for keywords in age_keywords.values() for kw in keywords]
+        has_any_age_info = any(kw in combined for kw in all_age_keywords)
+        
+        # No age info = benefit of doubt (most books don't specify)
+        return not has_any_age_info
+        
     def _extract_year(self, date_str: str) -> int:
         """Extract year from date string."""
         if not date_str:

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { BookOpen, X, Filter, ChevronDown, ChevronUp, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import BookCard from './BookCard';
 import FilterControls from '../../components/recommender/FilterControls';
-import BrowseCollectionsTab from './BrowseCollectionsTab';
+import BrowseCollectionsPanel from './BrowseCollectionsPanel';
 import LibrarySidebar from './LibrarySidebar';
 import LoadingState from '../../components/recommender/LoadingState';
 
@@ -16,18 +16,44 @@ const RecommendationsPanel = ({ sessionId, userId, conversationHistory, isVisibl
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [savedBooks, setSavedBooks] = useState([]);
-  const [showFilters, setShowFilters] = useState(false);
+  const [savedBookIds, setSavedBookIds] = useState(new Set());
   const [extractedThemes, setExtractedThemes] = useState(null);
-  const [flippedCard, setFlippedCard] = useState(null);
+  const [showFilters, setShowFilters] = useState(true);
+
+  // Current filters (UI state)
   const [filters, setFilters] = useState({
     ageRange: '12-16',
     pubDate: 'any',
     minRating: 3.5
   });
 
+  // Applied filters (last used for API call) - null means never applied
+  const [appliedFilters, setAppliedFilters] = useState(null);
+
+  const defaultFilters = {
+    ageRange: '12-16',
+    pubDate: 'any',
+    minRating: 3.5
+  };
+
   const canRequest = conversationHistory.length >= 3;
 
-  const getRecommendations = async () => {
+  // Check if filters have changed
+  const hasFilterChanges = appliedFilters === null
+    ? (
+      // Before first fetch: compare to defaults
+      filters.ageRange !== defaultFilters.ageRange ||
+      filters.pubDate !== defaultFilters.pubDate ||
+      filters.minRating !== defaultFilters.minRating
+    )
+    : (
+      // After first fetch: compare to last applied
+      filters.ageRange !== appliedFilters.ageRange ||
+      filters.pubDate !== appliedFilters.pubDate ||
+      filters.minRating !== appliedFilters.minRating
+    );
+
+  const getRecommendations = async (useFilters = filters) => {
     setLoading(true);
     setError(null);
 
@@ -38,7 +64,7 @@ const RecommendationsPanel = ({ sessionId, userId, conversationHistory, isVisibl
         body: JSON.stringify({
           userId,
           sessionId,
-          filters,
+          filters: useFilters,
           limit: 6,
           generateExplanations: true
         })
@@ -50,8 +76,7 @@ const RecommendationsPanel = ({ sessionId, userId, conversationHistory, isVisibl
       }
 
       const data = await response.json();
-      
-      // Clean up books - only include available fields
+
       const cleanedBooks = (data.recommendations || []).map(book => ({
         id: book.id,
         title: book.title,
@@ -62,12 +87,14 @@ const RecommendationsPanel = ({ sessionId, userId, conversationHistory, isVisibl
         ...(book.categories && book.categories.length > 0 && { categories: book.categories }),
         ...(book.explanation && { explanation: book.explanation }),
         ...(book.matchHighlights && book.matchHighlights.length > 0 && { matchHighlights: book.matchHighlights }),
-        ...(book.comparisonNote && { comparisonNote: book.comparisonNote })
+        ...(book.comparisonNote && { comparisonNote: book.comparisonNote }),
+        ...(book._filter_match_score !== undefined && { _filter_match_score: book._filter_match_score })
       }));
-      
+
       setBooks(cleanedBooks);
       setExtractedThemes(data.extractedElements || null);
-      
+      setAppliedFilters(useFilters); // Mark these filters as applied
+
     } catch (err) {
       console.error('Recommendation error:', err);
       setError(err.message);
@@ -76,39 +103,58 @@ const RecommendationsPanel = ({ sessionId, userId, conversationHistory, isVisibl
     }
   };
 
+  const handleApplyFilters = () => {
+    if (hasFilterChanges) {
+      getRecommendations(filters);
+    }
+  };
+
+  const handleClearFilters = () => {
+    const clearedFilters = {
+      ageRange: 'any',
+      pubDate: 'any',
+      minRating: 0
+    };
+    setFilters(clearedFilters);
+
+    // If we have books, regenerate with cleared filters
+    if (books.length > 0) {
+      getRecommendations(clearedFilters);
+    }
+  };
+
   const handleSaveBook = async (book) => {
+    console.log('Saving book with full data:', book);
+
     try {
-      await fetch(`${API_BASE}/api/book-recommendations/save`, {
+      const response = await fetch(`${API_BASE}/api/book-recommendations/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId,
           sessionId,
-          book: {
-            id: book.id,
-            title: book.title,
-            author: book.author,
-            source: book.source,
-            coverUrl: book.coverUrl
-          }
+          book: book  // ← CHANGED: Pass entire book object, not selective fields
         })
       });
-      
-      setSavedBooks(prev => [...prev, book]);
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setSavedBooks(prev => [...prev, book]);
+        setSavedBookIds(prev => new Set([...prev, book.id]));
+        console.log('Book saved successfully:', result);
+      } else {
+        console.error('Save failed:', result);
+        throw new Error(result.error || 'Failed to save book');
+      }
     } catch (err) {
       console.error('Failed to save book:', err);
+      throw err;
     }
   };
 
   const handleRejectBook = (bookId) => {
     setBooks(prev => prev.filter(b => b.id !== bookId));
-    if (flippedCard === bookId) {
-      setFlippedCard(null);
-    }
-  };
-
-  const handleFlipCard = (bookId) => {
-    setFlippedCard(flippedCard === bookId ? null : bookId);
   };
 
   if (!isVisible) return null;
@@ -126,11 +172,42 @@ const RecommendationsPanel = ({ sessionId, userId, conversationHistory, isVisibl
           </button>
         </div>
 
+        {/* Filters - Always visible at top */}
         <div className="recommendations-panel-controls">
           <button
-            onClick={getRecommendations}
+            onClick={() => setShowFilters(!showFilters)}
+            className="recommendations-filter-toggle"
+          >
+            <div className="recommendations-filter-toggle-left">
+              <Filter className="w-4 h-4" />
+              <span>Recommendation Filters</span>
+              {hasFilterChanges && (
+                <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-semibold">
+                  Modified
+                </span>
+              )}
+            </div>
+            {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+
+          {showFilters && (
+            <div className="mt-3">
+              <FilterControls
+                filters={filters}
+                onChange={setFilters}
+                onApply={handleApplyFilters}
+                onClear={handleClearFilters}
+                hasChanges={hasFilterChanges}
+                isLoading={loading}
+              />
+            </div>
+          )}
+
+          {/* Get Recommendations Button */}
+          <button
+            onClick={() => getRecommendations(filters)}
             disabled={!canRequest || loading}
-            className="recommendations-get-btn"
+            className="recommendations-get-btn mt-4"
           >
             {loading ? (
               <>
@@ -140,10 +217,11 @@ const RecommendationsPanel = ({ sessionId, userId, conversationHistory, isVisibl
             ) : (
               <>
                 <Sparkles className="w-5 h-5" />
-                Get Recommendations
+                {books.length > 0 ? 'Get New Recommendations' : 'Get Recommendations'}
               </>
             )}
           </button>
+
           {!canRequest && (
             <p className="recommendations-chat-reminder">
               Chat {3 - conversationHistory.length} more turns to unlock recommendations
@@ -151,6 +229,7 @@ const RecommendationsPanel = ({ sessionId, userId, conversationHistory, isVisibl
           )}
         </div>
 
+        {/* Results */}
         <div className="recommendations-panel-content">
           {loading ? (
             <div className="recommendations-loading">
@@ -162,7 +241,7 @@ const RecommendationsPanel = ({ sessionId, userId, conversationHistory, isVisibl
               <AlertCircle className="w-16 h-16 recommendations-error-icon" />
               <p className="recommendations-error-title">Failed to load recommendations</p>
               <p className="recommendations-error-message">{error}</p>
-              <button onClick={getRecommendations} className="recommendations-retry-btn">
+              <button onClick={() => getRecommendations(filters)} className="recommendations-retry-btn">
                 Try Again
               </button>
             </div>
@@ -171,7 +250,7 @@ const RecommendationsPanel = ({ sessionId, userId, conversationHistory, isVisibl
               <BookOpen className="w-16 h-16 recommendations-empty-icon" />
               <h3 className="recommendations-empty-title">Ready to discover books?</h3>
               <p className="recommendations-empty-text">
-                Chat about your story to get personalized book recommendations that match your themes and style
+                Set your preferences above, then click "Get Recommendations" to find books that match your story themes and style
               </p>
             </div>
           ) : (
@@ -195,20 +274,7 @@ const RecommendationsPanel = ({ sessionId, userId, conversationHistory, isVisibl
                   )}
                 </div>
               )}
-              
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="recommendations-filter-toggle"
-              >
-                <div className="recommendations-filter-toggle-left">
-                  <Filter className="w-4 h-4" />
-                  <span>Filters</span>
-                </div>
-                {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
-              
-              {showFilters && <FilterControls filters={filters} onChange={setFilters} />}
-              
+
               <p className="recommendations-flip-hint-text">
                 💡 <strong>Tip:</strong> Click any book card to flip and see full details
               </p>
@@ -221,8 +287,6 @@ const RecommendationsPanel = ({ sessionId, userId, conversationHistory, isVisibl
                     onSave={handleSaveBook}
                     onReject={handleRejectBook}
                     isSaved={savedBooks.some(b => b.id === book.id)}
-                    flippedCard={flippedCard}
-                    onFlip={handleFlipCard}
                   />
                 ))}
               </div>
