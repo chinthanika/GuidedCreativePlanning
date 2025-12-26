@@ -117,8 +117,9 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
             msg = parse_markdown(data.get("message", ""), "html")
             if msg.strip():
                 current_stage = cfm_session.get_stage()
-                if depth == 0:
-                    cfm_session.save_message("assistant", msg, stage=current_stage, visible=True)
+
+                cfm_session.save_message("assistant", msg, stage=current_stage, visible=True)
+                logger.info(f"[ACTION] Saved respond message to Firebase (depth={depth})")
               
                 result["chat_message"] += msg + "\n"
                 logger.debug(f"[ACTION] Responding with: {msg[:100]}...")
@@ -234,10 +235,12 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                 
             except Exception as e:
                 logger.error(f"[GET_INFO] Data fetch failed: {e}")
-                result["chat_message"] = parse_markdown(
-                    "I encountered an issue retrieving that information. Could you try rephrasing your question?",
-                    "html"
-                )
+                error_msg = "I encountered an issue retrieving that information. Could you try rephrasing your question?"
+                result["chat_message"] = parse_markdown(error_msg, "html")
+                # ALWAYS save error messages
+                cfm_session.save_message("assistant", result["chat_message"], 
+                                       stage=cfm_session.get_stage(), visible=True)
+                logger.info(f"[GET_INFO] Saved error response to Firebase (depth={depth})")
                 continue
             
             # Check if we got actual data
@@ -259,28 +262,25 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
             
             if not has_actual_data:
                 logger.info("[GET_INFO] No data found, providing fallback")
-                result["chat_message"] = parse_markdown(
-                    "I don't have any previous information about that yet. Let's start building it together! "
-                    "What would you like to tell me?", 
-                    "html"
-                )
-            else:
-                # TURN 2: Call DeepSeek with the data
-                logger.info(f"[GET_INFO] Calling DeepSeek with {total_items} items")
-                
-                info_summary = json.dumps(result["profile_data"], indent=2)
+                fallback_msg = "I don't have any previous information about that yet. Let's start building it together! What would you like to tell me?"
                 
                 followup_messages = [
                     {"role": "system", "content": BS_SYSTEM_PROMPT},
                     {"role": "user", "content": f"User asked: {last_user_msg}"},
                     {"role": "assistant", "content": f"Reasoning: {reasoning}"},
                     {"role": "system", "content": f"""Retrieved data:
-{info_summary}
+                No data about that exists, perhaps because the user has not added it yet.
 
-CRITICAL: The data above is the complete information available. Do NOT request get_info again.
-Respond conversationally with ONLY a 'respond' action presenting this information naturally.
-Format: {{"action": "respond", "data": {{"message": "your formatted response"}}}}"""}
-                ]
+                CRITICAL: Do NOT request get_info again.
+                Respond conversationally with ONLY a 'respond' action presenting this information naturally and continuing the conversation
+                Format: {{"action": "respond", "data": {{"message": "your formatted response"}}}}"""}
+                                ]
+                
+                result["chat_message"] = parse_markdown(fallback_msg, "html")
+                # ALWAYS save fallback messages
+                cfm_session.save_message("assistant", result["chat_message"], 
+                                       stage=cfm_session.get_stage(), visible=True)
+                logger.info(f"[GET_INFO] Saved fallback response to Firebase (depth={depth})")
 
                 followup_start = time.time()
                 try:
@@ -328,6 +328,131 @@ Format: {{"action": "respond", "data": {{"message": "your formatted response"}}}
                     logger.error(f"[GET_INFO] Turn 2 failed: {e}")
                     logger.error(traceback.format_exc())
                     result["chat_message"] = parse_markdown(
+                        f"No information available on that topic...",
+                        "html"
+                    )
+                    followup_start = time.time()
+                try:
+                    followup_resp = client.chat.completions.create(
+                        model="deepseek-chat",
+                        messages=followup_messages,
+                        stream=False,
+                        temperature=0.7
+                    )
+                    followup_time = time.time() - followup_start
+                    logger.info(f"[TIMING] DeepSeek Turn 2: {followup_time:.3f}s")
+
+                    bot_reply_raw = followup_resp.choices[0].message.content.strip()
+                    logger.debug(f"[GET_INFO] Turn 2 response: {bot_reply_raw[:200]}...")
+                    
+                    try:
+                        bot_reply_json = parse_deepseek_json(bot_reply_raw)
+                        bot_reply_json = normalize_deepseek_response(bot_reply_json)
+                    except Exception as parse_err:
+                        logger.warning(f"[GET_INFO] JSON parse failed: {parse_err}")
+                        bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+
+                    # Recursively handle Turn 2 response
+                    followup_result = bs_handle_action(
+                        bot_reply_json, 
+                        user_id, 
+                        recent_msgs, 
+                        cfm_session, 
+                        depth=depth+1, 
+                        update_status=update_status
+                    )
+                    
+                    # Merge results
+                    if followup_result.get("chat_message"):
+                        result["chat_message"] += followup_result["chat_message"]
+                        logger.info(f"[GET_INFO] Turn 2 complete (length: {len(result['chat_message'])})")
+                    else:
+                        logger.warning("[GET_INFO] No chat_message in Turn 2")
+                        result["chat_message"] = parse_markdown(bot_reply_raw, "html")
+
+                        cfm_session.save_message("assistant", result["chat_message"], 
+                                               stage=cfm_session.get_stage(), visible=True)
+                    
+                    result["requests"].extend(followup_result.get("requests", []))
+                    result["staging_results"].extend(followup_result.get("staging_results", []))
+                    
+                except Exception as e:
+                    logger.error(f"[GET_INFO] Turn 2 failed: {e}")
+                    logger.error(traceback.format_exc())
+                    result["chat_message"] = parse_markdown(
+                        f"Here's what I found:\n\n{info_summary[:500]}...",
+                        "html"
+                    )
+                    cfm_session.save_message("assistant", result["chat_message"], 
+                                           stage=cfm_session.get_stage(), visible=True)
+
+            else:
+                # TURN 2: Call DeepSeek with the data
+                logger.info(f"[GET_INFO] Turn 2: Calling DeepSeek with {total_items} items (depth={depth})")
+                
+                info_summary = json.dumps(result["profile_data"], indent=2)
+                
+                followup_messages = [
+                    {"role": "system", "content": BS_SYSTEM_PROMPT},
+                    {"role": "user", "content": f"User asked: {last_user_msg}"},
+                    {"role": "assistant", "content": f"Reasoning: {reasoning}"},
+                    {"role": "system", "content": f"""Retrieved data:
+                {info_summary}
+
+                CRITICAL: The data above is the complete information available. Do NOT request get_info again.
+                Respond conversationally with ONLY a 'respond' action presenting this information naturally.
+                Format: {{"action": "respond", "data": {{"message": "your formatted response"}}}}"""}
+                                ]
+
+                followup_start = time.time()
+                try:
+                    followup_resp = client.chat.completions.create(
+                        model="deepseek-chat",
+                        messages=followup_messages,
+                        stream=False,
+                        temperature=0.7
+                    )
+                    followup_time = time.time() - followup_start
+                    logger.info(f"[TIMING] DeepSeek Turn 2: {followup_time:.3f}s")
+
+                    bot_reply_raw = followup_resp.choices[0].message.content.strip()
+                    logger.debug(f"[GET_INFO] Turn 2 response: {bot_reply_raw[:200]}...")
+                    
+                    try:
+                        bot_reply_json = parse_deepseek_json(bot_reply_raw)
+                        bot_reply_json = normalize_deepseek_response(bot_reply_json)
+                    except Exception as parse_err:
+                        logger.warning(f"[GET_INFO] JSON parse failed: {parse_err}")
+                        bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+
+                    # Recursively handle Turn 2 response
+                    followup_result = bs_handle_action(
+                        bot_reply_json, 
+                        user_id, 
+                        recent_msgs, 
+                        cfm_session, 
+                        depth=depth+1, 
+                        update_status=update_status
+                    )
+                    
+                    # Merge results
+                    if followup_result.get("chat_message"):
+                        result["chat_message"] += followup_result["chat_message"]
+                        logger.info(f"[GET_INFO] Turn 2 complete (length: {len(result['chat_message'])})")
+                    else:
+                        logger.warning("[GET_INFO] No chat_message in Turn 2")
+                        result["chat_message"] = parse_markdown(bot_reply_raw, "html")
+                    
+                        cfm_session.save_message("assistant", result["chat_message"], 
+                                               stage=cfm_session.get_stage(), visible=True)
+                        
+                    result["requests"].extend(followup_result.get("requests", []))
+                    result["staging_results"].extend(followup_result.get("staging_results", []))
+                    
+                except Exception as e:
+                    logger.error(f"[GET_INFO] Turn 2 failed: {e}")
+                    logger.error(traceback.format_exc())
+                    result["chat_message"] = parse_markdown(
                         f"Here's what I found:\n\n{info_summary[:500]}...",
                         "html"
                     )
@@ -364,11 +489,54 @@ Format: {{"action": "respond", "data": {{"message": "your formatted response"}}}
                                         action="stage_result", visible=False)
 
             result["staging_results"] = staged_summaries
+            
+            # Call DeepSeek for follow-up
+            logger.info(f"[STAGE_CHANGE] Calling DeepSeek for follow-up (depth={depth})")
+            summary = json.dumps(staged_summaries, indent=2)
+            followup_messages = [
+                {"role": "system", "content": BS_SYSTEM_PROMPT},
+                {"role": "assistant", "content": f"Your reasoning when requesting this stage change was: {reasoning}"},
+                {"role": "system", "content": f"Changes staged successfully:\n{summary}\n\nProceed conversationally based on this."}
+            ]
+
+            try:
+                followup_resp = client.chat.completions.create(
+                    model="deepseek-chat",
+                    messages=followup_messages,
+                    stream=False
+                )
+                
+                bot_reply_raw = followup_resp.choices[0].message.content.strip()
+                logger.debug(f"[STAGE_CHANGE] Follow-up response: {bot_reply_raw[:200]}...")
+
+                try:
+                    bot_reply_json = parse_deepseek_json(bot_reply_raw)
+                    bot_reply_json = normalize_deepseek_response(bot_reply_json)
+                except Exception:
+                    bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
+
+                # Handle follow-up response (depth+1 to prevent infinite loops)
+                followup_result = bs_handle_action(
+                    bot_reply_json, 
+                    user_id, 
+                    recent_msgs, 
+                    cfm_session, 
+                    depth=depth+1,  # ← Increment depth
+                    update_status=update_status
+                )
+                
+                if followup_result.get("chat_message"):
+                    result["chat_message"] += followup_result["chat_message"]
+                    logger.info("[STAGE_CHANGE] Follow-up response saved to Firebase")
+
+            except Exception as e:
+                logger.warning(f"[STAGE_CHANGE] Error triggering follow-up: {e}")
 
         else:
             logger.debug(f"[ACTION] Unknown action: {action}")
 
     action_time = time.time() - action_start
-    logger.info(f"[TIMING] bs_handle_action: {action_time:.3f}s at depth={depth}")
+    logger.info(f"[TIMING] bs_handle_action completed in {action_time:.3f}s at depth={depth}")
+    
     
     return result

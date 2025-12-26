@@ -117,8 +117,8 @@ def dt_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
             logger.debug(f"[ACTION] Processing respond action")
             msg = parse_markdown(data.get("message", ""), "html")
             if msg.strip():
-                if depth == 0:
-                    cfm_session.save_message("assistant", msg, visible=True)
+                cfm_session.save_message("assistant", msg, visible=True)
+                logger.info(f"[ACTION] Saved respond message to Firebase (depth={depth})")
                 
                 result["chat_message"] += msg + "\n"
                 logger.debug(f"[ACTION] Responding with: {msg[:100]}...")
@@ -198,6 +198,9 @@ def dt_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                     "What would you like to tell me?", 
                     "html"
                 )
+
+                cfm_session.save_message("assistant", result["chat_message"], visible=True)
+                logger.info(f"[GET_INFO] Saved fallback response to Firebase (depth={depth})")
             else:
                 # TURN 2: Call DeepSeek with the data
                 logger.info(f"[GET_INFO] Calling DeepSeek with {total_items} items")
@@ -254,6 +257,8 @@ Format: {{"action": "respond", "data": {{"message": "your formatted response"}}}
                     else:
                         logger.warning("[GET_INFO] No chat_message in Turn 2")
                         result["chat_message"] = parse_markdown(bot_reply_raw, "html")
+
+                        cfm_session.save_message("assistant", result["chat_message"], visible=True)
                     
                     result["requests"].extend(followup_result.get("requests", []))
                     result["staging_results"].extend(followup_result.get("staging_results", []))
