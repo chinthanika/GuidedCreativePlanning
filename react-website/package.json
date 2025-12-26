@@ -19,6 +19,7 @@
     "date-fns": "^4.1.0",
     "firebase": "^9.18.0",
     "js-sha256": "^0.11.0",
+    "lucide-react": "^0.555.0",
     "mdb-react-ui-kit": "^6.0.0",
     "moment": "^2.29.4",
     "react": "^18.2.0",
