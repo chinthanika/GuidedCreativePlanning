@@ -5,7 +5,7 @@ import { useAuthValue } from '../../Firebase/AuthContext';
 import { database } from '../../Firebase/firebase';
 import Graph from '../../components/storymap/Graph';
 import GraphModal from '../../components/storymap/graph-modal';
-import { Input, Button, Modal, Box } from '@material-ui/core';
+import { Input, Button, Modal, Box } from '@mui/material';
 import { v4 as uuidv4 } from "uuid";
 import { sha256 } from 'js-sha256';
 import NewNodeModal from '../../components/storymap/NewNodeModal';

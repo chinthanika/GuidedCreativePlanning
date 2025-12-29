@@ -43,11 +43,19 @@ const Graph = ({ data, getNodeSize, handleNodeClick, handleLinkClick }) => {
           left: "10px",
           zIndex: 10,
           padding: "10px 20px",
-          backgroundColor: "#000000",
-          color: "#fff",
+          backgroundColor: "var(--primary-main)",
+          color: "var(--background-default)",
           border: "none",
-          borderRadius: "5px",
+          borderRadius: "8px",
           cursor: "pointer",
+          fontWeight: "400",
+          transition: "all 0.15s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.backgroundColor = "var(--primary-dark)";
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.backgroundColor = "var(--primary-main)";
         }}
       >
         {showNodeLabels ? "Switch to Node View" : "Switch to Label View"}

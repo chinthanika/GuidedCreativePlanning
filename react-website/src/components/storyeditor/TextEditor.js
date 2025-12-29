@@ -2,7 +2,7 @@ import React, { useCallback, useState, useMemo, useEffect, Fragment } from 'reac
 import { Slate, Editable, withReact } from 'slate-react';
 import { createEditor, Editor, Transforms, Text, Range } from 'slate';
 
-import Alert from "@material-ui/lab/Alert";
+import Alert from '@mui/material/Alert';
 
 import Icon from 'react-icons-kit';
 import { bold } from 'react-icons-kit/feather/bold';
