@@ -4,6 +4,7 @@
     flex-direction: column;
     align-items: center;
     padding: 20px;
+    background: var(--background-default);
 }
 
 /* Graph container */
@@ -11,9 +12,9 @@
     width: 100%;
     height: 100%;
     margin: 20px 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--divider);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
     overflow: hidden;
     display: flex;
     align-items: center;
@@ -21,6 +22,7 @@
     position: relative;
     z-index: 1;
     pointer-events: auto;
+    background: var(--background-paper);
 }
 
 .graph-container > canvas, .graph-container > div {
@@ -40,97 +42,84 @@
 .story-map-btn {
     padding: 10px 20px;
     font-size: 14px;
-    font-weight: bold;
+    font-weight: 400;
     text-transform: uppercase;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: all 0.15s ease;
 }
 
 .story-map-btn:hover {
-    transform: scale(1.05);
+    transform: scale(1.02);
 }
 
 .render-btn {
-    background-color: #c93030;
-    /* Blue background */
-    color: #fef4f4f7;
-    /* White text */
+    background-color: var(--secondary-main);
+    color: white;
     border: none;
-    /* Remove border */
     margin-bottom: 15px;
     margin-top: 5px;
     margin-left: 5px;
     padding: 10px 20px;
-    /* Add padding for a cleaner look */
     text-transform: none;
 }
 
 .render-btn:hover {
-    background-color: #dee2e604;
-    color: #000000;
-    /* Darker  on hover */
+    background-color: var(--primary-light);
 }
 
 .add-node-btn {
-    background-color: #ffc107;
-    /* Blue background */
-    color: #000000;
-    /* White text */
+    background-color: var(--success-main);
+    color: white;
     border: none;
-    /* Remove border */
     margin-bottom: 15px;
     margin-top: 5px;
     margin-left: 5px;
     padding: 10px 20px;
-    /* Add padding for a cleaner look */
     text-transform: none;
 }
 
 .add-node-btn:hover {
-    background-color: #e0a800;
-    /* Darker green on hover */
+    background-color: var(--success-dark);
 }
 
 .add-link-btn {
-    background-color: #ffc107;
-    /* Yellow background */
-    color: #000000;
-    /* White text */
+    background-color: var(--success-main);
+    color: white;
     border: none;
-    /* Remove border */
     margin-bottom: 15px;
     margin-top: 5px;
     margin-left: 5px;
     padding: 10px 20px;
-    /* Add padding for a cleaner look */
-    text-transform: none;
     text-transform: none;
 }
 
 .add-link-btn:hover {
-    background-color: #e0a800;
-    /* Darker yellow on hover */
+    background-color: var(--success-dark);
 }
 
 /* Modal styling */
 .modal-container {
     padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    background: var(--background-paper);
 }
 
 .modal-input {
     width: 100%;
     padding: 10px;
     font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    border: 1px solid var(--divider);
+    border-radius: 8px;
     margin-bottom: 10px;
+    background: var(--background-paper);
+    color: var(--text-primary);
+    transition: border-color 0.15s ease;
 }
 
 .modal-input:focus {
-    border-color: #007bff;
+    border-color: var(--text-disabled);
     outline: none;
 }

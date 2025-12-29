@@ -4,14 +4,14 @@ import { signOut } from 'firebase/auth'
 import { auth } from '../../Firebase/firebase'
 import { ref, remove, onValue, set } from "firebase/database";
 import { database } from '../../Firebase/firebase';
-import Dialog from "@material-ui/core/Dialog";
-import DialogActions from "@material-ui/core/DialogActions";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogContentText from "@material-ui/core/DialogContentText";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import { Button, IconButton, TextField, TextareaAutosize } from "@material-ui/core";
-import EditIcon from "@material-ui/icons/Edit";
-import SaveIcon from "@material-ui/icons/Save";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import { Button, IconButton, TextField, TextareaAutosize } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
 import './profile.css'
 
 function Profile() {
@@ -102,14 +102,14 @@ function Profile() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                   />
-                  <IconButton onClick={handleTitleSave}>
+                  <IconButton onClick={handleTitleSave} size="large">
                     <SaveIcon />
                   </IconButton>
                 </>
               ) : (
                 <>
                   <span>{title}</span>
-                  <IconButton onClick={() => setEditingTitle(true)}>
+                  <IconButton onClick={() => setEditingTitle(true)} size="large">
                     <EditIcon />
                   </IconButton>
                 </>
@@ -123,10 +123,10 @@ function Profile() {
                     <TextareaAutosize
                       value={summary}
                       onChange={(e) => setSummary(e.target.value)}
-                      rowsMin={10}
+                      minRows={10}
                       className="profile-textarea"
                     />
-                    <IconButton onClick={handleSummarySave} className="save-icon">
+                    <IconButton onClick={handleSummarySave} className="save-icon" size="large">
                       <SaveIcon />
                     </IconButton>
                   </>
@@ -144,7 +144,7 @@ function Profile() {
                     <IconButton
                       onClick={() => setEditingSummary(true)}
                       className="edit-icon"
-                    >
+                      size="large">
                       <EditIcon />
                     </IconButton>
                   </>
@@ -175,7 +175,7 @@ function Profile() {
         </DialogActions>
       </Dialog>
     </div>
-  )
+  );
 }
 
 export default Profile

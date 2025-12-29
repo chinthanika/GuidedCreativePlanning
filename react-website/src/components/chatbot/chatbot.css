@@ -4,7 +4,7 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: #f5f5f5;
+  background: var(--background-default);
 }
 
 /* Chat window takes available space */
@@ -15,10 +15,11 @@
   width: 100%;
   max-width: 800px;
   height: 90vh;
-  background: white;
+  background: var(--background-paper);
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
   overflow: hidden;
+  border: 1px solid var(--divider);
 }
 
 /* Scrollable messages */
@@ -55,27 +56,28 @@
 }
 
 .message.user {
-  background: #0078ff;
-  color: white;
+  background: var(--primary-main);
+  color: var(--background-default);
   border-bottom-right-radius: 4px;
 }
 
 .message.assistant {
-  background: #e5e5ea;
-  color: black;
+  background: var(--border-light);
+  color: var(--text-primary);
   border-bottom-left-radius: 4px;
+  border: 1px solid var(--divider);
 }
 
 /* Better bubble spacing */
 .message-wrapper.user .message {
-  background: #0078ff;
-  color: white;
+  background: var(--primary-main);
+  color: var(--background-default);
   align-self: flex-end;
 }
 
 .message-wrapper.assistant .message {
-  background: #e5e5ea;
-  color: black;
+  background: var(--border-light);
+  color: var(--text-primary);
   align-self: flex-start;
 }
 
@@ -84,30 +86,44 @@
 .chat-input {
   display: flex;
   padding: 12px;
-  border-top: 1px solid #ddd;
-  background: #fafafa;
+  border-top: 1px solid var(--divider);
+  background: var(--background-default);
 }
 
 .chat-input input {
   flex: 1;
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--divider);
   border-radius: 8px;
   font-size: 15px;
+  background: var(--background-paper);
+  color: var(--text-primary);
+  transition: border-color 0.15s;
+}
+
+.chat-input input:focus {
+  outline: none;
+  border-color: var(--text-disabled);
+}
+
+.chat-input input::placeholder {
+  color: var(--text-disabled);
 }
 
 .chat-input button {
   margin-left: 8px;
   padding: 10px 16px;
-  background: #0078ff;
-  color: white;
+  background: var(--primary-main);
+  color: var(--background-default);
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  transition: background 0.15s;
+  font-weight: 400;
 }
 
 .chat-input button:hover {
-  background: #005fcc;
+  background: var(--primary-dark);
 }
 
 /* Typing dots animation */
@@ -115,15 +131,16 @@
   display: flex;
   gap: 4px;
   padding: 10px 14px;
-  background: #e5e5ea;
+  background: var(--border-light);
   border-radius: 16px;
   max-width: fit-content;
+  border: 1px solid var(--divider);
 }
 
 .message.assistant.typing span {
   width: 6px;
   height: 6px;
-  background: #555;
+  background: var(--secondary-main);
   border-radius: 50%;
   display: inline-block;
   animation: blink 1.4s infinite both;
@@ -142,33 +159,34 @@
   justify-content: center;
   gap: 12px;
   padding: 12px;
-  border-bottom: 1px solid #ddd;
-  background: #fafafa;
+  border-bottom: 1px solid var(--divider);
+  background: var(--background-default);
 }
 
 /* Mode buttons */
 .mode-switcher button {
   padding: 8px 16px;
   font-size: 14px;
-  font-weight: 500;
-  border: 1px solid #ccc;
+  font-weight: 400;
+  border: 1px solid var(--divider);
   border-radius: 20px;
-  background: white;
+  background: var(--background-paper);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  color: var(--primary-light);
 }
 
 /* Hover effect */
 .mode-switcher button:hover {
-  background: #f0f0f0;
+  background: var(--border-light);
 }
 
 /* Active button state */
 .mode-switcher button.active {
-  background: #0078ff;
-  color: white;
-  border-color: #0078ff;
-  box-shadow: 0 2px 6px rgba(0, 120, 255, 0.3);
+  background: var(--primary-main);
+  color: var(--background-default);
+  border-color: var(--primary-main);
+  box-shadow: 0 2px 4px rgba(39, 39, 42, 0.2);
 }
 
 
@@ -177,4 +195,3 @@
   20% { opacity: 1; }
   100% { opacity: 0.2; }
 }
-

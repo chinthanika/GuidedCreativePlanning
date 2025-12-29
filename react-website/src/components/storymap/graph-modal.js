@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Modal, Box, Button, TextField, Typography, Select, MenuItem } from "@material-ui/core";
+import { Modal, Box, Button, TextField, Typography, Select, MenuItem } from "@mui/material";
 
 const SYSTEM_FIELDS = new Set([
   "index", "fx", "fy", "vx", "vy", "__indexColor", "indexColor", "x", "y", "hidden", "level", "note"
@@ -138,7 +138,7 @@ const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, d
           <Button
             onClick={handleAddNewField}
             variant="contained"
-            color="primary"
+            color="success"
             size="small"
             style={{ marginTop: 8 }}
             disabled={!newFieldName.trim()}
@@ -227,7 +227,7 @@ const GraphModal = ({ isModalOpen, handleCloseModal, selectedNode, updateNode, d
 
         {/* Action Buttons */}
         <Box style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
-          <Button onClick={handleSaveClick} variant="contained" color="primary" size="small">
+          <Button onClick={handleSaveClick} variant="contained" color="success" size="small">
             Save
           </Button>
           <Button onClick={handleDeleteClick} variant="outlined" color="secondary" size="small">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Modal, Box, Button, TextField, Typography, Select, MenuItem } from "@material-ui/core";
+import { Modal, Box, Button, TextField, Typography, Select, MenuItem } from "@mui/material";
 
 import "../common/modal.css";
 
