@@ -87,10 +87,6 @@ try:
     })
     print(f"[DEBUG] Credentials loaded successfully")
 
-    firebase_admin.initialize_app(cred, {
-        'databaseURL': "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
-    })
-
     bs_logger.info("Firebase initialized successfully")
 except Exception as e:
     bs_logger.error(f"Firebase initialization failed: {e}")
