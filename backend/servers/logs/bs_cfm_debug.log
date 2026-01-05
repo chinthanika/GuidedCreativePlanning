@@ -23361,3 +23361,334 @@ requests.exceptions.HTTPError: 502 Server Error: Bad Gateway for url: https://gu
 2026-01-05 10:56:33,727 [DEBUG] [STAGE] Current stage: Ideate
 2026-01-05 10:56:33,727 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Ideate, evals=False
 2026-01-05 10:56:34,919 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OiB4QQgHp6uqL4hTBNY
+2026-01-05 12:49:50,994 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:49:52,839 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 12:49:54,157 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2026-01-05 12:49:54,157 [DEBUG] [SESSION INIT] Session API connection OK.
+2026-01-05 12:49:55,412 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2026-01-05 12:49:55,414 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 12:49:55,414 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:49:56,429 [INFO] [TIMING] Metadata fetch took 1.015s
+2026-01-05 12:49:56,429 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 12:49:56,429 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Ideate, evals=False
+2026-01-05 12:49:56,430 [DEBUG] [CACHE MISS] Fetching summaries
+2026-01-05 12:49:59,343 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 12:49:59,804 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OiBUNoDAlSyAqZb81pf
+2026-01-05 12:50:00,625 [DEBUG] [SNAPSHOT] Generating hybrid session snapshot
+2026-01-05 12:50:00,625 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:50:00,625 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 12:50:00,625 [DEBUG] [SCAMPER] Calculating technique coverage
+2026-01-05 12:50:00,625 [DEBUG] [SCAMPER] Coverage: {'S': 0, 'C': 0, 'A': 0, 'M': 0, 'P': 0, 'E': 0, 'R': 0}, used 0/7 techniques
+2026-01-05 12:50:00,625 [DEBUG] [SNAPSHOT] Generated: stage=Ideate, techniques=0/7, progress=0/10 ideas, 0/7 techniques (0%), 0 categories - Need: 10 more ideas, 4 more techniques, 2 more categories
+2026-01-05 12:50:08,609 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 12:50:09,941 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2026-01-05 12:50:09,941 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 12:50:09,942 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:50:09,942 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 12:50:09,942 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:50:09,942 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 12:50:09,947 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 12:50:09,947 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:50:09,947 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 12:50:09,947 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Ideate, evals=False
+2026-01-05 12:50:11,377 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OiBUQdEuR1FsIya-mc-
+2026-01-05 12:54:07,194 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:54:08,629 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 12:54:09,863 [DEBUG] [CACHE] Ideas cache refreshed: count=0
+2026-01-05 12:54:09,863 [DEBUG] [SESSION INIT] Session API connection OK.
+2026-01-05 12:54:10,994 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2026-01-05 12:54:10,994 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 12:54:10,994 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:54:11,912 [INFO] [TIMING] Metadata fetch took 0.918s
+2026-01-05 12:54:11,912 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 12:54:11,912 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Ideate, evals=False
+2026-01-05 12:54:11,913 [DEBUG] [CACHE MISS] Fetching summaries
+2026-01-05 12:54:13,492 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OiBVLkUGjmk5l1UQ7Rv
+2026-01-05 12:54:13,715 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 12:54:15,068 [DEBUG] [SNAPSHOT] Generating hybrid session snapshot
+2026-01-05 12:54:15,068 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:54:15,068 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 12:54:15,068 [DEBUG] [SCAMPER] Calculating technique coverage
+2026-01-05 12:54:15,068 [DEBUG] [SCAMPER] Coverage: {'S': 0, 'C': 0, 'A': 0, 'M': 0, 'P': 0, 'E': 0, 'R': 0}, used 0/7 techniques
+2026-01-05 12:54:15,068 [DEBUG] [SNAPSHOT] Generated: stage=Ideate, techniques=0/7, progress=0/10 ideas, 0/7 techniques (0%), 0 categories - Need: 10 more ideas, 4 more techniques, 2 more categories
+2026-01-05 12:54:29,724 [DEBUG] [SCAMPER IDEA] Logging with technique: Eliminate
+2026-01-05 12:54:31,260 [DEBUG] [SCAMPER IDEA] Saved with ID=-OiBVQ4CyQP8K3q8wJwa, technique=Eliminate
+2026-01-05 12:54:31,260 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:54:32,680 [DEBUG] [CACHE INVALIDATE] Cleared metadata cache for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:54:33,992 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 12:54:33,993 [DEBUG] [CATEGORY] Added category: Theme (total: 1)
+2026-01-05 12:54:35,253 [DEBUG] [CACHE] Ideas cache refreshed: count=1
+2026-01-05 12:54:35,254 [DEBUG] [SCAMPER IDEA] Confirmed in cache after 1 attempts
+2026-01-05 12:54:36,687 [DEBUG] [CACHE INVALIDATE] Cleared metadata cache for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:54:38,024 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 12:54:38,024 [DEBUG] [IDEA METRICS] Updated: {'Fluency': 1, 'Flexibility': 1, 'Originality': 'Medium', 'Elaboration': 'Medium'}
+2026-01-05 12:54:38,025 [DEBUG] [AUTO-PROGRESS] Checking stage progress with auto-advance
+2026-01-05 12:54:38,025 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 12:54:38,025 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:54:38,986 [INFO] [TIMING] Metadata fetch took 0.961s
+2026-01-05 12:54:38,986 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 12:54:38,986 [DEBUG] [STAGE CHECK] Checking progress for stage: Ideate
+2026-01-05 12:54:38,986 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:54:38,986 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 12:54:38,986 [DEBUG] [SCAMPER] Calculating technique coverage
+2026-01-05 12:54:38,986 [DEBUG] [SCAMPER] Coverage: {'S': 0, 'C': 0, 'A': 0, 'M': 0, 'P': 0, 'E': 1, 'R': 0}, used 1/7 techniques
+2026-01-05 12:54:38,986 [INFO] [STAGE CHECK] {'currentStage': 'Ideate', 'ready': False, 'suggestedNext': None, 'reasoning': 'Need: 9 more ideas, 3 more SCAMPER techniques, 1 more categories', 'metrics': {'hmwCount': 3, 'ideaCount': 1, 'refinedCount': 0, 'categoryCount': 1, 'highQualityCount': 1, 'techniquesUsed': 1, 'scamperCoverage': {'S': 0, 'C': 0, 'A': 0, 'M': 0, 'P': 0, 'E': 1, 'R': 0}}}
+2026-01-05 12:54:38,986 [DEBUG] [AUTO-PROGRESS] Not ready: Need: 9 more ideas, 3 more SCAMPER techniques, 1 more categories
+2026-01-05 12:54:39,978 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 12:54:41,169 [DEBUG] [CACHE] Ideas cache refreshed: count=1
+2026-01-05 12:54:41,169 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 12:54:41,169 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:54:41,169 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 12:54:41,169 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:54:41,169 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 12:54:41,170 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 12:54:41,170 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:54:41,170 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 12:54:41,171 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Ideate, evals=False
+2026-01-05 12:54:42,529 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OiBVSqB5Lb9huXTbOfc
+2026-01-05 12:56:49,497 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:56:51,038 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 12:56:52,179 [DEBUG] [CACHE] Ideas cache refreshed: count=1
+2026-01-05 12:56:52,179 [DEBUG] [SESSION INIT] Session API connection OK.
+2026-01-05 12:56:53,388 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2026-01-05 12:56:53,389 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 12:56:53,389 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:56:54,443 [INFO] [TIMING] Metadata fetch took 1.054s
+2026-01-05 12:56:54,443 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 12:56:54,443 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Ideate, evals=False
+2026-01-05 12:56:54,444 [DEBUG] [CACHE MISS] Fetching summaries
+2026-01-05 12:56:55,846 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 12:56:56,361 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OiBVyUqbo6uyGOBLxGY
+2026-01-05 12:56:57,178 [DEBUG] [SNAPSHOT] Generating hybrid session snapshot
+2026-01-05 12:56:57,179 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:56:57,179 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 12:56:57,179 [DEBUG] [SCAMPER] Calculating technique coverage
+2026-01-05 12:56:57,179 [DEBUG] [SCAMPER] Coverage: {'S': 0, 'C': 0, 'A': 0, 'M': 0, 'P': 0, 'E': 1, 'R': 0}, used 1/7 techniques
+2026-01-05 12:56:57,179 [DEBUG] [SNAPSHOT] Generated: stage=Ideate, techniques=1/7, progress=1/10 ideas, 1/7 techniques (14%), 1 categories - Need: 9 more ideas, 3 more techniques, 1 more categories
+2026-01-05 12:57:04,960 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 12:57:06,190 [DEBUG] [CACHE] Ideas cache refreshed: count=1
+2026-01-05 12:57:06,190 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 12:57:06,190 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:57:06,190 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 12:57:06,191 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:57:06,191 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 12:57:06,193 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 12:57:06,193 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 12:57:06,193 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 12:57:06,194 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Ideate, evals=False
+2026-01-05 12:57:07,617 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OiBW0GL6pQ9r5gai6jZ
+2026-01-05 13:00:43,791 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:00:45,277 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:00:46,493 [DEBUG] [CACHE] Ideas cache refreshed: count=1
+2026-01-05 13:00:46,493 [DEBUG] [SESSION INIT] Session API connection OK.
+2026-01-05 13:00:47,676 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2026-01-05 13:00:47,676 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:00:47,676 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:00:48,628 [INFO] [TIMING] Metadata fetch took 0.951s
+2026-01-05 13:00:48,628 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 13:00:48,628 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Ideate, evals=False
+2026-01-05 13:00:48,629 [DEBUG] [CACHE MISS] Fetching summaries
+2026-01-05 13:00:50,236 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OiBWrbGmW-2n4olXiVW
+2026-01-05 13:00:50,515 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:00:51,884 [DEBUG] [SNAPSHOT] Generating hybrid session snapshot
+2026-01-05 13:00:51,885 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:00:51,885 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 13:00:51,885 [DEBUG] [SCAMPER] Calculating technique coverage
+2026-01-05 13:00:51,885 [DEBUG] [SCAMPER] Coverage: {'S': 0, 'C': 0, 'A': 0, 'M': 0, 'P': 0, 'E': 1, 'R': 0}, used 1/7 techniques
+2026-01-05 13:00:51,885 [DEBUG] [SNAPSHOT] Generated: stage=Ideate, techniques=1/7, progress=1/10 ideas, 1/7 techniques (14%), 1 categories - Need: 9 more ideas, 3 more techniques, 1 more categories
+2026-01-05 13:01:11,571 [DEBUG] [SCAMPER IDEA] Logging with technique: Modify
+2026-01-05 13:01:13,071 [DEBUG] [SCAMPER IDEA] Saved with ID=-OiBWx9poXIwY6Wk2EV4, technique=Modify
+2026-01-05 13:01:13,071 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:01:14,504 [DEBUG] [CACHE INVALIDATE] Cleared metadata cache for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:01:15,836 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:01:15,837 [DEBUG] [CATEGORY] Added category: Character (total: 2)
+2026-01-05 13:01:17,060 [DEBUG] [CACHE] Ideas cache refreshed: count=2
+2026-01-05 13:01:17,060 [DEBUG] [SCAMPER IDEA] Confirmed in cache after 1 attempts
+2026-01-05 13:01:18,499 [DEBUG] [CACHE INVALIDATE] Cleared metadata cache for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:01:19,830 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:01:19,830 [DEBUG] [IDEA METRICS] Updated: {'Fluency': 2, 'Flexibility': 2, 'Originality': 'Medium', 'Elaboration': 'Medium'}
+2026-01-05 13:01:19,831 [DEBUG] [AUTO-PROGRESS] Checking stage progress with auto-advance
+2026-01-05 13:01:19,831 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:01:19,831 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:01:20,765 [INFO] [TIMING] Metadata fetch took 0.934s
+2026-01-05 13:01:20,766 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 13:01:20,766 [DEBUG] [STAGE CHECK] Checking progress for stage: Ideate
+2026-01-05 13:01:20,766 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:01:20,766 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 13:01:20,766 [DEBUG] [SCAMPER] Calculating technique coverage
+2026-01-05 13:01:20,766 [DEBUG] [SCAMPER] Coverage: {'S': 0, 'C': 0, 'A': 0, 'M': 1, 'P': 0, 'E': 1, 'R': 0}, used 2/7 techniques
+2026-01-05 13:01:20,766 [INFO] [STAGE CHECK] {'currentStage': 'Ideate', 'ready': False, 'suggestedNext': None, 'reasoning': 'Need: 8 more ideas, 2 more SCAMPER techniques', 'metrics': {'hmwCount': 3, 'ideaCount': 2, 'refinedCount': 0, 'categoryCount': 2, 'highQualityCount': 2, 'techniquesUsed': 2, 'scamperCoverage': {'S': 0, 'C': 0, 'A': 0, 'M': 1, 'P': 0, 'E': 1, 'R': 0}}}
+2026-01-05 13:01:20,766 [DEBUG] [AUTO-PROGRESS] Not ready: Need: 8 more ideas, 2 more SCAMPER techniques
+2026-01-05 13:01:21,702 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:01:23,528 [DEBUG] [CACHE] Ideas cache refreshed: count=2
+2026-01-05 13:01:23,528 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:01:23,528 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:01:23,529 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 13:01:23,529 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:01:23,529 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 13:01:23,530 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:01:23,530 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:01:23,530 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 13:01:23,530 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Ideate, evals=False
+2026-01-05 13:01:25,051 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OiBX-5wQSy708X5IFjE
+2026-01-05 13:13:09,654 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:13:11,115 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:13:12,283 [DEBUG] [CACHE] Ideas cache refreshed: count=2
+2026-01-05 13:13:12,283 [DEBUG] [SESSION INIT] Session API connection OK.
+2026-01-05 13:13:13,564 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2026-01-05 13:13:13,565 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:13:13,565 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:13:14,584 [INFO] [TIMING] Metadata fetch took 1.019s
+2026-01-05 13:13:14,584 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 13:13:14,584 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Ideate, evals=False
+2026-01-05 13:13:14,584 [DEBUG] [CACHE MISS] Fetching summaries
+2026-01-05 13:13:16,210 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OiBZhitzNNQmZ4Kzg1T
+2026-01-05 13:13:16,413 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:13:17,645 [DEBUG] [SNAPSHOT] Generating hybrid session snapshot
+2026-01-05 13:13:17,645 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:13:17,645 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 13:13:17,645 [DEBUG] [SCAMPER] Calculating technique coverage
+2026-01-05 13:13:17,645 [DEBUG] [SCAMPER] Coverage: {'S': 0, 'C': 0, 'A': 0, 'M': 1, 'P': 0, 'E': 1, 'R': 0}, used 2/7 techniques
+2026-01-05 13:13:17,645 [DEBUG] [SNAPSHOT] Generated: stage=Ideate, techniques=2/7, progress=2/10 ideas, 2/7 techniques (28%), 2 categories - Need: 8 more ideas, 2 more techniques
+2026-01-05 13:13:40,273 [DEBUG] [SCAMPER IDEA] Logging with technique: Substitute
+2026-01-05 13:13:41,707 [DEBUG] [SCAMPER IDEA] Saved with ID=-OiBZnxb_GiNjeXj9Wqk, technique=Substitute
+2026-01-05 13:13:41,707 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:13:42,934 [DEBUG] [CACHE] Ideas cache refreshed: count=3
+2026-01-05 13:13:42,935 [DEBUG] [SCAMPER IDEA] Confirmed in cache after 1 attempts
+2026-01-05 13:13:44,382 [DEBUG] [CACHE INVALIDATE] Cleared metadata cache for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:13:45,598 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:13:45,598 [DEBUG] [IDEA METRICS] Updated: {'Fluency': 3, 'Flexibility': 2, 'Originality': 'Medium', 'Elaboration': 'Medium'}
+2026-01-05 13:13:45,598 [DEBUG] [AUTO-PROGRESS] Checking stage progress with auto-advance
+2026-01-05 13:13:45,598 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:13:45,598 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:13:46,626 [INFO] [TIMING] Metadata fetch took 1.027s
+2026-01-05 13:13:46,626 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 13:13:46,626 [DEBUG] [STAGE CHECK] Checking progress for stage: Ideate
+2026-01-05 13:13:46,626 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:13:46,626 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 13:13:46,626 [DEBUG] [SCAMPER] Calculating technique coverage
+2026-01-05 13:13:46,626 [DEBUG] [SCAMPER] Coverage: {'S': 1, 'C': 0, 'A': 0, 'M': 1, 'P': 0, 'E': 1, 'R': 0}, used 3/7 techniques
+2026-01-05 13:13:46,626 [INFO] [STAGE CHECK] {'currentStage': 'Ideate', 'ready': False, 'suggestedNext': None, 'reasoning': 'Need: 7 more ideas, 1 more SCAMPER techniques', 'metrics': {'hmwCount': 3, 'ideaCount': 3, 'refinedCount': 0, 'categoryCount': 2, 'highQualityCount': 3, 'techniquesUsed': 3, 'scamperCoverage': {'S': 1, 'C': 0, 'A': 0, 'M': 1, 'P': 0, 'E': 1, 'R': 0}}}
+2026-01-05 13:13:46,627 [DEBUG] [AUTO-PROGRESS] Not ready: Need: 7 more ideas, 1 more SCAMPER techniques
+2026-01-05 13:13:46,627 [DEBUG] [SCAMPER IDEA] Logging with technique: Substitute
+2026-01-05 13:13:48,055 [DEBUG] [SCAMPER IDEA] Saved with ID=-OiBZpVkrTrp9WQa9XQQ, technique=Substitute
+2026-01-05 13:13:48,055 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:13:49,490 [DEBUG] [CACHE INVALIDATE] Cleared metadata cache for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:13:50,717 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:13:50,717 [DEBUG] [CATEGORY] Added category: Plot (total: 3)
+2026-01-05 13:13:51,949 [DEBUG] [CACHE] Ideas cache refreshed: count=4
+2026-01-05 13:13:51,950 [DEBUG] [SCAMPER IDEA] Confirmed in cache after 1 attempts
+2026-01-05 13:13:53,373 [DEBUG] [CACHE INVALIDATE] Cleared metadata cache for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:13:54,553 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:13:54,553 [DEBUG] [IDEA METRICS] Updated: {'Fluency': 4, 'Flexibility': 3, 'Originality': 'Medium', 'Elaboration': 'Medium'}
+2026-01-05 13:13:54,554 [DEBUG] [AUTO-PROGRESS] Checking stage progress with auto-advance
+2026-01-05 13:13:54,554 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:13:54,554 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:13:55,479 [INFO] [TIMING] Metadata fetch took 0.925s
+2026-01-05 13:13:55,479 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 13:13:55,479 [DEBUG] [STAGE CHECK] Checking progress for stage: Ideate
+2026-01-05 13:13:55,479 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:13:55,479 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 13:13:55,479 [DEBUG] [SCAMPER] Calculating technique coverage
+2026-01-05 13:13:55,479 [DEBUG] [SCAMPER] Coverage: {'S': 2, 'C': 0, 'A': 0, 'M': 1, 'P': 0, 'E': 1, 'R': 0}, used 3/7 techniques
+2026-01-05 13:13:55,479 [INFO] [STAGE CHECK] {'currentStage': 'Ideate', 'ready': False, 'suggestedNext': None, 'reasoning': 'Need: 6 more ideas, 1 more SCAMPER techniques', 'metrics': {'hmwCount': 3, 'ideaCount': 4, 'refinedCount': 0, 'categoryCount': 3, 'highQualityCount': 4, 'techniquesUsed': 3, 'scamperCoverage': {'S': 2, 'C': 0, 'A': 0, 'M': 1, 'P': 0, 'E': 1, 'R': 0}}}
+2026-01-05 13:13:55,479 [DEBUG] [AUTO-PROGRESS] Not ready: Need: 6 more ideas, 1 more SCAMPER techniques
+2026-01-05 13:13:56,465 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:13:57,631 [DEBUG] [CACHE] Ideas cache refreshed: count=4
+2026-01-05 13:13:57,631 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:13:57,631 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:13:57,631 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 13:13:57,632 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:13:57,632 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 13:13:57,632 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:13:57,633 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:13:57,633 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 13:13:57,633 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Ideate, evals=False
+2026-01-05 13:13:59,073 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OiBZsCIn15i8_I4622O
+2026-01-05 13:21:29,154 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:21:30,691 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:21:31,920 [DEBUG] [CACHE] Ideas cache refreshed: count=4
+2026-01-05 13:21:31,920 [DEBUG] [SESSION INIT] Session API connection OK.
+2026-01-05 13:21:33,164 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2026-01-05 13:21:33,164 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:21:33,164 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:21:34,172 [INFO] [TIMING] Metadata fetch took 1.008s
+2026-01-05 13:21:34,173 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 13:21:34,173 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Ideate, evals=False
+2026-01-05 13:21:34,173 [DEBUG] [CACHE MISS] Fetching summaries
+2026-01-05 13:21:35,607 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:21:36,027 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OiBabkQ4SJw-hPGVMF_
+2026-01-05 13:21:36,959 [DEBUG] [SNAPSHOT] Generating hybrid session snapshot
+2026-01-05 13:21:36,960 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:21:36,960 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 13:21:36,960 [DEBUG] [SCAMPER] Calculating technique coverage
+2026-01-05 13:21:36,960 [DEBUG] [SCAMPER] Coverage: {'S': 2, 'C': 0, 'A': 0, 'M': 1, 'P': 0, 'E': 1, 'R': 0}, used 3/7 techniques
+2026-01-05 13:21:36,960 [DEBUG] [SNAPSHOT] Generated: stage=Ideate, techniques=3/7, progress=4/10 ideas, 3/7 techniques (42%), 3 categories - Need: 6 more ideas, 1 more techniques
+2026-01-05 13:22:00,080 [DEBUG] [SCAMPER IDEA] Logging with technique: Combine
+2026-01-05 13:22:01,616 [DEBUG] [SCAMPER IDEA] Saved with ID=-OiBahzhnMCt5ZlMgSRN, technique=Combine
+2026-01-05 13:22:01,617 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:22:02,844 [DEBUG] [CACHE] Ideas cache refreshed: count=5
+2026-01-05 13:22:02,845 [DEBUG] [SCAMPER IDEA] Confirmed in cache after 1 attempts
+2026-01-05 13:22:04,278 [DEBUG] [CACHE INVALIDATE] Cleared metadata cache for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:22:05,507 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:22:05,507 [DEBUG] [IDEA METRICS] Updated: {'Fluency': 5, 'Flexibility': 3, 'Originality': 'Medium', 'Elaboration': 'Medium'}
+2026-01-05 13:22:05,507 [DEBUG] [AUTO-PROGRESS] Checking stage progress with auto-advance
+2026-01-05 13:22:05,507 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:22:05,507 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:22:06,562 [INFO] [TIMING] Metadata fetch took 1.055s
+2026-01-05 13:22:06,563 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 13:22:06,563 [DEBUG] [STAGE CHECK] Checking progress for stage: Ideate
+2026-01-05 13:22:06,563 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:22:06,563 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 13:22:06,563 [DEBUG] [SCAMPER] Calculating technique coverage
+2026-01-05 13:22:06,563 [DEBUG] [SCAMPER] Coverage: {'S': 2, 'C': 1, 'A': 0, 'M': 1, 'P': 0, 'E': 1, 'R': 0}, used 4/7 techniques
+2026-01-05 13:22:06,563 [INFO] [STAGE CHECK] {'currentStage': 'Ideate', 'ready': False, 'suggestedNext': None, 'reasoning': 'Need: 5 more ideas', 'metrics': {'hmwCount': 3, 'ideaCount': 5, 'refinedCount': 0, 'categoryCount': 3, 'highQualityCount': 5, 'techniquesUsed': 4, 'scamperCoverage': {'S': 2, 'C': 1, 'A': 0, 'M': 1, 'P': 0, 'E': 1, 'R': 0}}}
+2026-01-05 13:22:06,563 [DEBUG] [AUTO-PROGRESS] Not ready: Need: 5 more ideas
+2026-01-05 13:22:07,573 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:22:08,783 [DEBUG] [CACHE] Ideas cache refreshed: count=5
+2026-01-05 13:22:08,784 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:22:08,784 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:22:08,784 [DEBUG] [STAGE] Current stage: Ideate
+2026-01-05 13:22:08,784 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:22:08,784 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 13:22:08,784 [DEBUG] [STAGE SWITCH] Switching stage to Develop due to: Auto: 5 ideas, 3 cats
+2026-01-05 13:22:10,223 [DEBUG] [CACHE INVALIDATE] Cleared metadata cache for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:22:11,389 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:22:11,389 [DEBUG] [STAGE SWITCH] Stage updated successfully
+2026-01-05 13:22:11,410 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:22:11,410 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:22:12,388 [INFO] [TIMING] Metadata fetch took 0.978s
+2026-01-05 13:22:12,389 [DEBUG] [STAGE] Current stage: Develop
+2026-01-05 13:22:12,389 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Develop, evals=False
+2026-01-05 13:22:13,782 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OiBakzNEzYB5-MOqFDQ
+2026-01-05 13:29:36,368 [DEBUG] [SESSION INIT] Initialising session for UID=04E9XYnVi8QD3yHAIXeBHCRp2sN2, session_id=-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:29:37,989 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:29:39,337 [DEBUG] [CACHE] Ideas cache refreshed: count=5
+2026-01-05 13:29:39,337 [DEBUG] [SESSION INIT] Session API connection OK.
+2026-01-05 13:29:40,668 [DEBUG] [SESSION INIT] Switched to brainstorming mode
+2026-01-05 13:29:40,669 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:29:40,669 [DEBUG] [CACHE MISS] Fetching metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:29:41,793 [INFO] [TIMING] Metadata fetch took 1.125s
+2026-01-05 13:29:41,794 [DEBUG] [STAGE] Current stage: Develop
+2026-01-05 13:29:41,794 [DEBUG] [MESSAGE SAVE] Queueing message role=user, stage=Develop, evals=False
+2026-01-05 13:29:41,794 [DEBUG] [CACHE MISS] Fetching summaries
+2026-01-05 13:29:43,552 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OiBcTlPmW9QljlHJpP7
+2026-01-05 13:29:43,671 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:29:45,051 [DEBUG] [SNAPSHOT] Generating hybrid session snapshot
+2026-01-05 13:29:45,051 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:29:45,051 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 13:29:45,051 [DEBUG] [SCAMPER] Calculating technique coverage
+2026-01-05 13:29:45,051 [DEBUG] [SCAMPER] Coverage: {'S': 2, 'C': 1, 'A': 0, 'M': 1, 'P': 0, 'E': 1, 'R': 0}, used 4/7 techniques
+2026-01-05 13:29:45,051 [DEBUG] [SNAPSHOT] Generated: stage=Develop, techniques=4/7, progress=0/2 refined, 5/2 high-quality - Need: 2 more refined
+2026-01-05 13:29:52,460 [DEBUG] [CACHE] Metadata cache refreshed: keys=['brainstorming', 'createdAt', 'title', 'titleSource', 'updatedAt']
+2026-01-05 13:29:53,779 [DEBUG] [CACHE] Ideas cache refreshed: count=5
+2026-01-05 13:29:53,779 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:29:53,779 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:29:53,779 [DEBUG] [STAGE] Current stage: Develop
+2026-01-05 13:29:53,779 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:29:53,779 [DEBUG] [IDEAS] Fetching all ideas
+2026-01-05 13:29:53,780 [DEBUG] [STAGE] Fetching current stage via metadata
+2026-01-05 13:29:53,780 [DEBUG] [CACHE HIT] Metadata for bs:04E9XYnVi8QD3yHAIXeBHCRp2sN2:-Ohi-7rNZYWilvR4cBav
+2026-01-05 13:29:53,781 [DEBUG] [STAGE] Current stage: Develop
+2026-01-05 13:29:53,781 [DEBUG] [MESSAGE SAVE] Queueing message role=assistant, stage=Develop, evals=False
+2026-01-05 13:29:55,264 [DEBUG] [MESSAGE SAVE] Message saved with ID=-OiBcWe0H9SgpjWCxy1s
