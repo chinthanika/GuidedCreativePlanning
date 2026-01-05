@@ -324,7 +324,7 @@ def brainstorming_chat():
             elif current_stage == "Ideate" and idea_count >= 5 and category_count >= 2:
                 cfm_session.switch_stage("Develop", 
                                         reasoning=f"Auto: {idea_count} ideas, {category_count} cats")
-                bs_logger.info(f"[BS] Auto-advanced Ideate→Develop")
+                bs_logger.info(f"[BS] Auto-advanced Ideate -> Develop")
         except Exception as e:
             bs_logger.error(f"[BS] Auto-advance check failed: {e}")
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, X, Filter, ChevronDown, ChevronUp, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import BookCard from './BookCard';
 import FilterControls from '../../components/recommender/FilterControls';
@@ -19,6 +19,31 @@ const RecommendationsPanel = ({ sessionId, userId, conversationHistory, isVisibl
   const [savedBookIds, setSavedBookIds] = useState(new Set());
   const [extractedThemes, setExtractedThemes] = useState(null);
   const [showFilters, setShowFilters] = useState(true);
+
+  const CACHE_KEY = `book_recs_${sessionId}`;
+
+  // restore cached recommendations
+  useEffect(() => {
+    if (sessionId && !loading) {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        try {
+          const data = JSON.parse(cached);
+          // Only restore if less than 1 hour old
+          if (Date.now() - data.timestamp < 3600000) {
+            setBooks(data.books || []);
+            setExtractedThemes(data.themes || null);
+            setAppliedFilters(data.filters || null);
+            console.log('✓ Restored cached recommendations');
+          }
+        } catch (err) {
+          console.error('Cache restore failed:', err);
+          sessionStorage.removeItem(CACHE_KEY); // Clear corrupted cache
+        }
+      }
+    }
+  }, [sessionId, loading]);
+
 
   // Current filters (UI state)
   const [filters, setFilters] = useState({
@@ -94,6 +119,24 @@ const RecommendationsPanel = ({ sessionId, userId, conversationHistory, isVisibl
       setBooks(cleanedBooks);
       setExtractedThemes(data.extractedElements || null);
       setAppliedFilters(useFilters); // Mark these filters as applied
+
+      try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+          books: cleanedBooks,
+          themes: data.extractedElements,
+          filters: useFilters,
+          timestamp: Date.now()
+        }));
+        console.log('✓ Cached recommendations');
+      } catch (err) {
+        console.warn('Failed to cache recommendations:', err);
+      }
+
+      // Clear cache when user closes panel
+      const handleClose = () => {
+        // Keep cache for reopening within same session
+        onToggle();
+      };
 
     } catch (err) {
       console.error('Recommendation error:', err);
