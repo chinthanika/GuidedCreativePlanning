@@ -1,0 +1,196 @@
+{
+  "coming_of_age": [
+    {
+      "id": "coa_1",
+      "title": "The Perks of Being a Wallflower",
+      "author": "Stephen Chbosky",
+      "year": 1999,
+      "rating": 4.2,
+      "coverUrl": "https://covers.openlibrary.org/b/id/8235937-L.jpg",
+      "description": "A coming-of-age story following Charlie through his freshman year of high school, exploring friendship, mental health, and self-discovery.",
+      "categories": ["Contemporary", "Young Adult", "Coming of Age"]
+    },
+    {
+      "id": "coa_2",
+      "title": "The Catcher in the Rye",
+      "author": "J.D. Salinger",
+      "year": 1951,
+      "rating": 3.8,
+      "coverUrl": "https://covers.openlibrary.org/b/id/7222246-L.jpg",
+      "description": "Holden Caulfield's journey through New York City after being expelled from prep school, exploring themes of alienation and identity.",
+      "categories": ["Classic", "Coming of Age", "Literary Fiction"]
+    },
+    {
+      "id": "coa_3",
+      "title": "Simon vs. the Homo Sapiens Agenda",
+      "author": "Becky Albertalli",
+      "year": 2015,
+      "rating": 4.3,
+      "coverUrl": "https://covers.openlibrary.org/b/id/8451450-L.jpg",
+      "description": "Sixteen-year-old Simon Spier is being blackmailed after his emails to another closeted gay student fall into the wrong hands.",
+      "categories": ["Contemporary", "Young Adult", "LGBTQ+", "Romance"]
+    }
+  ],
+  
+  "fantasy_worldbuilding": [
+    {
+      "id": "fbx_1",
+      "title": "The Name of the Wind",
+      "author": "Patrick Rothfuss",
+      "year": 2007,
+      "rating": 4.5,
+      "coverUrl": "https://covers.openlibrary.org/b/id/8235937-L.jpg",
+      "description": "Kvothe tells his own story: a tale of sorcery, adventure, and the complex magic system of sympathy in a richly detailed fantasy world.",
+      "categories": ["Fantasy", "Epic Fantasy", "Magic"]
+    },
+    {
+      "id": "fbx_2",
+      "title": "Six of Crows",
+      "author": "Leigh Bardugo",
+      "year": 2015,
+      "rating": 4.6,
+      "coverUrl": "https://covers.openlibrary.org/b/id/8451450-L.jpg",
+      "description": "A heist story set in the fantasy world of Ketterdam, featuring a diverse crew with unique magical abilities called Grisha powers.",
+      "categories": ["Fantasy", "Young Adult", "Heist", "Magic"]
+    },
+    {
+      "id": "fbx_3",
+      "title": "The Way of Kings",
+      "author": "Brandon Sanderson",
+      "year": 2010,
+      "rating": 4.6,
+      "coverUrl": "https://covers.openlibrary.org/b/id/7888617-L.jpg",
+      "description": "Epic fantasy with intricate world-building, featuring magical armor, weapons, and a hard magic system in the world of Roshar.",
+      "categories": ["Fantasy", "Epic Fantasy", "Magic Systems"]
+    },
+    {
+      "id": "fbx_4",
+      "title": "A Wizard of Earthsea",
+      "author": "Ursula K. Le Guin",
+      "year": 1968,
+      "rating": 4.0,
+      "coverUrl": "https://covers.openlibrary.org/b/id/6979861-L.jpg",
+      "description": "Young wizard Ged must face the consequences of his pride in a world where true names hold power and magic has a price.",
+      "categories": ["Fantasy", "Classic", "Magic", "Wizards"]
+    }
+  ],
+  
+  "dystopian": [
+    {
+      "id": "dys_1",
+      "title": "The Hunger Games",
+      "author": "Suzanne Collins",
+      "year": 2008,
+      "rating": 4.3,
+      "coverUrl": "https://covers.openlibrary.org/b/id/7833604-L.jpg",
+      "description": "Katniss Everdeen volunteers to take her sister's place in a brutal televised fight to the death in dystopian Panem.",
+      "categories": ["Dystopian", "Young Adult", "Action", "Survival"]
+    },
+    {
+      "id": "dys_2",
+      "title": "Divergent",
+      "author": "Veronica Roth",
+      "year": 2011,
+      "rating": 4.2,
+      "coverUrl": "https://covers.openlibrary.org/b/id/8451247-L.jpg",
+      "description": "In a world divided by factions based on virtues, Tris discovers she's Divergent and doesn't fit into any one group.",
+      "categories": ["Dystopian", "Young Adult", "Action"]
+    },
+    {
+      "id": "dys_3",
+      "title": "1984",
+      "author": "George Orwell",
+      "year": 1949,
+      "rating": 4.2,
+      "coverUrl": "https://covers.openlibrary.org/b/id/7222246-L.jpg",
+      "description": "Winston Smith struggles against totalitarian oppression in a world of perpetual war, surveillance, and mind control.",
+      "categories": ["Dystopian", "Classic", "Science Fiction"]
+    },
+    {
+      "id": "dys_4",
+      "title": "The Giver",
+      "author": "Lois Lowry",
+      "year": 1993,
+      "rating": 4.1,
+      "coverUrl": "https://covers.openlibrary.org/b/id/7833604-L.jpg",
+      "description": "Jonas lives in a seemingly perfect society without pain or choice, until he's chosen to receive all the memories of the past.",
+      "categories": ["Dystopian", "Middle Grade", "Science Fiction"]
+    }
+  ],
+  
+  "unreliable_narrators": [
+    {
+      "id": "un_1",
+      "title": "We Were Liars",
+      "author": "E. Lockhart",
+      "year": 2014,
+      "rating": 3.8,
+      "coverUrl": "https://covers.openlibrary.org/b/id/8235937-L.jpg",
+      "description": "A mysterious story about a wealthy family's private island, with an unreliable narrator recovering from an accident she can't remember.",
+      "categories": ["Mystery", "Young Adult", "Thriller"]
+    },
+    {
+      "id": "un_2",
+      "title": "Gone Girl",
+      "author": "Gillian Flynn",
+      "year": 2012,
+      "rating": 4.0,
+      "coverUrl": "https://covers.openlibrary.org/b/id/8235937-L.jpg",
+      "description": "A twisted thriller told from alternating perspectives, where nothing is as it seems in a marriage gone wrong.",
+      "categories": ["Mystery", "Thriller", "Adult", "Psychological"]
+    },
+    {
+      "id": "un_3",
+      "title": "The Girl on the Train",
+      "author": "Paula Hawkins",
+      "year": 2015,
+      "rating": 3.9,
+      "coverUrl": "https://covers.openlibrary.org/b/id/8451450-L.jpg",
+      "description": "Rachel witnesses something shocking from her train window, but her alcoholic blackouts make her an unreliable witness.",
+      "categories": ["Mystery", "Thriller", "Psychological"]
+    }
+  ],
+  
+  "character_driven": [
+    {
+      "id": "cd_1",
+      "title": "The Fault in Our Stars",
+      "author": "John Green",
+      "year": 2012,
+      "rating": 4.3,
+      "coverUrl": "https://covers.openlibrary.org/b/id/8235937-L.jpg",
+      "description": "Hazel and Gus are two teenagers who meet in a cancer support group and fall in love while grappling with mortality.",
+      "categories": ["Contemporary", "Young Adult", "Romance"]
+    },
+    {
+      "id": "cd_2",
+      "title": "Eleanor & Park",
+      "author": "Rainbow Rowell",
+      "year": 2013,
+      "rating": 4.0,
+      "coverUrl": "https://covers.openlibrary.org/b/id/8451450-L.jpg",
+      "description": "Two misfits slowly fall in love on the school bus, bonding over comic books and mixtapes in 1986.",
+      "categories": ["Contemporary", "Young Adult", "Romance"]
+    },
+    {
+      "id": "cd_3",
+      "title": "The Book Thief",
+      "author": "Markus Zusak",
+      "year": 2005,
+      "rating": 4.4,
+      "coverUrl": "https://covers.openlibrary.org/b/id/7833604-L.jpg",
+      "description": "Death narrates the story of Liesel, a girl living in Nazi Germany who steals books and shares them with others.",
+      "categories": ["Historical Fiction", "Young Adult", "Literary"]
+    },
+    {
+      "id": "cd_4",
+      "title": "Wonder",
+      "author": "R.J. Palacio",
+      "year": 2012,
+      "rating": 4.4,
+      "coverUrl": "https://covers.openlibrary.org/b/id/8235937-L.jpg",
+      "description": "Auggie Pullman, a boy with facial differences, starts mainstream school for the first time in fifth grade.",
+      "categories": ["Middle Grade", "Contemporary", "Character Study"]
+    }
+  ]
+}

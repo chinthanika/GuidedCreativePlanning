@@ -195,3 +195,67 @@
   20% { opacity: 1; }
   100% { opacity: 0.2; }
 }
+
+/* ===================================
+   PANEL TOGGLE BUTTONS
+   Add this to your chatbot.css
+   =================================== */
+
+.panel-toggle-bar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.panel-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #374151;
+}
+
+.panel-toggle-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.panel-toggle-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Active state for Recommend Books button */
+.panel-toggle-btn.recommend-active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+}
+
+.panel-toggle-btn.recommend-active:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+/* Active state for Pending Changes button */
+.panel-toggle-btn.pending-active {
+  background: #7c3aed;
+  color: white;
+  border-color: #7c3aed;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.3);
+}
+
+.panel-toggle-btn.pending-active:hover {
+  background: #6d28d9;
+  border-color: #6d28d9;
+}

@@ -8,15 +8,15 @@ import queue
 import logging
 from logging.handlers import RotatingFileHandler
 
-from utils.cache import get_cache_stats
+from backend.servers.utils.cache import get_cache_stats
 
 import threading, traceback
 
 import firebase_admin
 from firebase_admin import credentials, db
 
-from utils.BSConversationFlowManager import BSConversationFlowManager
-from utils.chat_utils import DEEPSEEK_API_KEY
+from utils.chat.BSConversationFlowManager import BSConversationFlowManager
+from utils.chat.chat_utils import DEEPSEEK_API_KEY
 
 app = Flask(__name__)
 CORS(app)

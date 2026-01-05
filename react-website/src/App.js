@@ -20,6 +20,7 @@ import StoryTimeline from './pages/timeline/timeline';
 import StoryEditor from './pages/storyeditor/story';
 import Chatbot from './pages/chatbot/chatbot'; // Import the Chatbot page
 import StoryWorld from './pages/world/world';  
+import LibraryPage from './pages/recommender/LibraryPage';
 
 function App() {
 
@@ -48,6 +49,7 @@ return (
                 <Route path='/story-timeline' element={<StoryTimeline/>}/>
                 <Route path='/story-world' element={<StoryWorld/>}/>
                 <Route path='/chatbot' element={<Chatbot/>}/>
+                <Route path='/library' element={<LibraryPage/>}/>
                 <Route path='/story-editor' element={<StoryEditor/>}/>
                 <Route exact path='/' element={
                     <PrivateRoute>

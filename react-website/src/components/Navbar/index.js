@@ -14,8 +14,9 @@ const Navbar = () => {
         <NavLink to="/story-map">Story Map</NavLink>
         <NavLink to="/story-timeline">Timeline</NavLink>
         <NavLink to="/story-world">World</NavLink>
-        <NavLink to="/story-editor">Story Editor</NavLink>
         <NavLink to="/chatbot">Chatbot</NavLink>
+        <NavLink to="/library">Library</NavLink>
+        <NavLink to="/story-editor">Story Editor</NavLink>
       </NavMenu>
 
       {/* Right-Aligned Section */}

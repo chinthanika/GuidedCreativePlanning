@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
+import { X, Clock, Check, XCircle, Edit } from "lucide-react";
 import "./PendingChanges.css";
 
-const API_BASE = "http://localhost:5001/api"; // adjust if deployed
+const API_BASE = "https://guidedcreativeplanning-pfm.onrender.com/api";
 
-const PendingChanges = ({ userId }) => {
+const PendingChanges = ({ userId, isVisible, onToggle }) => {
   const [changes, setChanges] = useState({});
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState({}); // track per-change action
+  const [actionLoading, setActionLoading] = useState({});
 
   const fetchPending = async () => {
     if (!userId) return;
@@ -14,7 +15,7 @@ const PendingChanges = ({ userId }) => {
       setLoading(true);
       const res = await fetch(`${API_BASE}/pending-changes?userId=${userId}`);
       const data = await res.json();
-      console.log(data)
+      console.log(data);
       setChanges(data || {});
     } catch (err) {
       console.error("Failed to fetch pending changes:", err);
@@ -24,16 +25,16 @@ const PendingChanges = ({ userId }) => {
   };
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !isVisible) return;
 
-    fetchPending(); // initial fetch
+    fetchPending();
 
     const evtSource = new EventSource(`${API_BASE}/pending-changes/stream`);
 
     evtSource.addEventListener("pendingUpdate", (e) => {
       const { userId: updatedUser } = JSON.parse(e.data);
       if (updatedUser === userId) {
-        fetchPending(); // only refetch for this user
+        fetchPending();
       }
     });
 
@@ -43,13 +44,11 @@ const PendingChanges = ({ userId }) => {
     };
 
     return () => evtSource.close();
-  }, [userId]);
-
-
+  }, [userId, isVisible]);
 
   const handleAction = async (changeKey, action) => {
     if (!userId) return;
-    setActionLoading(prev => ({ ...prev, [changeKey]: true }));
+    setActionLoading((prev) => ({ ...prev, [changeKey]: true }));
 
     try {
       const res = await fetch(`${API_BASE}/${action}-change`, {
@@ -59,11 +58,11 @@ const PendingChanges = ({ userId }) => {
       });
       const data = await res.json();
       console.log(`${action} result:`, data);
-      await fetchPending(); // refresh after action
+      await fetchPending();
     } catch (err) {
       console.error(`${action} failed:`, err);
     } finally {
-      setActionLoading(prev => ({ ...prev, [changeKey]: false }));
+      setActionLoading((prev) => ({ ...prev, [changeKey]: false }));
     }
   };
 
@@ -105,37 +104,70 @@ const PendingChanges = ({ userId }) => {
     }
   };
 
-  if (loading) return <div className="pending-changes">Loading pending changes...</div>;
-
-  if (!Object.keys(changes).length) return <div className="pending-changes">No pending changes</div>;
+  if (!isVisible) return null;
 
   return (
-    <div className="pending-changes">
-      <h3>Pending Changes</h3>
-      {Object.entries(changes).map(([key, change]) => (
-        <div className="change-card" key={key}>
-          <div className="change-details">
-            {renderChangeDetails(change)}
-            {change.status && <div className={`status ${change.status}`}>Status: {change.status}</div>}
+    <div className="pending-modal-overlay" onClick={onToggle}>
+      <div className="pending-panel-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="pending-panel-header">
+          <div className="pending-header-title">
+            <Clock className="pending-header-icon" />
+            <h2>Pending Changes</h2>
           </div>
-          <div className="change-actions">
-            <button
-              onClick={() => handleAction(key, "confirm")}
-              disabled={actionLoading[key]}
-            >
-              {actionLoading[key] && "Processing..."} Confirm
-            </button>
-            <button
-              onClick={() => handleAction(key, "deny")}
-              disabled={actionLoading[key]}
-            >
-              Deny
-            </button>
-            {/* Edit could open a modal, or redirect to edit page */}
-            <button disabled>Edit</button>
-          </div>
+          <button onClick={onToggle} className="pending-close-btn">
+            <X className="w-6 h-6" />
+          </button>
         </div>
-      ))}
+
+        <div className="pending-panel-content">
+          {loading ? (
+            <div className="pending-loading-state">
+              <div className="pending-spinner"></div>
+              <p>Loading pending changes...</p>
+            </div>
+          ) : !Object.keys(changes).length ? (
+            <div className="pending-empty-state">
+              <Check className="pending-empty-icon" />
+              <h3>All caught up!</h3>
+              <p>No pending changes to review</p>
+            </div>
+          ) : (
+            <div className="pending-changes-list">
+              {Object.entries(changes).map(([key, change]) => (
+                <div className="change-card" key={key}>
+                  <div className="change-details">
+                    {renderChangeDetails(change)}
+                    {change.status && (
+                      <div className={`status ${change.status}`}>
+                        Status: {change.status}
+                      </div>
+                    )}
+                  </div>
+                  <div className="change-actions">
+                    <button
+                      className="action-confirm"
+                      onClick={() => handleAction(key, "confirm")}
+                      disabled={actionLoading[key]}
+                    >
+                      {actionLoading[key] ? "Processing..." : "Confirm"}
+                    </button>
+                    <button
+                      className="action-deny"
+                      onClick={() => handleAction(key, "deny")}
+                      disabled={actionLoading[key]}
+                    >
+                      Deny
+                    </button>
+                    <button className="action-edit" disabled>
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

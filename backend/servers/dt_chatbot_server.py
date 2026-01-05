@@ -10,14 +10,14 @@ from logging.handlers import RotatingFileHandler
 
 import threading, traceback
 
-from utils.cache import get_cache_stats
+from backend.servers.utils.cache import get_cache_stats
 
 # Firebase + DTConversationFlowManager
 import firebase_admin
 from firebase_admin import credentials, db
 
-from utils.DTConversationFlowManager import DTConversationFlowManager
-from utils.chat_utils import DEEPSEEK_API_KEY
+from utils.chat.DTConversationFlowManager import DTConversationFlowManager
+from utils.chat.chat_utils import DEEPSEEK_API_KEY
 
 app = Flask(__name__)
 CORS(app)
@@ -35,13 +35,13 @@ from logging.handlers import RotatingFileHandler
 
 import threading, traceback
 
-from utils.cache import get_cache_stats
+from backend.servers.utils.cache import get_cache_stats
 
 # Firebase + DTConversationFlowManager
 import firebase_admin
 from firebase_admin import credentials, db
 
-from utils.DTConversationFlowManager import DTConversationFlowManager
+from utils.chat.DTConversationFlowManager import DTConversationFlowManager
 
 app = Flask(__name__)
 CORS(app)

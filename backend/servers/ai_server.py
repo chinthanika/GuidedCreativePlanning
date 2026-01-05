@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import os, json, time, hashlib, requests
 import openai
+import time
 import threading
 import random
 import re
@@ -12,22 +13,29 @@ from firebase_admin import credentials, db
 import logging
 from logging.handlers import RotatingFileHandler
 
-from utils.BSConversationFlowManager import BSConversationFlowManager
-from utils.DTConversationFlowManager import DTConversationFlowManager
+from utils.chat.BSConversationFlowManager import BSConversationFlowManager
+from utils.chat.DTConversationFlowManager import DTConversationFlowManager
 
-from utils.bs_action_handler import bs_background_handle_action, bs_handle_action
-from utils.dt_action_handler import dt_background_handle_action, dt_handle_action
+from utils.chat.bs_action_handler import bs_background_handle_action, bs_handle_action
+from utils.chat.dt_action_handler import dt_background_handle_action, dt_handle_action
 
-from utils.chat_utils import (
+from utils.chat.chat_utils import (
     MAX_DEPTH, KEEP_LAST_N, PROFILE_MANAGER_URL, DEEPSEEK_URL, 
     DEEPSEEK_API_KEY, LEONARDO_API_KEY, parse_markdown, 
     parse_deepseek_json, normalize_deepseek_response
 )
 
+from utils.recommendations.theme_extractor import ThemeExtractor
+from utils.recommendations.book_sources import BookSourceManager
+from utils.recommendations.ranker import BookRanker
+from utils.recommendations.StoryElementExtractor import StoryElementExtractor
+from utils.recommendations.book_explanation import BookExplanationGenerator
+
 from prompts.bs_system_prompt import BS_SYSTEM_PROMPT
 from prompts.dt_system_prompt import DT_SYSTEM_PROMPT
 from prompts.mapping_system_prompt import MAPPING_SYSTEM_PROMPT
 from prompts.world_system_prompt import WORLD_SYSTEM_PROMPT
+from prompts.element_extraction_prompt import STORY_EXTRACTION_PROMPT
 
 app = Flask(__name__)
 
@@ -38,10 +46,19 @@ CORS(app)
 # ============================================
 os.makedirs("logs", exist_ok=True)
 
+GOOGLE_BOOKS_API_KEY = "AQ.Ab8RN6Kuh2PfnTd4BOB-2xFNHChPxrbxln5PTSmH52mWFAQrHg"
+
 bs_logger = logging.getLogger("BS_CHAT")
 dt_logger = logging.getLogger("DT_CHAT")
 world_logger = logging.getLogger("WORLD_AI")
 char_logger = logging.getLogger("CHAR_EXTRACT")
+
+# Create logger for recommendations
+rec_logger = logging.getLogger("RECOMMENDATIONS")
+rec_handler = RotatingFileHandler("logs/recommendations.log", maxBytes=5*1024*1024, backupCount=3)
+rec_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+rec_logger.addHandler(rec_handler)
+rec_logger.setLevel(logging.DEBUG)
 
 for logger_instance in [bs_logger, dt_logger, world_logger, char_logger]:
     handler = RotatingFileHandler(
@@ -57,14 +74,24 @@ for logger_instance in [bs_logger, dt_logger, world_logger, char_logger]:
 # FIREBASE INIT
 # ============================================
 try:
-    firebase_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
+    # firebase_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
 
-    if not firebase_json:
-        raise ValueError("FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set")
+    # if not firebase_json:
+    #     raise ValueError("FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set")
     
-    # Parse the JSON string into a dict
-    cred = credentials.Certificate(json.loads(firebase_json))
+    # # Parse the JSON string into a dict
+    # cred = credentials.Certificate(json.loads(firebase_json))
     
+    # firebase_admin.initialize_app(cred, {
+    #     'databaseURL': "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
+    # })
+    json_path = "../Firebase/structuredcreativeplanning-fdea4acca240.json"
+    print(f"[DEBUG] Trying to load: {os.path.abspath(json_path)}")
+    print(f"[DEBUG] File exists: {os.path.exists(json_path)}")
+
+    cred = credentials.Certificate(json_path)
+    print(f"[DEBUG] Credentials loaded successfully")
+
     firebase_admin.initialize_app(cred, {
         'databaseURL': "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
     })
@@ -83,9 +110,16 @@ if not LEONARDO_API_KEY:
     raise ValueError("LEONARDO_API_KEY not set")
 if not PROFILE_MANAGER_URL:
     raise ValueError("PROFILE_MANAGER_URL not set")
+if not GOOGLE_BOOKS_API_KEY:
+    raise ValueError("GOOGLE_BOOKS_API_KEY not set")
 
 client = openai.OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_URL)
 
+theme_extractor = ThemeExtractor(client)
+book_source_manager = BookSourceManager()
+book_ranker = BookRanker()
+story_extractor = StoryElementExtractor()
+explanation_generator = BookExplanationGenerator(client)
 # ============================================
 # ROUTE: HEALTH CHECK
 # ============================================
@@ -101,6 +135,50 @@ def health_check():
             'image_generation': 'running' if LEONARDO_API_KEY else 'disabled'
         }
     })
+
+def trigger_auto_title_if_needed(user_id, session_id, message_count):
+    """
+    Trigger auto-title generation ONCE after 5 messages.
+    Only runs if title is still "New Chat" or "Untitled Chat".
+    Runs in background thread to not block chat response.
+    """
+    # Only auto-title at message 5 (gives enough context)
+    if message_count != 5:
+        return
+    
+    def generate_title():
+        try:
+            # Check current title before generating
+            metadata_ref = db.reference(f"chatSessions/{user_id}/{session_id}/metadata")
+            metadata = metadata_ref.get()
+            
+            if not metadata:
+                return
+            
+            current_title = metadata.get('title', '')
+            title_source = metadata.get('titleSource')
+            
+            # Only auto-generate if:
+            # 1. Title is still default ("New Chat" or "Untitled Chat")
+            # 2. No titleSource exists (never been titled)
+            # 3. titleSource is NOT 'manual' or 'ai' (user hasn't set a title)
+            if current_title in ['New Chat', 'Untitled Chat'] and title_source is None:
+                requests.post(
+                    f"http://localhost:{os.environ.get('PORT', 5000)}/sessions/auto-title",
+                    json={
+                        'userId': user_id,
+                        'sessionId': session_id
+                    },
+                    timeout=10
+                )
+                bs_logger.info(f"[AUTO_TITLE] Triggered for session {session_id}")
+            else:
+                bs_logger.debug(f"[AUTO_TITLE] Skipped for session {session_id} (title: {current_title}, source: {title_source})")
+                
+        except Exception as e:
+            bs_logger.warning(f"[AUTO_TITLE] Failed for session {session_id}: {e}")
+    
+    threading.Thread(target=generate_title, daemon=True).start()
 
 # ============================================
 # BRAINSTORMING CHAT (FIXED)
@@ -242,11 +320,11 @@ def brainstorming_chat():
             # Auto-advance logic
             if current_stage == "Clarify" and hmw_count >= 3:
                 cfm_session.switch_stage("Ideate", reasoning=f"Auto: {hmw_count} HMWs")
-                bs_logger.info(f"[BS] Auto-advanced Clarify→Ideate")
+                bs_logger.info(f"[BS] Auto-advanced Clarify -> Ideate")
             elif current_stage == "Ideate" and idea_count >= 5 and category_count >= 2:
                 cfm_session.switch_stage("Develop", 
                                         reasoning=f"Auto: {idea_count} ideas, {category_count} cats")
-                bs_logger.info(f"[BS] Auto-advanced Ideate→Develop")
+                bs_logger.info(f"[BS] Auto-advanced Ideate -> Develop")
         except Exception as e:
             bs_logger.error(f"[BS] Auto-advance check failed: {e}")
 
@@ -268,6 +346,16 @@ def brainstorming_chat():
         if chat_message:
             cfm_session.save_message("assistant", chat_message, 
                                     stage=cfm_session.get_stage(), visible=True)
+            
+            try:
+                messages_ref = db.reference(f"chatSessions/{user_id}/{session_id}/messages")
+                all_messages = messages_ref.get() or {}
+                user_message_count = sum(1 for m in all_messages.values() 
+                                        if isinstance(m, dict) and m.get('role') == 'user')
+                
+                trigger_auto_title_if_needed(user_id, session_id, user_message_count)
+            except Exception as e:
+                bs_logger.warning(f"[BS] Auto-title trigger failed: {e}")
 
         # Start background thread ONLY for pure data fetches
         if background_actions:
@@ -293,7 +381,7 @@ def brainstorming_chat():
         return jsonify({"error": str(e)}), 500
 
 # ============================================
-# DEEP THINKING CHAT (UNCHANGED - already correct structure)
+# DEEP THINKING CHAT
 # ============================================
 @app.route('/chat/deepthinking', methods=['POST'])
 def deepthinking_chat():
@@ -554,6 +642,16 @@ Instructions:
         if chat_message:
             cfm_session.save_message("assistant", chat_message, visible=True)
 
+            try:
+                messages_ref = db.reference(f"chatSessions/{user_id}/{session_id}/messages")
+                all_messages = messages_ref.get() or {}
+                user_message_count = sum(1 for m in all_messages.values() 
+                                        if isinstance(m, dict) and m.get('role') == 'user')
+                
+                trigger_auto_title_if_needed(user_id, session_id, user_message_count)
+            except Exception as e:
+                dt_logger.warning(f"[DT] Auto-title trigger failed: {e}")
+
         # Start background thread for remaining actions
         if background_actions:
             dt_logger.info(f"[DT] Starting background thread for {len(background_actions)} actions")
@@ -576,10 +674,337 @@ Instructions:
     except Exception as e:
         dt_logger.exception(f"[DT] Error: {e}")
         return jsonify({"error": str(e)}), 500
+    
+# ============================================
+# SESSION MANAGEMENT ENDPOINTS
+# ============================================
 
+@app.route('/sessions/list', methods=['POST'])
+def list_sessions():
+    """Get all chat sessions for a user."""
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+        
+        # Get all sessions for user
+        sessions_ref = db.reference(f"chatSessions/{user_id}")
+        sessions_data = sessions_ref.get() or {}
+        
+        # Build session list with metadata
+        sessions = []
+        for session_id, session_data in sessions_data.items():
+            if not isinstance(session_data, dict):
+                continue
+            
+            metadata = session_data.get('metadata', {})
+            messages = session_data.get('messages', {})
+            
+            # Count messages
+            message_count = len([m for m in messages.values() if isinstance(m, dict)])
+            
+            # Get last message timestamp
+            last_message_time = 0
+            for msg in messages.values():
+                if isinstance(msg, dict):
+                    timestamp = msg.get('timestamp', 0)
+                    if timestamp > last_message_time:
+                        last_message_time = timestamp
+            
+            sessions.append({
+                'sessionId': session_id,
+                'title': metadata.get('title', 'Untitled Chat'),
+                'mode': metadata.get('mode', 'brainstorming'),
+                'createdAt': metadata.get('createdAt', 0),
+                'updatedAt': last_message_time or metadata.get('updatedAt', 0),
+                'messageCount': message_count,
+                'stage': metadata.get('brainstorming', {}).get('stage', 'Clarify') if metadata.get('mode') == 'brainstorming' else None
+            })
+        
+        # Sort by most recent first
+        sessions.sort(key=lambda x: x['updatedAt'], reverse=True)
+        
+        bs_logger.info(f"[SESSIONS] Listed {len(sessions)} sessions for user {user_id}")
+        
+        return jsonify({
+            'sessions': sessions,
+            'count': len(sessions)
+        }), 200
+        
+    except Exception as e:
+        bs_logger.exception(f"[SESSIONS] List failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/sessions/rename', methods=['POST'])
+def rename_session():
+    """Manually rename a session."""
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        session_id = data.get('sessionId')
+        new_title = data.get('title', '').strip()
+        
+        if not user_id or not session_id or not new_title:
+            return jsonify({'error': 'userId, sessionId, and title required'}), 400
+        
+        if len(new_title) > 100:
+            return jsonify({'error': 'Title must be 100 characters or less'}), 400
+        
+        # Update session title
+        session_ref = db.reference(f"chatSessions/{user_id}/{session_id}/metadata")
+        session_data = session_ref.get()
+        
+        if not session_data:
+            return jsonify({'error': 'Session not found'}), 404
+        
+        session_ref.update({
+            'title': new_title,
+            'titleSource': 'manual',
+            'updatedAt': int(time.time() * 1000)
+        })
+        
+        bs_logger.info(f"[SESSIONS] Renamed session {session_id} to: {new_title}")
+        
+        return jsonify({
+            'success': True,
+            'sessionId': session_id,
+            'title': new_title
+        }), 200
+        
+    except Exception as e:
+        bs_logger.exception(f"[SESSIONS] Rename failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/sessions/delete', methods=['POST'])
+def delete_session():
+    """Delete a chat session."""
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        session_id = data.get('sessionId')
+        
+        if not user_id or not session_id:
+            return jsonify({'error': 'userId and sessionId required'}), 400
+        
+        # Check if session exists
+        session_ref = db.reference(f"chatSessions/{user_id}/{session_id}")
+        if not session_ref.get():
+            return jsonify({'error': 'Session not found'}), 404
+        
+        # Delete session
+        session_ref.delete()
+        
+        bs_logger.info(f"[SESSIONS] Deleted session {session_id}")
+        
+        return jsonify({
+            'success': True,
+            'deletedSessionId': session_id
+        }), 200
+        
+    except Exception as e:
+        bs_logger.exception(f"[SESSIONS] Delete failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/sessions/generate-title', methods=['POST'])
+def generate_session_title():
+    """Generate AI title for a session based on conversation."""
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        session_id = data.get('sessionId')
+        
+        if not user_id or not session_id:
+            return jsonify({'error': 'userId and sessionId required'}), 400
+        
+        # Get session messages
+        messages_ref = db.reference(f"chatSessions/{user_id}/{session_id}/messages")
+        messages_data = messages_ref.get() or {}
+        
+        if not messages_data:
+            return jsonify({'error': 'No messages in session'}), 400
+        
+        # Get first 5-10 user messages for context
+        user_messages = []
+        for msg_id, msg in messages_data.items():
+            if isinstance(msg, dict) and msg.get('role') == 'user':
+                user_messages.append({
+                    'content': msg.get('content', ''),
+                    'timestamp': msg.get('timestamp', 0)
+                })
+        
+        user_messages.sort(key=lambda x: x['timestamp'])
+        context_messages = user_messages[:10]
+        
+        if len(context_messages) < 2:
+            return jsonify({'error': 'Not enough messages to generate title'}), 400
+        
+        # Build prompt for title generation
+        conversation_text = "\n".join([f"User: {m['content']}" for m in context_messages])
+        
+        title_prompt = f"""Based on this conversation, generate a concise, descriptive title (max 6 words).
+The title should capture the main topic or focus of the discussion.
+
+Conversation:
+{conversation_text}
+
+Requirements:
+- Maximum 6 words
+- Descriptive and specific
+- No quotes or special characters
+- Capitalized like a title
+
+Respond with ONLY the title, nothing else."""
+
+        # Call DeepSeek
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that creates concise titles."},
+                {"role": "user", "content": title_prompt}
+            ],
+            stream=False,
+            temperature=0.7,
+            max_tokens=50
+        )
+        
+        generated_title = response.choices[0].message.content.strip()
+        
+        # Clean up title
+        generated_title = generated_title.strip('"').strip("'").strip()
+        
+        # Truncate if too long
+        if len(generated_title) > 60:
+            generated_title = generated_title[:57] + "..."
+        
+        # Update session metadata
+        metadata_ref = db.reference(f"chatSessions/{user_id}/{session_id}/metadata")
+        metadata_ref.update({
+            'title': generated_title,
+            'titleSource': 'ai',
+            'updatedAt': int(time.time() * 1000)
+        })
+        
+        bs_logger.info(f"[SESSIONS] Generated title for {session_id}: {generated_title}")
+        
+        return jsonify({
+            'success': True,
+            'sessionId': session_id,
+            'title': generated_title
+        }), 200
+        
+    except Exception as e:
+        bs_logger.exception(f"[SESSIONS] Title generation failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/sessions/auto-title', methods=['POST'])
+def auto_title_session():
+    """Auto-generate title when session reaches threshold (called internally)."""
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        session_id = data.get('sessionId')
+        
+        if not user_id or not session_id:
+            return jsonify({'error': 'userId and sessionId required'}), 400
+        
+        # Check if already has any title set
+        metadata_ref = db.reference(f"chatSessions/{user_id}/{session_id}/metadata")
+        metadata = metadata_ref.get() or {}
+        
+        # STRICT CHECK: Only generate if title is still default AND no titleSource exists
+        # This ensures auto-title only happens ONCE
+        current_title = metadata.get('title', '')
+        title_source = metadata.get('titleSource')
+        
+        if title_source is not None:
+            # Title has been set before (either manual, ai, or ai_auto)
+            return jsonify({
+                'success': True,
+                'skipped': True,
+                'reason': f'Title already generated (source: {title_source})'
+            }), 200
+        
+        if current_title not in ['New Chat', 'Untitled Chat', None, '']:
+            # Title has been changed from default
+            return jsonify({
+                'success': True,
+                'skipped': True,
+                'reason': 'Title already customized'
+            }), 200
+        
+        # Generate title (reuse logic from generate-title)
+        messages_ref = db.reference(f"chatSessions/{user_id}/{session_id}/messages")
+        messages_data = messages_ref.get() or {}
+        
+        user_messages = []
+        for msg_id, msg in messages_data.items():
+            if isinstance(msg, dict) and msg.get('role') == 'user':
+                user_messages.append({
+                    'content': msg.get('content', ''),
+                    'timestamp': msg.get('timestamp', 0)
+                })
+        
+        user_messages.sort(key=lambda x: x['timestamp'])
+        context_messages = user_messages[:10]
+        
+        if len(context_messages) < 3:
+            return jsonify({
+                'success': True,
+                'skipped': True,
+                'reason': 'Not enough messages'
+            }), 200
+        
+        conversation_text = "\n".join([f"User: {m['content']}" for m in context_messages])
+        
+        title_prompt = f"""Based on this conversation, generate a concise, descriptive title (max 6 words).
+
+Conversation:
+{conversation_text}
+
+Respond with ONLY the title."""
+
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
+                {"role": "system", "content": "You create concise, descriptive titles."},
+                {"role": "user", "content": title_prompt}
+            ],
+            stream=False,
+            temperature=0.7,
+            max_tokens=50
+        )
+        
+        generated_title = response.choices[0].message.content.strip().strip('"').strip("'")
+        
+        if len(generated_title) > 60:
+            generated_title = generated_title[:57] + "..."
+        
+        metadata_ref.update({
+            'title': generated_title,
+            'titleSource': 'ai_auto',
+            'updatedAt': int(time.time() * 1000)
+        })
+        
+        bs_logger.info(f"[SESSIONS] Auto-titled {session_id}: {generated_title}")
+        
+        return jsonify({
+            'success': True,
+            'sessionId': session_id,
+            'title': generated_title
+        }), 200
+        
+    except Exception as e:
+        bs_logger.exception(f"[SESSIONS] Auto-title failed: {e}")
+        return jsonify({'error': str(e)}), 500
+    
 # ============================================
 # WORLD AI, CHARACTER EXTRACTION, IMAGE GEN
-# (Unchanged - already correct)
 # ============================================
 @app.route('/worldbuilding/suggest-template', methods=['POST'])
 def suggest_world_template():
@@ -852,13 +1277,1549 @@ def generate_image():
         return jsonify({'error': str(e)}), 500
 
 # ============================================
+# BOOK RECOMMENDATIONS ENDPOINTS (CONSOLIDATED)
+# ============================================
+
+@app.route('/api/book-recommendations', methods=['POST'])
+def get_book_recommendations():
+    """
+    Generate book recommendations with personalized explanations.
+    Uses enhanced ranker and explanation generator.
+    """
+    request_start = time.time()
+    rec_logger.info("[REC] Incoming recommendation request")
+    
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        session_id = data.get('sessionId')
+        mode = data.get('mode', 'brainstorming')
+        filters = data.get('filters', {})
+        limit = data.get('limit', 5)
+        generate_explanations = data.get('generateExplanations', True)  # NEW: Optional flag
+        
+        if not user_id or not session_id:
+            return jsonify({
+                'error': 'Missing required fields',
+                'details': 'userId and sessionId are required'
+            }), 400
+        
+        rec_logger.info(f"[REC] Request for user={user_id}, session={session_id}")
+        
+        # Fetch conversation from Session API
+        try:
+            session_api_url = "https://guidedcreativeplanning-session.onrender.com"
+            
+            messages_response = requests.post(
+                f"{session_api_url}/session/get_messages",
+                json={"uid": user_id, "sessionID": session_id},
+                timeout=10
+            )
+            
+            if messages_response.status_code != 200:
+                return jsonify({
+                    'error': 'Session not found',
+                    'sessionId': session_id
+                }), 404
+            
+            messages_data = messages_response.json()
+            messages_snapshot = messages_data.get('messages', {})
+            
+            if not messages_snapshot:
+                return jsonify({
+                    'error': 'No conversation found',
+                    'sessionId': session_id,
+                    'hint': 'Start chatting about your story'
+                }), 400
+            
+            # Convert to list
+            conversation_history = []
+            for msg_id, msg_data in messages_snapshot.items():
+                if isinstance(msg_data, dict) and msg_data.get('role') == 'user':
+                    conversation_history.append({
+                        'role': msg_data.get('role'),
+                        'content': msg_data.get('content', ''),
+                        'timestamp': msg_data.get('timestamp', 0)
+                    })
+            
+            conversation_history = sorted(
+                conversation_history, 
+                key=lambda x: x.get('timestamp', 0)
+            )
+            
+            rec_logger.info(f"[REC] Loaded {len(conversation_history)} user messages")
+            
+        except Exception as e:
+            rec_logger.error(f"[REC] Failed to fetch conversation: {e}")
+            return jsonify({
+                'error': 'Failed to fetch conversation',
+                'details': str(e)
+            }), 500
+        
+        if len(conversation_history) < 3:
+            return jsonify({
+                'error': 'Insufficient conversation history',
+                'currentMessageCount': len(conversation_history),
+                'hint': 'Keep chatting about your story'
+            }), 400
+        
+        # Step 1: Extract comprehensive story elements
+        extraction_start = time.time()
+        rec_logger.info("[REC] Extracting story elements")
+        
+        try:
+            # Format conversation
+            conversation_text = story_extractor.format_conversation(conversation_history)
+            
+            # Build prompt
+            prompt = STORY_EXTRACTION_PROMPT.format(conversation_text=conversation_text)
+            
+            # Call DeepSeek
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "You are an expert at analyzing creative writing conversations."},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={'type': 'json_object'},
+                stream=False,
+                timeout=45,
+                temperature=0.3
+            )
+            
+            elements_text = response.choices[0].message.content.strip()
+            story_elements = json.loads(elements_text)
+            
+            # Validate
+            if not story_extractor.validate_extraction(story_elements):
+                rec_logger.warning("[REC] Extraction validation failed, using fallback")
+                story_elements = story_extractor.keyword_extraction_fallback(conversation_history)
+            
+            extraction_time = time.time() - extraction_start
+            rec_logger.info(f"[REC] Story extraction: {extraction_time:.3f}s")
+            
+        except Exception as e:
+            rec_logger.error(f"[REC] Story extraction failed: {e}, using fallback")
+            story_elements = story_extractor.keyword_extraction_fallback(conversation_history)
+        
+        # Check confidence
+        if story_elements.get('overallConfidence', 0) < 0.3:
+            rec_logger.warning(f"[REC] Low confidence: {story_elements.get('overallConfidence', 0)}")
+            return jsonify({
+                'error': 'Unable to extract story elements',
+                'details': 'Conversation too vague. Try discussing genre, themes, or characters.',
+                'confidence': story_elements.get('overallConfidence', 0)
+            }), 400
+        
+        # Step 2: Query book sources
+        source_start = time.time()
+        rec_logger.info("[REC] Querying book sources")
+        
+        try:
+            # Use enhanced search queries from story elements
+            search_queries = story_extractor.build_search_queries(story_elements)
+            
+            # Build backward-compatible themes dict for book sources
+            compat_themes = {
+                'genre': story_elements.get('genre', {}).get('primary', 'fiction'),
+                'themes': [t['name'] for t in story_elements.get('themes', [])],
+                'characterTypes': [c['archetype'] for c in story_elements.get('characterArchetypes', [])],
+                'plotStructures': story_elements.get('plotStructure', {}).get('primaryStructure', ''),
+                'tone': story_elements.get('tone', {}).get('primary', ''),
+                'ageGroup': story_elements.get('ageAppropriate', {}).get('targetAge', '12-16'),
+                'settingType': f"{story_elements.get('settingType', {}).get('temporal', '')} {story_elements.get('settingType', {}).get('spatial', '')}".strip(),
+                '_searchQueries': search_queries
+            }
+            
+            books = book_source_manager.get_books_from_sources(compat_themes, filters, limit * 2)
+            source_time = time.time() - source_start
+            rec_logger.info(f"[REC] Book sources: {source_time:.3f}s, found {len(books)} books")
+            
+        except Exception as e:
+            rec_logger.error(f"[REC] Book source query failed: {e}")
+            return jsonify({
+                'error': 'Book source query failed',
+                'details': str(e)
+            }), 500
+        
+        if not books:
+            rec_logger.warning("[REC] No books found")
+            return jsonify({
+                'error': 'No books found',
+                'extractedElements': story_elements,
+                'searchQueries': search_queries
+            }), 200
+        
+        # Step 3: Rank and deduplicate (using ENHANCED ranker)
+        rank_start = time.time()
+        rec_logger.info("[REC] Ranking books with enhanced ranker")
+        
+        try:
+            ranked_books = book_ranker.rank_and_deduplicate_books(books, compat_themes, limit)
+            rank_time = time.time() - rank_start
+            rec_logger.info(f"[REC] Ranking: {rank_time:.3f}s, selected {len(ranked_books)} books")
+            
+            # Log ranking summary
+            ranking_summary = book_ranker.get_ranking_summary(ranked_books)
+            rec_logger.debug(f"[REC] Ranking summary: avg_score={ranking_summary['avg_score']:.1f}")
+            
+        except Exception as e:
+            rec_logger.error(f"[REC] Ranking failed: {e}")
+            ranked_books = books[:limit]
+        
+        # Step 4: Generate explanations (NEW!)
+        if generate_explanations and ranked_books:
+            explain_start = time.time()
+            rec_logger.info("[REC] Generating explanations")
+            
+            try:
+                explained_books = explanation_generator.generate_explanations(
+                    ranked_books, 
+                    story_elements,
+                    batch_size=min(len(ranked_books), 5)
+                )
+                
+                # Generate summary comparison
+                summary = explanation_generator.generate_summary_comparison(
+                    explained_books, 
+                    story_elements
+                )
+                
+                explain_time = time.time() - explain_start
+                rec_logger.info(f"[REC] Explanations: {explain_time:.3f}s")
+                
+            except Exception as e:
+                rec_logger.error(f"[REC] Explanation generation failed: {e}")
+                # Fall back to books without explanations
+                explained_books = ranked_books
+                summary = {
+                    'summary': f'Here are {len(ranked_books)} books that match your story interests.',
+                    'diversity_note': '',
+                    'exploration_tips': []
+                }
+        else:
+            explained_books = ranked_books
+            summary = None
+        
+        # Build response
+        processing_time = int((time.time() - request_start) * 1000)
+        
+        response = {
+            'recommendations': [
+                {
+                    'id': book.get('id'),
+                    'title': book.get('title'),
+                    'author': book.get('author'),
+                    'year': book.get('year'),
+                    'coverUrl': book.get('coverUrl'),
+                    'rating': book.get('rating'),
+                    'description': book.get('description'),
+                    'categories': book.get('categories', []),
+                    'source': book.get('source'),
+                    'relevance_score': book.get('relevance_score', 0),
+                    'score_breakdown': book.get('score_breakdown'),  # NEW: Include detailed scoring
+                    'explanation': book.get('explanation'),  # NEW: Personalized explanation
+                    'matchHighlights': book.get('matchHighlights', []),  # NEW: Match highlights
+                    'comparisonNote': book.get('comparisonNote', '')  # NEW: Comparison note
+                }
+                for book in explained_books
+            ],
+            'extractedElements': {
+                'genre': story_elements.get('genre', {}).get('primary'),
+                'subgenres': [sg['name'] for sg in story_elements.get('subgenres', [])],
+                'themes': [t['name'] for t in story_elements.get('themes', [])],
+                'characterArchetypes': [c['archetype'] for c in story_elements.get('characterArchetypes', [])],
+                'tone': story_elements.get('tone', {}).get('primary'),
+                'overallConfidence': story_elements.get('overallConfidence', 0)
+            },
+            'searchQueries': search_queries,
+            'summary': summary,  # NEW: Overview comparison
+            'processingTime': processing_time,
+            'sessionId': session_id
+        }
+        
+        # Log metrics (non-blocking)
+        def log_metrics():
+            try:
+                metrics_data = {
+                    'timestamp': int(time.time() * 1000),
+                    'booksDisplayed': len(explained_books),
+                    'processingTime': processing_time,
+                    'extractionConfidence': story_elements.get('overallConfidence', 0),
+                    'genre': story_elements.get('genre', {}).get('primary'),
+                    'themes': [t['name'] for t in story_elements.get('themes', [])[:3]],
+                    'sources': {
+                        'google_books': sum(1 for b in explained_books if b.get('source') == 'google_books'),
+                        'open_library': sum(1 for b in explained_books if b.get('source') == 'open_library'),
+                        'curated': sum(1 for b in explained_books if b.get('source') == 'curated')
+                    },
+                    'explanationsGenerated': generate_explanations
+                }
+                
+                requests.post(
+                    f"{session_api_url}/session/update_metadata",
+                    json={
+                        "uid": user_id,
+                        "sessionID": session_id,
+                        "updates": {"lastRecommendation": metrics_data},
+                        "mode": "shared"
+                    },
+                    timeout=5
+                )
+            except Exception as e:
+                rec_logger.warning(f"[REC] Failed to log metrics: {e}")
+        
+        threading.Thread(target=log_metrics, daemon=True).start()
+        
+        total_time = time.time() - request_start
+        rec_logger.info(f"[REC] Total: {total_time:.2f}s, returned {len(explained_books)} books with explanations")
+        
+        return jsonify(response), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[REC] Unexpected error: {e}")
+        return jsonify({
+            'error': 'Recommendation generation failed',
+            'details': str(e)
+        }), 500
+    
+@app.route('/api/book-recommendations/save', methods=['POST'])
+def save_book_recommendation():
+    """
+    Save a book to user's saved collection in Firebase Realtime Database.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        book = data.get('book')
+        
+        if not user_id or not book:
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        # Generate unique book ID if not present
+        book_id = book.get('id', str(int(time.time() * 1000)))
+        
+        # Prepare book data
+        saved_book_data = {
+            'id': book_id,
+            'title': book.get('title'),
+            'author': book.get('author'),
+            'year': book.get('year'),
+            'coverUrl': book.get('coverUrl', ''),
+            'rating': book.get('rating'),
+            'categories': book.get('categories', []),
+            'description': book.get('description', ''),
+            'explanation': book.get('explanation', ''),
+            'matchHighlights': book.get('matchHighlights', []),
+            'comparisonNote': book.get('comparisonNote', ''),
+            'source': book.get('source', 'unknown'),
+            'savedAt': int(time.time() * 1000)
+        }
+        
+        # Save to Firebase Realtime Database
+        # Path: savedBooks/{userId}/{bookId}
+        saved_books_ref = db.reference(f"savedBooks/{user_id}")
+        
+        # Check if book already exists
+        existing_books = saved_books_ref.get() or {}
+        
+        # Check if book ID already saved
+        if book_id in existing_books:
+            rec_logger.info(f"[SAVE] Book already saved: {book.get('title')}")
+            return jsonify({
+                'success': True,
+                'alreadySaved': True,
+                'message': 'Book already in library'
+            }), 200
+        
+        # Save the book
+        saved_books_ref.child(book_id).set(saved_book_data)
+        
+        # Get total count
+        all_saved = saved_books_ref.get() or {}
+        total_saved = len(all_saved)
+        
+        rec_logger.info(f"[SAVE] Book saved: {book.get('title')} by {book.get('author')}")
+        
+        return jsonify({
+            'success': True,
+            'savedBookId': book_id,
+            'totalSaved': total_saved,
+            'message': 'Book saved successfully'
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[SAVE] Save failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/book-recommendations/saved', methods=['POST'])
+def get_saved_books():
+    """Get all saved books for a user's session."""
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        
+        if not user_id:
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        # Get saved books from Firebase
+        # Path: savedBooks/{userId}/{sessionId}
+        saved_books_ref = db.reference(f"savedBooks/{user_id}")
+        saved_books_data = saved_books_ref.get() or {}
+        
+        # Convert to list
+        saved_books = []
+        for book_id, book_data in saved_books_data.items():
+            if isinstance(book_data, dict):
+                saved_books.append({
+                    'firebaseId': book_id,
+                    **book_data
+                })
+        
+        # Sort by savedAt timestamp (newest first)
+        saved_books.sort(key=lambda x: x.get('savedAt', 0), reverse=True)
+        
+        rec_logger.info(f"[SAVE] Retrieved {len(saved_books)} saved books")
+        
+        return jsonify({
+            'savedBooks': saved_books,
+            'count': len(saved_books)
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[SAVE] Failed to get saved books: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/book-recommendations/remove', methods=['POST'])
+def remove_saved_book():
+    """Remove a book from saved collection."""
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        book_id = data.get('bookId')
+        
+        if not user_id or not book_id:
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        # Remove from Firebase (corrected path - no sessionId)
+        saved_books_ref = db.reference(f"savedBooks/{user_id}")
+        
+        # Check if book exists
+        book_data = saved_books_ref.child(book_id).get()
+        
+        if book_data:
+            saved_books_ref.child(book_id).delete()
+            rec_logger.info(f"[SAVE] Removed book: {book_id}")
+            
+            # Also remove from any collections
+            try:
+                collections_ref = db.reference(f"collections/{user_id}")
+                all_collections = collections_ref.get() or {}
+                
+                for collection_id, collection_data in all_collections.items():
+                    if isinstance(collection_data, dict):
+                        book_ids = collection_data.get('bookIds', [])
+                        if book_id in book_ids:
+                            book_ids.remove(book_id)
+                            collections_ref.child(collection_id).child('bookIds').set(book_ids)
+                            rec_logger.info(f"[SAVE] Removed book from collection: {collection_id}")
+            except Exception as e:
+                rec_logger.warning(f"[SAVE] Failed to remove from collections: {e}")
+            
+            # Get remaining count
+            remaining = saved_books_ref.get() or {}
+            
+            return jsonify({
+                'success': True,
+                'removedBookId': book_id,
+                'remainingCount': len(remaining)
+            }), 200
+        else:
+            return jsonify({
+                'error': 'Book not found in library',
+                'bookId': book_id
+            }), 404
+        
+    except Exception as e:
+        rec_logger.exception(f"[SAVE] Failed to remove book: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/curated-collections', methods=['GET'])
+def get_curated_collections():
+    """
+    Get list of curated book collections for browse mode.
+    """
+    try:
+        collections = book_source_manager.curated_collections
+        
+        # Build response with metadata
+        response = {
+            'collections': []
+        }
+        
+        for collection_id, books in collections.items():
+            if books:
+                response['collections'].append({
+                    'id': collection_id,
+                    'name': collection_id.replace('_', ' ').title(),
+                    'bookCount': len(books),
+                    'coverImages': [b.get('coverUrl', '') for b in books[:3] if b.get('coverUrl')]
+                })
+        
+        rec_logger.info(f"[COLLECTIONS] Returning {len(response['collections'])} collections")
+        return jsonify(response), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[COLLECTIONS] Failed to get collections: {e}")
+        return jsonify({'error': str(e)}), 500
+    
+# ============================================
+# COLLECTIONS MANAGEMENT ENDPOINTS
+# ============================================
+
+@app.route('/api/collections', methods=['POST'])
+def get_collections():
+    """
+    Get all collections for a user.
+    Firebase structure: collections/{userId}/{collectionId}
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        
+        if not user_id:
+            return jsonify({'error': 'Missing userId'}), 400
+        
+        # Get collections from Firebase
+        collections_ref = db.reference(f"collections/{user_id}")
+        collections_data = collections_ref.get() or {}
+        
+        # Convert to list with IDs
+        collections = []
+        for collection_id, collection_info in collections_data.items():
+            if isinstance(collection_info, dict):
+                collections.append({
+                    'id': collection_id,
+                    'name': collection_info.get('name', 'Untitled'),
+                    'description': collection_info.get('description', ''),
+                    'tags': collection_info.get('tags', []),
+                    'bookIds': collection_info.get('bookIds', []),
+                    'createdAt': collection_info.get('createdAt', 0),
+                    'updatedAt': collection_info.get('updatedAt', 0)
+                })
+        
+        # Sort by most recently updated
+        collections.sort(key=lambda x: x.get('updatedAt', 0), reverse=True)
+        
+        rec_logger.info(f"[COLLECTIONS] Retrieved {len(collections)} collections for user {user_id}")
+        
+        return jsonify({
+            'collections': collections,
+            'count': len(collections)
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[COLLECTIONS] Failed to get collections: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/collections/create', methods=['POST'])
+def create_collection():
+    """
+    Create a new collection.
+    Body: {userId, name, description?, tags[]}
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        name = data.get('name', '').strip()
+        description = data.get('description', '').strip()
+        tags = data.get('tags', [])
+        
+        if not user_id or not name:
+            return jsonify({'error': 'userId and name are required'}), 400
+        
+        # Validate name length
+        if len(name) > 50:
+            return jsonify({'error': 'Collection name must be 50 characters or less'}), 400
+        
+        # Generate unique collection ID
+        collection_id = f"col_{int(time.time() * 1000)}_{hashlib.md5(name.encode()).hexdigest()[:8]}"
+        
+        # Create collection data
+        now = int(time.time() * 1000)
+        collection_data = {
+            'name': name,
+            'description': description,
+            'tags': tags[:10],  # Limit to 10 tags
+            'bookIds': [],
+            'createdAt': now,
+            'updatedAt': now
+        }
+        
+        # Save to Firebase
+        collections_ref = db.reference(f"collections/{user_id}")
+        collections_ref.child(collection_id).set(collection_data)
+        
+        rec_logger.info(f"[COLLECTIONS] Created collection: {name} (ID: {collection_id})")
+        
+        return jsonify({
+            'success': True,
+            'collection': {
+                'id': collection_id,
+                **collection_data
+            }
+        }), 201
+        
+    except Exception as e:
+        rec_logger.exception(f"[COLLECTIONS] Failed to create collection: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/collections/update', methods=['POST'])
+def update_collection():
+    """
+    Update collection metadata (name, description, tags).
+    Body: {userId, collectionId, name?, description?, tags?}
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        collection_id = data.get('collectionId')
+        
+        if not user_id or not collection_id:
+            return jsonify({'error': 'userId and collectionId are required'}), 400
+        
+        # Get existing collection
+        collection_ref = db.reference(f"collections/{user_id}/{collection_id}")
+        existing = collection_ref.get()
+        
+        if not existing:
+            return jsonify({'error': 'Collection not found'}), 404
+        
+        # Build updates
+        updates = {'updatedAt': int(time.time() * 1000)}
+        
+        if 'name' in data:
+            name = data['name'].strip()
+            if not name:
+                return jsonify({'error': 'Name cannot be empty'}), 400
+            if len(name) > 50:
+                return jsonify({'error': 'Name must be 50 characters or less'}), 400
+            updates['name'] = name
+        
+        if 'description' in data:
+            updates['description'] = data['description'].strip()
+        
+        if 'tags' in data:
+            updates['tags'] = data['tags'][:10]  # Limit to 10 tags
+        
+        # Apply updates
+        collection_ref.update(updates)
+        
+        rec_logger.info(f"[COLLECTIONS] Updated collection: {collection_id}")
+        
+        return jsonify({
+            'success': True,
+            'collectionId': collection_id,
+            'updates': updates
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[COLLECTIONS] Failed to update collection: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/collections/delete', methods=['POST'])
+def delete_collection():
+    """
+    Delete a collection (does not delete the books themselves).
+    Body: {userId, collectionId}
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        collection_id = data.get('collectionId')
+        
+        if not user_id or not collection_id:
+            return jsonify({'error': 'userId and collectionId are required'}), 400
+        
+        # Get collection data before deleting
+        collection_ref = db.reference(f"collections/{user_id}/{collection_id}")
+        collection_data = collection_ref.get()
+        
+        if not collection_data:
+            return jsonify({'error': 'Collection not found'}), 404
+        
+        # Delete collection
+        collection_ref.delete()
+        
+        rec_logger.info(f"[COLLECTIONS] Deleted collection: {collection_id}")
+        
+        return jsonify({
+            'success': True,
+            'deletedCollectionId': collection_id,
+            'bookCount': len(collection_data.get('bookIds', []))
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[COLLECTIONS] Failed to delete collection: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/collections/add-book', methods=['POST'])
+def add_book_to_collection():
+    """
+    Add a book to a collection.
+    Body: {userId, collectionId, bookId}
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        collection_id = data.get('collectionId')
+        book_id = data.get('bookId')
+        
+        if not user_id or not collection_id or not book_id:
+            return jsonify({'error': 'userId, collectionId, and bookId are required'}), 400
+        
+        # Check if book exists in saved books
+        saved_books_ref = db.reference(f"savedBooks/{user_id}")
+        book_data = saved_books_ref.child(book_id).get()
+        
+        if not book_data:
+            return jsonify({'error': 'Book not found in library'}), 404
+        
+        # Get collection
+        collection_ref = db.reference(f"collections/{user_id}/{collection_id}")
+        collection_data = collection_ref.get()
+        
+        if not collection_data:
+            return jsonify({'error': 'Collection not found'}), 404
+        
+        # Get current book IDs
+        book_ids = collection_data.get('bookIds', [])
+        
+        # Check if book is already in collection
+        if book_id in book_ids:
+            return jsonify({
+                'success': True,
+                'alreadyInCollection': True,
+                'message': 'Book already in this collection'
+            }), 200
+        
+        # Add book to collection
+        book_ids.append(book_id)
+        collection_ref.update({
+            'bookIds': book_ids,
+            'updatedAt': int(time.time() * 1000)
+        })
+        
+        rec_logger.info(f"[COLLECTIONS] Added book {book_id} to collection {collection_id}")
+        
+        return jsonify({
+            'success': True,
+            'collectionId': collection_id,
+            'bookId': book_id,
+            'totalBooks': len(book_ids)
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[COLLECTIONS] Failed to add book to collection: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/collections/remove-book', methods=['POST'])
+def remove_book_from_collection():
+    """
+    Remove a book from a collection (does not delete the book from library).
+    Body: {userId, collectionId, bookId}
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        collection_id = data.get('collectionId')
+        book_id = data.get('bookId')
+        
+        if not user_id or not collection_id or not book_id:
+            return jsonify({'error': 'userId, collectionId, and bookId are required'}), 400
+        
+        # Get collection
+        collection_ref = db.reference(f"collections/{user_id}/{collection_id}")
+        collection_data = collection_ref.get()
+        
+        if not collection_data:
+            return jsonify({'error': 'Collection not found'}), 404
+        
+        # Get current book IDs
+        book_ids = collection_data.get('bookIds', [])
+        
+        # Check if book is in collection
+        if book_id not in book_ids:
+            return jsonify({
+                'error': 'Book not found in this collection',
+                'bookId': book_id
+            }), 404
+        
+        # Remove book from collection
+        book_ids.remove(book_id)
+        collection_ref.update({
+            'bookIds': book_ids,
+            'updatedAt': int(time.time() * 1000)
+        })
+        
+        rec_logger.info(f"[COLLECTIONS] Removed book {book_id} from collection {collection_id}")
+        
+        return jsonify({
+            'success': True,
+            'collectionId': collection_id,
+            'removedBookId': book_id,
+            'totalBooks': len(book_ids)
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[COLLECTIONS] Failed to remove book from collection: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/collections/books', methods=['POST'])
+def get_collection_books():
+    """
+    Get all books in a specific collection with full book details.
+    Body: {userId, collectionId}
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        collection_id = data.get('collectionId')
+        
+        if not user_id or not collection_id:
+            return jsonify({'error': 'userId and collectionId are required'}), 400
+        
+        # Get collection
+        collection_ref = db.reference(f"collections/{user_id}/{collection_id}")
+        collection_data = collection_ref.get()
+        
+        if not collection_data:
+            return jsonify({'error': 'Collection not found'}), 404
+        
+        book_ids = collection_data.get('bookIds', [])
+        
+        # Get full book details
+        saved_books_ref = db.reference(f"savedBooks/{user_id}")
+        all_saved_books = saved_books_ref.get() or {}
+        
+        # Filter books that are in this collection
+        books = []
+        for book_id in book_ids:
+            if book_id in all_saved_books:
+                book_data = all_saved_books[book_id]
+                if isinstance(book_data, dict):
+                    books.append({
+                        'id': book_id,
+                        **book_data
+                    })
+        
+        rec_logger.info(f"[COLLECTIONS] Retrieved {len(books)} books from collection {collection_id}")
+        
+        return jsonify({
+            'collection': {
+                'id': collection_id,
+                'name': collection_data.get('name'),
+                'description': collection_data.get('description'),
+                'tags': collection_data.get('tags', [])
+            },
+            'books': books,
+            'count': len(books)
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[COLLECTIONS] Failed to get collection books: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Add this endpoint to your Flask server (app.py)
+# Place it with your other book recommendation endpoints
+
+@app.route('/api/browse-books', methods=['POST'])
+def browse_books_by_genre():
+    """
+    Browse books by genre using Google Books API.
+    Simplified endpoint for genre-based browsing without AI analysis.
+    """
+    request_start = time.time()
+    rec_logger.info("[BROWSE] Incoming browse request")
+    
+    try:
+        data = request.json
+        genre_name = data.get('genre', '')
+        query = data.get('query', genre_name)  # Use provided query or fall back to genre name
+        limit = data.get('limit', 20)
+        
+        if not query:
+            return jsonify({
+                'error': 'Missing required field',
+                'details': 'genre or query is required'
+            }), 400
+        
+        rec_logger.info(f"[BROWSE] Fetching books for genre: {genre_name}, query: {query}")
+        
+        # Build Google Books API query
+        search_query = query
+        
+        # Add filters for better YA results
+        if 'young adult' not in query.lower() and 'ya' not in query.lower():
+            search_query += ' young adult'
+        
+        # Make request to Google Books API
+        params = {
+            'q': search_query,
+            'maxResults': min(limit, 40),  # Google Books API max is 40
+            'orderBy': 'relevance',
+            'printType': 'books',
+            'langRestrict': 'en'
+        }
+        
+        response = requests.get(
+            'https://www.googleapis.com/books/v1/volumes',
+            params=params,
+            timeout=10
+        )
+        
+        if response.status_code != 200:
+            rec_logger.error(f"[BROWSE] Google Books API error: {response.status_code}")
+            return jsonify({
+                'error': 'Failed to fetch books',
+                'details': 'Google Books API request failed'
+            }), 500
+        
+        data = response.json()
+        items = data.get('items', [])
+        
+        rec_logger.info(f"[BROWSE] Google Books returned {len(items)} items")
+        
+        # Transform to our book format
+        books = []
+        seen_titles = set()  # Deduplicate by title
+        
+        for item in items:
+            volume_info = item.get('volumeInfo', {})
+            
+            # Get basic info
+            title = volume_info.get('title', 'Untitled')
+            
+            # Skip duplicates
+            if title.lower() in seen_titles:
+                continue
+            seen_titles.add(title.lower())
+            
+            # Get authors
+            authors = volume_info.get('authors', [])
+            author = authors[0] if authors else 'Unknown Author'
+            
+            # Get published date
+            published_date = volume_info.get('publishedDate', '')
+            year = None
+            if published_date:
+                try:
+                    year = int(published_date[:4])
+                except:
+                    pass
+            
+            # Get cover image
+            image_links = volume_info.get('imageLinks', {})
+            cover_url = image_links.get('thumbnail', '')
+            if cover_url:
+                # Upgrade to https and try to get larger image
+                cover_url = cover_url.replace('http:', 'https:')
+                cover_url = cover_url.replace('zoom=1', 'zoom=2')  # Try for higher res
+            
+            # Get rating
+            rating = volume_info.get('averageRating')
+            
+            # Get description
+            description = volume_info.get('description', '')
+            # Truncate long descriptions
+            if len(description) > 500:
+                description = description[:497] + '...'
+            
+            # Get categories
+            categories = volume_info.get('categories', [])
+            
+            # Build book object
+            book = {
+                'id': item.get('id'),
+                'title': title,
+                'author': author,
+                'year': year,
+                'coverUrl': cover_url,
+                'rating': rating,
+                'description': description,
+                'categories': categories,
+                'source': 'google_books'
+            }
+            
+            books.append(book)
+            
+            # Stop if we've reached the limit
+            if len(books) >= limit:
+                break
+        
+        rec_logger.info(f"[BROWSE] Returning {len(books)} books after deduplication")
+        
+        total_time = time.time() - request_start
+        
+        return jsonify({
+            'books': books,
+            'count': len(books),
+            'genre': genre_name,
+            'query': search_query,
+            'processingTime': int(total_time * 1000)
+        }), 200
+        
+    except requests.exceptions.Timeout:
+        rec_logger.error("[BROWSE] Google Books API timeout")
+        return jsonify({
+            'error': 'Request timeout',
+            'details': 'Google Books API took too long to respond'
+        }), 504
+        
+    except Exception as e:
+        rec_logger.exception(f"[BROWSE] Error: {e}")
+        return jsonify({
+            'error': 'Browse request failed',
+            'details': str(e)
+        }), 500
+
+@app.route('/api/browse-books-smart', methods=['POST'])
+def browse_books_smart():
+    """
+    Smart browse using AI extraction + book sources + explanations (same as recommendations).
+    Allows free-form text input for browsing with personalized book explanations.
+    """
+    request_start = time.time()
+    rec_logger.info("[BROWSE_SMART] Incoming smart browse request")
+    
+    try:
+        data = request.json
+        query = data.get('query', '').strip()
+        limit = data.get('limit', 20)
+        generate_explanations = data.get('generateExplanations', True)
+        
+        if not query:
+            return jsonify({
+                'error': 'Missing required field',
+                'details': 'query is required'
+            }), 400
+        
+        rec_logger.info(f"[BROWSE_SMART] Query: {query}")
+        
+        # Step 1: Extract story elements from query using AI
+        extraction_start = time.time()
+        
+        try:
+            # Use the same extraction prompt as recommendations
+            from prompts.element_extraction_prompt import STORY_EXTRACTION_PROMPT
+            
+            # Format the query as a simple conversation
+            conversation_text = f"Student: {query}"
+            
+            prompt = STORY_EXTRACTION_PROMPT.format(conversation_text=conversation_text)
+            
+            # Call DeepSeek
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "You are an expert at analyzing creative writing conversations."},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={'type': 'json_object'},
+                stream=False,
+                timeout=45,
+                temperature=0.3
+            )
+            
+            elements_text = response.choices[0].message.content.strip()
+            story_elements = json.loads(elements_text)
+            
+            # Validate using utility
+            if not story_extractor.validate_extraction(story_elements):
+                rec_logger.warning("[BROWSE_SMART] Extraction validation failed, using fallback")
+                story_elements = story_extractor.keyword_extraction_fallback([
+                    {'role': 'user', 'content': query}
+                ])
+            
+            extraction_time = time.time() - extraction_start
+            rec_logger.info(f"[BROWSE_SMART] Extraction: {extraction_time:.3f}s")
+            
+        except Exception as e:
+            rec_logger.error(f"[BROWSE_SMART] Extraction failed: {e}")
+            # Fallback to simple keyword extraction
+            story_elements = story_extractor.keyword_extraction_fallback([
+                {'role': 'user', 'content': query}
+            ])
+        
+        # Check confidence
+        if story_elements.get('overallConfidence', 0) < 0.3:
+            rec_logger.warning(f"[BROWSE_SMART] Low confidence: {story_elements.get('overallConfidence', 0)}")
+            return jsonify({
+                'error': 'Unable to understand request',
+                'details': 'Query too vague. Try being more specific about genre, themes, or characters.',
+                'confidence': story_elements.get('overallConfidence', 0)
+            }), 400
+        
+        # Step 2: Build search queries from extracted elements
+        search_queries = story_extractor.build_search_queries(story_elements)
+        
+        rec_logger.info(f"[BROWSE_SMART] Search queries: {search_queries}")
+        
+        # Step 3: Query book sources (same as recommendations)
+        source_start = time.time()
+        
+        try:
+            # Build backward-compatible themes dict for book sources
+            compat_themes = {
+                'genre': story_elements.get('genre', {}).get('primary', 'fiction'),
+                'themes': [t['name'] for t in story_elements.get('themes', [])],
+                'characterTypes': [c['archetype'] for c in story_elements.get('characterArchetypes', [])],
+                'plotStructures': story_elements.get('plotStructure', {}).get('primaryStructure', ''),
+                'tone': story_elements.get('tone', {}).get('primary', ''),
+                'ageGroup': story_elements.get('ageAppropriate', {}).get('targetAge', '12-16'),
+                'settingType': f"{story_elements.get('settingType', {}).get('temporal', '')} {story_elements.get('settingType', {}).get('spatial', '')}".strip(),
+                '_searchQueries': search_queries
+            }
+            
+            books = book_source_manager.get_books_from_sources(compat_themes, {}, limit * 2)
+            source_time = time.time() - source_start
+            rec_logger.info(f"[BROWSE_SMART] Sources: {source_time:.3f}s, found {len(books)} books")
+            
+        except Exception as e:
+            rec_logger.error(f"[BROWSE_SMART] Book source query failed: {e}")
+            return jsonify({
+                'error': 'Book source query failed',
+                'details': str(e)
+            }), 500
+        
+        if not books:
+            rec_logger.warning("[BROWSE_SMART] No books found")
+            return jsonify({
+                'error': 'No books found',
+                'query': query,
+                'extractedElements': story_elements,
+                'searchQueries': search_queries
+            }), 200
+        
+        # Step 4: Rank books (same as recommendations)
+        rank_start = time.time()
+        rec_logger.info("[BROWSE_SMART] Ranking books")
+        
+        try:
+            ranked_books = book_ranker.rank_and_deduplicate_books(books, compat_themes, limit)
+            rank_time = time.time() - rank_start
+            rec_logger.info(f"[BROWSE_SMART] Ranking: {rank_time:.3f}s, selected {len(ranked_books)} books")
+            
+        except Exception as e:
+            rec_logger.error(f"[BROWSE_SMART] Ranking failed: {e}")
+            ranked_books = books[:limit]
+        
+        # Step 5: Generate explanations (same as recommendations)
+        if generate_explanations and ranked_books:
+            explain_start = time.time()
+            rec_logger.info("[BROWSE_SMART] Generating explanations")
+            
+            try:
+                explained_books = explanation_generator.generate_explanations(
+                    ranked_books, 
+                    story_elements,
+                    batch_size=min(len(ranked_books), 5)
+                )
+                
+                explain_time = time.time() - explain_start
+                rec_logger.info(f"[BROWSE_SMART] Explanations: {explain_time:.3f}s")
+                
+            except Exception as e:
+                rec_logger.error(f"[BROWSE_SMART] Explanation generation failed: {e}")
+                # Fall back to books without explanations
+                explained_books = ranked_books
+        else:
+            explained_books = ranked_books
+        
+        # Build response
+        total_time = time.time() - request_start
+        
+        response_data = {
+            'books': [
+                {
+                    'id': book.get('id'),
+                    'title': book.get('title'),
+                    'author': book.get('author'),
+                    'year': book.get('year'),
+                    'coverUrl': book.get('coverUrl'),
+                    'rating': book.get('rating'),
+                    'description': book.get('description'),
+                    'categories': book.get('categories', []),
+                    'source': book.get('source'),
+                    'relevance_score': book.get('relevance_score', 0),
+                    'explanation': book.get('explanation'),  # NEW: Personalized explanation
+                    'matchHighlights': book.get('matchHighlights', []),  # NEW: Match highlights
+                    'comparisonNote': book.get('comparisonNote', '')  # NEW: Comparison note
+                }
+                for book in explained_books
+            ],
+            'extractedElements': {
+                'genre': story_elements.get('genre', {}).get('primary'),
+                'subgenres': [sg['name'] for sg in story_elements.get('subgenres', [])],
+                'themes': [t['name'] for t in story_elements.get('themes', [])],
+                'characterArchetypes': [c['archetype'] for c in story_elements.get('characterArchetypes', [])],
+                'tone': story_elements.get('tone', {}).get('primary'),
+                'overallConfidence': story_elements.get('overallConfidence', 0)
+            },
+            'query': query,
+            'searchQueries': search_queries,
+            'processingTime': int(total_time * 1000),
+            'count': len(explained_books)
+        }
+        
+        rec_logger.info(
+            f"[BROWSE_SMART] Total: {total_time:.2f}s, "
+            f"returned {len(explained_books)} books with explanations"
+        )
+        
+        return jsonify(response_data), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[BROWSE_SMART] Error: {e}")
+        return jsonify({
+            'error': 'Browse request failed',
+            'details': str(e)
+        }), 500
+
+@app.route('/api/story-elements/extract', methods=['POST'])
+def extract_story_elements():
+    """
+    Extract comprehensive story elements from conversation.
+    AI call happens here in the server (like chat endpoints).
+    """
+    request_start = time.time()
+    rec_logger.info("[STORY_EXTRACT] Incoming extraction request")
+    
+    try:
+        # Parse request
+        data = request.json
+        user_id = data.get('userId')
+        session_id = data.get('sessionId')
+        
+        if not user_id or not session_id:
+            return jsonify({
+                'error': 'Missing required fields',
+                'details': 'userId and sessionId are required'
+            }), 400
+        
+        # Fetch conversation from Session API
+        session_api_url = "https://guidedcreativeplanning-session.onrender.com"
+        
+        messages_response = requests.post(
+            f"{session_api_url}/session/get_messages",
+            json={"uid": user_id, "sessionID": session_id},
+            timeout=10
+        )
+        
+        if messages_response.status_code != 200:
+            return jsonify({
+                'error': 'Session not found',
+                'sessionId': session_id
+            }), 404
+        
+        messages_snapshot = messages_response.json().get('messages', {})
+        
+        if not messages_snapshot:
+            return jsonify({
+                'error': 'No conversation found',
+                'sessionId': session_id
+            }), 400
+        
+        # Convert to list
+        conversation_history = []
+        for msg_id, msg_data in messages_snapshot.items():
+            if isinstance(msg_data, dict):
+                conversation_history.append({
+                    'role': msg_data.get('role'),
+                    'content': msg_data.get('content', ''),
+                    'timestamp': msg_data.get('timestamp', 0)
+                })
+        
+        conversation_history = sorted(
+            conversation_history,
+            key=lambda x: x.get('timestamp', 0)
+        )
+        
+        rec_logger.info(f"[STORY_EXTRACT] Loaded {len(conversation_history)} messages")
+        
+        # Check minimum
+        if len(conversation_history) < 3:
+            return jsonify({
+                'error': 'Insufficient conversation',
+                'details': f'Need 3+ messages. Current: {len(conversation_history)}'
+            }), 400
+        
+        # Format conversation using utility
+        conversation_text = story_extractor.format_conversation(conversation_history)
+        
+        # Build prompt
+        prompt = STORY_EXTRACTION_PROMPT.format(conversation_text=conversation_text)
+        
+        # AI CALL HAPPENS HERE (like chat endpoints)
+        extraction_start = time.time()
+        rec_logger.info("[STORY_EXTRACT] Calling DeepSeek")
+        
+        max_retries = 2
+        elements = None
+        
+        for attempt in range(max_retries):
+            try:
+                response = client.chat.completions.create(
+                    model="deepseek-chat",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are an expert at analyzing creative writing conversations."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    response_format={'type': 'json_object'},
+                    stream=False,
+                    timeout=45,
+                    temperature=0.3
+                )
+                
+                # Parse
+                elements_text = response.choices[0].message.content.strip()
+                elements = json.loads(elements_text)
+                
+                # Validate using utility
+                if story_extractor.validate_extraction(elements):
+                    extraction_time = time.time() - extraction_start
+                    rec_logger.info(
+                        f"[STORY_EXTRACT] Success in {extraction_time:.2f}s "
+                        f"(confidence: {elements.get('overallConfidence', 0):.2f})"
+                    )
+                    
+                    # Add metadata
+                    elements['_metadata'] = {
+                        'messageCount': len(conversation_history),
+                        'userMessages': sum(1 for m in conversation_history if m.get('role') == 'user'),
+                        'extractionAttempt': attempt + 1,
+                        'extractionTime': extraction_time
+                    }
+                    
+                    break  # Success
+                else:
+                    rec_logger.warning(f"[STORY_EXTRACT] Validation failed (attempt {attempt + 1})")
+                    
+            except openai.APITimeoutError:
+                rec_logger.warning(f"[STORY_EXTRACT] Timeout on attempt {attempt + 1}")
+                if attempt == max_retries - 1:
+                    elements = story_extractor.keyword_extraction_fallback(conversation_history)
+                    break
+
+            except json.JSONDecodeError as e:
+                rec_logger.error(f"[STORY_EXTRACT] JSON parse error: {e}")
+                if attempt == max_retries - 1:
+                    elements = story_extractor.keyword_extraction_fallback(conversation_history)
+                    break
+        
+        # If all failed, use fallback
+        if elements is None:
+            elements = story_extractor.keyword_extraction_fallback(conversation_history)
+        # Generate search queries
+        search_queries = story_extractor.build_search_queries(elements)
+        
+        # Build response
+        total_time = time.time() - request_start
+        rec_logger.info(f"[STORY_EXTRACT] Total: {total_time:.2f}s")
+        
+        return jsonify({
+            'elements': elements,
+            'searchQueries': search_queries,
+            'processingTime': int(total_time * 1000),
+            'sessionId': session_id
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[STORY_EXTRACT] Error: {e}")
+        return jsonify({
+            'error': 'Story extraction failed',
+            'details': str(e)
+        }), 500
+
+
+@app.route('/api/book-recommendations/debug', methods=['POST'])
+def debug_book_sources():
+    """
+    Debug endpoint to test each book source individually.
+    """
+    try:
+        data = request.json or {}
+        test_themes = data.get('themes') or {
+            'genre': 'fantasy',
+            'themes': ['magic', 'coming-of-age'],
+            'characterTypes': ['reluctant hero'],
+            'plotStructures': ['hero journey'],
+            'tone': 'dark',
+            'ageGroup': '12-16',
+            'settingType': 'medieval fantasy',
+            '_searchQueries': ['fantasy young adult magic coming-of-age']
+        }
+        
+        filters = data.get('filters', {})
+        limit = data.get('limit', 5)
+        
+        results = {
+            'google_books': {'status': 'pending', 'books': [], 'error': None},
+            'open_library': {'status': 'pending', 'books': [], 'error': None},
+            'curated': {'status': 'pending', 'books': [], 'error': None}
+        }
+        
+        # Test Google Books
+        rec_logger.info("[DEBUG] Testing Google Books API")
+        if GOOGLE_BOOKS_API_KEY:
+            try:
+                # FIX: Use correct method name
+                google_books = book_source_manager._fetch_google_books_with_retry(test_themes, limit)
+                results['google_books'] = {
+                    'status': 'success',
+                    'books': google_books,
+                    'count': len(google_books),
+                    'error': None
+                }
+                rec_logger.info(f"[DEBUG] Google Books: {len(google_books)} books")
+            except Exception as e:
+                results['google_books'] = {
+                    'status': 'error',
+                    'books': [],
+                    'count': 0,
+                    'error': str(e)
+                }
+                rec_logger.error(f"[DEBUG] Google Books error: {e}")
+        else:
+            results['google_books'] = {
+                'status': 'disabled',
+                'books': [],
+                'count': 0,
+                'error': 'API key not configured'
+            }
+        
+        # Test Open Library
+        rec_logger.info("[DEBUG] Testing Open Library API")
+        try:
+            # FIX: Use correct method name
+            openlibrary_books = book_source_manager._fetch_openlibrary_enhanced(test_themes, limit)
+            results['open_library'] = {
+                'status': 'success',
+                'books': openlibrary_books,
+                'count': len(openlibrary_books),
+                'error': None
+            }
+            rec_logger.info(f"[DEBUG] Open Library: {len(openlibrary_books)} books")
+        except Exception as e:
+            results['open_library'] = {
+                'status': 'error',
+                'books': [],
+                'count': 0,
+                'error': str(e)
+            }
+            rec_logger.error(f"[DEBUG] Open Library error: {e}")
+        
+        # Test Curated Collections
+        rec_logger.info("[DEBUG] Testing Curated Collections")
+        try:
+            curated_books = book_source_manager._match_curated_books(test_themes, limit)
+            results['curated'] = {
+                'status': 'success',
+                'books': curated_books,
+                'count': len(curated_books),
+                'error': None,
+                'available_collections': list(book_source_manager.curated_collections.keys()),
+                'total_curated_books': sum(len(v) for v in book_source_manager.curated_collections.values())
+            }
+            rec_logger.info(f"[DEBUG] Curated: {len(curated_books)} books")
+        except Exception as e:
+            results['curated'] = {
+                'status': 'error',
+                'books': [],
+                'count': 0,
+                'error': str(e),
+                'available_collections': list(book_source_manager.curated_collections.keys()) if hasattr(book_source_manager, 'curated_collections') else [],
+                'total_curated_books': sum(len(v) for v in book_source_manager.curated_collections.values()) if hasattr(book_source_manager, 'curated_collections') else 0
+            }
+            rec_logger.error(f"[DEBUG] Curated error: {e}")
+        
+        # Summary
+        total_books = sum(r.get('count', 0) for r in results.values())
+        
+        return jsonify({
+            'test_themes': test_themes,
+            'results': results,
+            'summary': {
+                'total_books': total_books,
+                'sources_working': sum(1 for r in results.values() if r['status'] == 'success'),
+                'sources_failed': sum(1 for r in results.values() if r['status'] == 'error')
+            },
+            'config': {
+                'google_books_api_key_set': bool(GOOGLE_BOOKS_API_KEY),
+                'curated_collections_loaded': bool(book_source_manager.curated_collections),
+                'curated_collections_count': len(book_source_manager.curated_collections)
+            }
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[DEBUG] Debug endpoint error: {e}")
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/api/debug/mapping-metrics', methods=['GET'])
+def get_mapping_metrics():
+    """Get subject mapping performance metrics."""
+    try:
+        metrics = book_source_manager.get_mapping_metrics()
+        
+        return jsonify({
+            'status': 'ok',
+            'metrics': metrics,
+            'timestamp': int(time.time() * 1000)
+        }), 200
+    except Exception as e:
+        rec_logger.exception(f"[METRICS] Failed to get mapping metrics: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/debug/clear-mapping-cache', methods=['POST'])
+def clear_mapping_cache():
+    """Clear subject mapping cache (admin only)."""
+    try:
+        book_source_manager.subject_mapper.clear_cache()
+        
+        return jsonify({
+            'status': 'ok',
+            'message': 'Mapping cache cleared'
+        }), 200
+    except Exception as e:
+        rec_logger.exception(f"[CACHE] Failed to clear cache: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# ============================================
 # RUN SERVER
 # ============================================
 if __name__ == "__main__":
-    print(f"Starting AI Server on port {port}")
+    print(f"Starting AI Server on port {os.environ.get('PORT', 5000)}")
     print(f"   - Brainstorming: /chat/brainstorming")
     print(f"   - Deep Thinking: /chat/deepthinking")
+    print(f"   - Session Management: /sessions")
     print(f"   - World AI: /worldbuilding/suggest-template")
     print(f"   - Characters: /characters/extract")
     print(f"   - Images: /images/generate")
+    print(f"   - Book Recommendations: /api/book-recommendations")
+    print(f"   - Story Extraction: /api/story-elements/extract")
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
