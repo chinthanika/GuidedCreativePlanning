@@ -367,6 +367,88 @@ def get_hmw_questions():
     logger.debug(f"Fetched HMW questions for session={session.session_id}: {hmw}")
     return jsonify({"hmwQuestions": hmw})
 
+
+@app.route("/cps/update_idea", methods=["POST"])
+def update_idea():
+    """
+    Update an existing idea (used for adding evaluations).
+    Supports SCAMPER technique fields.
+    """
+    session, err = get_session_from_request()
+    if err:
+        logger.error(f"Update idea failed: {err}")
+        return jsonify({"error": err}), 400
+    
+    idea_id = request.json.get("ideaID")
+    updates = request.json.get("updates", {})
+    
+    if not idea_id or not updates:
+        logger.error("Update idea failed: ideaID or updates missing")
+        return jsonify({"error": "ideaID and updates are required"}), 400
+    
+    try:
+        idea_ref = session.session_ref.child("ideas").child(idea_id)
+        
+        # Check if idea exists
+        existing = idea_ref.get()
+        if not existing:
+            logger.error(f"Update idea failed: idea {idea_id} not found")
+            return jsonify({"error": "Idea not found"}), 404
+        
+        # Update the idea
+        idea_ref.update(updates)
+        
+        logger.info(f"Idea updated: session={session.session_id}, ideaID={idea_id}, fields={list(updates.keys())}")
+        return jsonify({"success": True, "ideaID": idea_id})
+        
+    except Exception as e:
+        logger.error(f"Update idea error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/cps/refine_idea", methods=["POST"])
+def refine_idea():
+    """
+    Create a refined idea by combining multiple source ideas.
+    Supports SCAMPER techniques array for synergy tracking.
+    """
+    session, err = get_session_from_request()
+    if err:
+        logger.error(f"Refine idea failed: {err}")
+        return jsonify({"error": err}), 400
+    
+    source_ids = request.json.get("sourceIds", [])
+    new_idea = request.json.get("newIdea", {})
+    
+    if not source_ids or not new_idea:
+        logger.error("Refine idea failed: sourceIds or newIdea missing")
+        return jsonify({"error": "sourceIds and newIdea are required"}), 400
+    
+    try:
+        # Mark source ideas as refined
+        for source_id in source_ids:
+            source_ref = session.session_ref.child("ideas").child(source_id)
+            source_ref.update({"refined": True})
+        
+        # Create new refined idea
+        new_idea_ref = session.session_ref.child("ideas").push()
+        new_idea_ref.set(new_idea)
+        
+        logger.info(f"Refined idea created: session={session.session_id}, "
+                   f"refinedID={new_idea_ref.key}, sources={source_ids}, "
+                   f"techniques={new_idea.get('scamperTechniques', [])}")
+        
+        return jsonify({
+            "success": True, 
+            "ideaID": new_idea_ref.key,
+            "sourceIds": source_ids
+        })
+        
+    except Exception as e:
+        logger.error(f"Refine idea error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 # ---------------- DT-SPECIFIC ----------------
 
 @app.route("/dt/get_current_category", methods=["POST"])
