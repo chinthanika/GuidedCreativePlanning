@@ -439,6 +439,7 @@ class BSConversationFlowManager:
             raise
 
     def check_stage_progress(self):
+
         stage = self.get_stage()
         logger.debug(f"[STAGE CHECK] Checking progress for stage: {stage}")
         
@@ -450,14 +451,19 @@ class BSConversationFlowManager:
         idea_count = len(ideas)
         categories = bs_meta.get("flexibilityCategories", [])
         
-        # Calculate quality metrics from ideas
+        # SCAMPER coverage
+        scamper_data = self.get_scamper_coverage()
+        techniques_used = scamper_data["techniquesUsed"]
+        coverage = scamper_data["coverage"]
+        
+        # Quality metrics
         refined_count = sum(1 for i in ideas.values() if i.get("refined", False))
         high_quality_count = 0
         
         for idea in ideas.values():
             evals = idea.get("evaluations", {})
             if evals.get("elaboration") in ["Medium", "High"] or \
-               evals.get("originality") in ["Medium", "High"]:
+            evals.get("originality") in ["Medium", "High"]:
                 high_quality_count += 1
         
         result = {
@@ -470,40 +476,62 @@ class BSConversationFlowManager:
                 "ideaCount": idea_count,
                 "refinedCount": refined_count,
                 "categoryCount": len(categories),
-                "highQualityCount": high_quality_count
+                "highQualityCount": high_quality_count,
+                "techniquesUsed": techniques_used,
+                "scamperCoverage": coverage
             }
         }
         
-        # Stage-specific checks
         if stage == "Clarify":
-            if hmw_count >= 3:
+            base_concept = bs_meta.get("baseConcept")
+            has_concept = base_concept is not None
+            
+            if hmw_count >= 3 and has_concept:
                 result["ready"] = True
                 result["suggestedNext"] = "Ideate"
-                result["reasoning"] = f"Clarify complete: {hmw_count} HMW questions"
+                result["reasoning"] = f"Clarify complete: {hmw_count} HMWs, base concept defined"
             else:
-                result["reasoning"] = f"Need {3 - hmw_count} more HMW questions"
+                missing = []
+                if hmw_count < 3:
+                    missing.append(f"{3 - hmw_count} more HMWs")
+                if not has_concept:
+                    missing.append("base concept extraction")
+                result["reasoning"] = f"Need: {', '.join(missing)}"
         
         elif stage == "Ideate":
-            fluency_met = idea_count >= 5
+            # HIGHER THRESHOLDS for SCAMPER
+            fluency_met = idea_count >= 10  # Was 5, now 10
+            coverage_met = techniques_used >= 4  # NEW: 4+ techniques
             flexibility_met = len(categories) >= 2
             
-            if fluency_met and flexibility_met:
+            if fluency_met and coverage_met and flexibility_met:
                 result["ready"] = True
                 result["suggestedNext"] = "Develop"
-                result["reasoning"] = f"{idea_count} ideas across {len(categories)} categories"
+                result["reasoning"] = f"{idea_count} ideas, {techniques_used}/7 SCAMPER techniques, {len(categories)} categories"
             else:
                 missing = []
                 if not fluency_met:
-                    missing.append(f"{5 - idea_count} more ideas")
+                    missing.append(f"{10 - idea_count} more ideas")
+                if not coverage_met:
+                    missing.append(f"{4 - techniques_used} more SCAMPER techniques")
                 if not flexibility_met:
                     missing.append(f"{2 - len(categories)} more categories")
+                
                 result["reasoning"] = f"Need: {', '.join(missing)}"
         
         elif stage == "Develop":
+            # Check for technique synergy in refined ideas
+            synergy_count = 0
+            for idea in ideas.values():
+                if idea.get("refined"):
+                    techniques = idea.get("scamperTechniques", [])
+                    if isinstance(techniques, list) and len(techniques) >= 2:
+                        synergy_count += 1
+            
             if refined_count >= 2 and high_quality_count >= 2:
                 result["ready"] = True
                 result["suggestedNext"] = "Implement"
-                result["reasoning"] = f"{refined_count} refined, {high_quality_count} high-quality"
+                result["reasoning"] = f"{refined_count} refined ({synergy_count} with synergy), {high_quality_count} high-quality"
             else:
                 missing = []
                 if refined_count < 2:
@@ -514,7 +542,7 @@ class BSConversationFlowManager:
         
         elif stage == "Implement":
             result["ready"] = True
-            result["reasoning"] = "Already at Implement"
+            result["reasoning"] = "Implementation stage"
         
         logger.info(f"[STAGE CHECK] {result}")
         return result
@@ -727,10 +755,9 @@ class BSConversationFlowManager:
     
     def get_session_snapshot(self):
         """
-        Generate complete session snapshot with progress tracking.
-        UPDATED: Now includes auto-advance detection
+        UPDATED: Generate session snapshot with SCAMPER data.
         """
-        logger.debug("[SNAPSHOT] Generating session snapshot")
+        logger.debug("[SNAPSHOT] Generating hybrid session snapshot")
         
         bs_meta = self.get_metadata().get("brainstorming", {})
         ideas_raw = self.get_all_ideas()
@@ -739,7 +766,10 @@ class BSConversationFlowManager:
         hmw_raw = bs_meta.get("hmwQuestions", {}) or {}
         hmw_questions = [q.get("question", "") for q in hmw_raw.values()]
         
-        # Convert ideas with evaluations
+        # Base concept
+        base_concept = bs_meta.get("baseConcept", {})
+        
+        # Convert ideas with SCAMPER techniques
         ideas = []
         categories_seen = set()
         
@@ -747,6 +777,8 @@ class BSConversationFlowManager:
             ideas.append({
                 "id": idea_id,
                 "text": idea.get("text", ""),
+                "scamperTechnique": idea.get("scamperTechnique"),
+                "scamperTechniques": idea.get("scamperTechniques", []),  # For refined ideas
                 "evaluations": idea.get("evaluations", {}),
                 "refined": idea.get("refined", False)
             })
@@ -755,13 +787,17 @@ class BSConversationFlowManager:
             if cat:
                 categories_seen.add(cat)
         
+        # SCAMPER coverage
+        scamper_data = self.get_scamper_coverage()
+        
         # Calculate scores
         idea_count = len(ideas)
         hmw_count = len(hmw_questions)
         category_count = len(categories_seen)
         refined_count = sum(1 for i in ideas if i.get("refined"))
+        techniques_used = scamper_data["techniquesUsed"]
         
-        # Calculate quality
+        # Quality metrics
         high_quality_count = 0
         for idea in ideas:
             evals = idea.get("evaluations", {})
@@ -769,7 +805,7 @@ class BSConversationFlowManager:
             evals.get("originality") in ["Medium", "High"]:
                 high_quality_count += 1
         
-        fluency_score = "High" if idea_count >= 7 else ("Medium" if idea_count >= 5 else "Low")
+        fluency_score = "High" if idea_count >= 10 else ("Medium" if idea_count >= 7 else "Low")
         flexibility_score = "High" if category_count >= 3 else \
                             ("Medium" if category_count >= 2 else "Low")
         
@@ -782,28 +818,39 @@ class BSConversationFlowManager:
         progress_message = ""
         
         if current_stage == "Clarify":
-            ready = hmw_count >= 3
+            has_concept = bool(base_concept)
+            ready = hmw_count >= 3 and has_concept
             next_stage = "Ideate" if ready else None
-            progress_message = f"{hmw_count}/3 HMWs" + (" - Ready!" if ready else f" - Need {3-hmw_count} more")
-        
-        elif current_stage == "Ideate":
-            ready = idea_count >= 5 and category_count >= 2
-            next_stage = "Develop" if ready else None
             if ready:
-                progress_message = f"{idea_count}/5 ideas, {category_count}/2 categories - Ready!"
+                progress_message = f"{hmw_count}/3 HMWs ✓, Base concept defined ✓"
             else:
                 missing = []
-                if idea_count < 5:
-                    missing.append(f"{5-idea_count} more ideas")
+                if hmw_count < 3:
+                    missing.append(f"{3-hmw_count} more HMWs")
+                if not has_concept:
+                    missing.append("base concept")
+                progress_message = f"{hmw_count}/3 HMWs - Need: {', '.join(missing)}"
+        
+        elif current_stage == "Ideate":
+            ready = idea_count >= 10 and techniques_used >= 4 and category_count >= 2
+            next_stage = "Develop" if ready else None
+            if ready:
+                progress_message = f"{idea_count}/10 variations ✓, {techniques_used}/7 techniques ({scamper_data['percentage']}%) ✓, {category_count} categories ✓"
+            else:
+                missing = []
+                if idea_count < 10:
+                    missing.append(f"{10-idea_count} more ideas")
+                if techniques_used < 4:
+                    missing.append(f"{4-techniques_used} more techniques")
                 if category_count < 2:
                     missing.append(f"{2-category_count} more categories")
-                progress_message = f"{idea_count}/5 ideas, {category_count}/2 categories - Need: {', '.join(missing)}"
+                progress_message = f"{idea_count}/10 ideas, {techniques_used}/7 techniques ({scamper_data['percentage']}%), {category_count} categories - Need: {', '.join(missing)}"
         
         elif current_stage == "Develop":
             ready = refined_count >= 2 and high_quality_count >= 2
             next_stage = "Implement" if ready else None
             if ready:
-                progress_message = f"{refined_count}/2 refined, {high_quality_count}/2 high-quality - Ready!"
+                progress_message = f"{refined_count}/2 refined ✓, {high_quality_count}/2 high-quality ✓"
             else:
                 missing = []
                 if refined_count < 2:
@@ -816,7 +863,7 @@ class BSConversationFlowManager:
             ready = True
             progress_message = "Implementation stage"
         
-        # NEW: Check if stage was recently auto-advanced
+        # Check if recently auto-advanced
         stage_history = bs_meta.get("stageHistory", [])
         recently_advanced = False
         if stage_history:
@@ -824,19 +871,21 @@ class BSConversationFlowManager:
             reasoning = latest_transition.get("reasoning", "")
             if "Auto-advanced" in reasoning or "auto" in reasoning.lower():
                 time_since = int(time.time() * 1000) - latest_transition.get("timestamp", 0)
-                if time_since < 10000:  # Within last 10 seconds
+                if time_since < 10000:
                     recently_advanced = True
         
         snapshot = {
             "sessionId": self.session_id,
             "stage": current_stage,
             "hmwQuestions": hmw_questions,
+            "baseConcept": base_concept,
             "ideas": ideas,
+            "scamperCoverage": scamper_data["coverage"],
             "fluency": {
                 "count": idea_count,
                 "score": fluency_score,
-                "threshold": 5,
-                "met": idea_count >= 5
+                "threshold": 10,  # UPDATED from 5
+                "met": idea_count >= 10
             },
             "flexibility": {
                 "categories": list(categories_seen),
@@ -844,16 +893,24 @@ class BSConversationFlowManager:
                 "threshold": 2,
                 "met": category_count >= 2
             },
+            "techniquesCoverage": {
+                "used": techniques_used,
+                "total": 7,
+                "percentage": scamper_data["percentage"],
+                "threshold": 4,
+                "met": techniques_used >= 4
+            },
             "stageProgress": {
                 "current": current_stage,
                 "ready": ready,
                 "nextStage": next_stage,
                 "message": progress_message,
-                "recentlyAdvanced": recently_advanced,  # NEW FLAG
+                "recentlyAdvanced": recently_advanced,
                 "metrics": {
                     "hmwCount": hmw_count,
                     "ideaCount": idea_count,
                     "categoryCount": category_count,
+                    "techniquesUsed": techniques_used,
                     "refinedCount": refined_count,
                     "highQualityCount": high_quality_count
                 }
@@ -863,11 +920,12 @@ class BSConversationFlowManager:
                 "hmwCount": hmw_count,
                 "ideaCount": idea_count,
                 "refinedCount": refined_count,
-                "categories": list(categories_seen)
+                "categories": list(categories_seen),
+                "scamperCoverage": scamper_data["coverage"]
             }
         }
         
-        logger.debug(f"[SNAPSHOT] Generated: stage={current_stage}, progress={progress_message}, recentlyAdvanced={recently_advanced}")
+        logger.debug(f"[SNAPSHOT] Generated: stage={current_stage}, techniques={techniques_used}/7, progress={progress_message}")
         
         return snapshot
     
@@ -918,6 +976,208 @@ class BSConversationFlowManager:
         except Exception as e:
             logger.exception("[ERROR] get_recent_messages failed: %s", e)
             return {"summaries": [], "unsummarised": []}
+        
+    def log_idea_with_scamper(self, idea_text: str, scamper_technique: str, evaluations: dict = None):
+        """
+        Log idea with SCAMPER technique attribution.
+        
+        Args:
+            idea_text: The variation text
+            scamper_technique: One of S/C/A/M/P/E/R or full name
+            evaluations: Dict with flexibilityCategory, elaboration, originality, reasoning
+        """
+        logger.debug(f"[SCAMPER IDEA] Logging with technique: {scamper_technique}")
+        
+        # Normalize technique name
+        technique_map = {
+            "S": "Substitute", "Substitute": "Substitute",
+            "C": "Combine", "Combine": "Combine",
+            "A": "Adapt", "Adapt": "Adapt",
+            "M": "Modify", "Modify": "Modify",
+            "P": "Put", "Put to other uses": "Put", "Put": "Put",
+            "E": "Eliminate", "Eliminate": "Eliminate",
+            "R": "Reverse", "Reverse": "Reverse",
+            "None": None, None: None
+        }
+        
+        normalized_technique = technique_map.get(scamper_technique, scamper_technique)
+        
+        data = {
+            "text": idea_text,
+            "scamperTechnique": normalized_technique,
+            "category": evaluations.get("flexibilityCategory") if evaluations else None,
+            "evaluations": evaluations or {},
+            "createdAt": int(time.time() * 1000),
+            "refined": False
+        }
+        
+        payload = {"uid": self.uid, "sessionID": self.session_id, "data": data}
+        res = self._post("/cps/add_idea", payload)
+        idea_id = res.get("ideaID")
+        logger.debug(f"[SCAMPER IDEA] Saved with ID={idea_id}, technique={normalized_technique}")
+        
+        # Update category tracking
+        if evaluations and evaluations.get("flexibilityCategory"):
+            self._add_category(evaluations["flexibilityCategory"])
+        
+        # Force cache refresh
+        max_retries = 3
+        for attempt in range(max_retries):
+            self._refresh_ideas_cache()
+            
+            if idea_id in (self._ideas_cache or {}):
+                logger.debug(f"[SCAMPER IDEA] Confirmed in cache after {attempt + 1} attempts")
+                break
+            
+            if attempt < max_retries - 1:
+                logger.warning(f"[SCAMPER IDEA] Not in cache yet, retry {attempt + 1}/{max_retries}")
+                time.sleep(0.3 * (attempt + 1))
+        
+        # Update metrics
+        self.update_idea_metrics()
+        
+        return idea_id
+
+    def get_scamper_coverage(self):
+        """
+        Calculate SCAMPER technique coverage from ideas.
+        
+        Returns:
+            dict: {"S": 3, "C": 2, "A": 1, "M": 2, "P": 0, "E": 1, "R": 2}
+        """
+        logger.debug("[SCAMPER] Calculating technique coverage")
+        
+        if self._ideas_cache is None:
+            self._refresh_ideas_cache()
+        
+        ideas = self._ideas_cache or {}
+        
+        coverage = {
+            "S": 0,  # Substitute
+            "C": 0,  # Combine
+            "A": 0,  # Adapt
+            "M": 0,  # Modify
+            "P": 0,  # Put to other uses
+            "E": 0,  # Eliminate
+            "R": 0   # Reverse
+        }
+        
+        technique_map = {
+            "Substitute": "S",
+            "Combine": "C",
+            "Adapt": "A",
+            "Modify": "M",
+            "Put": "P",
+            "Eliminate": "E",
+            "Reverse": "R"
+        }
+        
+        for idea in ideas.values():
+            technique = idea.get("scamperTechnique")
+            if technique:
+                letter = technique_map.get(technique, technique[0] if technique else None)
+                if letter in coverage:
+                    coverage[letter] += 1
+        
+        techniques_used = sum(1 for count in coverage.values() if count > 0)
+        
+        logger.debug(f"[SCAMPER] Coverage: {coverage}, used {techniques_used}/7 techniques")
+        
+        return {
+            "coverage": coverage,
+            "techniquesUsed": techniques_used,
+            "totalTechniques": 7,
+            "percentage": int((techniques_used / 7) * 100)
+        }
+
+
+    def extract_base_concept(self, hmw_questions: list, conversation_context: list = None):
+        """
+        Extract base concept from HMW questions.
+        This is called by backend after 3+ HMWs are logged.
+        
+        Args:
+            hmw_questions: List of HMW question texts
+            conversation_context: Optional recent messages for context
+        
+        Returns:
+            dict: {"text": "...", "category": "Character|Plot|Setting|Theme"}
+        """
+        logger.debug(f"[BASE CONCEPT] Extracting from {len(hmw_questions)} HMWs")
+        
+        # Simple extraction: combine HMW themes
+        # In production, you might use AI to synthesize
+        
+        # For now, use first HMW as primary concept
+        primary_hmw = hmw_questions[0] if hmw_questions else ""
+        
+        # Attempt to categorize based on keywords
+        text_lower = primary_hmw.lower()
+        
+        if any(word in text_lower for word in ["character", "mentor", "hero", "villain", "protagonist"]):
+            category = "Character"
+        elif any(word in text_lower for word in ["plot", "story", "event", "happen", "twist"]):
+            category = "Plot"
+        elif any(word in text_lower for word in ["setting", "world", "place", "location"]):
+            category = "Setting"
+        elif any(word in text_lower for word in ["theme", "meaning", "message", "represent"]):
+            category = "Theme"
+        else:
+            category = "Plot"  # Default
+        
+        # Extract clean concept text (remove "How might we")
+        concept_text = primary_hmw.replace("How might we ", "").replace("?", "").strip()
+        
+        base_concept = {
+            "text": concept_text,
+            "category": category,
+            "extractedFrom": [i for i in range(len(hmw_questions))],
+            "timestamp": int(time.time() * 1000)
+        }
+        
+        # Store in metadata
+        self.update_metadata({"baseConcept": base_concept}, mode="brainstorming")
+        
+        logger.debug(f"[BASE CONCEPT] Extracted: {concept_text} ({category})")
+        
+        return base_concept
+
+    def refine_idea_with_scamper(self, source_ids: list, new_idea: dict):
+        """
+        UPDATED: Refine idea with multiple SCAMPER techniques.
+        
+        Args:
+            source_ids: List of backend idea IDs being combined
+            new_idea: Dict with:
+                - idea: Combined text
+                - scamperTechniques: List of techniques used (e.g., ["Substitute", "Reverse"])
+                - evaluations: Standard evaluation dict
+        """
+        logger.debug(f"[SCAMPER REFINE] Combining {len(source_ids)} ideas with techniques: {new_idea.get('scamperTechniques', [])}")
+        
+        payload = {
+            "uid": self.uid,
+            "sessionID": self.session_id,
+            "sourceIds": source_ids,
+            "newIdea": {
+                **new_idea,
+                "refined": True,
+                "createdAt": int(time.time() * 1000)
+            }
+        }
+        
+        res = self._post("/cps/refine_idea", payload)
+        logger.debug(f"[SCAMPER REFINE] Session API response: {res}")
+        
+        # Update category if provided
+        if new_idea.get("evaluations", {}).get("flexibilityCategory"):
+            self._add_category(new_idea["evaluations"]["flexibilityCategory"])
+        
+        # Refresh cache and metrics
+        self._refresh_ideas_cache()
+        self.update_idea_metrics()
+        
+        return res
         
     def summarise_and_store(self, deepseek_client, session_id, unsummarised_msgs):
         """Background summarization (existing implementation kept)"""

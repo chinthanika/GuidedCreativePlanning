@@ -1,3 +1,4 @@
+
 import json
 import time
 import os
@@ -16,6 +17,7 @@ from utils.chat.chat_utils import (
 )
 
 from prompts.bs_system_prompt import BS_SYSTEM_PROMPT
+
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -87,7 +89,7 @@ def bs_background_handle_action(actions, user_id, deepseek_messages, cfm_session
 def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth=0, update_status=None):
     """
     Recursively handle DeepSeek actions for Brainstorming mode.
-    UPDATED: get_info now processes data and calls DeepSeek again in same execution.
+    UPDATED: Now supports SCAMPER technique tracking
     """
     action_start = time.time()
     logger.debug(f"[ACTION] bs_handle_action called at depth={depth}")
@@ -149,7 +151,7 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                 logger.debug(f"[ACTION] Stage updated to {to_stage}")
 
         # -------------------------
-        # CPS-specific actions
+        # CPS-specific actions (UPDATED WITH SCAMPER)
         # -------------------------
         elif action == "add_hmw":
             if update_status:
@@ -159,14 +161,42 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                 hmw_count = cfm_session.add_hmw_question(q)
                 logger.debug(f"[ACTION] Added HMW: {q}, count: {hmw_count}")
                 
+                # SCAMPER UPDATE: Auto-extract base concept after 3 HMWs
+                if hmw_count >= 3:
+                    bs_meta = cfm_session.get_metadata().get("brainstorming", {})
+                    if not bs_meta.get("baseConcept"):
+                        logger.info("[ACTION] Extracting base concept from HMWs")
+                        hmw_raw = bs_meta.get("hmwQuestions", {}) or {}
+                        hmw_list = [hmw.get("question", "") for hmw in hmw_raw.values()]
+                        cfm_session.extract_base_concept(hmw_list)
+                
+                # Check for auto-advancement
+                cfm_session.check_stage_progress_with_auto_advance()
+                
         elif action == "log_idea":
             if update_status:
                 update_status("processing", "Logging idea")
+            
             idea_text = data.get("idea")
             evals = data.get("evaluations", {})
+            
+            # SCAMPER UPDATE: Check for technique attribution
+            scamper_technique = data.get("scamperTechnique")
+            
             if idea_text:
-                idea_id = cfm_session.log_idea(idea_text, evals)
+                if scamper_technique:
+                    # Use SCAMPER-aware method
+                    logger.debug(f"[ACTION] Logging idea with SCAMPER technique: {scamper_technique}")
+                    idea_id = cfm_session.log_idea_with_scamper(idea_text, scamper_technique, evals)
+                else:
+                    # Fallback to standard method (for backward compatibility)
+                    logger.debug(f"[ACTION] Logging idea without SCAMPER technique")
+                    idea_id = cfm_session.log_idea(idea_text, evals)
+                
                 logger.debug(f"[ACTION] Logged idea {idea_id}")
+                
+                # Check for auto-advancement
+                cfm_session.check_stage_progress_with_auto_advance()
                 
         elif action == "evaluate_idea":
             if update_status:
@@ -181,32 +211,44 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
         elif action == "refine_idea":
             if update_status:
                 update_status("processing", "Refining idea")
+            
             source_ids = data.get("sourceIdeaIds", [])
             new_idea = data.get("newIdea", {})
+            
             if source_ids and new_idea:
-                refine_result = cfm_session.refine_idea(source_ids, new_idea)
+                # SCAMPER UPDATE: Check if combining multiple techniques
+                scamper_techniques = new_idea.get("scamperTechniques")
+                
+                if scamper_techniques and isinstance(scamper_techniques, list):
+                    # Use SCAMPER-aware refine method
+                    logger.debug(f"[ACTION] Refining with SCAMPER synergy: {scamper_techniques}")
+                    refine_result = cfm_session.refine_idea_with_scamper(source_ids, new_idea)
+                else:
+                    # Fallback to standard refine (backward compatibility)
+                    logger.debug(f"[ACTION] Refining without SCAMPER synergy")
+                    refine_result = cfm_session.refine_idea(source_ids, new_idea)
+                
                 result["profile_data"].append(refine_result)
                 logger.debug(f"[ACTION] Refined idea")
+                
+                # Check for auto-advancement
+                cfm_session.check_stage_progress_with_auto_advance()
 
         elif action == "switch_stage":
             if update_status:
                 update_status("processing", "Switching stage")
             to_stage = data.get("toStage")
             if to_stage:
-                cfm_session.update_metadata({"stage": to_stage})
+                cfm_session.switch_stage(to_stage, reasoning)  # Pass reasoning
                 logger.debug(f"[ACTION] Stage switched to {to_stage}")
         
         elif action == "check_progress":
             if update_status:
                 update_status("processing", "Checking progress")
-            progress_result = cfm_session.check_stage_progress()
+            
+            # SCAMPER UPDATE: Use enhanced progress check
+            progress_result = cfm_session.check_stage_progress_with_auto_advance()
             logger.debug(f"[ACTION] Progress check: {progress_result}")
-
-            if progress_result.get("ready"):
-                suggested = progress_result.get("suggestedNext")
-                if suggested:
-                    cfm_session.update_metadata({"stage": suggested})
-                    logger.debug(f"[ACTION] Auto-advanced to {suggested}")
 
         # -------------------------
         # Profile Manager actions - TWO-TURN PATTERN
@@ -237,7 +279,6 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                 logger.error(f"[GET_INFO] Data fetch failed: {e}")
                 error_msg = "I encountered an issue retrieving that information. Could you try rephrasing your question?"
                 result["chat_message"] = parse_markdown(error_msg, "html")
-                # ALWAYS save error messages
                 cfm_session.save_message("assistant", result["chat_message"], 
                                        stage=cfm_session.get_stage(), visible=True)
                 logger.info(f"[GET_INFO] Saved error response to Firebase (depth={depth})")
@@ -263,21 +304,20 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
             if not has_actual_data:
                 logger.info("[GET_INFO] No data found, providing fallback")
                 fallback_msg = "I don't have any previous information about that yet. Let's start building it together! What would you like to tell me?"
-                
+
                 followup_messages = [
                     {"role": "system", "content": BS_SYSTEM_PROMPT},
                     {"role": "user", "content": f"User asked: {last_user_msg}"},
                     {"role": "assistant", "content": f"Reasoning: {reasoning}"},
                     {"role": "system", "content": f"""Retrieved data:
-                No data about that exists, perhaps because the user has not added it yet.
+No data about that exists, perhaps because the user has not added it yet.
 
-                CRITICAL: Do NOT request get_info again.
-                Respond conversationally with ONLY a 'respond' action presenting this information naturally and continuing the conversation
-                Format: {{"action": "respond", "data": {{"message": "your formatted response"}}}}"""}
-                                ]
+CRITICAL: Do NOT request get_info again.
+Respond conversationally with ONLY a 'respond' action presenting this information naturally and continuing the conversation
+Format: {{"action": "respond", "data": {{"message": "your formatted response"}}}}"""}
+                ]
                 
                 result["chat_message"] = parse_markdown(fallback_msg, "html")
-                # ALWAYS save fallback messages
                 cfm_session.save_message("assistant", result["chat_message"], 
                                        stage=cfm_session.get_stage(), visible=True)
                 logger.info(f"[GET_INFO] Saved fallback response to Firebase (depth={depth})")
@@ -303,7 +343,6 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                         logger.warning(f"[GET_INFO] JSON parse failed: {parse_err}")
                         bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
 
-                    # Recursively handle Turn 2 response
                     followup_result = bs_handle_action(
                         bot_reply_json, 
                         user_id, 
@@ -313,7 +352,6 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                         update_status=update_status
                     )
                     
-                    # Merge results
                     if followup_result.get("chat_message"):
                         result["chat_message"] += followup_result["chat_message"]
                         logger.info(f"[GET_INFO] Turn 2 complete (length: {len(result['chat_message'])})")
@@ -331,60 +369,6 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                         f"No information available on that topic...",
                         "html"
                     )
-                    followup_start = time.time()
-                try:
-                    followup_resp = client.chat.completions.create(
-                        model="deepseek-chat",
-                        messages=followup_messages,
-                        stream=False,
-                        temperature=0.7
-                    )
-                    followup_time = time.time() - followup_start
-                    logger.info(f"[TIMING] DeepSeek Turn 2: {followup_time:.3f}s")
-
-                    bot_reply_raw = followup_resp.choices[0].message.content.strip()
-                    logger.debug(f"[GET_INFO] Turn 2 response: {bot_reply_raw[:200]}...")
-                    
-                    try:
-                        bot_reply_json = parse_deepseek_json(bot_reply_raw)
-                        bot_reply_json = normalize_deepseek_response(bot_reply_json)
-                    except Exception as parse_err:
-                        logger.warning(f"[GET_INFO] JSON parse failed: {parse_err}")
-                        bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
-
-                    # Recursively handle Turn 2 response
-                    followup_result = bs_handle_action(
-                        bot_reply_json, 
-                        user_id, 
-                        recent_msgs, 
-                        cfm_session, 
-                        depth=depth+1, 
-                        update_status=update_status
-                    )
-                    
-                    # Merge results
-                    if followup_result.get("chat_message"):
-                        result["chat_message"] += followup_result["chat_message"]
-                        logger.info(f"[GET_INFO] Turn 2 complete (length: {len(result['chat_message'])})")
-                    else:
-                        logger.warning("[GET_INFO] No chat_message in Turn 2")
-                        result["chat_message"] = parse_markdown(bot_reply_raw, "html")
-
-                        cfm_session.save_message("assistant", result["chat_message"], 
-                                               stage=cfm_session.get_stage(), visible=True)
-                    
-                    result["requests"].extend(followup_result.get("requests", []))
-                    result["staging_results"].extend(followup_result.get("staging_results", []))
-                    
-                except Exception as e:
-                    logger.error(f"[GET_INFO] Turn 2 failed: {e}")
-                    logger.error(traceback.format_exc())
-                    result["chat_message"] = parse_markdown(
-                        f"Here's what I found:\n\n{info_summary[:500]}...",
-                        "html"
-                    )
-                    cfm_session.save_message("assistant", result["chat_message"], 
-                                           stage=cfm_session.get_stage(), visible=True)
 
             else:
                 # TURN 2: Call DeepSeek with the data
@@ -397,12 +381,12 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                     {"role": "user", "content": f"User asked: {last_user_msg}"},
                     {"role": "assistant", "content": f"Reasoning: {reasoning}"},
                     {"role": "system", "content": f"""Retrieved data:
-                {info_summary}
+{info_summary}
 
-                CRITICAL: The data above is the complete information available. Do NOT request get_info again.
-                Respond conversationally with ONLY a 'respond' action presenting this information naturally.
-                Format: {{"action": "respond", "data": {{"message": "your formatted response"}}}}"""}
-                                ]
+CRITICAL: The data above is the complete information available. Do NOT request get_info again.
+Respond conversationally with ONLY a 'respond' action presenting this information naturally.
+Format: {{"action": "respond", "data": {{"message": "your formatted response"}}}}"""}
+                ]
 
                 followup_start = time.time()
                 try:
@@ -425,7 +409,6 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                         logger.warning(f"[GET_INFO] JSON parse failed: {parse_err}")
                         bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
 
-                    # Recursively handle Turn 2 response
                     followup_result = bs_handle_action(
                         bot_reply_json, 
                         user_id, 
@@ -435,7 +418,6 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                         update_status=update_status
                     )
                     
-                    # Merge results
                     if followup_result.get("chat_message"):
                         result["chat_message"] += followup_result["chat_message"]
                         logger.info(f"[GET_INFO] Turn 2 complete (length: {len(result['chat_message'])})")
@@ -443,8 +425,8 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                         logger.warning("[GET_INFO] No chat_message in Turn 2")
                         result["chat_message"] = parse_markdown(bot_reply_raw, "html")
                     
-                        cfm_session.save_message("assistant", result["chat_message"], 
-                                               stage=cfm_session.get_stage(), visible=True)
+                    cfm_session.save_message("assistant", result["chat_message"], 
+                                           stage=cfm_session.get_stage(), visible=True)
                         
                     result["requests"].extend(followup_result.get("requests", []))
                     result["staging_results"].extend(followup_result.get("staging_results", []))
@@ -489,8 +471,7 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                                         action="stage_result", visible=False)
 
             result["staging_results"] = staged_summaries
-            
-            # Call DeepSeek for follow-up
+
             logger.info(f"[STAGE_CHANGE] Calling DeepSeek for follow-up (depth={depth})")
             summary = json.dumps(staged_summaries, indent=2)
             followup_messages = [
@@ -515,13 +496,12 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
                 except Exception:
                     bot_reply_json = {"action": "respond", "data": {"message": bot_reply_raw}}
 
-                # Handle follow-up response (depth+1 to prevent infinite loops)
                 followup_result = bs_handle_action(
                     bot_reply_json, 
                     user_id, 
                     recent_msgs, 
                     cfm_session, 
-                    depth=depth+1,  # ← Increment depth
+                    depth=depth+1,
                     update_status=update_status
                 )
                 
@@ -537,6 +517,5 @@ def bs_handle_action(deepseek_response, user_id, recent_msgs, cfm_session, depth
 
     action_time = time.time() - action_start
     logger.info(f"[TIMING] bs_handle_action completed in {action_time:.3f}s at depth={depth}")
-    
     
     return result

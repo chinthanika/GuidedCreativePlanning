@@ -85,8 +85,13 @@ try:
     # firebase_admin.initialize_app(cred, {
     #     'databaseURL': "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
     # })
+    json_path = "../Firebase/structuredcreativeplanning-fdea4acca240.json"
+    print(f"[DEBUG] Trying to load: {os.path.abspath(json_path)}")
+    print(f"[DEBUG] File exists: {os.path.exists(json_path)}")
 
-    cred = credentials.Certificate("../Firebase/structuredcreativeplanning-fdea4acca240.json")
+    cred = credentials.Certificate(json_path)
+    print(f"[DEBUG] Credentials loaded successfully")
+
     firebase_admin.initialize_app(cred, {
         'databaseURL': "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
     })
@@ -130,6 +135,50 @@ def health_check():
             'image_generation': 'running' if LEONARDO_API_KEY else 'disabled'
         }
     })
+
+def trigger_auto_title_if_needed(user_id, session_id, message_count):
+    """
+    Trigger auto-title generation ONCE after 5 messages.
+    Only runs if title is still "New Chat" or "Untitled Chat".
+    Runs in background thread to not block chat response.
+    """
+    # Only auto-title at message 5 (gives enough context)
+    if message_count != 5:
+        return
+    
+    def generate_title():
+        try:
+            # Check current title before generating
+            metadata_ref = db.reference(f"chatSessions/{user_id}/{session_id}/metadata")
+            metadata = metadata_ref.get()
+            
+            if not metadata:
+                return
+            
+            current_title = metadata.get('title', '')
+            title_source = metadata.get('titleSource')
+            
+            # Only auto-generate if:
+            # 1. Title is still default ("New Chat" or "Untitled Chat")
+            # 2. No titleSource exists (never been titled)
+            # 3. titleSource is NOT 'manual' or 'ai' (user hasn't set a title)
+            if current_title in ['New Chat', 'Untitled Chat'] and title_source is None:
+                requests.post(
+                    f"http://localhost:{os.environ.get('PORT', 5000)}/sessions/auto-title",
+                    json={
+                        'userId': user_id,
+                        'sessionId': session_id
+                    },
+                    timeout=10
+                )
+                bs_logger.info(f"[AUTO_TITLE] Triggered for session {session_id}")
+            else:
+                bs_logger.debug(f"[AUTO_TITLE] Skipped for session {session_id} (title: {current_title}, source: {title_source})")
+                
+        except Exception as e:
+            bs_logger.warning(f"[AUTO_TITLE] Failed for session {session_id}: {e}")
+    
+    threading.Thread(target=generate_title, daemon=True).start()
 
 # ============================================
 # BRAINSTORMING CHAT (FIXED)
@@ -271,7 +320,7 @@ def brainstorming_chat():
             # Auto-advance logic
             if current_stage == "Clarify" and hmw_count >= 3:
                 cfm_session.switch_stage("Ideate", reasoning=f"Auto: {hmw_count} HMWs")
-                bs_logger.info(f"[BS] Auto-advanced Clarify→Ideate")
+                bs_logger.info(f"[BS] Auto-advanced Clarify -> Ideate")
             elif current_stage == "Ideate" and idea_count >= 5 and category_count >= 2:
                 cfm_session.switch_stage("Develop", 
                                         reasoning=f"Auto: {idea_count} ideas, {category_count} cats")
@@ -297,6 +346,16 @@ def brainstorming_chat():
         if chat_message:
             cfm_session.save_message("assistant", chat_message, 
                                     stage=cfm_session.get_stage(), visible=True)
+            
+            try:
+                messages_ref = db.reference(f"chatSessions/{user_id}/{session_id}/messages")
+                all_messages = messages_ref.get() or {}
+                user_message_count = sum(1 for m in all_messages.values() 
+                                        if isinstance(m, dict) and m.get('role') == 'user')
+                
+                trigger_auto_title_if_needed(user_id, session_id, user_message_count)
+            except Exception as e:
+                bs_logger.warning(f"[BS] Auto-title trigger failed: {e}")
 
         # Start background thread ONLY for pure data fetches
         if background_actions:
@@ -322,7 +381,7 @@ def brainstorming_chat():
         return jsonify({"error": str(e)}), 500
 
 # ============================================
-# DEEP THINKING CHAT (UNCHANGED - already correct structure)
+# DEEP THINKING CHAT
 # ============================================
 @app.route('/chat/deepthinking', methods=['POST'])
 def deepthinking_chat():
@@ -583,6 +642,16 @@ Instructions:
         if chat_message:
             cfm_session.save_message("assistant", chat_message, visible=True)
 
+            try:
+                messages_ref = db.reference(f"chatSessions/{user_id}/{session_id}/messages")
+                all_messages = messages_ref.get() or {}
+                user_message_count = sum(1 for m in all_messages.values() 
+                                        if isinstance(m, dict) and m.get('role') == 'user')
+                
+                trigger_auto_title_if_needed(user_id, session_id, user_message_count)
+            except Exception as e:
+                dt_logger.warning(f"[DT] Auto-title trigger failed: {e}")
+
         # Start background thread for remaining actions
         if background_actions:
             dt_logger.info(f"[DT] Starting background thread for {len(background_actions)} actions")
@@ -605,10 +674,337 @@ Instructions:
     except Exception as e:
         dt_logger.exception(f"[DT] Error: {e}")
         return jsonify({"error": str(e)}), 500
+    
+# ============================================
+# SESSION MANAGEMENT ENDPOINTS
+# ============================================
 
+@app.route('/sessions/list', methods=['POST'])
+def list_sessions():
+    """Get all chat sessions for a user."""
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+        
+        # Get all sessions for user
+        sessions_ref = db.reference(f"chatSessions/{user_id}")
+        sessions_data = sessions_ref.get() or {}
+        
+        # Build session list with metadata
+        sessions = []
+        for session_id, session_data in sessions_data.items():
+            if not isinstance(session_data, dict):
+                continue
+            
+            metadata = session_data.get('metadata', {})
+            messages = session_data.get('messages', {})
+            
+            # Count messages
+            message_count = len([m for m in messages.values() if isinstance(m, dict)])
+            
+            # Get last message timestamp
+            last_message_time = 0
+            for msg in messages.values():
+                if isinstance(msg, dict):
+                    timestamp = msg.get('timestamp', 0)
+                    if timestamp > last_message_time:
+                        last_message_time = timestamp
+            
+            sessions.append({
+                'sessionId': session_id,
+                'title': metadata.get('title', 'Untitled Chat'),
+                'mode': metadata.get('mode', 'brainstorming'),
+                'createdAt': metadata.get('createdAt', 0),
+                'updatedAt': last_message_time or metadata.get('updatedAt', 0),
+                'messageCount': message_count,
+                'stage': metadata.get('brainstorming', {}).get('stage', 'Clarify') if metadata.get('mode') == 'brainstorming' else None
+            })
+        
+        # Sort by most recent first
+        sessions.sort(key=lambda x: x['updatedAt'], reverse=True)
+        
+        bs_logger.info(f"[SESSIONS] Listed {len(sessions)} sessions for user {user_id}")
+        
+        return jsonify({
+            'sessions': sessions,
+            'count': len(sessions)
+        }), 200
+        
+    except Exception as e:
+        bs_logger.exception(f"[SESSIONS] List failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/sessions/rename', methods=['POST'])
+def rename_session():
+    """Manually rename a session."""
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        session_id = data.get('sessionId')
+        new_title = data.get('title', '').strip()
+        
+        if not user_id or not session_id or not new_title:
+            return jsonify({'error': 'userId, sessionId, and title required'}), 400
+        
+        if len(new_title) > 100:
+            return jsonify({'error': 'Title must be 100 characters or less'}), 400
+        
+        # Update session title
+        session_ref = db.reference(f"chatSessions/{user_id}/{session_id}/metadata")
+        session_data = session_ref.get()
+        
+        if not session_data:
+            return jsonify({'error': 'Session not found'}), 404
+        
+        session_ref.update({
+            'title': new_title,
+            'titleSource': 'manual',
+            'updatedAt': int(time.time() * 1000)
+        })
+        
+        bs_logger.info(f"[SESSIONS] Renamed session {session_id} to: {new_title}")
+        
+        return jsonify({
+            'success': True,
+            'sessionId': session_id,
+            'title': new_title
+        }), 200
+        
+    except Exception as e:
+        bs_logger.exception(f"[SESSIONS] Rename failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/sessions/delete', methods=['POST'])
+def delete_session():
+    """Delete a chat session."""
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        session_id = data.get('sessionId')
+        
+        if not user_id or not session_id:
+            return jsonify({'error': 'userId and sessionId required'}), 400
+        
+        # Check if session exists
+        session_ref = db.reference(f"chatSessions/{user_id}/{session_id}")
+        if not session_ref.get():
+            return jsonify({'error': 'Session not found'}), 404
+        
+        # Delete session
+        session_ref.delete()
+        
+        bs_logger.info(f"[SESSIONS] Deleted session {session_id}")
+        
+        return jsonify({
+            'success': True,
+            'deletedSessionId': session_id
+        }), 200
+        
+    except Exception as e:
+        bs_logger.exception(f"[SESSIONS] Delete failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/sessions/generate-title', methods=['POST'])
+def generate_session_title():
+    """Generate AI title for a session based on conversation."""
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        session_id = data.get('sessionId')
+        
+        if not user_id or not session_id:
+            return jsonify({'error': 'userId and sessionId required'}), 400
+        
+        # Get session messages
+        messages_ref = db.reference(f"chatSessions/{user_id}/{session_id}/messages")
+        messages_data = messages_ref.get() or {}
+        
+        if not messages_data:
+            return jsonify({'error': 'No messages in session'}), 400
+        
+        # Get first 5-10 user messages for context
+        user_messages = []
+        for msg_id, msg in messages_data.items():
+            if isinstance(msg, dict) and msg.get('role') == 'user':
+                user_messages.append({
+                    'content': msg.get('content', ''),
+                    'timestamp': msg.get('timestamp', 0)
+                })
+        
+        user_messages.sort(key=lambda x: x['timestamp'])
+        context_messages = user_messages[:10]
+        
+        if len(context_messages) < 2:
+            return jsonify({'error': 'Not enough messages to generate title'}), 400
+        
+        # Build prompt for title generation
+        conversation_text = "\n".join([f"User: {m['content']}" for m in context_messages])
+        
+        title_prompt = f"""Based on this conversation, generate a concise, descriptive title (max 6 words).
+The title should capture the main topic or focus of the discussion.
+
+Conversation:
+{conversation_text}
+
+Requirements:
+- Maximum 6 words
+- Descriptive and specific
+- No quotes or special characters
+- Capitalized like a title
+
+Respond with ONLY the title, nothing else."""
+
+        # Call DeepSeek
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that creates concise titles."},
+                {"role": "user", "content": title_prompt}
+            ],
+            stream=False,
+            temperature=0.7,
+            max_tokens=50
+        )
+        
+        generated_title = response.choices[0].message.content.strip()
+        
+        # Clean up title
+        generated_title = generated_title.strip('"').strip("'").strip()
+        
+        # Truncate if too long
+        if len(generated_title) > 60:
+            generated_title = generated_title[:57] + "..."
+        
+        # Update session metadata
+        metadata_ref = db.reference(f"chatSessions/{user_id}/{session_id}/metadata")
+        metadata_ref.update({
+            'title': generated_title,
+            'titleSource': 'ai',
+            'updatedAt': int(time.time() * 1000)
+        })
+        
+        bs_logger.info(f"[SESSIONS] Generated title for {session_id}: {generated_title}")
+        
+        return jsonify({
+            'success': True,
+            'sessionId': session_id,
+            'title': generated_title
+        }), 200
+        
+    except Exception as e:
+        bs_logger.exception(f"[SESSIONS] Title generation failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/sessions/auto-title', methods=['POST'])
+def auto_title_session():
+    """Auto-generate title when session reaches threshold (called internally)."""
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        session_id = data.get('sessionId')
+        
+        if not user_id or not session_id:
+            return jsonify({'error': 'userId and sessionId required'}), 400
+        
+        # Check if already has any title set
+        metadata_ref = db.reference(f"chatSessions/{user_id}/{session_id}/metadata")
+        metadata = metadata_ref.get() or {}
+        
+        # STRICT CHECK: Only generate if title is still default AND no titleSource exists
+        # This ensures auto-title only happens ONCE
+        current_title = metadata.get('title', '')
+        title_source = metadata.get('titleSource')
+        
+        if title_source is not None:
+            # Title has been set before (either manual, ai, or ai_auto)
+            return jsonify({
+                'success': True,
+                'skipped': True,
+                'reason': f'Title already generated (source: {title_source})'
+            }), 200
+        
+        if current_title not in ['New Chat', 'Untitled Chat', None, '']:
+            # Title has been changed from default
+            return jsonify({
+                'success': True,
+                'skipped': True,
+                'reason': 'Title already customized'
+            }), 200
+        
+        # Generate title (reuse logic from generate-title)
+        messages_ref = db.reference(f"chatSessions/{user_id}/{session_id}/messages")
+        messages_data = messages_ref.get() or {}
+        
+        user_messages = []
+        for msg_id, msg in messages_data.items():
+            if isinstance(msg, dict) and msg.get('role') == 'user':
+                user_messages.append({
+                    'content': msg.get('content', ''),
+                    'timestamp': msg.get('timestamp', 0)
+                })
+        
+        user_messages.sort(key=lambda x: x['timestamp'])
+        context_messages = user_messages[:10]
+        
+        if len(context_messages) < 3:
+            return jsonify({
+                'success': True,
+                'skipped': True,
+                'reason': 'Not enough messages'
+            }), 200
+        
+        conversation_text = "\n".join([f"User: {m['content']}" for m in context_messages])
+        
+        title_prompt = f"""Based on this conversation, generate a concise, descriptive title (max 6 words).
+
+Conversation:
+{conversation_text}
+
+Respond with ONLY the title."""
+
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
+                {"role": "system", "content": "You create concise, descriptive titles."},
+                {"role": "user", "content": title_prompt}
+            ],
+            stream=False,
+            temperature=0.7,
+            max_tokens=50
+        )
+        
+        generated_title = response.choices[0].message.content.strip().strip('"').strip("'")
+        
+        if len(generated_title) > 60:
+            generated_title = generated_title[:57] + "..."
+        
+        metadata_ref.update({
+            'title': generated_title,
+            'titleSource': 'ai_auto',
+            'updatedAt': int(time.time() * 1000)
+        })
+        
+        bs_logger.info(f"[SESSIONS] Auto-titled {session_id}: {generated_title}")
+        
+        return jsonify({
+            'success': True,
+            'sessionId': session_id,
+            'title': generated_title
+        }), 200
+        
+    except Exception as e:
+        bs_logger.exception(f"[SESSIONS] Auto-title failed: {e}")
+        return jsonify({'error': str(e)}), 500
+    
 # ============================================
 # WORLD AI, CHARACTER EXTRACTION, IMAGE GEN
-# (Unchanged - already correct)
 # ============================================
 @app.route('/worldbuilding/suggest-template', methods=['POST'])
 def suggest_world_template():
@@ -2420,6 +2816,7 @@ if __name__ == "__main__":
     print(f"Starting AI Server on port {os.environ.get('PORT', 5000)}")
     print(f"   - Brainstorming: /chat/brainstorming")
     print(f"   - Deep Thinking: /chat/deepthinking")
+    print(f"   - Session Management: /sessions")
     print(f"   - World AI: /worldbuilding/suggest-template")
     print(f"   - Characters: /characters/extract")
     print(f"   - Images: /images/generate")
