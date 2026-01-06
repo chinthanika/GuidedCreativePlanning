@@ -1,0 +1,206 @@
+/* ===============================================================================
+   STORY MODALS STYLES
+   Matches theme.js color scheme
+   =============================================================================== */
+
+/* Modal Overlay */
+.story-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal Content */
+.story-modal-content {
+  background: var(--background-paper, #FFFFFF);
+  border-radius: 8px;
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  animation: slideUp 0.3s ease;
+  border: 1px solid var(--divider, #E7E5E4);
+}
+
+.story-modal-small {
+  max-width: 400px;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Modal Header */
+.story-modal-header {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary, #27272A);
+}
+
+.story-modal-header span {
+  font-size: 20px;
+}
+
+.story-modal-danger {
+  color: var(--error-main, #DC2626);
+}
+
+.story-modal-subtitle {
+  margin: 0 0 20px 0;
+  color: var(--text-secondary, #52525B);
+  font-size: 14px;
+}
+
+/* Form */
+.story-modal-form {
+  margin: 20px 0;
+}
+
+.story-form-group {
+  margin-bottom: 16px;
+}
+
+.story-form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--text-primary, #27272A);
+  font-size: 14px;
+}
+
+.story-form-group input,
+.story-form-group textarea,
+.story-form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--divider, #E7E5E4);
+  border-radius: 6px;
+  font-size: 15px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  background: var(--background-paper, #FFFFFF);
+  color: var(--text-primary, #27272A);
+}
+
+.story-form-group input:focus,
+.story-form-group textarea:focus,
+.story-form-group select:focus {
+  outline: none;
+  border-color: var(--primary-main, #27272A);
+}
+
+.story-form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.story-form-group select {
+  cursor: pointer;
+}
+
+/* Delete Warning */
+.story-delete-warning {
+  margin: 16px 0 8px 0;
+  font-size: 15px;
+  color: var(--text-primary, #27272A);
+  line-height: 1.6;
+}
+
+.story-delete-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary, #52525B);
+  font-style: italic;
+}
+
+/* Modal Actions */
+.story-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.story-modal-btn {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.story-btn-save {
+  background: var(--primary-main, #27272A);
+  color: var(--background-paper, #FFFFFF);
+}
+
+.story-btn-save:hover {
+  background: var(--primary-dark, #18181B);
+  transform: translateY(-1px);
+}
+
+.story-btn-cancel {
+  background: var(--border-light, #F5F5F4);
+  color: var(--text-primary, #27272A);
+  border: 1px solid var(--divider, #E7E5E4);
+}
+
+.story-btn-cancel:hover {
+  background: var(--divider, #E7E5E4);
+}
+
+.story-btn-delete {
+  background: var(--error-main, #DC2626);
+  color: var(--background-paper, #FFFFFF);
+}
+
+.story-btn-delete:hover {
+  background: var(--error-dark, #B91C1C);
+  transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .story-modal-content {
+    width: 95%;
+    padding: 20px;
+  }
+
+  .story-modal-header {
+    font-size: 16px;
+  }
+
+  .story-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .story-modal-btn {
+    width: 100%;
+  }
+}

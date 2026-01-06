@@ -1535,7 +1535,7 @@ app.get("/api/stories", async (req, res) => {
 app.post("/api/stories", async (req, res) => {
   logger.info(`[REQUEST] POST /api/stories`);
   try {
-    const { userId, title, description } = req.body; // ADDED: description
+    const { userId, title } = req.body;
     if (!userId || !title) {
       return res.status(400).json({ error: "userId and title are required" });
     }
@@ -1546,7 +1546,6 @@ app.post("/api/stories", async (req, res) => {
 
     const storyData = {
       title,
-      description: description || '', // ADDED
       createdAt: Date.now(),
       parts: {}
     };
@@ -1568,7 +1567,7 @@ app.post("/api/stories", async (req, res) => {
 app.post("/api/stories/:storyId/parts", async (req, res) => {
   logger.info(`[REQUEST] POST /api/stories/:storyId/parts`);
   try {
-    const { userId, title, type, description } = req.body; // ADDED: type, description
+    const { userId, title } = req.body;
     const { storyId } = req.params;
 
     if (!userId || !title) {
@@ -1585,8 +1584,6 @@ app.post("/api/stories/:storyId/parts", async (req, res) => {
 
     const partData = {
       title,
-      type: type || 'chapter', // ADDED
-      description: description || '', // ADDED
       order,
       createdAt: Date.now(),
       drafts: {}
@@ -1609,7 +1606,7 @@ app.post("/api/stories/:storyId/parts", async (req, res) => {
 app.post("/api/stories/:storyId/parts/:partId/drafts", async (req, res) => {
   logger.info(`[REQUEST] POST /api/stories/:storyId/parts/:partId/drafts`);
   try {
-    const { userId, title } = req.body; // ADDED: title
+    const { userId } = req.body;
     const { storyId, partId } = req.params;
 
     if (!userId) {
@@ -1625,7 +1622,6 @@ app.post("/api/stories/:storyId/parts/:partId/drafts", async (req, res) => {
     const version = Object.keys(existingDrafts).length + 1;
 
     const draftData = {
-      title: title || `Draft ${version}`, // ADDED
       content: JSON.stringify([{ type: 'paragraph', children: [{ text: '' }] }]),
       createdAt: Date.now(),
       wordCount: 0,
@@ -1694,166 +1690,6 @@ app.put("/api/stories/:storyId/parts/:partId/drafts/:draftId", async (req, res) 
     res.status(200).json({ success: true });
   } catch (err) {
     logger.error(`[ERROR] PUT draft: ${err}`);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.put("/api/stories/:storyId", async (req, res) => {
-  logger.info(`[REQUEST] PUT /api/stories/:storyId`);
-  try {
-    const { userId, title, description } = req.body;
-    const { storyId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
-    }
-
-    const pipeline = new ConfirmationPipeline({ uid: userId });
-    const storyRef = child(pipeline.manager.baseRef, `stories/${storyId}`);
-
-    const updates = {
-      updatedAt: Date.now()
-    };
-    if (title) updates.title = title;
-    if (description !== undefined) updates.description = description;
-
-    await update(storyRef, updates);
-
-    logger.info(`[DATA] Updated story ${storyId}`);
-    res.status(200).json({ success: true, storyId });
-  } catch (err) {
-    logger.error(`[ERROR] PUT /api/stories/:storyId: ${err}`);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.delete("/api/stories/:storyId", async (req, res) => {
-  logger.info(`[REQUEST] DELETE /api/stories/:storyId`);
-  try {
-    const { userId } = req.body;
-    const { storyId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
-    }
-
-    const pipeline = new ConfirmationPipeline({ uid: userId });
-    const storyRef = child(pipeline.manager.baseRef, `stories/${storyId}`);
-
-    await remove(storyRef);
-
-    logger.info(`[DATA] Deleted story ${storyId}`);
-    res.status(200).json({ success: true, storyId });
-  } catch (err) {
-    logger.error(`[ERROR] DELETE /api/stories/:storyId: ${err}`);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ========== PART UPDATE/DELETE ==========
-
-app.put("/api/stories/:storyId/parts/:partId", async (req, res) => {
-  logger.info(`[REQUEST] PUT /api/stories/:storyId/parts/:partId`);
-  try {
-    const { userId, title, type, description } = req.body;
-    const { storyId, partId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
-    }
-
-    const pipeline = new ConfirmationPipeline({ uid: userId });
-    const partRef = child(pipeline.manager.baseRef, `stories/${storyId}/parts/${partId}`);
-
-    const updates = {
-      updatedAt: Date.now()
-    };
-    if (title) updates.title = title;
-    if (type) updates.type = type;
-    if (description !== undefined) updates.description = description;
-
-    await update(partRef, updates);
-
-    logger.info(`[DATA] Updated part ${partId} in story ${storyId}`);
-    res.status(200).json({ success: true, partId });
-  } catch (err) {
-    logger.error(`[ERROR] PUT /api/stories/:storyId/parts/:partId: ${err}`);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.delete("/api/stories/:storyId/parts/:partId", async (req, res) => {
-  logger.info(`[REQUEST] DELETE /api/stories/:storyId/parts/:partId`);
-  try {
-    const { userId } = req.body;
-    const { storyId, partId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
-    }
-
-    const pipeline = new ConfirmationPipeline({ uid: userId });
-    const partRef = child(pipeline.manager.baseRef, `stories/${storyId}/parts/${partId}`);
-
-    await remove(partRef);
-
-    logger.info(`[DATA] Deleted part ${partId} from story ${storyId}`);
-    res.status(200).json({ success: true, partId });
-  } catch (err) {
-    logger.error(`[ERROR] DELETE /api/stories/:storyId/parts/:partId: ${err}`);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ========== DRAFT UPDATE/DELETE ==========
-
-app.patch("/api/stories/:storyId/parts/:partId/drafts/:draftId", async (req, res) => {
-  logger.info(`[REQUEST] PATCH draft (update metadata)`);
-  try {
-    const { userId, title } = req.body;
-    const { storyId, partId, draftId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
-    }
-
-    const pipeline = new ConfirmationPipeline({ uid: userId });
-    const draftRef = child(pipeline.manager.baseRef, `stories/${storyId}/parts/${partId}/drafts/${draftId}`);
-
-    const updates = {
-      updatedAt: Date.now()
-    };
-    if (title) updates.title = title;
-
-    await update(draftRef, updates);
-
-    logger.info(`[DATA] Updated draft metadata ${draftId}`);
-    res.status(200).json({ success: true, draftId });
-  } catch (err) {
-    logger.error(`[ERROR] PATCH draft: ${err}`);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.delete("/api/stories/:storyId/parts/:partId/drafts/:draftId", async (req, res) => {
-  logger.info(`[REQUEST] DELETE draft`);
-  try {
-    const { userId } = req.body;
-    const { storyId, partId, draftId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
-    }
-
-    const pipeline = new ConfirmationPipeline({ uid: userId });
-    const draftRef = child(pipeline.manager.baseRef, `stories/${storyId}/parts/${partId}/drafts/${draftId}`);
-
-    await remove(draftRef);
-
-    logger.info(`[DATA] Deleted draft ${draftId}`);
-    res.status(200).json({ success: true, draftId });
-  } catch (err) {
-    logger.error(`[ERROR] DELETE draft: ${err}`);
     res.status(500).json({ error: err.message });
   }
 });

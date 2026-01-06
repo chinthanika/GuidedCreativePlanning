@@ -19,6 +19,8 @@ from utils.chat.DTConversationFlowManager import DTConversationFlowManager
 from utils.chat.bs_action_handler import bs_background_handle_action, bs_handle_action
 from utils.chat.dt_action_handler import dt_background_handle_action, dt_handle_action
 
+from utils.feedback.feedback_action_handler import handle_feedback_action
+
 from utils.chat.chat_utils import (
     MAX_DEPTH, KEEP_LAST_N, PROFILE_MANAGER_URL, DEEPSEEK_URL, 
     DEEPSEEK_API_KEY, LEONARDO_API_KEY, parse_markdown, 
@@ -31,11 +33,14 @@ from utils.recommendations.ranker import BookRanker
 from utils.recommendations.StoryElementExtractor import StoryElementExtractor
 from utils.recommendations.book_explanation import BookExplanationGenerator
 
+from utils.feedback.utils import _validate_feedback, _build_context_summary
+
 from prompts.bs_system_prompt import BS_SYSTEM_PROMPT
 from prompts.dt_system_prompt import DT_SYSTEM_PROMPT
 from prompts.mapping_system_prompt import MAPPING_SYSTEM_PROMPT
 from prompts.world_system_prompt import WORLD_SYSTEM_PROMPT
 from prompts.element_extraction_prompt import STORY_EXTRACTION_PROMPT
+from prompts.feedback_system_prompt import FEEDBACK_SYSTEM_PROMPT
 
 app = Flask(__name__)
 
@@ -81,6 +86,8 @@ try:
     
     # Parse the JSON string into a dict
     cred = credentials.Certificate(json.loads(firebase_json))
+
+    # cred = credentials.Certificate("../Firebase/structuredcreativeplanning-fdea4acca240.json")
     
     firebase_admin.initialize_app(cred, {
         'databaseURL': "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
@@ -2646,6 +2653,131 @@ def extract_story_elements():
             'details': str(e)
         }), 500
 
+
+# In app.py, update the feedback endpoint
+
+@app.route('/api/stories/<story_id>/feedback', methods=['POST'])
+def get_draft_feedback(story_id):
+    """
+    Generate context-aware feedback for story draft.
+    AI requests context itself using get_info/query actions (like BS chat).
+    """
+    request_start = time.time()
+    rec_logger.info(f"[FEEDBACK] Request for story {story_id}")
+    
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        draft_text = data.get('draftText', '').strip()
+        part_id = data.get('partId')
+        draft_id = data.get('draftId')
+        
+        # Validation
+        if not user_id or not draft_text:
+            return jsonify({
+                'error': 'Missing required fields',
+                'details': 'userId and draftText are required'
+            }), 400
+        
+        if len(draft_text) < 50:
+            return jsonify({
+                'error': 'Draft too short',
+                'details': 'Please write at least 50 characters before requesting feedback'
+            }), 400
+        
+        word_count = len(draft_text.split())
+        rec_logger.info(f"[FEEDBACK] Draft: {len(draft_text)} chars, {word_count} words")
+        
+        # ... rest of your existing feedback generation logic ...
+        
+        # After generating final_feedback:
+        
+        # Save feedback to Firebase
+        try:
+            feedback_data = {
+                **final_feedback,
+                'timestamp': int(time.time() * 1000),
+                'draftWordCount': word_count,
+                'processingTime': int((time.time() - request_start) * 1000),
+                'iterations': iteration
+            }
+            
+            feedback_ref = db.reference(
+                f"storyDrafts/{user_id}/{story_id}/parts/{part_id}/drafts/{draft_id}/feedback"
+            )
+            feedback_ref.set(feedback_data)
+            rec_logger.info("[FEEDBACK] Saved to Firebase")
+        except Exception as e:
+            rec_logger.warning(f"[FEEDBACK] Failed to save to Firebase: {e}")
+        
+        # Build response
+        total_time = time.time() - request_start
+        rec_logger.info(f"[FEEDBACK] Total: {total_time:.2f}s ({iteration} iterations)")
+        
+        return jsonify({
+            'feedback': final_feedback,
+            'processingTime': int(total_time * 1000),
+            'iterations': iteration,
+            'storyId': story_id,
+            'draftWordCount': word_count
+        }), 200
+        
+    except openai.APITimeoutError:
+        rec_logger.error("[FEEDBACK] DeepSeek timeout")
+        return jsonify({
+            'error': 'Analysis timeout',
+            'details': 'AI took too long to respond'
+        }), 504
+    
+    except Exception as e:
+        rec_logger.exception(f"[FEEDBACK] Unexpected error: {e}")
+        return jsonify({
+            'error': 'Feedback generation failed',
+            'details': str(e)
+        }), 500
+    
+@app.route('/api/stories/<story_id>/feedback/get', methods=['POST'])
+def get_existing_feedback(story_id):
+    """
+    Retrieve existing feedback for a draft.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        part_id = data.get('partId')
+        draft_id = data.get('draftId')
+        
+        if not user_id or not part_id or not draft_id:
+            return jsonify({
+                'error': 'Missing required fields',
+                'details': 'userId, partId, and draftId are required'
+            }), 400
+        
+        # Get feedback from Firebase
+        feedback_ref = db.reference(
+            f"storyDrafts/{user_id}/{story_id}/parts/{part_id}/drafts/{draft_id}/feedback"
+        )
+        feedback_data = feedback_ref.get()
+        
+        if not feedback_data:
+            return jsonify({
+                'exists': False,
+                'feedback': None
+            }), 200
+        
+        rec_logger.info(f"[FEEDBACK] Retrieved existing feedback for draft {draft_id}")
+        
+        return jsonify({
+            'exists': True,
+            'feedback': feedback_data
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[FEEDBACK] Failed to get existing feedback: {e}")
+        return jsonify({
+            'error': 'Failed to retrieve feedback',
+            'details': str(e)
+        }), 500
 
 @app.route('/api/book-recommendations/debug', methods=['POST'])
 def debug_book_sources():

@@ -17,7 +17,7 @@ import Login from './pages/signin/login';
 import MapGenerator from './pages/storymap/map-generator';
 import StoryMap from './pages/storymap/story-map';
 import StoryTimeline from './pages/timeline/timeline';
-import StoryEditor from './pages/storyeditor/story';
+import StoryEditorPage from './pages/storyeditor/story';
 import Chatbot from './pages/chatbot/chatbot'; // Import the Chatbot page
 import StoryWorld from './pages/world/world';  
 import LibraryPage from './pages/recommender/LibraryPage';
@@ -50,7 +50,7 @@ return (
                 <Route path='/story-world' element={<StoryWorld/>}/>
                 <Route path='/chatbot' element={<Chatbot/>}/>
                 <Route path='/library' element={<LibraryPage/>}/>
-                <Route path='/story-editor' element={<StoryEditor/>}/>
+                <Route path='/story-editor' element={<StoryEditorPage/>}/>
                 <Route exact path='/' element={
                     <PrivateRoute>
                     <Profile/>
