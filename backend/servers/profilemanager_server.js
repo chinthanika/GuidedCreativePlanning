@@ -1511,6 +1511,189 @@ async function getCachedWorldMetadata(userId, pipeline) {
   return metadata;
 }
 
+// ========== STORY STRUCTURE ENDPOINTS ==========
+
+app.get("/api/stories", async (req, res) => {
+  logger.info(`[REQUEST] GET /api/stories`);
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    const storiesRef = child(pipeline.manager.baseRef, "stories");
+    const snapshot = await get(storiesRef);
+
+    const stories = snapshot.exists() ? snapshot.val() : {};
+    logger.info(`[DATA] Fetched ${Object.keys(stories).length} stories`);
+    res.status(200).json(stories);
+  } catch (err) {
+    logger.error(`[ERROR] /api/stories: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/stories", async (req, res) => {
+  logger.info(`[REQUEST] POST /api/stories`);
+  try {
+    const { userId, title } = req.body;
+    if (!userId || !title) {
+      return res.status(400).json({ error: "userId and title are required" });
+    }
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    const storiesRef = child(pipeline.manager.baseRef, "stories");
+    const newStoryRef = push(storiesRef);
+
+    const storyData = {
+      title,
+      createdAt: Date.now(),
+      parts: {}
+    };
+
+    await set(newStoryRef, storyData);
+
+    logger.info(`[DATA] Created story ${newStoryRef.key}`);
+    res.status(200).json({
+      success: true,
+      storyId: newStoryRef.key,
+      ...storyData
+    });
+  } catch (err) {
+    logger.error(`[ERROR] POST /api/stories: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/stories/:storyId/parts", async (req, res) => {
+  logger.info(`[REQUEST] POST /api/stories/:storyId/parts`);
+  try {
+    const { userId, title } = req.body;
+    const { storyId } = req.params;
+
+    if (!userId || !title) {
+      return res.status(400).json({ error: "userId and title are required" });
+    }
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    const partsRef = child(pipeline.manager.baseRef, `stories/${storyId}/parts`);
+    const newPartRef = push(partsRef);
+
+    const partsSnapshot = await get(partsRef);
+    const existingParts = partsSnapshot.exists() ? partsSnapshot.val() : {};
+    const order = Object.keys(existingParts).length;
+
+    const partData = {
+      title,
+      order,
+      createdAt: Date.now(),
+      drafts: {}
+    };
+
+    await set(newPartRef, partData);
+
+    logger.info(`[DATA] Created part ${newPartRef.key} in story ${storyId}`);
+    res.status(200).json({
+      success: true,
+      partId: newPartRef.key,
+      ...partData
+    });
+  } catch (err) {
+    logger.error(`[ERROR] POST /api/stories/:storyId/parts: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/stories/:storyId/parts/:partId/drafts", async (req, res) => {
+  logger.info(`[REQUEST] POST /api/stories/:storyId/parts/:partId/drafts`);
+  try {
+    const { userId } = req.body;
+    const { storyId, partId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    const draftsRef = child(pipeline.manager.baseRef, `stories/${storyId}/parts/${partId}/drafts`);
+    const newDraftRef = push(draftsRef);
+
+    const draftsSnapshot = await get(draftsRef);
+    const existingDrafts = draftsSnapshot.exists() ? draftsSnapshot.val() : {};
+    const version = Object.keys(existingDrafts).length + 1;
+
+    const draftData = {
+      content: JSON.stringify([{ type: 'paragraph', children: [{ text: '' }] }]),
+      createdAt: Date.now(),
+      wordCount: 0,
+      version
+    };
+
+    await set(newDraftRef, draftData);
+
+    logger.info(`[DATA] Created draft ${newDraftRef.key} in part ${partId}`);
+    res.status(200).json({
+      success: true,
+      draftId: newDraftRef.key,
+      ...draftData
+    });
+  } catch (err) {
+    logger.error(`[ERROR] POST /api/stories/:storyId/parts/:partId/drafts: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/stories/:storyId/parts/:partId/drafts/:draftId", async (req, res) => {
+  logger.info(`[REQUEST] GET draft`);
+  try {
+    const { userId } = req.query;
+    const { storyId, partId, draftId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    const draftRef = child(pipeline.manager.baseRef, `stories/${storyId}/parts/${partId}/drafts/${draftId}`);
+    const snapshot = await get(draftRef);
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Draft not found" });
+    }
+
+    res.status(200).json(snapshot.val());
+  } catch (err) {
+    logger.error(`[ERROR] GET draft: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put("/api/stories/:storyId/parts/:partId/drafts/:draftId", async (req, res) => {
+  logger.info(`[REQUEST] PUT draft`);
+  try {
+    const { userId, content, wordCount } = req.body;
+    const { storyId, partId, draftId } = req.params;
+
+    if (!userId || !content) {
+      return res.status(400).json({ error: "userId and content are required" });
+    }
+
+    const pipeline = new ConfirmationPipeline({ uid: userId });
+    const draftRef = child(pipeline.manager.baseRef, `stories/${storyId}/parts/${partId}/drafts/${draftId}`);
+
+    await update(draftRef, {
+      content: JSON.stringify(content),
+      wordCount: wordCount || 0,
+      updatedAt: Date.now()
+    });
+
+    logger.info(`[DATA] Saved draft ${draftId}`);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    logger.error(`[ERROR] PUT draft: ${err}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
