@@ -8,7 +8,6 @@ import PartModal from '../../components/writingstudio/PartModal';
 import DraftModal from '../../components/writingstudio/DraftModal';
 import DeleteModal from '../../components/writingstudio/DeleteModal';
 
-
 import { useAuthValue } from '../../Firebase/AuthContext';
 import storyService from '../../services/StoryService';
 import './writing-studio.css';
@@ -24,6 +23,7 @@ const WritingStudio = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackExists, setFeedbackExists] = useState(false); // NEW
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -51,6 +51,40 @@ const WritingStudio = () => {
       loadStories();
     }
   }, [userId]);
+
+  // Load existing feedback when draft changes (NEW)
+  useEffect(() => {
+    const loadExistingFeedback = async () => {
+      if (!userId || !selectedStory || !selectedPart || !selectedDraft) {
+        setFeedback(null);
+        setFeedbackExists(false);
+        return;
+      }
+
+      try {
+        const result = await storyService.getExistingFeedback(
+          userId,
+          selectedStory,
+          selectedPart,
+          selectedDraft
+        );
+
+        if (result.exists) {
+          setFeedback(result.feedback);
+          setFeedbackExists(true);
+        } else {
+          setFeedback(null);
+          setFeedbackExists(false);
+        }
+      } catch (error) {
+        console.error('Failed to load existing feedback:', error);
+        setFeedback(null);
+        setFeedbackExists(false);
+      }
+    };
+
+    loadExistingFeedback();
+  }, [userId, selectedStory, selectedPart, selectedDraft]);
 
   const loadStories = async () => {
     try {
@@ -85,8 +119,7 @@ const WritingStudio = () => {
     setSelectedStory(storyId);
     setSelectedPart(partId);
     setSelectedDraft(draftId);
-    setFeedbackOpen(false);
-    setFeedback(null);
+    // Don't reset feedback - let useEffect handle loading
   };
 
   // ============ STORY CRUD ============
@@ -103,10 +136,8 @@ const WritingStudio = () => {
   const handleSaveStory = async (storyData) => {
     try {
       if (editingStory) {
-        // Update existing story
         await storyService.updateStory(userId, editingStory.id, storyData);
       } else {
-        // Create new story with first part and draft
         const story = await storyService.createStory(userId, storyData.title, storyData.description);
         const part = await storyService.createPart(userId, story.storyId, {
           title: 'Chapter 1',
@@ -116,7 +147,6 @@ const WritingStudio = () => {
           title: 'Draft 1'
         });
 
-        // Select the newly created draft
         await loadStories();
         handleSelect(story.storyId, part.partId, draft.draftId);
       }
@@ -169,16 +199,13 @@ const WritingStudio = () => {
   const handleSavePart = async (partData) => {
     try {
       if (editingPart) {
-        // Update existing part
         await storyService.updatePart(userId, editingPart.storyId, editingPart.id, partData);
       } else {
-        // Create new part with first draft
         const part = await storyService.createPart(userId, partModalStoryId, partData);
         const draft = await storyService.createDraft(userId, partModalStoryId, part.partId, {
           title: 'Draft 1'
         });
 
-        // Select the newly created draft
         await loadStories();
         handleSelect(partModalStoryId, part.partId, draft.draftId);
       }
@@ -234,13 +261,10 @@ const WritingStudio = () => {
   const handleSaveDraft = async (draftData) => {
     try {
       if (editingDraft) {
-        // Update existing draft
         await storyService.updateDraft(userId, editingDraft.storyId, editingDraft.partId, editingDraft.id, draftData);
       } else {
-        // Create new draft
         const draft = await storyService.createDraft(userId, draftModalStoryId, draftModalPartId, draftData);
 
-        // Select the newly created draft
         await loadStories();
         handleSelect(draftModalStoryId, draftModalPartId, draft.draftId);
       }
@@ -277,8 +301,8 @@ const WritingStudio = () => {
     setDeleteModalOpen(true);
   };
 
-  // ============ FEEDBACK ============
-  const handleFeedbackRequest = async (draftText) => {
+  // ============ FEEDBACK (UPDATED) ============
+  const handleGenerateFeedback = async (draftText) => {
     setFeedbackOpen(true);
     setFeedbackLoading(true);
 
@@ -290,15 +314,24 @@ const WritingStudio = () => {
         selectedDraft,
         draftText
       );
-      setFeedback(result);
+      setFeedback(result.feedback);
+      setFeedbackExists(true);
     } catch (err) {
       console.error('Error getting feedback:', err);
       setFeedback({
-        error: 'Failed to generate feedback. Please try again.'
+        error: err.message || 'Failed to generate feedback. Please try again.'
       });
     } finally {
       setFeedbackLoading(false);
     }
+  };
+
+  const handleViewFeedback = () => {
+    setFeedbackOpen(true);
+  };
+
+  const handleCloseFeedback = () => {
+    setFeedbackOpen(false);
   };
 
   if (loading) {
@@ -334,7 +367,10 @@ const WritingStudio = () => {
           storyId={selectedStory}
           partId={selectedPart}
           draftId={selectedDraft}
-          onFeedbackRequest={handleFeedbackRequest}
+          feedbackExists={feedbackExists}
+          onGenerateFeedback={handleGenerateFeedback}
+          onViewFeedback={handleViewFeedback}
+          onFeedbackStatusChange={setFeedbackExists}
         />
       ) : (
         <div className="editor-placeholder">
@@ -348,7 +384,7 @@ const WritingStudio = () => {
 
       <FeedbackPanel
         isOpen={feedbackOpen}
-        onClose={() => setFeedbackOpen(false)}
+        onClose={handleCloseFeedback}
         feedback={feedback}
         isLoading={feedbackLoading}
       />

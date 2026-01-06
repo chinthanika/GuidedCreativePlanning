@@ -810,3 +810,276 @@
   background: var(--primary-dark, #18181B);
   transform: translateY(-1px);
 }
+
+/* Add to writing-studio.css */
+
+/* ============ EDITOR ACTIONS ============ */
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.word-count {
+  font-size: 13px;
+  color: var(--text-secondary, #52525B);
+  padding: 0 8px;
+  font-weight: 400;
+}
+
+/* ============ SAVE BUTTON ============ */
+.save-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--background-paper, #FFFFFF);
+  border: 1px solid var(--divider, #E7E5E4);
+  border-radius: 6px;
+  color: var(--text-primary, #27272A);
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: var(--border-light, #F5F5F4);
+  border-color: var(--text-disabled, #A8A29E);
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============ FEEDBACK BUTTONS ============ */
+.feedback-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--primary-main, #27272A);
+  border: none;
+  border-radius: 6px;
+  color: var(--background-default, #FAFAF9);
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.feedback-btn:hover:not(:disabled) {
+  background: var(--primary-light, #3F3F46);
+}
+
+.feedback-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* View Feedback Button (Info/Secondary Style) */
+.feedback-btn-view {
+  background: var(--secondary-main, #52525B);
+  color: var(--background-default, #FAFAF9);
+}
+
+.feedback-btn-view:hover:not(:disabled) {
+  background: var(--secondary-light, #71717A);
+}
+
+/* Regenerate Feedback Button (Warning Style) */
+.feedback-btn-regenerate {
+  background: var(--warning-main, #EA580C);
+  color: #FFFFFF;
+  position: relative;
+}
+
+.feedback-btn-regenerate:hover:not(:disabled) {
+  background: var(--warning-dark, #C2410C);
+}
+
+/* ============ UNSAVED CHANGES INDICATOR ============ */
+.unsaved-badge {
+  background: var(--error-main, #DC2626);
+  color: #FFFFFF;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 6px;
+  animation: pulse-badge 2s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+/* ============ SAVE INDICATOR ============ */
+.save-indicator {
+  padding: 8px 16px;
+  background: var(--border-light, #F5F5F4);
+  border-bottom: 1px solid var(--divider, #E7E5E4);
+  font-size: 13px;
+  color: var(--text-secondary, #52525B);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+
+.unsaved-indicator {
+  color: var(--warning-main, #EA580C);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.unsaved-indicator::before {
+  content: '•';
+  font-size: 18px;
+}
+
+/* ============ LOADING STATES ============ */
+.feedback-btn:disabled {
+  position: relative;
+  padding-left: 36px;
+}
+
+.feedback-btn:disabled::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============ RESPONSIVE ADJUSTMENTS ============ */
+@media (max-width: 768px) {
+  .editor-actions {
+    gap: 6px;
+  }
+
+  .save-btn,
+  .feedback-btn,
+  .feedback-btn-view,
+  .feedback-btn-regenerate {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .word-count {
+    display: none; /* Hide on mobile to save space */
+  }
+}
+
+/* ============ FOCUS STATES (Accessibility) ============ */
+.save-btn:focus-visible,
+.feedback-btn:focus-visible,
+.feedback-btn-view:focus-visible,
+.feedback-btn-regenerate:focus-visible {
+  outline: 2px solid var(--primary-main, #27272A);
+  outline-offset: 2px;
+}
+
+/* ============ BUTTON ICONS ============ */
+.save-btn svg,
+.feedback-btn svg,
+.feedback-btn-view svg,
+.feedback-btn-regenerate svg {
+  flex-shrink: 0;
+}
+
+/* ============ EDITOR TOOLBAR LAYOUT ============ */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--background-paper, #FFFFFF);
+  border-bottom: 1px solid var(--divider, #E7E5E4);
+  gap: 16px;
+}
+
+.format-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--divider, #E7E5E4);
+  border-radius: 4px;
+  color: var(--text-primary, #27272A);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toolbar-btn:hover {
+  background: var(--border-light, #F5F5F4);
+  border-color: var(--text-disabled, #A8A29E);
+}
+
+.toolbar-btn:active {
+  background: var(--divider, #E7E5E4);
+}
+
+/* ============ BUTTON GROUP SPACING ============ */
+.editor-actions > * + * {
+  margin-left: 0; /* Reset any default margins */
+}
+
+/* ============ SUCCESS STATE (After Saving) ============ */
+.save-btn.save-success {
+  background: var(--success-main, #16A34A);
+  color: #FFFFFF;
+  border-color: var(--success-main, #16A34A);
+}
+
+.save-btn.save-success:hover {
+  background: var(--success-dark, #15803D);
+  border-color: var(--success-dark, #15803D);
+}
+
+/* Optional: Add transition animation for save success */
+@keyframes save-success-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(22, 163, 74, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+  }
+}
+
+.save-btn.save-success {
+  animation: save-success-pulse 0.6s ease-out;
+}

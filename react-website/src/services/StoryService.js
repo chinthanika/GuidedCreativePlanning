@@ -3,7 +3,7 @@ const AI_URL = process.env.REACT_APP_AI_SERVER_URL || 'http://localhost:5000';
 
 export const storyService = {
   // ============ STORIES ============
-  
+
   async getStories(userId) {
     const response = await fetch(`${API_URL}/api/stories?userId=${userId}`);
     if (!response.ok) throw new Error('Failed to fetch stories');
@@ -52,8 +52,8 @@ export const storyService = {
     const response = await fetch(`${API_URL}/api/stories/${storyId}/parts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        userId, 
+      body: JSON.stringify({
+        userId,
         title: partData.title || 'Untitled Part',
         type: partData.type || 'chapter',
         description: partData.description || ''
@@ -99,7 +99,7 @@ export const storyService = {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           userId,
           title: draftData.title || 'Draft 1'
         })
@@ -148,7 +148,7 @@ export const storyService = {
     return response.json();
   },
 
-  // ============ FEEDBACK (NEW!) ============
+  // ============ FEEDBACK ============
 
   async requestFeedback(userId, storyId, partId, draftId, draftText) {
     // Input validation
@@ -160,11 +160,11 @@ export const storyService = {
       const response = await fetch(`${AI_URL}/api/stories/${storyId}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userId, 
+        body: JSON.stringify({
+          userId,
           draftText: draftText.trim(),
-          partId, 
-          draftId 
+          partId,
+          draftId
         })
       });
 
@@ -177,6 +177,29 @@ export const storyService = {
       return data;
     } catch (error) {
       // Handle network errors
+      if (error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to AI server. Check your connection.');
+      }
+      throw error;
+    }
+  },
+
+  async getExistingFeedback(userId, storyId, partId, draftId) {
+    try {
+      const response = await fetch(`${AI_URL}/api/stories/${storyId}/feedback/get`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, partId, draftId })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.details || data.error || 'Failed to get feedback');
+      }
+
+      return data;
+    } catch (error) {
       if (error.message === 'Failed to fetch') {
         throw new Error('Unable to connect to AI server. Check your connection.');
       }
@@ -200,11 +223,11 @@ export const storyService = {
       if (node.text !== undefined) {
         return node.text;
       }
-      
+
       if (node.children) {
         return node.children.map(extractNode).join('');
       }
-      
+
       return '';
     };
 
@@ -220,7 +243,7 @@ export const storyService = {
     if (!text || typeof text !== 'string') {
       return 0;
     }
-    
+
     return text.trim().split(/\s+/).filter(word => word.length > 0).length;
   }
 };

@@ -1,12 +1,21 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Slate, Editable, withReact } from 'slate-react';
 import { createEditor, Editor } from 'slate';
-import { Save, Zap } from 'lucide-react';
+import { Save, Zap, Eye } from 'lucide-react';
 import storyService from '../../services/StoryService';
 
 const INITIAL_VALUE = [{ type: 'paragraph', children: [{ text: '' }] }];
 
-const StoryEditor = ({ userId, storyId, partId, draftId, onFeedbackRequest }) => {
+const StoryEditor = ({ 
+  userId, 
+  storyId, 
+  partId, 
+  draftId, 
+  feedbackExists,
+  onGenerateFeedback,
+  onViewFeedback,
+  onFeedbackStatusChange
+}) => {
   const editor = useMemo(() => withReact(createEditor()), []);
   const [value, setValue] = useState(INITIAL_VALUE);
   const [wordCount, setWordCount] = useState(0);
@@ -14,6 +23,8 @@ const StoryEditor = ({ userId, storyId, partId, draftId, onFeedbackRequest }) =>
   const [lastSaved, setLastSaved] = useState(null);
   const [autoSaveTimer, setAutoSaveTimer] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isGeneratingFeedback, setIsGeneratingFeedback] = useState(false);
 
   // Load draft on mount or when draft changes
   useEffect(() => {
@@ -25,13 +36,14 @@ const StoryEditor = ({ userId, storyId, partId, draftId, onFeedbackRequest }) =>
 
   const loadDraft = async () => {
     setIsLoading(true);
+    setHasUnsavedChanges(false);
+    
     try {
       const draft = await storyService.getDraft(userId, storyId, partId, draftId);
       
       if (draft && draft.content) {
         try {
           const parsedContent = JSON.parse(draft.content);
-          // Validate that it's a valid Slate value
           if (Array.isArray(parsedContent) && parsedContent.length > 0) {
             setValue(parsedContent);
             setWordCount(draft.wordCount || 0);
@@ -46,11 +58,9 @@ const StoryEditor = ({ userId, storyId, partId, draftId, onFeedbackRequest }) =>
           setWordCount(0);
         }
       } else {
-        // New draft - initialize with empty content
         console.log('No draft content found, initializing with default');
         setValue(INITIAL_VALUE);
         setWordCount(0);
-        // Save initial value to database
         try {
           await storyService.saveDraft(userId, storyId, partId, draftId, INITIAL_VALUE, 0);
         } catch (saveError) {
@@ -79,6 +89,7 @@ const StoryEditor = ({ userId, storyId, partId, draftId, onFeedbackRequest }) =>
     setValue(newValue);
     const words = countWords(newValue);
     setWordCount(words);
+    setHasUnsavedChanges(true);
 
     // Auto-save after 10 seconds of inactivity
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
@@ -93,6 +104,7 @@ const StoryEditor = ({ userId, storyId, partId, draftId, onFeedbackRequest }) =>
     try {
       await storyService.saveDraft(userId, storyId, partId, draftId, content, words);
       setLastSaved(new Date());
+      setHasUnsavedChanges(false);
     } catch (err) {
       console.error('Error saving draft:', err);
       alert('Failed to save draft');
@@ -101,11 +113,39 @@ const StoryEditor = ({ userId, storyId, partId, draftId, onFeedbackRequest }) =>
     }
   };
 
-  const handleFeedbackClick = () => {
-    const plainText = value.map(node =>
-      node.children.map(child => child.text).join('')
-    ).join('\n');
-    onFeedbackRequest(plainText);
+  const handleGetFeedback = async () => {
+    // Ensure draft is saved first
+    if (hasUnsavedChanges) {
+      await handleSave();
+    }
+
+    const plainText = storyService.extractTextFromSlate(value);
+    
+    if (!plainText || plainText.trim().length < 50) {
+      alert('Please write at least 50 characters before requesting feedback');
+      return;
+    }
+
+    setIsGeneratingFeedback(true);
+    try {
+      await onGenerateFeedback(plainText);
+      onFeedbackStatusChange(true);
+    } catch (error) {
+      console.error('Failed to generate feedback:', error);
+    } finally {
+      setIsGeneratingFeedback(false);
+    }
+  };
+
+  const handleRegenerateFeedback = async () => {
+    if (!hasUnsavedChanges) {
+      const confirm = window.confirm(
+        'You haven\'t made changes since the last feedback. Regenerate anyway?'
+      );
+      if (!confirm) return;
+    }
+
+    await handleGetFeedback();
   };
 
   const toggleMark = (markType) => {
@@ -148,7 +188,6 @@ const StoryEditor = ({ userId, storyId, partId, draftId, onFeedbackRequest }) =>
     }
   };
 
-  // Show loading state while fetching draft
   if (isLoading) {
     return (
       <div className="editor-container">
@@ -186,6 +225,7 @@ const StoryEditor = ({ userId, storyId, partId, draftId, onFeedbackRequest }) =>
 
         <div className="editor-actions">
           <span className="word-count">Words: {wordCount}</span>
+          
           <button
             onClick={() => handleSave()}
             className="save-btn"
@@ -195,16 +235,49 @@ const StoryEditor = ({ userId, storyId, partId, draftId, onFeedbackRequest }) =>
             <Save size={16} />
             {isSaving ? 'Saving...' : 'Save'}
           </button>
-          <button onClick={handleFeedbackClick} className="feedback-btn">
-            <Zap size={16} />
-            Get Feedback
-          </button>
+
+          {/* Feedback buttons - conditional rendering */}
+          {feedbackExists ? (
+            <>
+              <button 
+                onClick={onViewFeedback} 
+                className="feedback-btn feedback-btn-view"
+                title="View existing feedback"
+              >
+                <Eye size={16} />
+                View Feedback
+              </button>
+              <button 
+                onClick={handleRegenerateFeedback} 
+                className="feedback-btn feedback-btn-regenerate"
+                disabled={isGeneratingFeedback}
+                title={hasUnsavedChanges 
+                  ? "Regenerate feedback with latest changes" 
+                  : "Regenerate feedback"}
+              >
+                <Zap size={16} />
+                {isGeneratingFeedback ? 'Analyzing...' : 'Regenerate'}
+                {hasUnsavedChanges && <span className="unsaved-badge">*</span>}
+              </button>
+            </>
+          ) : (
+            <button 
+              onClick={handleGetFeedback} 
+              className="feedback-btn"
+              disabled={isGeneratingFeedback}
+              title="Get AI feedback on your draft"
+            >
+              <Zap size={16} />
+              {isGeneratingFeedback ? 'Analyzing...' : 'Get Feedback'}
+            </button>
+          )}
         </div>
       </div>
 
       {lastSaved && (
         <div className="save-indicator">
           Saved at {lastSaved.toLocaleTimeString()}
+          {hasUnsavedChanges && <span className="unsaved-indicator"> • Unsaved changes</span>}
         </div>
       )}
 
