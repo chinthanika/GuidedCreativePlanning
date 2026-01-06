@@ -4,6 +4,11 @@ import { X } from 'lucide-react';
 const FeedbackPanel = ({ isOpen, onClose, feedback, isLoading }) => {
   if (!isOpen) return null;
 
+  // Extract the actual feedback data
+  // Handle both direct feedback and nested feedback.feedback structure
+  const feedbackData = feedback?.feedback || feedback;
+  const hasError = feedback?.error || feedbackData?.error;
+
   return (
     <div className="feedback-panel">
       <div className="feedback-header">
@@ -18,35 +23,36 @@ const FeedbackPanel = ({ isOpen, onClose, feedback, isLoading }) => {
           <div className="loading-spinner"></div>
           <p>Analyzing your draft...</p>
         </div>
-      ) : feedback?.error ? (
+      ) : hasError ? (
         <div className="feedback-error">
-          <p>{feedback.error}</p>
+          <p><strong>Error:</strong> {hasError}</p>
+          {feedback?.details && <p className="error-details">{feedback.details}</p>}
         </div>
-      ) : feedback ? (
+      ) : feedbackData?.overallScore ? (
         <div className="feedback-content">
           <div className="feedback-score">
-            Overall Score: <strong>{feedback.overallScore}/10</strong>
+            Overall Score: <strong>{feedbackData.overallScore}/10</strong>
           </div>
 
-          {feedback.topPriority && (
+          {feedbackData.topPriority && (
             <div className="feedback-priority">
-              🎯 Top Priority: {feedback.topPriority}
+              🎯 <strong>Top Priority:</strong> {feedbackData.topPriority}
             </div>
           )}
 
-          {feedback.contextUsed && (
+          {feedbackData.contextUsed && (
             <div className="context-info">
               <strong>Story Context Used:</strong>
               <ul>
-                <li>{feedback.contextUsed.characters} characters</li>
-                <li>{feedback.contextUsed.locations} locations</li>
-                <li>{feedback.contextUsed.events} events</li>
-                <li>{feedback.contextUsed.relationships} relationships</li>
+                <li>{feedbackData.contextUsed.characters || 0} characters</li>
+                <li>{feedbackData.contextUsed.locations || 0} locations</li>
+                <li>{feedbackData.contextUsed.events || 0} events</li>
+                <li>{feedbackData.contextUsed.relationships || 0} relationships</li>
               </ul>
             </div>
           )}
 
-          {feedback.categories?.map((cat, idx) => (
+          {feedbackData.categories?.map((cat, idx) => (
             <div key={idx} className="feedback-category">
               <div className="category-header">
                 <span className="category-icon">{cat.icon}</span>
@@ -54,17 +60,23 @@ const FeedbackPanel = ({ isOpen, onClose, feedback, isLoading }) => {
                 <span className="category-score">({cat.score}/10)</span>
               </div>
               <div className="category-strength">
-                <strong>Strength:</strong> {cat.strength}
+                <strong>✓ Strength:</strong> {cat.strength}
               </div>
               <div className="category-suggestion">
-                <strong>Suggestion:</strong> {cat.suggestion}
+                <strong>💡 Suggestion:</strong> {cat.suggestion}
               </div>
             </div>
           ))}
+
+          {feedbackData.processingTime && (
+            <div className="feedback-meta">
+              <small>Analysis completed in {feedbackData.processingTime}ms</small>
+            </div>
+          )}
         </div>
       ) : (
         <div className="feedback-empty">
-          Click "Get Feedback" to analyze your draft with AI
+          <p>Click "Get Feedback" to analyze your draft with AI</p>
         </div>
       )}
     </div>

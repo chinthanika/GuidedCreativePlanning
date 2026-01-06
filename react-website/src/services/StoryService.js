@@ -148,16 +148,80 @@ export const storyService = {
     return response.json();
   },
 
-  // ============ FEEDBACK ============
+  // ============ FEEDBACK (NEW!) ============
 
   async requestFeedback(userId, storyId, partId, draftId, draftText) {
-    const response = await fetch(`${AI_URL}/api/stories/${storyId}/feedback`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, draftText, partId, draftId })
-    });
-    if (!response.ok) throw new Error('Failed to get feedback');
-    return response.json();
+    // Input validation
+    if (!draftText || draftText.trim().length < 50) {
+      throw new Error('Draft must be at least 50 characters');
+    }
+
+    try {
+      const response = await fetch(`${AI_URL}/api/stories/${storyId}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId, 
+          draftText: draftText.trim(),
+          partId, 
+          draftId 
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.details || data.error || 'Failed to get feedback');
+      }
+
+      return data;
+    } catch (error) {
+      // Handle network errors
+      if (error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to AI server. Check your connection.');
+      }
+      throw error;
+    }
+  },
+
+  // ============ HELPER METHODS ============
+
+  /**
+   * Extract plain text from Slate.js editor value
+   * @param {Array} slateValue - Slate.js document structure
+   * @returns {string} Plain text content
+   */
+  extractTextFromSlate(slateValue) {
+    if (!slateValue || !Array.isArray(slateValue)) {
+      return '';
+    }
+
+    const extractNode = (node) => {
+      if (node.text !== undefined) {
+        return node.text;
+      }
+      
+      if (node.children) {
+        return node.children.map(extractNode).join('');
+      }
+      
+      return '';
+    };
+
+    return slateValue.map(extractNode).join('\n').trim();
+  },
+
+  /**
+   * Calculate word count from text
+   * @param {string} text - Plain text
+   * @returns {number} Word count
+   */
+  calculateWordCount(text) {
+    if (!text || typeof text !== 'string') {
+      return 0;
+    }
+    
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
   }
 };
 
