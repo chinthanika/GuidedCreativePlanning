@@ -33,7 +33,7 @@ from utils.recommendations.ranker import BookRanker
 from utils.recommendations.StoryElementExtractor import StoryElementExtractor
 from utils.recommendations.book_explanation import BookExplanationGenerator
 
-from utils.feedback.utils import _validate_feedback, _build_context_summary
+from utils.feedback.utils import _validate_feedback, _build_context_summary, _validate_feedback_structure
 
 from prompts.bs_system_prompt import BS_SYSTEM_PROMPT
 from prompts.dt_system_prompt import DT_SYSTEM_PROMPT
@@ -2688,9 +2688,190 @@ def get_draft_feedback(story_id):
         word_count = len(draft_text.split())
         rec_logger.info(f"[FEEDBACK] Draft: {len(draft_text)} chars, {word_count} words")
         
-        # ... rest of your existing feedback generation logic ...
+       # Build initial prompt for AI
+        analysis_prompt = f"""Analyze this story draft and provide feedback.
+
+STORY ID: {story_id}
+USER ID: {user_id}
+
+DRAFT TEXT:
+{draft_text}
+
+INSTRUCTIONS:
+1. First, request story context if needed (characters, locations, events, etc.)
+2. Analyze the draft for craft, clarity, and consistency
+3. Return structured feedback in JSON format
+
+You can use these actions:
+- get_info: Fetch story profile data (nodes, links, events, worldbuilding)
+- query: Search for specific elements
+- respond: Return final feedback
+
+Start by requesting relevant context based on what you see in the draft."""
+
+        # Initial call to DeepSeek
+        messages = [
+            {"role": "system", "content": FEEDBACK_SYSTEM_PROMPT},
+            {"role": "user", "content": analysis_prompt}
+        ]
         
-        # After generating final_feedback:
+        max_iterations = 5  # Prevent infinite loops
+        iteration = 0
+        final_feedback = None
+        
+        while iteration < max_iterations and not final_feedback:
+            iteration += 1
+            rec_logger.info(f"[FEEDBACK] Iteration {iteration}")
+            
+            # Call DeepSeek
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=messages,
+                stream=False,
+                timeout=60,
+                temperature=0.7
+            )
+            
+            ai_response = response.choices[0].message.content.strip()
+            rec_logger.debug(f"[FEEDBACK] AI response: {ai_response[:200]}...")
+            
+            # Parse actions from response
+            try:
+                # Try to parse as JSON first
+                if ai_response.startswith('[') or ai_response.startswith('{'):
+                    parsed = json.loads(ai_response)
+                    if isinstance(parsed, dict) and 'overallScore' in parsed:
+                        final_feedback = parsed
+                        rec_logger.info("[FEEDBACK] Received final feedback (no action wrapper)")
+                        break
+
+                    if isinstance(parsed, dict):
+                        actions = [parsed]
+                    else:
+                        actions = parsed
+                else:
+                    # Extract JSON from markdown
+                    
+                    json_match = re.search(r'```json\s*(\[.*?\]|\{.*?\})\s*```', ai_response, re.DOTALL)
+                    if json_match:
+                        actions = json.loads(json_match.group(1))
+                        if isinstance(actions, dict):
+                            actions = [actions]
+                    else:
+                        # Try to find JSON object/array in response
+                        json_match = re.search(r'(\[.*?\]|\{.*?\})', ai_response, re.DOTALL)
+                        if json_match:
+                            actions = json.loads(json_match.group(1))
+                            if isinstance(actions, dict):
+                                actions = [actions]
+                        else:
+                            rec_logger.error(f"[FEEDBACK] Could not parse AI response as JSON")
+                            return jsonify({
+                                'error': 'Invalid AI response format',
+                                'details': 'AI did not return valid JSON'
+                            }), 500
+            
+            except json.JSONDecodeError as e:
+                rec_logger.error(f"[FEEDBACK] JSON parse error: {e}")
+                return jsonify({
+                    'error': 'Failed to parse AI response',
+                    'details': str(e)
+                }), 500
+            
+            # Process actions
+            context_responses = []
+            
+            for action in actions:
+                action_type = action.get('action')
+                
+                if action_type == 'get_info':
+                    # Handle context request (like BS chat)
+                    try:
+                        result = handle_feedback_action(
+                            action, 
+                            user_id, 
+                            story_id
+                        )
+                        context_responses.append({
+                            'action': 'get_info',
+                            'result': result
+                        })
+                        rec_logger.info(f"[FEEDBACK] [AI_SERVER] Fetched {action.get('data', {}).get('type')}")
+                        rec_logger.info(f"[FEEDBACK] Results: {result}")
+                    except Exception as e:
+                        rec_logger.error(f"[FEEDBACK] get_info failed: {e}")
+                        context_responses.append({
+                            'action': 'get_info',
+                            'error': str(e)
+                        })
+                
+                elif action_type == 'query':
+                    # Handle query (search) request
+                    try:
+                        result = handle_feedback_action(
+                            action,
+                            user_id,
+                            story_id
+                        )
+                        context_responses.append({
+                            'action': 'query',
+                            'result': result
+                        })
+                        rec_logger.info(f"[FEEDBACK] Query completed")
+                    except Exception as e:
+                        rec_logger.error(f"[FEEDBACK] query failed: {e}")
+                        context_responses.append({
+                            'action': 'query',
+                            'error': str(e)
+                        })
+                
+                elif action_type == 'respond':
+                    # Final feedback response
+                    feedback_data = action.get('data', {})
+                    
+                    # Validate feedback structure
+                    if _validate_feedback_structure(feedback_data):
+                        final_feedback = feedback_data
+                        rec_logger.info(f"[FEEDBACK] Final feedback received")
+                    else:
+                        rec_logger.error(f"[FEEDBACK] Invalid feedback structure")
+                        return jsonify({
+                            'error': 'Invalid feedback format',
+                            'details': 'AI response missing required fields'
+                        }), 500
+            
+            # If we got context, feed it back to AI for next iteration
+            if context_responses and not final_feedback:
+                context_message = {
+                    "role": "assistant",
+                    "content": json.dumps(actions)
+                }
+                
+                result_message = {
+                    "role": "user",
+                    "content": f"Context retrieved:\n{json.dumps(context_responses, indent=2)}\n\nNow analyze the draft and provide feedback."
+                }
+                
+                messages.append(context_message)
+                messages.append(result_message)
+                
+                rec_logger.info(f"[FEEDBACK] Context provided, continuing analysis")
+            
+            # If no more actions and no feedback, something went wrong
+            if not context_responses and not final_feedback:
+                rec_logger.error(f"[FEEDBACK] AI did not request context or return feedback")
+                return jsonify({
+                    'error': 'Analysis incomplete',
+                    'details': 'AI did not complete feedback analysis'
+                }), 500
+        
+        # Check if we hit max iterations
+        if not final_feedback:
+            rec_logger.error(f"[FEEDBACK] Max iterations reached without feedback")
+            return jsonify({
+                'error': 'Analysis timeout',
+                'details': 'Feedback generation took too long'
+            }), 500
         
         # Save feedback to Firebase
         try:

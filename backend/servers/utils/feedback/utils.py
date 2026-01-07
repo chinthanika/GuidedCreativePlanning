@@ -124,3 +124,24 @@ def _validate_feedback(feedback_data):
         return False
     
     return True
+
+def _validate_feedback_structure(feedback):
+    """Validate feedback has all required fields."""
+    required_fields = ['overallScore', 'topPriority', 'categories', 'contextUsed']
+    
+    for field in required_fields:
+        if field not in feedback:
+            return False
+    
+    # Validate categories
+    categories = feedback.get('categories', [])
+    if len(categories) != 5:
+        return False
+    
+    required_category_fields = ['name', 'icon', 'score', 'strength', 'suggestion']
+    for cat in categories:
+        for field in required_category_fields:
+            if field not in cat:
+                return False
+    
+    return True
