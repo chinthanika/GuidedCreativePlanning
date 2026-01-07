@@ -80,15 +80,15 @@ for logger_instance in [bs_logger, dt_logger, world_logger, char_logger]:
 # FIREBASE INIT
 # ============================================
 try:
-    # firebase_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
+    firebase_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
 
-    # if not firebase_json:
-    #     raise ValueError("FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set")
+    if not firebase_json:
+        raise ValueError("FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set")
     
-    # # Parse the JSON string into a dict
-    # cred = credentials.Certificate(json.loads(firebase_json))
+    # Parse the JSON string into a dict
+    cred = credentials.Certificate(json.loads(firebase_json))
 
-    cred = credentials.Certificate("../Firebase/structuredcreativeplanning-fdea4acca240.json")
+    # cred = credentials.Certificate("../Firebase/structuredcreativeplanning-fdea4acca240.json")
     
     firebase_admin.initialize_app(cred, {
         'databaseURL': "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
