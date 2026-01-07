@@ -1,5 +1,5 @@
 const API_URL = process.env.REACT_APP_PROFILE_MANAGER_URL || "https://guidedcreativeplanning-pfm.onrender.com" || 'http://localhost:5001';
-const AI_URL = process.env.REACT_APP_AI_SERVER_URL || 'http://localhost:5000';
+const AI_URL = process.env.REACT_APP_AI_SERVER_URL || 'https://guidedcreativeplanning-ai.onrender.com' || 'http://localhost:5000';
 
 export const storyService = {
   // ============ STORIES ============
