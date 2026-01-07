@@ -41,6 +41,7 @@ from prompts.mapping_system_prompt import MAPPING_SYSTEM_PROMPT
 from prompts.world_system_prompt import WORLD_SYSTEM_PROMPT
 from prompts.element_extraction_prompt import STORY_EXTRACTION_PROMPT
 from prompts.feedback_system_prompt import FEEDBACK_SYSTEM_PROMPT
+from prompts.timeline_reflection_prompt import TIMELINE_REFLECTION_PROMPT, TIMELINE_COHERENCE_PROMPT
 
 app = Flask(__name__)
 
@@ -2136,9 +2137,6 @@ def get_collection_books():
         rec_logger.exception(f"[COLLECTIONS] Failed to get collection books: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Add this endpoint to your Flask server (app.py)
-# Place it with your other book recommendation endpoints
-
 @app.route('/api/browse-books', methods=['POST'])
 def browse_books_by_genre():
     """
@@ -2654,8 +2652,274 @@ def extract_story_elements():
         }), 500
 
 
-# In app.py, update the feedback endpoint
+@app.route('/api/timeline/coherence', methods=['POST'])
+def timeline_coherence():
+    """
+    AI as Feedback Assistant: Check entire timeline for coherence issues.
+    """
+    request_start = time.time()
+    rec_logger.info("[TIMELINE_COHERENCE] Incoming request")
+    
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        timeline = data.get('timeline', [])
+        
+        if not user_id:
+            return jsonify({
+                'error': 'Missing required field',
+                'details': 'userId is required'
+            }), 400
+        
+        if len(timeline) < 3:
+            return jsonify({
+                'error': 'Insufficient timeline',
+                'details': f'Need at least 3 events. Current: {len(timeline)}'
+            }), 400
+        
+        rec_logger.info(f"[TIMELINE_COHERENCE] Analyzing {len(timeline)} events")
+        
+        # Prepare timeline data as separate context
+        timeline_data = {
+            'total_events': len(timeline),
+            'events': [
+                {
+                    'order': i + 1,
+                    'title': e.get('title', 'Untitled'),
+                    'description': e.get('description', '')[:200],
+                    'stage': e.get('stage', 'unknown'),
+                    'isMainEvent': e.get('isMainEvent', False),
+                    'date': e.get('date', '')
+                }
+                for i, e in enumerate(timeline)
+            ]
+        }
+        
+        # Build user message with timeline data (like other endpoints)
+        user_message = f"""Analyze this story timeline for coherence.
 
+TIMELINE DATA:
+{json.dumps(timeline_data, indent=2)}
+
+Provide feedback in the specified JSON format."""
+        
+        rec_logger.info("[TIMELINE_COHERENCE] Calling DeepSeek")
+        
+        # Call DeepSeek (static system prompt, dynamic data in user message)
+        try:
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": TIMELINE_COHERENCE_PROMPT},
+                    {"role": "user", "content": user_message}
+                ],
+                response_format={'type': 'json_object'},
+                stream=False,
+                timeout=60,
+                temperature=0.5
+            )
+            
+            rec_logger.info("[TIMELINE_COHERENCE] DeepSeek response received")
+            
+        except openai.APITimeoutError:
+            rec_logger.error("[TIMELINE_COHERENCE] DeepSeek timeout")
+            return jsonify({
+                'error': 'Analysis timeout',
+                'details': 'Timeline analysis took too long'
+            }), 504
+        
+        except Exception as api_err:
+            rec_logger.error(f"[TIMELINE_COHERENCE] DeepSeek API error: {api_err}")
+            return jsonify({
+                'error': 'AI service error',
+                'details': str(api_err)
+            }), 500
+        
+        # Parse response
+        try:
+            result_text = response.choices[0].message.content.strip()
+            
+            # Clean markdown code blocks if present
+            if result_text.startswith('```'):
+                result_text = re.sub(r'```(?:json)?\s*', '', result_text).strip()
+            
+            result = json.loads(result_text)
+            rec_logger.info("[TIMELINE_COHERENCE] Response parsed successfully")
+            
+        except json.JSONDecodeError as parse_err:
+            rec_logger.error(f"[TIMELINE_COHERENCE] JSON parse error: {parse_err}")
+            return jsonify({
+                'error': 'Failed to parse AI response',
+                'details': 'AI returned invalid JSON format'
+            }), 500
+        
+        # Add metadata
+        result['eventCount'] = len(timeline)
+        result['timestamp'] = int(time.time() * 1000)
+        
+        # Add stage distribution
+        stage_distribution = {}
+        for event in timeline:
+            stage = event.get('stage', 'unknown')
+            stage_distribution[stage] = stage_distribution.get(stage, 0) + 1
+        result['stageDistribution'] = stage_distribution
+        
+        total_time = time.time() - request_start
+        rec_logger.info(
+            f"[TIMELINE_COHERENCE] Success in {total_time:.2f}s, "
+            f"score: {result.get('overallScore', 'N/A')}"
+        )
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[TIMELINE_COHERENCE] Unexpected error: {e}")
+        return jsonify({
+            'error': 'Coherence check failed',
+            'details': str(e)
+        }), 500
+
+
+@app.route('/api/timeline/reflect', methods=['POST'])
+def timeline_reflect():
+    """
+    AI as Reflective Guide: Generate reflective questions about a timeline event.
+    """
+    request_start = time.time()
+    rec_logger.info("[TIMELINE_REFLECT] Incoming request")
+    
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        event = data.get('event')
+        timeline = data.get('timeline', [])
+        context = data.get('context', 'view')
+        
+        if not user_id or not event:
+            return jsonify({
+                'error': 'Missing required fields',
+                'details': 'userId and event are required'
+            }), 400
+        
+        if len(timeline) < 2:
+            return jsonify({
+                'error': 'Insufficient timeline data',
+                'details': 'Need at least 2 events for meaningful reflection'
+            }), 400
+        
+        rec_logger.info(f"[TIMELINE_REFLECT] Analyzing event: {event.get('title')}")
+        
+        # Build context data
+        event_index = next((i for i, e in enumerate(timeline) if e['id'] == event['id']), -1)
+        prev_event = timeline[event_index - 1] if event_index > 0 else None
+        next_event = timeline[event_index + 1] if event_index < len(timeline) - 1 else None
+        
+        context_map = {
+            'add': 'added',
+            'edit': 'edited',
+            'reorder': 'moved',
+            'view': 'selected'
+        }
+        
+        # Prepare context as structured data (like other endpoints)
+        reflection_context = {
+            'action': context_map.get(context, 'selected'),
+            'event': {
+                'title': event['title'],
+                'description': event['description'],
+                'stage': event['stage'],
+                'position': f"{event_index + 1} of {len(timeline)}"
+            },
+            'previous_event': {
+                'title': prev_event['title'] if prev_event else None,
+                'stage': prev_event['stage'] if prev_event else None,
+                'description': prev_event['description'][:100] if prev_event else None
+            } if prev_event else None,
+            'next_event': {
+                'title': next_event['title'] if next_event else None,
+                'stage': next_event['stage'] if next_event else None,
+                'description': next_event['description'][:100] if next_event else None
+            } if next_event else None,
+            'stage_event_count': sum(1 for e in timeline if e['stage'] == event['stage'])
+        }
+        
+        # Build user message (like other endpoints)
+        user_message = f"""The writer just {reflection_context['action']} an event in their timeline.
+
+EVENT AND CONTEXT:
+{json.dumps(reflection_context, indent=2)}
+
+Generate reflective questions and suggestions in the specified JSON format."""
+        
+        rec_logger.info("[TIMELINE_REFLECT] Calling DeepSeek")
+        
+        # Call DeepSeek
+        try:
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": TIMELINE_REFLECTION_PROMPT},
+                    {"role": "user", "content": user_message}
+                ],
+                response_format={'type': 'json_object'},
+                stream=False,
+                timeout=30,
+                temperature=0.7
+            )
+            
+            rec_logger.info("[TIMELINE_REFLECT] DeepSeek response received")
+            
+        except openai.APITimeoutError:
+            rec_logger.error("[TIMELINE_REFLECT] DeepSeek timeout")
+            return jsonify({
+                'error': 'Analysis timeout',
+                'details': 'Request took too long'
+            }), 504
+        
+        except Exception as api_err:
+            rec_logger.error(f"[TIMELINE_REFLECT] DeepSeek API error: {api_err}")
+            return jsonify({
+                'error': 'AI service error',
+                'details': str(api_err)
+            }), 500
+        
+        # Parse response
+        try:
+            result_text = response.choices[0].message.content.strip()
+            
+            if result_text.startswith('```'):
+                result_text = re.sub(r'```(?:json)?\s*', '', result_text).strip()
+            
+            result = json.loads(result_text)
+            rec_logger.info("[TIMELINE_REFLECT] Response parsed successfully")
+            
+        except json.JSONDecodeError as parse_err:
+            rec_logger.error(f"[TIMELINE_REFLECT] JSON parse error: {parse_err}")
+            return jsonify({
+                'error': 'Failed to parse AI response',
+                'details': 'AI returned invalid JSON format'
+            }), 500
+        
+        # Add metadata
+        result['event'] = {
+            'id': event['id'],
+            'title': event['title']
+        }
+        result['context'] = context
+        result['timestamp'] = int(time.time() * 1000)
+        
+        total_time = time.time() - request_start
+        rec_logger.info(f"[TIMELINE_REFLECT] Completed in {total_time:.2f}s")
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[TIMELINE_REFLECT] Error: {e}")
+        return jsonify({
+            'error': 'Reflection generation failed',
+            'details': str(e)
+        }), 500
+    
 @app.route('/api/stories/<story_id>/feedback', methods=['POST'])
 def get_draft_feedback(story_id):
     """
