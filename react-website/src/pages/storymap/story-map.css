@@ -43,7 +43,7 @@
     padding: 10px 20px;
     font-size: 14px;
     font-weight: 400;
-    text-transform: uppercase;
+    text-transform: none;
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -61,29 +61,13 @@
     margin-bottom: 15px;
     margin-top: 5px;
     margin-left: 5px;
-    padding: 10px 20px;
-    text-transform: none;
 }
 
 .render-btn:hover {
     background-color: var(--primary-light);
 }
 
-.add-node-btn {
-    background-color: var(--success-main);
-    color: white;
-    border: none;
-    margin-bottom: 15px;
-    margin-top: 5px;
-    margin-left: 5px;
-    padding: 10px 20px;
-    text-transform: none;
-}
-
-.add-node-btn:hover {
-    background-color: var(--success-dark);
-}
-
+.add-node-btn,
 .add-link-btn {
     background-color: var(--success-main);
     color: white;
@@ -91,12 +75,24 @@
     margin-bottom: 15px;
     margin-top: 5px;
     margin-left: 5px;
-    padding: 10px 20px;
-    text-transform: none;
 }
 
+.add-node-btn:hover,
 .add-link-btn:hover {
     background-color: var(--success-dark);
+}
+
+.analyze-btn {
+    background-color: var(--primary-main);
+    color: white;
+    border: none;
+    margin-bottom: 15px;
+    margin-top: 5px;
+    margin-left: 5px;
+}
+
+.analyze-btn:hover {
+    background-color: var(--primary-light);
 }
 
 /* Modal styling */
@@ -122,4 +118,140 @@
 .modal-input:focus {
     border-color: var(--text-disabled);
     outline: none;
+}
+
+/* Analysis Panel (matches FeedbackPanel style) */
+.analysis-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 500px;
+    height: 100vh;
+    background: var(--background-paper);
+    border-left: 1px solid var(--divider);
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.08);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+.analysis-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--divider);
+    flex-shrink: 0;
+}
+
+.analysis-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+}
+
+.icon-btn:hover {
+    background: var(--background-default);
+    color: var(--text-primary);
+}
+
+.analysis-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+}
+
+/* Override StoryMapAnalysis styles to fit in panel */
+.analysis-content > div {
+    max-width: 100%;
+    padding: 20px;
+}
+
+.analysis-content button {
+    font-size: 13px;
+}
+
+.analysis-content .text-2xl {
+    font-size: 1.5rem;
+}
+
+.analysis-content .text-sm {
+    font-size: 13px;
+}
+
+.analysis-content .px-6 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.analysis-content .py-4 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.analysis-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--divider);
+    border-top-color: var(--primary-main);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.analysis-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.analysis-empty p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .analysis-panel {
+        width: 100%;
+    }
 }
