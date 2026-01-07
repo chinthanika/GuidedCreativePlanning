@@ -8,8 +8,8 @@ import './worldbuilding.css';
 const WorldBuildingWidget = () => {
     const { currentUser } = useAuthValue();
     const userId = currentUser ? currentUser.uid : null;
-    // const PROFILE_MANAGER_URL = process.env.REACT_APP_PROFILE_MANAGER_URL || "https://guidedcreativeplanning-pfm.onrender.com" || "http://localhost:5001";
-    const PROFILE_MANAGER_URL = process.env.REACT_APP_PROFILE_MANAGER_URL || "http://localhost:5001";
+    const PROFILE_MANAGER_URL = process.env.REACT_APP_PROFILE_MANAGER_URL || "https://guidedcreativeplanning-pfm.onrender.com" || "http://localhost:5001";
+    // const PROFILE_MANAGER_URL = process.env.REACT_APP_PROFILE_MANAGER_URL || "http://localhost:5001";
     const [worldMetadata, setWorldMetadata] = useState(null);
     const [items, setItems] = useState({});
     const [templates, setTemplates] = useState({});
@@ -157,7 +157,6 @@ const WorldBuildingWidget = () => {
         }
     };
 
-    // Save edited item
     // Save edited item
     const handleSaveEditedItem = async (updatedItem, updatedTemplate) => {
         try {
