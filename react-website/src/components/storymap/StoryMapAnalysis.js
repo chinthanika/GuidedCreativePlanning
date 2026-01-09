@@ -44,7 +44,7 @@ export default function StoryMapAnalysis({
     setError(null);
     
     try {
-      const response = await fetch('api/story-map/analyze', {
+      const response = await fetch(`${AI_API_BASE_URL}/api/story-map/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
