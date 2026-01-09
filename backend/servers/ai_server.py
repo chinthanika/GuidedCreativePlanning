@@ -2726,11 +2726,12 @@ Provide comprehensive analysis including:
 5. Relationship diversity
 6. Character centrality
 
+IMPORTANT: Return ONLY valid JSON. Ensure all strings are properly escaped and quoted.
 Return analysis in the specified JSON format."""
         
         rec_logger.info("[STORY_MAP] Calling DeepSeek")
         
-        # Call DeepSeek
+        # Call DeepSeek with increased max_tokens to prevent truncation
         try:
             response = client.chat.completions.create(
                 model="deepseek-chat",
@@ -2740,8 +2741,9 @@ Return analysis in the specified JSON format."""
                 ],
                 response_format={'type': 'json_object'},
                 stream=False,
-                timeout=60,
-                temperature=0.3  # Lower temperature for more consistent analysis
+                timeout=90,
+                temperature=0.3,  # Lower temperature for more consistent analysis
+                max_tokens=8000  # Increased to handle large story maps
             )
             
             rec_logger.info("[STORY_MAP] DeepSeek response received")
@@ -2764,10 +2766,24 @@ Return analysis in the specified JSON format."""
         try:
             result_text = response.choices[0].message.content.strip()
             
+            # Log the raw response for debugging
+            rec_logger.debug(f"[STORY_MAP] Raw AI response length: {len(result_text)} chars")
+            
+            # Check if response was truncated
+            if response.choices[0].finish_reason == 'length':
+                rec_logger.error("[STORY_MAP] Response truncated - max_tokens too small")
+                return jsonify({
+                    'error': 'Analysis incomplete',
+                    'details': 'Story map too large for analysis. Try analyzing a smaller section.'
+                }), 413
+            
             # Clean markdown code blocks if present
             if result_text.startswith('```'):
                 result_text = re.sub(r'```(?:json)?\s*', '', result_text).strip()
+                if result_text.endswith('```'):
+                    result_text = result_text[:-3].strip()
             
+            # Try to parse JSON
             analysis = json.loads(result_text)
             rec_logger.info("[STORY_MAP] Response parsed successfully")
             
@@ -2782,10 +2798,24 @@ Return analysis in the specified JSON format."""
             
         except json.JSONDecodeError as parse_err:
             rec_logger.error(f"[STORY_MAP] JSON parse error: {parse_err}")
-            return jsonify({
-                'error': 'Failed to parse AI response',
-                'details': 'AI returned invalid JSON format'
-            }), 500
+            rec_logger.error(f"[STORY_MAP] Problematic response (first 500 chars): {result_text[:500]}")
+            rec_logger.error(f"[STORY_MAP] Problematic response (last 500 chars): {result_text[-500:]}")
+            
+            # Try to salvage partial response by fixing common issues
+            try:
+                # Remove any trailing incomplete content
+                last_brace = result_text.rfind('}')
+                if last_brace > 0:
+                    truncated = result_text[:last_brace + 1]
+                    analysis = json.loads(truncated)
+                    rec_logger.info("[STORY_MAP] Recovered partial response")
+                else:
+                    raise parse_err
+            except:
+                return jsonify({
+                    'error': 'Failed to parse AI response',
+                    'details': f'AI returned invalid JSON: {str(parse_err)}'
+                }), 500
         
         # Enrich issues with full node data for frontend
         for issue in analysis.get('issues', []):
@@ -2834,7 +2864,8 @@ Return analysis in the specified JSON format."""
             'error': 'Analysis failed',
             'details': str(e)
         }), 500
-
+    
+    
 @app.route('/api/timeline/coherence', methods=['POST'])
 def timeline_coherence():
     """

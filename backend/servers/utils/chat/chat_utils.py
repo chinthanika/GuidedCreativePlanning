@@ -11,7 +11,7 @@ from logging.handlers import RotatingFileHandler
 # ============================================
 # API KEYS & CONFIG
 # ============================================
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "sk-4fc0b7154d4441f7ac5922824c59454d")
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "sk-6df74184292c4ecc830f3d916cdb3592")
 LEONARDO_API_KEY = os.getenv("LEONARDO_API_KEY", "ff99362e-8a7e-4776-b03a-aed92b7ada51")
 PROFILE_MANAGER_URL = os.getenv("PROFILE_MANAGER_URL", "https://guidedcreativeplanning-pfm.onrender.com/api")
 DEEPSEEK_URL = "https://api.deepseek.com" 
