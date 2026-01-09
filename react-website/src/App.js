@@ -14,6 +14,7 @@ import SignUp from './pages/signin/signup';
 import VerifyEmail from './pages/signin/verifyEmail';
 import Profile from './pages/signin/profile';
 import Login from './pages/signin/login';
+import MentorTextPage from './pages/modelling/mentorTextPage';
 import MapGenerator from './pages/storymap/map-generator';
 import StoryMap from './pages/storymap/story-map';
 import StoryTimeline from './pages/timeline/timeline';
@@ -44,6 +45,7 @@ return (
                 <Route path='/login' element={<Login/>} />
                 <Route path='/verify-email' element={<VerifyEmail/>} />
                 <Route path='/profile' element={<Profile/>} />
+                <Route path='/mentor-text' element={<MentorTextPage/>} />
                 <Route path='/map-generator' element={<MapGenerator/>}/>
                 <Route path='/story-map' element={<StoryMap/>}/>
                 <Route path='/story-timeline' element={<StoryTimeline/>}/>

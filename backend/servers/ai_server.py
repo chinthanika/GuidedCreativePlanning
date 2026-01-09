@@ -43,6 +43,7 @@ from prompts.element_extraction_prompt import STORY_EXTRACTION_PROMPT
 from prompts.feedback_system_prompt import FEEDBACK_SYSTEM_PROMPT
 from prompts.timeline_reflection_prompt import TIMELINE_REFLECTION_PROMPT, TIMELINE_COHERENCE_PROMPT
 from prompts.story_map_analysis_prompt import STORY_MAP_ANALYSIS_PROMPT
+from prompts.mentor_analysis_prompt import MENTOR_TEXT_ANALYSIS_SYSTEM_PROMPT, build_mentor_analysis_user_prompt, validate_analysis_output
 
 app = Flask(__name__)
 
@@ -81,15 +82,15 @@ for logger_instance in [bs_logger, dt_logger, world_logger, char_logger]:
 # FIREBASE INIT
 # ============================================
 try:
-    # firebase_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
+    firebase_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
 
-    # if not firebase_json:
-    #     raise ValueError("FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set")
+    if not firebase_json:
+        raise ValueError("FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set")
     
-    # # Parse the JSON string into a dict
-    # cred = credentials.Certificate(json.loads(firebase_json))
+    # Parse the JSON string into a dict
+    cred = credentials.Certificate(json.loads(firebase_json))
 
-    cred = credentials.Certificate("../Firebase/structuredcreativeplanning-fdea4acca240.json")
+    # cred = credentials.Certificate("../Firebase/structuredcreativeplanning-fdea4acca240.json")
     
     firebase_admin.initialize_app(cred, {
         'databaseURL': "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
@@ -2865,7 +2866,7 @@ Return analysis in the specified JSON format."""
             'details': str(e)
         }), 500
     
-    
+
 @app.route('/api/timeline/coherence', methods=['POST'])
 def timeline_coherence():
     """
@@ -3561,6 +3562,306 @@ def debug_book_sources():
         rec_logger.exception(f"[DEBUG] Debug endpoint error: {e}")
         return jsonify({'error': str(e)}), 500
     
+
+@app.route('/api/mentor-text/analyze', methods=['POST'])
+def analyze_mentor_text():
+    """
+    Analyze a mentor text excerpt and generate teaching points.
+    AI acts as Modelling Guide: Notice & Name techniques for student learning.
+    """
+    request_start = time.time()
+    rec_logger.info("[MODELLING] Incoming analysis request")
+    
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        excerpt = data.get('excerpt', '').strip()
+        genre = data.get('genre', 'general fiction')
+        focus = data.get('focus', 'general')
+        
+        # Validation
+        if not user_id or not excerpt:
+            return jsonify({
+                'error': 'Missing required fields',
+                'details': 'userId and excerpt are required'
+            }), 400
+        
+        if len(excerpt) < 100:
+            return jsonify({
+                'error': 'Excerpt too short',
+                'details': f'Please provide at least 100 characters for meaningful analysis (currently: {len(excerpt)} chars)'
+            }), 400
+        
+        if len(excerpt) > 6000:
+            return jsonify({
+                'error': 'Excerpt too long',
+                'details': f'Please limit excerpts to 6000 characters (currently: {len(excerpt)} chars). Try selecting a key scene or passage.'
+            }), 400
+        
+        rec_logger.info(f"[MODELLING] Analyzing {len(excerpt)} char excerpt | Genre: {genre} | Focus: {focus}")
+        
+        # Build user message (data in user prompt, like other endpoints)
+        user_message = build_mentor_analysis_user_prompt(excerpt, genre, focus)
+        
+        rec_logger.info("[MODELLING] Calling DeepSeek")
+        
+        # Call DeepSeek (static system prompt, dynamic data in user message)
+        try:
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": MENTOR_TEXT_ANALYSIS_SYSTEM_PROMPT},
+                    {"role": "user", "content": user_message}
+                ],
+                response_format={'type': 'json_object'},
+                stream=False,
+                timeout=60,
+                temperature=0.4  # Lower for consistent pedagogical analysis
+            )
+            
+            rec_logger.info("[MODELLING] DeepSeek response received")
+            
+        except openai.APITimeoutError:
+            rec_logger.error("[MODELLING] DeepSeek timeout")
+            return jsonify({
+                'error': 'Analysis timeout',
+                'details': 'Mentor text analysis took too long. Try a shorter excerpt.'
+            }), 504
+        
+        except Exception as api_err:
+            rec_logger.error(f"[MODELLING] DeepSeek API error: {api_err}")
+            return jsonify({
+                'error': 'AI service error',
+                'details': str(api_err)
+            }), 500
+        
+        # Parse response
+        try:
+            result_text = response.choices[0].message.content.strip()
+            
+            # Clean markdown code blocks if present
+            if result_text.startswith('```'):
+                result_text = re.sub(r'```(?:json)?\s*', '', result_text).strip()
+                if result_text.endswith('```'):
+                    result_text = result_text[:-3].strip()
+            
+            result = json.loads(result_text)
+            rec_logger.info("[MODELLING] Response parsed successfully")
+            
+        except json.JSONDecodeError as parse_err:
+            rec_logger.error(f"[MODELLING] JSON parse error: {parse_err}")
+            rec_logger.error(f"[MODELLING] Problematic response (first 500 chars): {result_text[:500]}")
+            return jsonify({
+                'error': 'Failed to parse AI response',
+                'details': 'AI returned invalid JSON format'
+            }), 500
+        
+        # Validate output using utility function
+        validation = validate_analysis_output(result, excerpt)
+        
+        if not validation['passesValidation']:
+            rec_logger.warning(f"[MODELLING] Validation issues: {validation['issues']}")
+            # Include validation warning in response but don't fail
+            result['_validationWarning'] = {
+                'issues': validation['issues'],
+                'warnings': validation['warnings']
+            }
+        
+        if validation['warnings']:
+            rec_logger.info(f"[MODELLING] Validation warnings: {validation['warnings'][:3]}")
+        
+        # Add metadata
+        result['metadata'] = {
+            'timestamp': int(time.time() * 1000),
+            'excerptLength': len(excerpt),
+            'userProvided': {
+                'genre': genre,
+                'focus': focus
+            },
+            'validation': {
+                'quality': validation['quality'],
+                'passesValidation': validation['passesValidation'],
+                'teachingPointCount': validation['teachingPointCount']
+            },
+            'processingTime': int((time.time() - request_start) * 1000)
+        }
+        
+        # Optional: Save to user's library (non-blocking)
+        def save_to_library():
+            try:
+                analysis_id = f"analysis_{int(time.time() * 1000)}"
+                analyses_ref = db.reference(f"mentorTextAnalyses/{user_id}/{analysis_id}")
+                
+                # Store truncated excerpt to save Firebase space
+                truncated_excerpt = excerpt[:500] + '...' if len(excerpt) > 500 else excerpt
+                
+                analyses_ref.set({
+                    'excerpt': truncated_excerpt,
+                    'fullExcerptLength': len(excerpt),
+                    'analysis': result,
+                    'createdAt': int(time.time() * 1000),
+                    'genre': genre,
+                    'focus': focus,
+                    'validation': validation
+                })
+                
+                rec_logger.info(f"[MODELLING] Saved analysis {analysis_id} to library")
+            except Exception as save_error:
+                rec_logger.warning(f"[MODELLING] Failed to save to library: {save_error}")
+        
+        # Save in background thread
+        threading.Thread(target=save_to_library, daemon=True).start()
+        
+        total_time = time.time() - request_start
+        rec_logger.info(
+            f"[MODELLING] Total: {total_time:.2f}s, "
+            f"generated {len(result.get('teachingPoints', []))} teaching points, "
+            f"quality: {validation['quality']}"
+        )
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[MODELLING] Unexpected error: {e}")
+        return jsonify({
+            'error': 'Mentor text analysis failed',
+            'details': str(e)
+        }), 500
+
+
+@app.route('/api/mentor-text/library', methods=['POST'])
+def get_mentor_text_library():
+    """
+    Get all saved mentor text analyses for a user.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        
+        if not user_id:
+            return jsonify({
+                'error': 'Missing required field',
+                'details': 'userId is required'
+            }), 400
+        
+        # Get analyses from Firebase
+        analyses_ref = db.reference(f"mentorTextAnalyses/{user_id}")
+        analyses_data = analyses_ref.get() or {}
+        
+        # Convert to list with IDs
+        analyses = []
+        for analysis_id, analysis_info in analyses_data.items():
+            if isinstance(analysis_info, dict):
+                analyses.append({
+                    'id': analysis_id,
+                    'excerpt': analysis_info.get('excerpt'),
+                    'fullExcerptLength': analysis_info.get('fullExcerptLength'),
+                    'genre': analysis_info.get('genre'),
+                    'focus': analysis_info.get('focus'),
+                    'createdAt': analysis_info.get('createdAt', 0),
+                    'teachingPointCount': len(analysis_info.get('analysis', {}).get('teachingPoints', [])),
+                    'genreIdentified': analysis_info.get('analysis', {}).get('genreIdentified'),
+                    'overallLesson': analysis_info.get('analysis', {}).get('overallLesson')
+                })
+        
+        # Sort by most recent first
+        analyses.sort(key=lambda x: x.get('createdAt', 0), reverse=True)
+        
+        rec_logger.info(f"[MODELLING] Retrieved {len(analyses)} analyses from library")
+        
+        return jsonify({
+            'analyses': analyses,
+            'count': len(analyses)
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[MODELLING] Failed to get library: {e}")
+        return jsonify({
+            'error': 'Failed to retrieve library',
+            'details': str(e)
+        }), 500
+
+
+@app.route('/api/mentor-text/library/<analysis_id>', methods=['POST'])
+def get_mentor_text_analysis(analysis_id):
+    """
+    Get a specific saved mentor text analysis.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        
+        if not user_id:
+            return jsonify({
+                'error': 'Missing required field',
+                'details': 'userId is required'
+            }), 400
+        
+        # Get specific analysis from Firebase
+        analysis_ref = db.reference(f"mentorTextAnalyses/{user_id}/{analysis_id}")
+        analysis_data = analysis_ref.get()
+        
+        if not analysis_data:
+            return jsonify({
+                'error': 'Analysis not found',
+                'analysisId': analysis_id
+            }), 404
+        
+        rec_logger.info(f"[MODELLING] Retrieved analysis {analysis_id}")
+        
+        return jsonify({
+            'id': analysis_id,
+            **analysis_data
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[MODELLING] Failed to get analysis: {e}")
+        return jsonify({
+            'error': 'Failed to retrieve analysis',
+            'details': str(e)
+        }), 500
+
+
+@app.route('/api/mentor-text/library/<analysis_id>/delete', methods=['POST'])
+def delete_mentor_text_analysis(analysis_id):
+    """
+    Delete a saved mentor text analysis.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        
+        if not user_id:
+            return jsonify({
+                'error': 'Missing required field',
+                'details': 'userId is required'
+            }), 400
+        
+        # Check if analysis exists
+        analysis_ref = db.reference(f"mentorTextAnalyses/{user_id}/{analysis_id}")
+        if not analysis_ref.get():
+            return jsonify({
+                'error': 'Analysis not found',
+                'analysisId': analysis_id
+            }), 404
+        
+        # Delete analysis
+        analysis_ref.delete()
+        
+        rec_logger.info(f"[MODELLING] Deleted analysis {analysis_id}")
+        
+        return jsonify({
+            'success': True,
+            'deletedAnalysisId': analysis_id
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[MODELLING] Failed to delete analysis: {e}")
+        return jsonify({
+            'error': 'Failed to delete analysis',
+            'details': str(e)
+        }), 500
+    
 @app.route('/api/debug/mapping-metrics', methods=['GET'])
 def get_mapping_metrics():
     """Get subject mapping performance metrics."""
@@ -3604,4 +3905,5 @@ if __name__ == "__main__":
     print(f"   - Images: /images/generate")
     print(f"   - Book Recommendations: /api/book-recommendations")
     print(f"   - Story Extraction: /api/story-elements/extract")
+    print(f"   - Mentor Text Analysis: /api/mentor-text/analyze")
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
