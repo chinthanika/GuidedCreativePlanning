@@ -1,0 +1,475 @@
+/* Analysis Detail Modal Overlay */
+.analysis-detail-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+}
+
+.analysis-detail-modal {
+    background: var(--background-paper);
+    border-radius: 16px;
+    max-width: 900px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+/* Header */
+.analysis-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 2px solid var(--divider);
+    background: var(--border-light);
+}
+
+.analysis-detail-header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.analysis-detail-header-title h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.analysis-detail-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.analysis-detail-delete-btn,
+.analysis-detail-close-btn {
+    padding: 8px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.analysis-detail-delete-btn:hover {
+    background: #fee2e2;
+    color: var(--error-main);
+}
+
+.analysis-detail-close-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-primary);
+}
+
+/* Content Area */
+.analysis-detail-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+/* Loading, Error, Empty States */
+.analysis-detail-loading,
+.analysis-detail-error,
+.analysis-detail-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.analysis-loading-spinner {
+    animation: spin 1s linear infinite;
+    color: var(--secondary-main);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.analysis-retry-btn {
+    margin-top: 16px;
+    padding: 10px 20px;
+    background: var(--primary-main);
+    color: var(--background-paper);
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.analysis-retry-btn:hover {
+    background: var(--primary-dark);
+}
+
+/* Badges */
+.analysis-detail-badges {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.analysis-genre-badge,
+.analysis-focus-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.analysis-genre-badge {
+    background: var(--border-light);
+    border: 2px solid var(--divider);
+    color: var(--text-primary);
+}
+
+.analysis-focus-badge {
+    background: var(--background-paper);
+    border: 2px solid var(--divider);
+    color: var(--text-secondary);
+}
+
+/* Overall Lesson */
+.analysis-overall-lesson {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    background: var(--border-light);
+    border-left: 4px solid var(--secondary-main);
+    border-radius: 12px;
+    margin-bottom: 24px;
+}
+
+.analysis-lesson-icon {
+    flex-shrink: 0;
+    color: var(--secondary-main);
+}
+
+.analysis-overall-lesson h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+.analysis-overall-lesson p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Pedagogical Rationale */
+.analysis-rationale {
+    padding: 16px;
+    background: var(--border-light);
+    border-left: 4px solid var(--primary-light);
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.analysis-rationale h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.analysis-rationale p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Section Titles */
+.analysis-section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 16px 0;
+}
+
+/* Teaching Points */
+.analysis-teaching-points {
+    margin-bottom: 24px;
+}
+
+.analysis-teaching-point {
+    background: var(--background-paper);
+    border: 2px solid var(--divider);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+.analysis-teaching-point:hover {
+    border-color: var(--secondary-main);
+}
+
+.analysis-point-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+    background: var(--background-default);
+    transition: background-color 0.2s;
+}
+
+.analysis-point-header:hover {
+    background: var(--border-light);
+}
+
+.analysis-point-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+}
+
+.analysis-point-number {
+    width: 36px;
+    height: 36px;
+    background: var(--primary-main);
+    color: var(--background-paper);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.analysis-point-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 4px 0;
+}
+
+.analysis-trait-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--border-light);
+    color: var(--text-primary);
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+    border: 1px solid var(--divider);
+}
+
+.analysis-expand-btn {
+    padding: 4px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Point Content */
+.analysis-point-content {
+    padding: 20px 24px;
+    border-top: 1px solid var(--divider);
+}
+
+.analysis-point-section {
+    margin-bottom: 20px;
+}
+
+.analysis-point-section:last-child {
+    margin-bottom: 0;
+}
+
+.analysis-point-section h5 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px 0;
+}
+
+.analysis-point-section p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin: 0;
+}
+
+/* Genre Convention */
+.analysis-convention {
+    padding: 12px;
+    background: var(--border-light);
+    border-left: 3px solid var(--primary-light);
+    border-radius: 6px;
+}
+
+.analysis-convention h5 {
+    color: var(--text-primary);
+}
+
+.analysis-convention p {
+    color: var(--text-secondary);
+}
+
+/* Student Application */
+.analysis-application {
+    padding: 16px;
+    background: var(--border-light);
+    border-left: 4px solid var(--success-main);
+    border-radius: 8px;
+}
+
+.analysis-application-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.analysis-application-header svg {
+    color: var(--success-main);
+}
+
+.analysis-application h5 {
+    color: var(--text-primary);
+}
+
+.analysis-application p {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.analysis-blooms-badge {
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: var(--background-paper);
+    border: 1px solid var(--success-main);
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--success-dark);
+    display: inline-block;
+    text-transform: capitalize;
+}
+
+/* Related Techniques */
+.analysis-related-techniques {
+    padding: 16px;
+    background: var(--background-default);
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.analysis-related-techniques h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin: 0 0 12px 0;
+}
+
+.analysis-technique-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.analysis-technique-tag {
+    padding: 6px 14px;
+    background: var(--background-paper);
+    border: 1px solid var(--divider);
+    border-radius: 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Metadata Footer */
+.analysis-metadata-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 16px;
+    background: var(--border-light);
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.analysis-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+}
+
+.analysis-meta-item strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.analysis-quality-pass {
+    color: var(--success-main);
+}
+
+.analysis-quality-review_recommended {
+    color: var(--warning-main);
+}
+
+.analysis-quality-fail {
+    color: var(--error-main);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .analysis-detail-modal {
+        max-width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    .analysis-detail-content {
+        padding: 16px;
+    }
+
+    .analysis-point-header-left {
+        gap: 12px;
+    }
+
+    .analysis-point-number {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+}
