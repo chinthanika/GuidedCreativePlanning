@@ -191,6 +191,11 @@ const ItemDetailsModal = ({ isOpen, closeModal, item, template, onSave, onDelete
         try {
             const AI_SERVER_URL = process.env.REACT_APP_AI_SERVER_URL || "http://10.163.7.9:5000";
             
+            console.log(`Calling ${AI_SERVER_URL}.\n Requesting AI suggestions with:`, {
+                userId: item.userId || 'unknown',
+                itemName: editedItem.name,
+            });
+
             const response = await axios.post(`${AI_SERVER_URL}/worldbuilding/suggest-template`, {
                 userId: item.userId || 'unknown',
                 itemName: editedItem.name,

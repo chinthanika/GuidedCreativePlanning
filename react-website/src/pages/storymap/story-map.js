@@ -11,6 +11,8 @@ import { sha256 } from 'js-sha256';
 import NewNodeModal from '../../components/storymap/NewNodeModal';
 import NewLinkModal from '../../components/storymap/NewLinkModal';
 import EditLinkModal from '../../components/storymap/EditLinkModal';
+import StoryMapAnalysis from '../../components/storymap/StoryMapAnalysis';
+import AnalysisPanel from '../../components/storymap/AnalysisPanel';
 
 import './story-map.css';
 
@@ -28,6 +30,11 @@ function StoryMap() {
   const [newLinkSource, setNewLinkSource] = useState("");
   const [newLinkTarget, setNewLinkTarget] = useState("");
   const [notification, setNotification] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [cachedAnalysis, setCachedAnalysis] = useState(null); // Store generated feedback
+  const [shouldRegenerate, setShouldRegenerate] = useState(false);
+  const [mergeMode, setMergeMode] = useState(false);
+  const [selectedForMerge, setSelectedForMerge] = useState([]);
 
   const graphRef = ref(database, `stories/${userId}/graph/`);
 
@@ -42,14 +49,11 @@ function StoryMap() {
     setTimeout(() => setNotification(false), 2000);
   };
 
-
-  // Opens the modal for a selected node
   const openModal = (node) => {
     setSelectedNode(node);
     setIsModalOpen(true);
   };
 
-  // Closes the modal
   const closeModal = () => {
     setSelectedNode(null);
     setIsModalOpen(false);
@@ -84,16 +88,46 @@ function StoryMap() {
       console.error("Error updating node:", error);
     }
 
-    setData(updatedData);  // Be careful: this might still cause unnecessary re-renders
+    setData(updatedData);
     setIsModalOpen(false);
   }, [data, selectedNode, textInput, userId]);
 
-
-  // Opens the modal for editing a node
   const handleNodeClick = (node) => {
-    console.log("Clicked node: ", node);
-    setSelectedNode(node);
-    setIsModalOpen(true);
+    // If in merge mode, select nodes for merging
+    if (mergeMode) {
+      if (selectedForMerge.length === 0) {
+        // First node selected
+        setSelectedForMerge([node]);
+      } else if (selectedForMerge.length === 1) {
+        // Second node selected - perform merge
+        if (selectedForMerge[0].id === node.id) {
+          alert('Please select a different node');
+          return;
+        }
+        
+        const confirmMerge = window.confirm(
+          `Merge "${selectedForMerge[0].label}" into "${node.label}"?\n\n` +
+          `This will:\n` +
+          `• Keep "${node.label}" as the primary node\n` +
+          `• Combine all relationships and aliases\n` +
+          `• Delete "${selectedForMerge[0].label}"\n\n` +
+          `This cannot be undone.`
+        );
+        
+        if (confirmMerge) {
+          handleMergeNodes([selectedForMerge[0].id, node.id], node.label);
+        }
+        
+        // Exit merge mode
+        setMergeMode(false);
+        setSelectedForMerge([]);
+      }
+    } else {
+      // Normal mode - open edit modal
+      console.log("Clicked node: ", node);
+      setSelectedNode(node);
+      setIsModalOpen(true);
+    }
   };
 
   const handleLinkClick = (link) => {
@@ -112,12 +146,10 @@ function StoryMap() {
       return { ...prevData, nodes: updatedNodes };
     });
 
-    // Use setTimeout to ensure the state update is reflected in logs
     setTimeout(() => {
       console.log("Updated Nodes: ", data.nodes);
     }, 100);
 
-    // Ensure the correct node is updated in Firebase
     if (updatedNode.id) {
       const nodeIndex = data.nodes.findIndex((node) => node.id === updatedNode.id);
       console.log("Updated Node: ", updatedNode)
@@ -135,9 +167,8 @@ function StoryMap() {
 
   const deleteNode = (nodeId) => {
     const nodeIndex = data.nodes.findIndex((node) => node.id === nodeId);
-    if (nodeIndex === -1) return; // Exit if node is not found
+    if (nodeIndex === -1) return;
 
-    // Find the indices of the links to be deleted
     const linkIndices = data.links
       .map((link, linkIndex) => (link.source === nodeId || link.target === nodeId ? linkIndex : -1))
       .filter((linkIndex) => linkIndex !== -1);
@@ -146,10 +177,8 @@ function StoryMap() {
       const updatedNodes = prevData.nodes.filter((node) => node.id !== nodeId);
       const updatedLinks = prevData.links.filter((link) => link.source !== nodeId && link.target !== nodeId);
 
-      // Remove node from Firebase using its index
       remove(ref(database, `stories/${currentUser.uid}/graph/nodes/${nodeIndex}`));
 
-      // Remove related links from Firebase using their indices
       linkIndices.forEach((linkIndex) => {
         remove(ref(database, `stories/${currentUser.uid}/graph/links/${linkIndex}`));
       });
@@ -158,32 +187,8 @@ function StoryMap() {
     });
   };
 
-  // const addNode = async () => {
-  //   const nodeName = "New Node"; // Default name
-
-  //   const id = sha256(nodeName)
-
-  //   const newNode = {
-  //     id: id,
-  //     label: nodeName,
-  //     aliases: "",
-  //     group: "Uncategorized",
-  //     hidden: false,
-  //     level: 1,
-  //     note: ""
-  //   };
-
-  //   setData((prev) => ({ ...prev, nodes: [...prev.nodes, newNode] }));
-  //   console.log("Adding Node: ", newNode);
-
-  //   // Store in Firebase
-  //   set(ref(database, `stories/${userId}/graph/nodes/${data.nodes.length}`), newNode)
-  //     .then(showNotification)
-  //     .catch((error) => console.error("Error adding node:", error));
-  // };
-
   const addNode = () => {
-    setIsNewNodeModalOpen(true); // Open modal to input new node details
+    setIsNewNodeModalOpen(true);
   };
 
   const closeNewNodeModal = () => {
@@ -193,7 +198,6 @@ function StoryMap() {
   const saveNewNode = async (nodeDetails) => {
     const { label, aliases } = nodeDetails;
 
-    // Check if node name or alias already exists
     const existingNode = data.nodes.find(node =>
       node.label.toLowerCase() === label.toLowerCase() ||
       node.aliases.split(",").map(a => a.trim().toLowerCase()).includes(label.toLowerCase())
@@ -217,12 +221,11 @@ function StoryMap() {
 
     setData((prev) => ({ ...prev, nodes: [...prev.nodes, newNode] }));
 
-    // Store in Firebase
     set(ref(database, `stories/${userId}/graph/nodes/${data.nodes.length}`), newNode)
       .then(showNotification)
       .catch((error) => console.error("Error adding node:", error));
 
-    closeNewNodeModal(); // Close the modal after saving
+    closeNewNodeModal();
   };
 
   const openNewLinkModal = () => {
@@ -242,7 +245,6 @@ function StoryMap() {
     setSelectedLink(null);
     setIsEditLinkModalOpen(false);
   };
-
 
   const saveNewLink = (linkDetails) => {
     const { context, source, target, type } = linkDetails;
@@ -325,97 +327,54 @@ function StoryMap() {
     closeEditLinkModal();
   };
 
-  // // Adds a new link between nodes
-  // const addLink = (sourceId, targetId, linkLabel) => {
-  //   if (sourceId === targetId) {
-  //     alert("A node cannot link to itself.");
-  //     return;
-  //   }
-
-  //   const existingLink = links.find(
-  //     (link) =>
-  //       (link.source === sourceId && link.target === targetId) ||
-  //       (link.source === targetId && link.target === sourceId)
-  //   );
-
-  //   if (existingLink) {
-  //     const newLabel = prompt(`Edit existing link (${existingLink.link}):`, existingLink.link);
-  //     if (newLabel !== null) {
-  //       setLinks(data.links.map((link) =>
-  //         link === existingLink ? { ...link, link: newLabel } : link
-  //       ));
-  //     }
-  //   } else {
-  //     if (linkLabel) {
-  //       setLinks([...links, { link: linkLabel, source: sourceId, target: targetId }]);
-  //     }
-  //   }
-  // };
-
-  // Assign levels to nodes
   const assignLevels = (snapshotData) => {
-    // Initialize nodes, links and visited sets
     const nodes = new Map();
     const links = new Set();
     const visited = new Set();
-    console.log("Data links: ", snapshotData.links, "\nData Nodes:", snapshotData.nodes)
 
-    // Get links for a given node
     const getLinks = (nodeId) => {
       return snapshotData.links.filter((link) => link.source === nodeId && !visited.has(link.target));
     };
 
-    // Check if two links are bidirectional
     const isTwoWayLinked = (link1, link2) => {
       return link1.source === link2.target && link1.target === link2.source;
     };
 
-    // Remove a link from the data
     const removeLink = (linkToRemove) => {
       snapshotData.links.splice(snapshotData.links.findIndex((link) => link === linkToRemove), 1);
     };
 
-    // Find root nodes
     const rootNodeNames = new Set(snapshotData.nodes.map(node => node.id));
-    console.log("After creating rootNodeNames, Snapshot: ", snapshotData.nodes)
-    console.log("At line 193: ", snapshotData.links)
+    
     snapshotData.links.forEach(link => {
       if (!snapshotData.nodes.some(node => node.id === link.source) || !snapshotData.nodes.some(node => node.id === link.target)) {
-        // Remove link if source or target node doesn't exist
         removeLink(link);
       } else {
         rootNodeNames.delete(link.target);
         if (snapshotData.links.some((l) => isTwoWayLinked(link, l))) {
-          // Check for bidirectional links
           rootNodeNames.add(link.source);
           removeLink(snapshotData.links.find((l) => isTwoWayLinked(link, l) && l.source !== link.source));
         }
       }
     });
-    console.log("At line 206: ", snapshotData.links)
-    // Create a queue of root nodes
+    
     const queue = Array.from(rootNodeNames, rootNodeName => ({ id: rootNodeName, level: 1 }));
     while (queue.length > 0) {
       const { id, level } = queue.shift();
       visited.add(id);
 
-      // Get links and child nodes for the current node
       const children = getLinks(id);
-      console.log(children)
       const childNodes = children.map((link) => ({ id: link.target, level: level + 1 }));
       queue.push(...childNodes);
 
-      // Assign level to the node
       if (!nodes.has(id)) {
         nodes.set(id, level);
       } else if (nodes.get(id) > level) {
         nodes.set(id, level);
       }
 
-      // Add links to the set
       children.forEach((link) => {
         if (visited.has(link.target)) {
-          // Add link as a stringified JSON object if the target has already been visited
           links.add(JSON.stringify({
             type: link.type,
             source: link.source,
@@ -423,26 +382,13 @@ function StoryMap() {
             context: link.context || ""
           }));
         } else {
-          // Add link as a stringified JSON object
           links.add(JSON.stringify(link));
         }
-        console.log("Adding Links as children: ", links)
       });
     }
 
-    // Convert the set of links back to an array
     const flattenedLinks = Array.from(links, (link) => JSON.parse(link));
-    console.log("Flattened: ", flattenedLinks)
-    // Build a mapping of node IDs to their assigned levels
-    const nodeLevels = {};
-    nodes.forEach((level, id) => {
-      nodeLevels[id] = level;
-    });
-
-    console.log("Before filtering: ", nodes)
-
-    console.log("Filtering Nodes: ", snapshotData.nodes.filter((node) => nodes.has(node.id)))
-    // Build the final list of nodes with text attribute added
+    
     const finalNodes = snapshotData.nodes.filter((node) => nodes.has(node.id)).map((node) => ({
       ...node,
       id: node.id,
@@ -453,36 +399,176 @@ function StoryMap() {
       aliases: node.aliases,
       hidden: false
     }));
-    console.log("Final nodes and links: ", finalNodes, flattenedLinks)
-    // Return the final nodes and links
+    
     return { nodes: finalNodes, links: flattenedLinks };
   };
 
   function onGraphData(snapshot) {
-  console.log("Getting snapshot...")
-  if (snapshot.exists()) {
-    const snapshotData = snapshot.val();
-    console.log("Got snapshot: ", snapshotData)
+    if (snapshot.exists()) {
+      const snapshotData = snapshot.val();
+      const nodes_links = assignLevels(snapshotData);
 
-    const nodes_links = assignLevels(snapshotData);
+      const finalNodes = nodes_links.nodes.map((node) => ({ ...node, hidden: false }));
+      const finalLinks = nodes_links.links.map((link) => ({
+        type: link.type,
+        source: link.source,
+        target: link.target,
+        context: link.context || "None"
+      }));
 
-    const finalNodes = nodes_links.nodes.map((node) => ({ ...node, hidden: false }));
-    const finalLinks = nodes_links.links.map((link) => ({
-      type: link.type,
-      source: link.source,
-      target: link.target,
-      context: link.context || "None"
+      setData({ nodes: finalNodes, links: finalLinks });
+
+      setTextInput("");
+      setSelectedNode({});
+      setSelectedLink({});
+    }
+  }
+
+  const handleMergeNodes = (nodeIds, primaryName) => {
+    if (nodeIds.length < 2) return;
+
+    const confirmMerge = window.confirm(
+      `Merge ${nodeIds.length} nodes into "${primaryName}"?\n\n` +
+      `This will:\n` +
+      `• Keep "${primaryName}" as the primary node\n` +
+      `• Combine all relationships\n` +
+      `• Delete duplicate nodes\n\n` +
+      `This cannot be undone.`
+    );
+
+    if (!confirmMerge) return;
+
+    const nodesToMerge = nodeIds
+      .map(id => data.nodes.find(n => n.id === id))
+      .filter(Boolean);
+
+    if (nodesToMerge.length < 2) {
+      alert('Could not find all nodes to merge');
+      return;
+    }
+
+    let primaryNode = nodesToMerge.find(n => n.label === primaryName);
+    if (!primaryNode) {
+      primaryNode = { ...nodesToMerge[0] };
+      primaryNode.label = primaryName;
+    } else {
+      primaryNode = { ...primaryNode };
+    }
+
+    const allAliases = nodesToMerge
+      .flatMap(n => {
+        if (!n.aliases) return [];
+        if (typeof n.aliases === 'string') {
+          return n.aliases.split(',').map(a => a.trim()).filter(Boolean);
+        }
+        if (Array.isArray(n.aliases)) {
+          return n.aliases.map(a => String(a).trim()).filter(Boolean);
+        }
+        return [];
+      })
+      .filter(a => a !== primaryName);
+    primaryNode.aliases = allAliases.length > 0 ? [...new Set(allAliases)].join(', ') : '';
+
+    const allNotes = nodesToMerge
+      .map(n => n.note)
+      .filter(Boolean);
+    primaryNode.note = allNotes.length > 0 ? allNotes.join('\n---\n') : '';
+
+    const updatedLinks = data.links.map(link => {
+      // Ensure we're working with IDs, not objects
+      const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+      const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+      
+      return {
+        type: link.type || 'Unspecified',
+        source: nodeIds.includes(sourceId) ? primaryNode.id : sourceId,
+        target: nodeIds.includes(targetId) ? primaryNode.id : targetId,
+        context: link.context || ''
+      };
+    });
+
+    const uniqueLinks = [];
+    const seen = new Set();
+    for (const link of updatedLinks) {
+      const key = `${link.source}|${link.target}|${link.type}`;
+      if (!seen.has(key) && link.source !== link.target) {
+        seen.add(key);
+        uniqueLinks.push(link);
+      }
+    }
+
+    const updatedNodes = data.nodes
+      .filter(n => n.id === primaryNode.id || !nodeIds.includes(n.id))
+      .map(n => {
+        if (n.id === primaryNode.id) {
+          // Clean primary node - only keep essential properties
+          return {
+            id: primaryNode.id,
+            label: primaryNode.label || '',
+            aliases: primaryNode.aliases || '',
+            note: primaryNode.note || '',
+            group: primaryNode.group || 'Uncategorized',
+            level: primaryNode.level || 1,
+            hidden: false
+          };
+        }
+        // Clean all other nodes - only keep essential properties
+        return {
+          id: n.id,
+          label: n.label || '',
+          aliases: n.aliases || '',
+          note: n.note || '',
+          group: n.group || 'Uncategorized',
+          level: n.level || 1,
+          hidden: false
+        };
+      });
+
+    // Final pass: ensure links only have primitive values
+    const cleanedLinks = uniqueLinks.map(link => ({
+      type: String(link.type || 'Unspecified'),
+      source: String(link.source),
+      target: String(link.target),
+      context: String(link.context || '')
     }));
 
-    setData({ nodes: finalNodes, links: finalLinks });
+    setData({ nodes: updatedNodes, links: cleanedLinks });
 
-    setTextInput("");
-    setSelectedNode({});
-    setSelectedLink({});
-  } else {
-    console.log("No data available.")
-  }
-}
+    const graphRef = ref(database, `stories/${currentUser.uid}/graph/`);
+    set(graphRef, { nodes: updatedNodes, links: cleanedLinks })
+      .then(() => {
+        showNotification();
+        alert(`Successfully merged ${nodesToMerge.length} nodes into "${primaryName}"`);
+      })
+      .catch(error => {
+        console.error("Error saving merge:", error);
+        alert('Failed to save merge: ' + error.message);
+      });
+  };
+
+  // Handler to regenerate analysis
+  const handleRegenerateAnalysis = () => {
+    setShouldRegenerate(true);
+    setShowAnalysis(true);
+  };
+
+  // Handler to view existing feedback
+  const handleViewFeedback = () => {
+    setShouldRegenerate(false);
+    setShowAnalysis(true);
+  };
+
+  // Toggle merge mode
+  const toggleMergeMode = () => {
+    setMergeMode(!mergeMode);
+    setSelectedForMerge([]);
+  };
+
+  // Callback when analysis completes
+  const handleAnalysisComplete = (analysisResult) => {
+    setCachedAnalysis(analysisResult);
+    setShouldRegenerate(false);
+  };
 
   return (
     <div>
@@ -492,7 +578,6 @@ function StoryMap() {
           className="story-map-btn render-btn"
         >
           Render Graph
-
         </button>
 
         <button
@@ -501,19 +586,76 @@ function StoryMap() {
         >
           + Add Node
         </button>
+        
         <button
           onClick={openNewLinkModal}
           className="story-map-btn add-link-btn"
         >
           + Add Link
         </button>
+
+        <button
+          onClick={toggleMergeMode}
+          className={`story-map-btn ${mergeMode ? 'merge-btn-active' : 'merge-btn'}`}
+          title="Click to enter merge mode, then click two nodes to merge them"
+        >
+          {mergeMode ? '✓ Merge Mode Active' : '🔀 Merge Nodes'}
+        </button>
+
+        {/* Show different buttons based on whether feedback exists */}
+        {cachedAnalysis ? (
+          <>
+            <button 
+              onClick={handleViewFeedback} 
+              className="story-map-btn view-feedback-btn"
+            >
+              📊 View Feedback
+            </button>
+            <button 
+              onClick={handleRegenerateAnalysis} 
+              className="story-map-btn analyze-btn"
+            >
+              🔄 Regenerate Analysis
+            </button>
+          </>
+        ) : (
+          <button 
+            onClick={handleRegenerateAnalysis} 
+            className="story-map-btn analyze-btn"
+          >
+            🔍 Analyze Structure
+          </button>
+        )}
       </div>
 
-
+      {/* Merge Mode Instructions */}
+      {mergeMode && (
+        <div style={{
+          padding: '12px 16px',
+          background: '#FEF3C7',
+          border: '1px solid #FDE68A',
+          borderRadius: '8px',
+          margin: '12px 0',
+          color: '#92400E',
+          fontSize: '14px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <span style={{ fontSize: '18px' }}>ℹ️</span>
+          <div>
+            <strong>Merge Mode Active:</strong> 
+            {selectedForMerge.length === 0 ? (
+              <> Click the first node (this will be deleted)</>
+            ) : (
+              <> Click the second node (this will be kept). Selected: <strong>{selectedForMerge[0].label}</strong></>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Graph Display */}
-      <div
-        className="graph-container">
+      <div className="graph-container">
         <Graph
           data={data}
           getNodeSize={getNodeSize}
@@ -522,6 +664,22 @@ function StoryMap() {
           nodeAutoColorBy="id"
         />
       </div>
+
+      {/* Analysis Panel */}
+      {showAnalysis && (
+        <AnalysisPanel
+          isOpen={showAnalysis}
+          onClose={() => setShowAnalysis(false)}
+        >
+          <StoryMapAnalysis 
+            data={data} 
+            onMergeNodes={handleMergeNodes}
+            autoAnalyze={shouldRegenerate}
+            cachedAnalysis={shouldRegenerate ? null : cachedAnalysis}
+            onAnalysisComplete={handleAnalysisComplete}
+          />
+        </AnalysisPanel>
+      )}
 
       {/* Modals */}
       {selectedNode && (
@@ -555,7 +713,6 @@ function StoryMap() {
       )}
     </div>
   );
-
 }
 
 export default StoryMap;

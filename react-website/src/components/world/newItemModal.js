@@ -115,7 +115,9 @@ const NewItemModal = ({
                 return acc;
             }, {});
 
-            const AI_SERVER_URL = process.env.REACT_APP_AI_SERVER_URL || 'https://guidedcreativeplanning-ai.onrender.com' || "http://10.163.7.9:5000";
+            const AI_SERVER_URL = process.env.REACT_APP_AI_SERVER_URL || 'https://guidedcreativeplanning-ai.onrender.com' || "http://localhost:5000";
+
+            console.log(`Calling ${AI_SERVER_URL}.\n Requesting AI suggestions.`);
 
             const response = await axios.post(`${AI_SERVER_URL}/worldbuilding/suggest-template`, {
                 userId,

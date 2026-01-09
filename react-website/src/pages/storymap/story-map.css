@@ -34,8 +34,17 @@
 .story-map-buttons {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 20px;
+    gap: 12px;
+    margin-bottom: 20px;
+    margin-top: 10px;
+    width: 100%;
+    padding-right: 20px;
+}
+
+/* Push AI buttons to the right but not to the edge */
+.story-map-buttons > .analyze-btn,
+.story-map-buttons > .view-feedback-btn {
+    margin-left: auto;
 }
 
 /* Styled buttons */
@@ -43,7 +52,7 @@
     padding: 10px 20px;
     font-size: 14px;
     font-weight: 400;
-    text-transform: uppercase;
+    text-transform: none;
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -58,45 +67,98 @@
     background-color: var(--secondary-main);
     color: white;
     border: none;
-    margin-bottom: 15px;
-    margin-top: 5px;
-    margin-left: 5px;
-    padding: 10px 20px;
-    text-transform: none;
 }
 
 .render-btn:hover {
     background-color: var(--primary-light);
 }
 
-.add-node-btn {
-    background-color: var(--success-main);
-    color: white;
-    border: none;
-    margin-bottom: 15px;
-    margin-top: 5px;
-    margin-left: 5px;
-    padding: 10px 20px;
-    text-transform: none;
-}
-
-.add-node-btn:hover {
-    background-color: var(--success-dark);
-}
-
+.add-node-btn,
 .add-link-btn {
     background-color: var(--success-main);
     color: white;
     border: none;
-    margin-bottom: 15px;
-    margin-top: 5px;
-    margin-left: 5px;
-    padding: 10px 20px;
-    text-transform: none;
 }
 
+.add-node-btn:hover,
 .add-link-btn:hover {
     background-color: var(--success-dark);
+}
+
+/* Analysis Buttons - Timeline Coherence Style */
+.analyze-btn,
+.view-feedback-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.analyze-btn:hover:not(:disabled),
+.view-feedback-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.analyze-btn:disabled,
+.view-feedback-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+/* View Feedback has slightly different gradient */
+.view-feedback-btn {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.view-feedback-btn:hover:not(:disabled) {
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+}
+
+/* Merge Nodes Button */
+.merge-btn {
+    background-color: #F5F5F4;
+    color: #3F3F46;
+    border: 1px solid #E7E5E4;
+    transition: all 0.2s ease;
+}
+
+.merge-btn:hover {
+    background-color: #E7E5E4;
+    border-color: #A8A29E;
+}
+
+.merge-btn-active {
+    background-color: #FEF3C7;
+    color: #92400E;
+    border: 1px solid #FDE68A;
+    font-weight: 500;
+}
+
+.merge-btn-active:hover {
+    background-color: #FDE68A;
+    border-color: #FCD34D;
+}
+
+/* Graph highlighting for selected nodes during merge */
+.node-selected-for-merge {
+    stroke: #EA580C !important;
+    stroke-width: 3px !important;
+    filter: drop-shadow(0 0 8px rgba(234, 88, 12, 0.5));
+}
+
+/* Cursor change during merge mode */
+.merge-mode-active {
+    cursor: crosshair;
 }
 
 /* Modal styling */
@@ -122,4 +184,151 @@
 .modal-input:focus {
     border-color: var(--text-disabled);
     outline: none;
+}
+
+/* Analysis Panel (matches FeedbackPanel style) */
+.analysis-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 500px;
+    height: 100vh;
+    background: var(--background-paper);
+    border-left: 1px solid var(--divider);
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.08);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+.analysis-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--divider);
+    flex-shrink: 0;
+}
+
+.analysis-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+}
+
+.icon-btn:hover {
+    background: var(--background-default);
+    color: var(--text-primary);
+}
+
+.analysis-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+}
+
+/* Override StoryMapAnalysis styles to fit in panel */
+.analysis-content > div {
+    max-width: 100%;
+    padding: 20px;
+}
+
+.analysis-content button {
+    font-size: 13px;
+}
+
+.analysis-content .text-2xl {
+    font-size: 1.5rem;
+}
+
+.analysis-content .text-sm {
+    font-size: 13px;
+}
+
+.analysis-content .px-6 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.analysis-content .py-4 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.analysis-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--divider);
+    border-top-color: var(--primary-main);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.analysis-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.analysis-empty p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .story-map-buttons {
+        flex-wrap: wrap;
+        padding-right: 0;
+    }
+
+    .analyze-btn,
+    .view-feedback-btn {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .analysis-panel {
+        width: 100%;
+    }
 }

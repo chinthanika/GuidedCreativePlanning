@@ -42,6 +42,7 @@ from prompts.world_system_prompt import WORLD_SYSTEM_PROMPT
 from prompts.element_extraction_prompt import STORY_EXTRACTION_PROMPT
 from prompts.feedback_system_prompt import FEEDBACK_SYSTEM_PROMPT
 from prompts.timeline_reflection_prompt import TIMELINE_REFLECTION_PROMPT, TIMELINE_COHERENCE_PROMPT
+from prompts.story_map_analysis_prompt import STORY_MAP_ANALYSIS_PROMPT
 
 app = Flask(__name__)
 
@@ -80,15 +81,15 @@ for logger_instance in [bs_logger, dt_logger, world_logger, char_logger]:
 # FIREBASE INIT
 # ============================================
 try:
-    firebase_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
+    # firebase_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
 
-    if not firebase_json:
-        raise ValueError("FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set")
+    # if not firebase_json:
+    #     raise ValueError("FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set")
     
-    # Parse the JSON string into a dict
-    cred = credentials.Certificate(json.loads(firebase_json))
+    # # Parse the JSON string into a dict
+    # cred = credentials.Certificate(json.loads(firebase_json))
 
-    # cred = credentials.Certificate("../Firebase/structuredcreativeplanning-fdea4acca240.json")
+    cred = credentials.Certificate("../Firebase/structuredcreativeplanning-fdea4acca240.json")
     
     firebase_admin.initialize_app(cred, {
         'databaseURL': "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
@@ -2651,7 +2652,220 @@ def extract_story_elements():
             'details': str(e)
         }), 500
 
+@app.route('/api/story-map/analyze', methods=['POST'])
+def analyze_story_map():
+    """
+    Analyze story map structure for duplicates, coherence, and genre patterns.
+    AI acts as Deconstructor (genre patterns) and Reflective Guide (structural questions).
+    """
+    request_start = time.time()
+    rec_logger.info("[STORY_MAP] Incoming analysis request")
+    
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        nodes = data.get('nodes', [])
+        links = data.get('links', [])
+        genre = data.get('genre')  # Optional
+        context = data.get('context', '')  # Optional user-provided context
+        
+        # Validation
+        if not user_id:
+            return jsonify({
+                'error': 'Missing required field',
+                'details': 'userId is required'
+            }), 400
+        
+        if not nodes or len(nodes) < 2:
+            return jsonify({
+                'error': 'Insufficient data',
+                'details': 'Need at least 2 nodes to analyze structure'
+            }), 400
+        
+        rec_logger.info(f"[STORY_MAP] Analyzing {len(nodes)} nodes, {len(links)} links")
+        
+        # Prepare data for AI
+        analysis_context = {
+            'node_count': len(nodes),
+            'link_count': len(links),
+            'nodes': [
+                {
+                    'id': node.get('id'),
+                    'label': node.get('label'),
+                    'group': node.get('group'),
+                    'aliases': node.get('aliases', ''),
+                    'level': node.get('level', 1),
+                    'note': node.get('note', '')
+                }
+                for node in nodes
+            ],
+            'links': [
+                {
+                    'source': link.get('source'),
+                    'target': link.get('target'),
+                    'type': link.get('type'),
+                    'context': link.get('context', '')
+                }
+                for link in links
+            ],
+            'user_genre': genre,
+            'user_context': context
+        }
+        
+        # Build prompt
+        user_message = f"""Analyze this story map structure.
 
+GRAPH DATA:
+{json.dumps(analysis_context, indent=2)}
+
+Provide comprehensive analysis including:
+1. DUPLICATE DETECTION (highest priority)
+2. Structural coherence
+3. Genre pattern analysis (if genre provided)
+4. Narrative consistency
+5. Relationship diversity
+6. Character centrality
+
+IMPORTANT: Return ONLY valid JSON. Ensure all strings are properly escaped and quoted.
+Return analysis in the specified JSON format."""
+        
+        rec_logger.info("[STORY_MAP] Calling DeepSeek")
+        
+        # Call DeepSeek with increased max_tokens to prevent truncation
+        try:
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": STORY_MAP_ANALYSIS_PROMPT},
+                    {"role": "user", "content": user_message}
+                ],
+                response_format={'type': 'json_object'},
+                stream=False,
+                timeout=90,
+                temperature=0.3,  # Lower temperature for more consistent analysis
+                max_tokens=8000  # Increased to handle large story maps
+            )
+            
+            rec_logger.info("[STORY_MAP] DeepSeek response received")
+            
+        except openai.APITimeoutError:
+            rec_logger.error("[STORY_MAP] DeepSeek timeout")
+            return jsonify({
+                'error': 'Analysis timeout',
+                'details': 'Analysis took too long. Try analyzing a smaller section of your map.'
+            }), 504
+        
+        except Exception as api_err:
+            rec_logger.error(f"[STORY_MAP] DeepSeek API error: {api_err}")
+            return jsonify({
+                'error': 'AI service error',
+                'details': str(api_err)
+            }), 500
+        
+        # Parse response
+        try:
+            result_text = response.choices[0].message.content.strip()
+            
+            # Log the raw response for debugging
+            rec_logger.debug(f"[STORY_MAP] Raw AI response length: {len(result_text)} chars")
+            
+            # Check if response was truncated
+            if response.choices[0].finish_reason == 'length':
+                rec_logger.error("[STORY_MAP] Response truncated - max_tokens too small")
+                return jsonify({
+                    'error': 'Analysis incomplete',
+                    'details': 'Story map too large for analysis. Try analyzing a smaller section.'
+                }), 413
+            
+            # Clean markdown code blocks if present
+            if result_text.startswith('```'):
+                result_text = re.sub(r'```(?:json)?\s*', '', result_text).strip()
+                if result_text.endswith('```'):
+                    result_text = result_text[:-3].strip()
+            
+            # Try to parse JSON
+            analysis = json.loads(result_text)
+            rec_logger.info("[STORY_MAP] Response parsed successfully")
+            
+            # Validate response structure
+            required_fields = ['overall_health', 'overall_score', 'summary', 'issues']
+            if not all(field in analysis for field in required_fields):
+                rec_logger.error(f"[STORY_MAP] Missing required fields in AI response")
+                return jsonify({
+                    'error': 'Invalid AI response',
+                    'details': 'AI response missing required fields'
+                }), 500
+            
+        except json.JSONDecodeError as parse_err:
+            rec_logger.error(f"[STORY_MAP] JSON parse error: {parse_err}")
+            rec_logger.error(f"[STORY_MAP] Problematic response (first 500 chars): {result_text[:500]}")
+            rec_logger.error(f"[STORY_MAP] Problematic response (last 500 chars): {result_text[-500:]}")
+            
+            # Try to salvage partial response by fixing common issues
+            try:
+                # Remove any trailing incomplete content
+                last_brace = result_text.rfind('}')
+                if last_brace > 0:
+                    truncated = result_text[:last_brace + 1]
+                    analysis = json.loads(truncated)
+                    rec_logger.info("[STORY_MAP] Recovered partial response")
+                else:
+                    raise parse_err
+            except:
+                return jsonify({
+                    'error': 'Failed to parse AI response',
+                    'details': f'AI returned invalid JSON: {str(parse_err)}'
+                }), 500
+        
+        # Enrich issues with full node data for frontend
+        for issue in analysis.get('issues', []):
+            if 'affected_entities' in issue:
+                issue['affected_nodes'] = [
+                    next((n for n in nodes if n['id'] == entity_id), None)
+                    for entity_id in issue['affected_entities']
+                ]
+                # Filter out None values
+                issue['affected_nodes'] = [n for n in issue['affected_nodes'] if n is not None]
+        
+        # Add metadata
+        analysis['timestamp'] = int(time.time() * 1000)
+        analysis['processing_time_ms'] = int((time.time() - request_start) * 1000)
+        
+        # Categorize issues by type for easier frontend handling
+        analysis['issues_by_category'] = {}
+        for issue in analysis.get('issues', []):
+            category = issue.get('category', 'other')
+            if category not in analysis['issues_by_category']:
+                analysis['issues_by_category'][category] = []
+            analysis['issues_by_category'][category].append(issue)
+        
+        # Count issues by severity
+        analysis['severity_counts'] = {
+            'high': sum(1 for i in analysis['issues'] if i.get('severity') == 'high'),
+            'medium': sum(1 for i in analysis['issues'] if i.get('severity') == 'medium'),
+            'low': sum(1 for i in analysis['issues'] if i.get('severity') == 'low')
+        }
+        
+        total_time = time.time() - request_start
+        rec_logger.info(
+            f"[STORY_MAP] Analysis complete in {total_time:.2f}s, "
+            f"score: {analysis['overall_score']}, "
+            f"issues: {len(analysis['issues'])} "
+            f"(H:{analysis['severity_counts']['high']}, "
+            f"M:{analysis['severity_counts']['medium']}, "
+            f"L:{analysis['severity_counts']['low']})"
+        )
+        
+        return jsonify(analysis), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[STORY_MAP] Unexpected error: {e}")
+        return jsonify({
+            'error': 'Analysis failed',
+            'details': str(e)
+        }), 500
+    
+    
 @app.route('/api/timeline/coherence', methods=['POST'])
 def timeline_coherence():
     """
