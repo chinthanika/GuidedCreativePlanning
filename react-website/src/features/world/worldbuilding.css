@@ -842,3 +842,555 @@
         font-size: 0.9rem;
     }
 }
+
+/* ============================================
+   PEDAGOGICAL ENHANCEMENTS - ADD TO EXISTING worldbuilding.css
+   ============================================ */
+
+/* Guiding Question Banner */
+.world-guiding-question-banner {
+  padding: 16px 20px;
+  background: var(--success-main);
+  color: white;
+  border-radius: 12px;
+  margin: 0 0 20px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.world-guiding-question-banner strong {
+  font-size: 15px;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.world-guiding-question-banner p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  opacity: 0.95;
+}
+
+/* AI Suggestions Section Header */
+.world-suggestions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.world-suggestions-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Accept/Reject All Buttons */
+.world-bulk-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.world-bulk-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.world-bulk-btn.accept {
+  background: var(--success-main);
+  color: white;
+}
+
+.world-bulk-btn.accept:hover {
+  background: var(--success-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(22, 163, 74, 0.3);
+}
+
+.world-bulk-btn.reject {
+  background: var(--error-main);
+  color: white;
+}
+
+.world-bulk-btn.reject:hover {
+  background: var(--error-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3);
+}
+
+/* Suggested Field Card */
+.world-suggested-field {
+  padding: 16px;
+  border: 2px solid var(--divider);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  background: var(--background-paper);
+  transition: all 0.2s;
+}
+
+.world-suggested-field.accepted {
+  border-color: var(--success-main);
+  background: rgba(22, 163, 74, 0.04);
+}
+
+.world-suggested-field-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.world-suggested-field-info {
+  flex: 1;
+}
+
+.world-suggested-field-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.world-field-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: var(--border-light);
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-left: 8px;
+}
+
+.world-field-badge.inherited {
+  background: rgba(82, 82, 91, 0.1);
+  color: var(--text-disabled);
+}
+
+.world-suggested-field-description {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 8px 0 0 0;
+}
+
+/* Field Action Buttons */
+.world-field-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.world-field-action-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+}
+
+.world-field-action-btn.accept {
+  background: var(--success-main);
+  color: white;
+}
+
+.world-field-action-btn.accept:hover {
+  background: var(--success-dark);
+  transform: scale(1.05);
+}
+
+.world-field-action-btn.reject {
+  background: var(--error-main);
+  color: white;
+}
+
+.world-field-action-btn.reject:hover {
+  background: var(--error-dark);
+  transform: scale(1.05);
+}
+
+/* Pedagogy Toggle Button */
+.world-pedagogy-toggle {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  color: var(--primary-main);
+  border: 1px solid var(--primary-main);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.world-pedagogy-toggle:hover {
+  background: rgba(39, 39, 42, 0.04);
+  transform: translateY(-1px);
+}
+
+.world-pedagogy-toggle:active {
+  transform: translateY(0);
+}
+
+/* Pedagogical Content Boxes */
+.world-pedagogy-content {
+  margin-top: 12px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.world-pedagogy-rationale {
+  padding: 14px 16px;
+  background: var(--border-light);
+  border-left: 3px solid var(--primary-main);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.world-pedagogy-rationale strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.world-pedagogy-rationale p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.world-pedagogy-prompt {
+  padding: 14px 16px;
+  background: var(--warning-main);
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(234, 88, 12, 0.2);
+}
+
+.world-pedagogy-prompt strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  opacity: 0.95;
+}
+
+.world-pedagogy-prompt p {
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+  opacity: 0.95;
+}
+
+/* Suggestions Container */
+.world-suggestions-container {
+  max-height: 450px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.world-suggestions-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.world-suggestions-container::-webkit-scrollbar-track {
+  background: var(--border-light);
+  border-radius: 3px;
+}
+
+.world-suggestions-container::-webkit-scrollbar-thumb {
+  background: var(--text-disabled);
+  border-radius: 3px;
+}
+
+.world-suggestions-container::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Loading State for AI */
+.world-ai-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.world-ai-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--border-light);
+  border-top-color: var(--primary-main);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.world-ai-loading-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* AI Error State */
+.world-ai-error {
+  padding: 16px;
+  background: rgba(220, 38, 38, 0.05);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.world-ai-error-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.world-ai-error-icon {
+  color: var(--error-main);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.world-ai-error-text {
+  font-size: 13px;
+  color: var(--error-main);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Progress Indicator Enhancement */
+.world-modal-progress {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.world-progress-step {
+  flex: 1;
+  height: 4px;
+  background: var(--border-light);
+  border-radius: 2px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.world-progress-step.active {
+  background: var(--primary-main);
+}
+
+.world-progress-step.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.3), 
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Step Indicators */
+.world-step-header {
+  margin-bottom: 20px;
+}
+
+.world-step-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+}
+
+.world-step-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Template Choice Cards */
+.world-template-choice {
+  padding: 16px;
+  border: 2px solid var(--divider);
+  border-radius: 12px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  background: var(--background-paper);
+  transition: all 0.2s;
+}
+
+.world-template-choice:hover {
+  border-color: var(--secondary-main);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.world-template-choice.selected {
+  border-color: var(--primary-main);
+  background: rgba(39, 39, 42, 0.02);
+  box-shadow: 0 4px 12px rgba(39, 39, 42, 0.12);
+}
+
+.world-template-choice-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.world-template-choice-description {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Current Fields List */
+.world-current-fields {
+  margin-top: 24px;
+}
+
+.world-current-fields-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+}
+
+.world-current-fields-list {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.world-current-field-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--border-light);
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+
+.world-current-field-item:hover {
+  background: var(--divider);
+}
+
+.world-current-field-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.world-current-field-type {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-left: 8px;
+}
+
+.world-current-field-label {
+  font-size: 11px;
+  color: var(--text-disabled);
+  margin-left: 8px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.world-current-field-remove {
+  padding: 4px 10px;
+  background: var(--error-main);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.world-current-field-remove:hover {
+  background: var(--error-dark);
+  transform: scale(1.05);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .world-guiding-question-banner {
+    padding: 14px 16px;
+  }
+
+  .world-guiding-question-banner strong {
+    font-size: 14px;
+  }
+
+  .world-guiding-question-banner p {
+    font-size: 13px;
+  }
+
+  .world-bulk-actions {
+    flex-direction: column;
+  }
+
+  .world-suggestions-container {
+    max-height: 350px;
+  }
+
+  .world-suggested-field {
+    padding: 14px;
+  }
+
+  .world-pedagogy-content {
+    margin-top: 10px;
+  }
+}

@@ -82,15 +82,15 @@ for logger_instance in [bs_logger, dt_logger, world_logger, char_logger]:
 # FIREBASE INIT
 # ============================================
 try:
-    firebase_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
+    # firebase_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
 
-    if not firebase_json:
-        raise ValueError("FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set")
+    # if not firebase_json:
+    #     raise ValueError("FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set")
     
-    # Parse the JSON string into a dict
-    cred = credentials.Certificate(json.loads(firebase_json))
+    # # Parse the JSON string into a dict
+    # cred = credentials.Certificate(json.loads(firebase_json))
 
-    # cred = credentials.Certificate("../Firebase/structuredcreativeplanning-fdea4acca240.json")
+    cred = credentials.Certificate("../Firebase/structuredcreativeplanning-fdea4acca240.json")
     
     firebase_admin.initialize_app(cred, {
         'databaseURL': "https://structuredcreativeplanning-default-rtdb.firebaseio.com/"
@@ -1032,7 +1032,6 @@ def suggest_world_template():
         context_parts.append(f"Description: {item_description}")
     
     if parent_template_fields:
-        # Extract field names from template field objects
         inherited_field_names = [f['fieldName'] for f in parent_template_fields]
         context_parts.append(f"\nInherited Fields (already included):\n{json.dumps(inherited_field_names, indent=2)}")
     
@@ -1042,6 +1041,8 @@ def suggest_world_template():
     context_parts.append("\n\nSuggest ADDITIONAL relevant custom fields that complement the inherited/existing fields.")
     context_parts.append("DO NOT duplicate inherited or existing fields.")
     context_parts.append("Focus on fields that add new dimensions to this specific item.")
+    context_parts.append("Include pedagogicalRationale and reflectivePrompt for EACH field.")
+    context_parts.append("Include a guidingQuestion that ties all suggested fields together.")
     
     user_prompt = "\n".join(context_parts)
 
@@ -1054,29 +1055,49 @@ def suggest_world_template():
             ],
             response_format={'type': 'json_object'},
             stream=False,
-            timeout=30
+            timeout=30,
+            temperature=0.7  # Slightly higher for more creative pedagogical explanations
         )
 
         result = json.loads(response.choices[0].message.content)
         suggested_fields = result.get('suggestedFields', [])
+        guiding_question = result.get('guidingQuestion', '')
 
-        # Prepend inherited fields with "inherited" flag
+        # Validate that each field has required pedagogical components
+        validated_fields = []
+        for field in suggested_fields:
+            if all(k in field for k in ['fieldName', 'fieldType', 'description', 
+                                       'pedagogicalRationale', 'reflectivePrompt']):
+                validated_fields.append(field)
+            else:
+                world_logger.warning(f"[WORLD] Field missing pedagogical components: {field.get('fieldName', 'unknown')}")
+
+        # Prepend inherited fields with metadata
         if parent_template_fields:
             inherited_with_flag = []
             for field in parent_template_fields:
-                # Check if not already in existing custom fields
                 if field['fieldName'] not in existing_custom_fields:
                     inherited_with_flag.append({
                         **field,
                         'inherited': True,
-                        'description': field.get('description', '') + ' [Inherited from parent]'
+                        'description': field.get('description', '') + ' [Inherited from parent]',
+                        'pedagogicalRationale': field.get('pedagogicalRationale', 
+                            'This field is inherited from the parent item type and maintains consistency across related items.'),
+                        'reflectivePrompt': field.get('reflectivePrompt', 
+                            'How does this inherited property connect to your parent item?')
                     })
-            suggested_fields = inherited_with_flag + suggested_fields
+            validated_fields = inherited_with_flag + validated_fields
 
-        world_logger.info(f"[WORLD] Suggested {len(suggested_fields)} fields ({len(parent_template_fields)} inherited)")
+        world_logger.info(f"[WORLD] Suggested {len(validated_fields)} fields ({len(parent_template_fields)} inherited) with pedagogical guidance")
         
-        return jsonify({'suggestedFields': suggested_fields})
+        return jsonify({
+            'suggestedFields': validated_fields,
+            'guidingQuestion': guiding_question
+        })
 
+    except json.JSONDecodeError as e:
+        world_logger.exception(f"[WORLD] JSON decode error: {e}")
+        return jsonify({'error': 'AI returned invalid JSON'}), 500
     except Exception as e:
         world_logger.exception(f"[WORLD] Error: {e}")
         return jsonify({'error': str(e)}), 500
