@@ -10,6 +10,8 @@ import CreateAnalysisModal from '../../components/modelling/CreateAnalysisModal'
 import DeleteConfirmModal from '../../components/modelling/DeleteConfirmModal';
 import AnalysisDetailModal from '../../components/modelling/AnalysisDetailModal';
 
+import { logPageExit, logPageView, logUIInteraction } from '../../utils/analytics';
+
 import "./mentor-text-page.css";
 
 const API_BASE = process.env.REACT_APP_AI_SERVER_URL || "http://localhost:5000";
@@ -27,6 +29,25 @@ const MentorTextPage = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [detailModal, setDetailModal] = useState({ isOpen: false, analysisId: null, data: null });
+    
+    // Track page entry time for duration calculation
+    const [pageEntryTime] = useState(Date.now());
+
+    // Track page view on mount, page exit on unmount
+    useEffect(() => {
+        if (!userId) return;
+        
+        const entryTime = Date.now();
+        
+        // Log page entry
+        logPageView(userId, 'mentorText', 'modelling');
+        
+        // Cleanup: log page exit
+        return () => {
+            const duration = Date.now() - entryTime;
+            logPageExit(userId, 'mentorText', duration);
+        };
+    }, [userId]);
 
     useEffect(() => {
         loadAnalyses();
@@ -66,6 +87,7 @@ const MentorTextPage = () => {
 
     const handleCreateAnalysis = async (analysisData) => {
         try {
+            // Backend will log the analysis automatically
             const response = await fetch(`${API_BASE}/api/mentor-text/analyze`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -84,14 +106,14 @@ const MentorTextPage = () => {
                 // Close create modal
                 setShowCreateModal(false);
                 
-                // IMMEDIATELY open detail modal with the fresh analysis
+                // Open detail modal with fresh analysis
                 setDetailModal({
                     isOpen: true,
-                    analysisId: null, // No ID yet since it's fresh
-                    data: data // Pass the full response
+                    analysisId: null,
+                    data: data
                 });
                 
-                // Reload library in background
+                // Reload library
                 await loadAnalyses();
             } else {
                 const errorData = await response.json();
@@ -99,15 +121,23 @@ const MentorTextPage = () => {
             }
         } catch (err) {
             console.error('Failed to create analysis:', err);
-            throw err; // Let modal handle error display
+            throw err;
         }
     };
 
     const handleOpenDetail = (analysis) => {
+        // Log when user opens an analysis
+        logUIInteraction(userId, 'mentorText', 'open_analysis', {
+            analysisId: analysis.id,
+            genre: analysis.genreIdentified,
+            focus: analysis.focus,
+            teachingPointCount: analysis.teachingPointCount
+        });
+        
         setDetailModal({
             isOpen: true,
             analysisId: analysis.id,
-            data: null // Will be loaded by modal
+            data: null
         });
     };
 
@@ -122,6 +152,7 @@ const MentorTextPage = () => {
         setAnalyses(prev => prev.filter(a => a.id !== analysisId));
 
         try {
+            // Backend will log deletion automatically
             const response = await fetch(`${API_BASE}/api/mentor-text/library/${analysisId}/delete`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -140,7 +171,48 @@ const MentorTextPage = () => {
         }
     };
 
-    // Extract unique genres and focus areas from analyses
+    // Log search interactions
+    const handleSearchChange = (query) => {
+        setSearchQuery(query);
+        
+        // Only log if query is meaningful (3+ chars)
+        if (query.length >= 3) {
+            const results = analyses.filter(a => 
+                a.excerpt?.toLowerCase().includes(query.toLowerCase()) ||
+                a.genreIdentified?.toLowerCase().includes(query.toLowerCase())
+            );
+            
+            logUIInteraction(userId, 'mentorText', 'search', {
+                query: query,
+                resultsCount: results.length
+            });
+        }
+    };
+
+    // Log filter interactions
+    const handleGenreFilter = (genre) => {
+        setFilterGenre(genre);
+        
+        if (genre !== 'all') {
+            logUIInteraction(userId, 'mentorText', 'filter', {
+                filterType: 'genre',
+                filterValue: genre
+            });
+        }
+    };
+
+    const handleFocusFilter = (focus) => {
+        setFilterFocus(focus);
+        
+        if (focus !== 'all') {
+            logUIInteraction(userId, 'mentorText', 'filter', {
+                filterType: 'focus',
+                filterValue: focus
+            });
+        }
+    };
+
+    // Extract unique genres and focus areas
     const genres = ['all', ...new Set(
         analyses.map(a => a.genreIdentified).filter(Boolean)
     )];
@@ -218,7 +290,13 @@ const MentorTextPage = () => {
 
                     {/* Create New Analysis Button */}
                     <button
-                        onClick={() => setShowCreateModal(true)}
+                        onClick={() => {
+                            // ✅ NEW: Log when user opens create modal
+                            logUIInteraction(userId, 'mentorText', 'open_create_modal', {
+                                currentAnalysesCount: analyses.length
+                            });
+                            setShowCreateModal(true);
+                        }}
                         className="mentor-text-create-btn"
                     >
                         <Plus className="w-5 h-5" />
@@ -234,14 +312,14 @@ const MentorTextPage = () => {
                             type="text"
                             placeholder="Search by excerpt or genre..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => handleSearchChange(e.target.value)}
                             className="mentor-text-search-input"
                         />
                     </div>
 
                     <select
                         value={filterGenre}
-                        onChange={(e) => setFilterGenre(e.target.value)}
+                        onChange={(e) => handleGenreFilter(e.target.value)}
                         className="mentor-text-filter-select"
                     >
                         {genres.map(genre => (
@@ -253,7 +331,7 @@ const MentorTextPage = () => {
 
                     <select
                         value={filterFocus}
-                        onChange={(e) => setFilterFocus(e.target.value)}
+                        onChange={(e) => handleFocusFilter(e.target.value)}
                         className="mentor-text-filter-select"
                     >
                         {focusAreas.map(focus => (
@@ -279,7 +357,10 @@ const MentorTextPage = () => {
                                     Start analyzing published excerpts to learn professional writing techniques
                                 </p>
                                 <button
-                                    onClick={() => setShowCreateModal(true)}
+                                    onClick={() => {
+                                        logUIInteraction(userId, 'mentorText', 'cta_first_analysis', {});
+                                        setShowCreateModal(true);
+                                    }}
                                     className="mentor-text-create-cta-btn"
                                 >
                                     <Plus className="w-5 h-5" />
@@ -342,7 +423,6 @@ const MentorTextPage = () => {
                 onClose={handleCloseDetail}
                 onDelete={(id) => {
                     handleCloseDetail();
-                    // Find the full analysis object for delete confirmation
                     const analysisToDelete = analyses.find(a => a.id === id);
                     if (analysisToDelete) {
                         setDeleteTarget(analysisToDelete);

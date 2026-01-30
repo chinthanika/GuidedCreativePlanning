@@ -14,6 +14,17 @@ import EditLinkModal from '../../components/storymap/EditLinkModal';
 import StoryMapAnalysis from '../../components/storymap/StoryMapAnalysis';
 import AnalysisPanel from '../../components/storymap/AnalysisPanel';
 
+import {
+  logStoryMapRender,
+  logNodeAction,
+  logLinkAction,
+  logNodeMerge,
+  logAnalysisPanelInteraction,
+  logViewToggle,
+  logMergeModeAction,
+  trackAnalysisPanelTime
+} from '../../utils/analytics';
+
 import './story-map.css';
 
 function StoryMap() {
@@ -35,8 +46,17 @@ function StoryMap() {
   const [shouldRegenerate, setShouldRegenerate] = useState(false);
   const [mergeMode, setMergeMode] = useState(false);
   const [selectedForMerge, setSelectedForMerge] = useState([]);
+  const [panelTimeTracker, setPanelTimeTracker] = useState(null);
+  const [sessionStartTime] = useState(Date.now());
+  const [actionCount, setActionCount] = useState(0);
 
   const graphRef = ref(database, `stories/${userId}/graph/`);
+
+  useEffect(() => {
+    if (userId && data.nodes.length > 0) {
+      logStoryMapRender(userId, data.nodes, data.links);
+    }
+  }, [userId]);
 
   useEffect(() => {
     if (selectedNode) {
@@ -97,6 +117,7 @@ function StoryMap() {
     if (mergeMode) {
       if (selectedForMerge.length === 0) {
         // First node selected
+        logMergeModeAction(userId, 'select_first', [node.id]);
         setSelectedForMerge([node]);
       } else if (selectedForMerge.length === 1) {
         // Second node selected - perform merge
@@ -104,7 +125,9 @@ function StoryMap() {
           alert('Please select a different node');
           return;
         }
-        
+
+        logMergeModeAction(userId, 'select_second', [selectedForMerge[0].id, node.id]);
+
         const confirmMerge = window.confirm(
           `Merge "${selectedForMerge[0].label}" into "${node.label}"?\n\n` +
           `This will:\n` +
@@ -113,26 +136,36 @@ function StoryMap() {
           `• Delete "${selectedForMerge[0].label}"\n\n` +
           `This cannot be undone.`
         );
-        
+
         if (confirmMerge) {
+          const mergeStartTime = Date.now();
           handleMergeNodes([selectedForMerge[0].id, node.id], node.label);
+
+          const mergeTime = Date.now() - mergeStartTime;
+          logNodeMerge(userId, 2, node.label, mergeTime);
+          logMergeModeAction(userId, 'complete', [selectedForMerge[0].id, node.id]);
         }
-        
+
         // Exit merge mode
         setMergeMode(false);
         setSelectedForMerge([]);
+        logMergeModeAction(userId, 'exit');
       }
     } else {
       // Normal mode - open edit modal
       console.log("Clicked node: ", node);
       setSelectedNode(node);
       setIsModalOpen(true);
+
+      logNodeAction(userId, 'view', node);
     }
   };
 
   const handleLinkClick = (link) => {
     setSelectedLink(link);
     setIsEditLinkModalOpen(true);
+
+    logLinkAction(userId, 'view', link);
   };
 
   const updateNode = (updatedNode) => {
@@ -160,6 +193,10 @@ function StoryMap() {
       } else {
         console.error("Error: Node with ID not found in dataset");
       }
+
+      logNodeAction(userId, 'edit', updatedNode);
+      setActionCount(prev => prev + 1);
+
     } else {
       console.error("Error: updatedNode.id is undefined");
     }
@@ -168,6 +205,8 @@ function StoryMap() {
   const deleteNode = (nodeId) => {
     const nodeIndex = data.nodes.findIndex((node) => node.id === nodeId);
     if (nodeIndex === -1) return;
+
+    const nodeData = data.nodes[nodeIndex];
 
     const linkIndices = data.links
       .map((link, linkIndex) => (link.source === nodeId || link.target === nodeId ? linkIndex : -1))
@@ -183,6 +222,9 @@ function StoryMap() {
         remove(ref(database, `stories/${currentUser.uid}/graph/links/${linkIndex}`));
       });
 
+      logNodeAction(userId, 'delete', nodeData);
+      setActionCount(prev => prev + 1);
+
       return { ...prevData, nodes: updatedNodes, links: updatedLinks };
     });
   };
@@ -196,6 +238,7 @@ function StoryMap() {
   };
 
   const saveNewNode = async (nodeDetails) => {
+    const startTime = Date.now();
     const { label, aliases } = nodeDetails;
 
     const existingNode = data.nodes.find(node =>
@@ -225,6 +268,10 @@ function StoryMap() {
       .then(showNotification)
       .catch((error) => console.error("Error adding node:", error));
 
+    const processingTime = Date.now() - startTime;
+    await logNodeAction(userId, 'create', newNode, processingTime);
+
+    setActionCount(prev => prev + 1);
     closeNewNodeModal();
   };
 
@@ -282,6 +329,9 @@ function StoryMap() {
       .then(showNotification)
       .catch((error) => console.error("Error adding link:", error));
 
+    logLinkAction(userId, 'create', newLink);
+    setActionCount(prev => prev + 1);
+
     closeNewLinkModal();
   };
 
@@ -324,6 +374,9 @@ function StoryMap() {
         .catch((error) => console.error("Error updating link:", error));
     }
 
+    logLinkAction(userId, 'edit', { ...linkDetails, source, target, type });
+    setActionCount(prev => prev + 1);
+
     closeEditLinkModal();
   };
 
@@ -345,7 +398,7 @@ function StoryMap() {
     };
 
     const rootNodeNames = new Set(snapshotData.nodes.map(node => node.id));
-    
+
     snapshotData.links.forEach(link => {
       if (!snapshotData.nodes.some(node => node.id === link.source) || !snapshotData.nodes.some(node => node.id === link.target)) {
         removeLink(link);
@@ -357,7 +410,7 @@ function StoryMap() {
         }
       }
     });
-    
+
     const queue = Array.from(rootNodeNames, rootNodeName => ({ id: rootNodeName, level: 1 }));
     while (queue.length > 0) {
       const { id, level } = queue.shift();
@@ -388,7 +441,7 @@ function StoryMap() {
     }
 
     const flattenedLinks = Array.from(links, (link) => JSON.parse(link));
-    
+
     const finalNodes = snapshotData.nodes.filter((node) => nodes.has(node.id)).map((node) => ({
       ...node,
       id: node.id,
@@ -399,7 +452,7 @@ function StoryMap() {
       aliases: node.aliases,
       hidden: false
     }));
-    
+
     return { nodes: finalNodes, links: flattenedLinks };
   };
 
@@ -478,7 +531,7 @@ function StoryMap() {
       // Ensure we're working with IDs, not objects
       const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
       const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-      
+
       return {
         type: link.type || 'Unspecified',
         source: nodeIds.includes(sourceId) ? primaryNode.id : sourceId,
@@ -550,18 +603,35 @@ function StoryMap() {
   const handleRegenerateAnalysis = () => {
     setShouldRegenerate(true);
     setShowAnalysis(true);
+
+    const tracker = trackAnalysisPanelTime(userId);
+    setPanelTimeTracker(() => tracker);
+
+    logAnalysisPanelInteraction(userId, 'open');
   };
 
   // Handler to view existing feedback
   const handleViewFeedback = () => {
     setShouldRegenerate(false);
     setShowAnalysis(true);
+
+    const tracker = trackAnalysisPanelTime(userId);
+    setPanelTimeTracker(() => tracker);
+
+    logAnalysisPanelInteraction(userId, 'open');
   };
 
   // Toggle merge mode
   const toggleMergeMode = () => {
+    const newMergeMode = !mergeMode;
     setMergeMode(!mergeMode);
     setSelectedForMerge([]);
+
+    if (newMergeMode) {
+      logMergeModeAction(userId, 'enter');
+    } else {
+      logMergeModeAction(userId, 'exit');
+    }
   };
 
   // Callback when analysis completes
@@ -569,6 +639,25 @@ function StoryMap() {
     setCachedAnalysis(analysisResult);
     setShouldRegenerate(false);
   };
+
+  useEffect(() => {
+    return () => {
+      // On component unmount, log session summary
+      const sessionDuration = Date.now() - sessionStartTime;
+
+      // This could be a separate analytics function
+      console.log('[StoryMap Analytics] Session ended', {
+        duration: sessionDuration,
+        actionCount,
+        userId
+      });
+
+      // Close panel tracker if still open
+      if (panelTimeTracker) {
+        panelTimeTracker();
+      }
+    };
+  }, [sessionStartTime, actionCount, panelTimeTracker, userId]);
 
   return (
     <div>
@@ -586,7 +675,7 @@ function StoryMap() {
         >
           + Add Node
         </button>
-        
+
         <button
           onClick={openNewLinkModal}
           className="story-map-btn add-link-btn"
@@ -605,22 +694,22 @@ function StoryMap() {
         {/* Show different buttons based on whether feedback exists */}
         {cachedAnalysis ? (
           <>
-            <button 
-              onClick={handleViewFeedback} 
+            <button
+              onClick={handleViewFeedback}
               className="story-map-btn view-feedback-btn"
             >
               📊 View Feedback
             </button>
-            <button 
-              onClick={handleRegenerateAnalysis} 
+            <button
+              onClick={handleRegenerateAnalysis}
               className="story-map-btn analyze-btn"
             >
               🔄 Regenerate Analysis
             </button>
           </>
         ) : (
-          <button 
-            onClick={handleRegenerateAnalysis} 
+          <button
+            onClick={handleRegenerateAnalysis}
             className="story-map-btn analyze-btn"
           >
             🔍 Analyze Structure
@@ -644,7 +733,7 @@ function StoryMap() {
         }}>
           <span style={{ fontSize: '18px' }}>ℹ️</span>
           <div>
-            <strong>Merge Mode Active:</strong> 
+            <strong>Merge Mode Active:</strong>
             {selectedForMerge.length === 0 ? (
               <> Click the first node (this will be deleted)</>
             ) : (
@@ -671,8 +760,8 @@ function StoryMap() {
           isOpen={showAnalysis}
           onClose={() => setShowAnalysis(false)}
         >
-          <StoryMapAnalysis 
-            data={data} 
+          <StoryMapAnalysis
+            data={data}
             onMergeNodes={handleMergeNodes}
             autoAnalyze={shouldRegenerate}
             cachedAnalysis={shouldRegenerate ? null : cachedAnalysis}
