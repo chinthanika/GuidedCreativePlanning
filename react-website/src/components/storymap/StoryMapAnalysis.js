@@ -2,6 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { AlertCircle, CheckCircle, Info, TrendingUp, Users, GitMerge } from 'lucide-react';
 import './feedback-panel.css';
 
+import { useAuthValue } from '../../Firebase/AuthContext';
+
+import {
+  logAnalysisPanelInteraction
+} from '../../utils/analytics';
+
 export default function StoryMapAnalysis({ 
   data, 
   onMergeNodes, 
@@ -9,13 +15,15 @@ export default function StoryMapAnalysis({
   cachedAnalysis = null,
   onAnalysisComplete 
 }) {
+  const { currentUser } = useAuthValue();
+  const userId = currentUser ? currentUser.uid : null;
   const [analysis, setAnalysis] = useState(cachedAnalysis);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState({});
   const hasAnalyzedRef = useRef(false);
 
-  const AI_API_BASE_URL = process.env.REACT_APP_AI_API_BASE_URL || 'https://guidedcreativeplanning-ai.onrender.com' || 'http://localhost:5000/';
+  const AI_API_BASE_URL = process.env.REACT_APP_AI_API_BASE_URL || 'http://localhost:5000/';
 
   // Load cached analysis if provided
   useEffect(() => {
@@ -83,6 +91,8 @@ export default function StoryMapAnalysis({
       ...prev,
       [category]: !prev[category]
     }));
+
+    logAnalysisPanelInteraction(userId, 'expand_category', null, { category });
   };
 
   const handleMergeClick = (issue) => {

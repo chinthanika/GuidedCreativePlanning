@@ -23,6 +23,7 @@ import Chatbot from './pages/chatbot/chatbot'; // Import the Chatbot page
 import StoryWorld from './pages/world/world';  
 import LibraryPage from './pages/recommender/LibraryPage';
 import GuidanceAssistant from './assistant/GuidanceAssistant';
+import AdminDashboard from './pages/analytics/AdminDashboard';
 
 function App() {
 
@@ -54,6 +55,11 @@ return (
                 <Route path='/chatbot' element={<Chatbot/>}/>
                 <Route path='/library' element={<LibraryPage/>}/>
                 <Route path='/story-editor' element={<StoryEditorPage/>}/>
+                <Route path='/admin-dashboard' element={
+                    <PrivateRoute>
+                    <AdminDashboard/>
+                    </PrivateRoute>
+                }/>
                 <Route exact path='/' element={
                     <PrivateRoute>
                     <Profile/>

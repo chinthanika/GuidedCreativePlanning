@@ -6,6 +6,8 @@ import time
 import threading
 import random
 import re
+import statistics
+from collections import defaultdict
 
 import firebase_admin
 from firebase_admin import credentials, db
@@ -44,6 +46,29 @@ from prompts.feedback_system_prompt import FEEDBACK_SYSTEM_PROMPT
 from prompts.timeline_reflection_prompt import TIMELINE_REFLECTION_PROMPT, TIMELINE_COHERENCE_PROMPT
 from prompts.story_map_analysis_prompt import STORY_MAP_ANALYSIS_PROMPT
 from prompts.mentor_analysis_prompt import MENTOR_TEXT_ANALYSIS_SYSTEM_PROMPT, build_mentor_analysis_user_prompt, validate_analysis_output
+
+from utils.analytics.logger import log_tool_interaction, get_current_session_id
+from utils.analytics.mentor_text_logger import (
+    log_mentor_text_analysis,
+    log_mentor_text_view,
+    log_mentor_text_deletion,
+    log_mentor_text_search,
+    log_mentor_text_filter
+)
+
+from utils.analytics.story_map_logger import (
+    log_story_map_graph_render,
+    log_story_map_node_action,
+    log_story_map_link_action,
+    log_story_map_merge,
+    log_story_map_analysis,
+    log_story_map_analysis_panel_interaction,
+    log_story_map_view_toggle,
+    log_story_map_merge_mode,
+    log_story_map_iteration_pattern,
+    log_story_map_ai_vs_manual_ratio,
+    get_story_map_summary
+)
 
 app = Flask(__name__)
 
@@ -181,40 +206,249 @@ def trigger_auto_title_if_needed(user_id, session_id, message_count):
     
     threading.Thread(target=generate_title, daemon=True).start()
 
-@app.route('/api/guidance/chat', methods=['POST'])
-def guidance_chat():
+# ============================================
+# PAGE VIEW TRACKING ENDPOINTS
+# ============================================
+
+@app.route('/api/log-page-view', methods=['POST'])
+def log_page_view():
+    """
+    Track when user navigates to a tool page.
+    Called by frontend on page mount.
+    """
     try:
-        body = request.get_json()
-        system_prompt = body.get('system', '')
-        messages = body.get('messages', [])
-
-        if not messages:
-            return jsonify({'error': 'No messages provided'}), 400
-
-        deepseek_messages = [
-            {"role": "system", "content": system_prompt}
-        ]
-        for m in messages:
-            deepseek_messages.append({"role": m["role"], "content": m["content"]})
-
-        response = client.chat.completions.create(
-            model="deepseek-chat",
-            messages=deepseek_messages,
-            max_tokens=300,
-            stream=False
+        data = request.json
+        user_id = data.get('userId')
+        page_name = data.get('pageName')
+        tlc_stage = data.get('tlcStage')
+        timestamp = data.get('timestamp', int(time.time() * 1000))
+        
+        if not user_id or not page_name:
+            return jsonify({'error': 'userId and pageName required'}), 400
+        
+        # Log as tool interaction
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name=page_name,
+            interaction_type='page_view',
+            tlc_stage=tlc_stage,
+            metadata={'timestamp': timestamp}
         )
-
-        content = response.choices[0].message.content
-        return jsonify({'content': content}), 200
-
+        
+        # Track page view separately for timing analysis
+        page_views_ref = db.reference(f"analytics/{user_id}/pageViews")
+        page_view_id = page_views_ref.push({
+            'pageName': page_name,
+            'entryTimestamp': timestamp,
+            'exitTimestamp': None,  # Will be filled on exit
+            'duration': None
+        }).key
+        
+        rec_logger.info(f"[PAGE_VIEW] {user_id} entered {page_name}")
+        
+        return jsonify({
+            'success': True, 
+            'logged': 'page_view',
+            'pageViewId': page_view_id
+        }), 200
+        
     except Exception as e:
-        import traceback
-        print(f"[GuidanceAssistant] ERROR: {e}")
-        print(traceback.format_exc())
+        rec_logger.exception(f"[PAGE_VIEW] Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/log-page-exit', methods=['POST'])
+def log_page_exit():
+    """
+    Track when user exits a tool page.
+    Called by frontend on page unmount.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        page_name = data.get('pageName')
+        duration_ms = data.get('durationMs')
+        timestamp = data.get('timestamp', int(time.time() * 1000))
+        
+        if not user_id or not page_name:
+            return jsonify({'error': 'userId and pageName required'}), 400
+        
+        # Find the most recent page view for this page
+        page_views_ref = db.reference(f"analytics/{user_id}/pageViews")
+        all_views = page_views_ref.order_by_child('entryTimestamp').get() or {}
+        
+        # Find matching entry (most recent view of this page with no exit)
+        matching_view_key = None
+        for view_key, view_data in reversed(list(all_views.items())):
+            if (view_data.get('pageName') == page_name and 
+                view_data.get('exitTimestamp') is None):
+                matching_view_key = view_key
+                break
+        
+        if matching_view_key:
+            # Update with exit data
+            page_views_ref.child(matching_view_key).update({
+                'exitTimestamp': timestamp,
+                'duration': duration_ms
+            })
+        
+        # Also track in feature metrics
+        feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/{page_name}")
+        total_time = feature_ref.child('totalTimeInFeature').get() or 0
+        feature_ref.child('totalTimeInFeature').set(total_time + duration_ms)
+        
+        rec_logger.info(f"[PAGE_EXIT] {user_id} exited {page_name} after {duration_ms}ms")
+        
+        return jsonify({'success': True, 'logged': 'page_exit'}), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[PAGE_EXIT] Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/log-ui-interaction', methods=['POST'])
+def log_ui_interaction():
+    """
+    Endpoint for frontend to log UI-only interactions.
+    
+    Expected body:
+    {
+        "userId": "user_123",
+        "feature": "mentorText",
+        "action": "open_analysis" | "search" | "filter" | etc.,
+        "metadata": { ... feature-specific data ... }
+    }
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        feature = data.get('feature')
+        action = data.get('action')
+        metadata = data.get('metadata', {})
+        
+        if not user_id or not feature or not action:
+            return jsonify({'error': 'userId, feature, and action required'}), 400
+        
+        # Map feature to TLC stage (default to joint_construction for UI interactions)
+        stage_map = {
+            'bookRecs': 'building_knowledge',
+            'mentorText': 'modelling',
+            'storyMap': 'modelling',
+            'timeline': 'joint_construction',
+            'bsChatbot': 'joint_construction',
+            'dtChatbot': 'joint_construction',
+            'feedback': 'independent_construction'
+        }
+        
+        tlc_stage = stage_map.get(feature, 'joint_construction')
+        
+        # Log the interaction
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name=feature,
+            interaction_type=action,
+            tlc_stage=tlc_stage,
+            metadata=metadata
+        )
+        
+        # Update feature-specific metrics if needed
+        if feature == 'bookRecs' and action == 'save_book':
+            feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/bookRecommendations/savedBooks")
+            total_saved = feature_ref.child('totalSaved').get() or 0
+            feature_ref.child('totalSaved').set(total_saved + 1)
+        
+        elif feature == 'mentorText' and action == 'search':
+            feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/mentorText")
+            total_searches = feature_ref.child('totalSearches').get() or 0
+            feature_ref.child('totalSearches').set(total_searches + 1)
+        
+        elif feature == 'mentorText' and action == 'filter':
+            feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/mentorText")
+            filter_type = metadata.get('filterType')
+            if filter_type:
+                filter_count = feature_ref.child(f'filterUsage/{filter_type}').get() or 0
+                feature_ref.child(f'filterUsage/{filter_type}').set(filter_count + 1)
+        
+        rec_logger.info(f"[UI_LOG] {user_id} - {feature}.{action}")
+        
+        return jsonify({'success': True, 'logged': action}), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[UI_LOG] Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/log-ui-batch', methods=['POST'])
+def log_ui_batch():
+    """
+    Batch endpoint for logging multiple rapid interactions.
+    Used by createBatchLogger in frontend.
+    
+    Expected body:
+    {
+        "userId": "user_123",
+        "feature": "storyMap",
+        "interactions": [
+            {"action": "move_node", "metadata": {...}, "timestamp": 123456},
+            {"action": "move_node", "metadata": {...}, "timestamp": 123457}
+        ]
+    }
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        feature = data.get('feature')
+        interactions = data.get('interactions', [])
+        
+        if not user_id or not feature or not interactions:
+            return jsonify({'error': 'userId, feature, and interactions required'}), 400
+        
+        # Map feature to TLC stage
+        stage_map = {
+            'bookRecs': 'building_knowledge',
+            'mentorText': 'modelling',
+            'storyMap': 'modelling',
+            'timeline': 'joint_construction',
+            'bsChatbot': 'joint_construction',
+            'dtChatbot': 'joint_construction',
+            'feedback': 'independent_construction'
+        }
+        
+        tlc_stage = stage_map.get(feature, 'joint_construction')
+        
+        # Log each interaction
+        for interaction in interactions:
+            action = interaction.get('action')
+            metadata = interaction.get('metadata', {})
+            timestamp = interaction.get('timestamp')
+            
+            if action:
+                # Add timestamp to metadata
+                if timestamp:
+                    metadata['batchTimestamp'] = timestamp
+                
+                log_tool_interaction(
+                    user_id=user_id,
+                    tool_name=feature,
+                    interaction_type=action,
+                    tlc_stage=tlc_stage,
+                    metadata=metadata
+                )
+        
+        rec_logger.info(f"[UI_BATCH] {user_id} - {feature}: {len(interactions)} interactions")
+        
+        return jsonify({
+            'success': True, 
+            'logged': len(interactions),
+            'feature': feature
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[UI_BATCH] Error: {e}")
         return jsonify({'error': str(e)}), 500
 
 # ============================================
-# BRAINSTORMING CHAT (FIXED)
+# BRAINSTORMING CHAT
 # ============================================
 @app.route('/chat/brainstorming', methods=['POST'])
 def brainstorming_chat():
@@ -2909,6 +3143,21 @@ Return analysis in the specified JSON format."""
             f"M:{analysis['severity_counts']['medium']}, "
             f"L:{analysis['severity_counts']['low']})"
         )
+
+        try:
+            log_story_map_analysis(
+                user_id=user_id,
+                overall_score=analysis.get('overall_score', 0),
+                overall_health=analysis.get('overall_health', 'unknown'),
+                node_count=len(nodes),
+                link_count=len(links),
+                issues_found=analysis.get('issues', []),
+                genre_inferred=analysis.get('genre_insights', {}).get('detected_genre'),
+                processing_time_ms=int((time.time() - request_start) * 1000)
+            )
+            rec_logger.info("[STORY_MAP] Analysis metrics logged")
+        except Exception as log_err:
+            rec_logger.warning(f"[STORY_MAP] Failed to log analysis: {log_err}")
         
         return jsonify(analysis), 200
         
@@ -3620,19 +3869,19 @@ def debug_book_sources():
 def analyze_mentor_text():
     """
     Analyze a mentor text excerpt and generate teaching points.
-    AI acts as Modelling Guide: Notice & Name techniques for student learning.
+    NOW WITH ANALYTICS TRACKING.
     """
     request_start = time.time()
     rec_logger.info("[MODELLING] Incoming analysis request")
     
     try:
         data = request.json
-        user_id = data.get('userId')
+        user_id = data.get('userId')  # REQUIRED for logging
         excerpt = data.get('excerpt', '').strip()
         genre = data.get('genre', 'general fiction')
         focus = data.get('focus', 'general')
         
-        # Validation
+        # Validation (existing code)
         if not user_id or not excerpt:
             return jsonify({
                 'error': 'Missing required fields',
@@ -3642,23 +3891,23 @@ def analyze_mentor_text():
         if len(excerpt) < 100:
             return jsonify({
                 'error': 'Excerpt too short',
-                'details': f'Please provide at least 100 characters for meaningful analysis (currently: {len(excerpt)} chars)'
+                'details': f'Please provide at least 100 characters'
             }), 400
         
         if len(excerpt) > 6000:
             return jsonify({
                 'error': 'Excerpt too long',
-                'details': f'Please limit excerpts to 6000 characters (currently: {len(excerpt)} chars). Try selecting a key scene or passage.'
+                'details': f'Please limit excerpts to 6000 characters'
             }), 400
         
-        rec_logger.info(f"[MODELLING] Analyzing {len(excerpt)} char excerpt | Genre: {genre} | Focus: {focus}")
+        rec_logger.info(f"[MODELLING] Analyzing {len(excerpt)} char excerpt")
         
-        # Build user message (data in user prompt, like other endpoints)
+        # Build user message (existing code)
         user_message = build_mentor_analysis_user_prompt(excerpt, genre, focus)
         
         rec_logger.info("[MODELLING] Calling DeepSeek")
         
-        # Call DeepSeek (static system prompt, dynamic data in user message)
+        # Call DeepSeek (existing code)
         try:
             response = client.chat.completions.create(
                 model="deepseek-chat",
@@ -3669,7 +3918,7 @@ def analyze_mentor_text():
                 response_format={'type': 'json_object'},
                 stream=False,
                 timeout=60,
-                temperature=0.4  # Lower for consistent pedagogical analysis
+                temperature=0.4
             )
             
             rec_logger.info("[MODELLING] DeepSeek response received")
@@ -3678,7 +3927,7 @@ def analyze_mentor_text():
             rec_logger.error("[MODELLING] DeepSeek timeout")
             return jsonify({
                 'error': 'Analysis timeout',
-                'details': 'Mentor text analysis took too long. Try a shorter excerpt.'
+                'details': 'Mentor text analysis took too long.'
             }), 504
         
         except Exception as api_err:
@@ -3688,11 +3937,10 @@ def analyze_mentor_text():
                 'details': str(api_err)
             }), 500
         
-        # Parse response
+        # Parse response (existing code)
         try:
             result_text = response.choices[0].message.content.strip()
             
-            # Clean markdown code blocks if present
             if result_text.startswith('```'):
                 result_text = re.sub(r'```(?:json)?\s*', '', result_text).strip()
                 if result_text.endswith('```'):
@@ -3703,27 +3951,41 @@ def analyze_mentor_text():
             
         except json.JSONDecodeError as parse_err:
             rec_logger.error(f"[MODELLING] JSON parse error: {parse_err}")
-            rec_logger.error(f"[MODELLING] Problematic response (first 500 chars): {result_text[:500]}")
             return jsonify({
                 'error': 'Failed to parse AI response',
                 'details': 'AI returned invalid JSON format'
             }), 500
         
-        # Validate output using utility function
+        # Validate output (existing code)
         validation = validate_analysis_output(result, excerpt)
         
         if not validation['passesValidation']:
             rec_logger.warning(f"[MODELLING] Validation issues: {validation['issues']}")
-            # Include validation warning in response but don't fail
             result['_validationWarning'] = {
                 'issues': validation['issues'],
                 'warnings': validation['warnings']
             }
         
-        if validation['warnings']:
-            rec_logger.info(f"[MODELLING] Validation warnings: {validation['warnings'][:3]}")
+        # Calculate processing time
+        processing_time = int((time.time() - request_start) * 1000)
         
-        # Add metadata
+        # Logging analytics
+        try:
+            log_mentor_text_analysis(
+                user_id=user_id,
+                excerpt_length=len(excerpt),
+                teaching_points_count=len(result.get('teachingPoints', [])),
+                genre_identified=result.get('genreIdentified', genre),
+                focus_area=focus,
+                validation_quality=validation['quality'],
+                processing_time_ms=processing_time
+            )
+            rec_logger.info("[MODELLING] Analytics logged successfully")
+        except Exception as log_err:
+            rec_logger.warning(f"[MODELLING] Failed to log analytics: {log_err}")
+            # Don't fail the request if logging fails
+        
+        # Add metadata (existing code)
         result['metadata'] = {
             'timestamp': int(time.time() * 1000),
             'excerptLength': len(excerpt),
@@ -3736,16 +3998,15 @@ def analyze_mentor_text():
                 'passesValidation': validation['passesValidation'],
                 'teachingPointCount': validation['teachingPointCount']
             },
-            'processingTime': int((time.time() - request_start) * 1000)
+            'processingTime': processing_time
         }
-        
-        # Optional: Save to user's library (non-blocking)
+
+        # Save to library (non-blocking)
         def save_to_library():
             try:
                 analysis_id = f"analysis_{int(time.time() * 1000)}"
                 analyses_ref = db.reference(f"mentorTextAnalyses/{user_id}/{analysis_id}")
                 
-                # Store truncated excerpt to save Firebase space
                 truncated_excerpt = excerpt[:500] + '...' if len(excerpt) > 500 else excerpt
                 
                 analyses_ref.set({
@@ -3758,17 +4019,16 @@ def analyze_mentor_text():
                     'validation': validation
                 })
                 
-                rec_logger.info(f"[MODELLING] Saved analysis {analysis_id} to library")
+                rec_logger.info(f"[MODELLING] Saved analysis {analysis_id}")
             except Exception as save_error:
-                rec_logger.warning(f"[MODELLING] Failed to save to library: {save_error}")
+                rec_logger.warning(f"[MODELLING] Failed to save: {save_error}")
         
-        # Save in background thread
         threading.Thread(target=save_to_library, daemon=True).start()
         
         total_time = time.time() - request_start
         rec_logger.info(
             f"[MODELLING] Total: {total_time:.2f}s, "
-            f"generated {len(result.get('teachingPoints', []))} teaching points, "
+            f"points: {len(result.get('teachingPoints', []))}, "
             f"quality: {validation['quality']}"
         )
         
@@ -3879,6 +4139,7 @@ def get_mentor_text_analysis(analysis_id):
 def delete_mentor_text_analysis(analysis_id):
     """
     Delete a saved mentor text analysis.
+    NOW WITH ANALYTICS TRACKING.
     """
     try:
         data = request.json
@@ -3892,11 +4153,28 @@ def delete_mentor_text_analysis(analysis_id):
         
         # Check if analysis exists
         analysis_ref = db.reference(f"mentorTextAnalyses/{user_id}/{analysis_id}")
-        if not analysis_ref.get():
+        analysis_data = analysis_ref.get()
+        
+        if not analysis_data:
             return jsonify({
                 'error': 'Analysis not found',
                 'analysisId': analysis_id
             }), 404
+        
+        # Log deletion analytics
+        try:
+            # Check if it was ever viewed (simple heuristic: created more than 5 min ago)
+            created_at = analysis_data.get('createdAt', 0)
+            was_viewed = (int(time.time() * 1000) - created_at) > 300000  # 5 minutes
+            
+            log_mentor_text_deletion(
+                user_id=user_id,
+                analysis_id=analysis_id,
+                was_viewed=was_viewed
+            )
+            rec_logger.info("[MODELLING] Deletion logged")
+        except Exception as log_err:
+            rec_logger.warning(f"[MODELLING] Failed to log deletion: {log_err}")
         
         # Delete analysis
         analysis_ref.delete()
@@ -3909,7 +4187,7 @@ def delete_mentor_text_analysis(analysis_id):
         }), 200
         
     except Exception as e:
-        rec_logger.exception(f"[MODELLING] Failed to delete analysis: {e}")
+        rec_logger.exception(f"[MODELLING] Failed to delete: {e}")
         return jsonify({
             'error': 'Failed to delete analysis',
             'details': str(e)
@@ -3930,6 +4208,247 @@ def get_mapping_metrics():
         rec_logger.exception(f"[METRICS] Failed to get mapping metrics: {e}")
         return jsonify({'error': str(e)}), 500
 
+# ============================================
+# STORY MAP ANALYTICS ENDPOINTS
+# ============================================
+
+@app.route('/api/story-map/log-render', methods=['POST'])
+def log_story_map_render():
+    """
+    Log when user renders the story map graph.
+    Called from frontend on component mount.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        node_count = data.get('nodeCount', 0)
+        link_count = data.get('linkCount', 0)
+        
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+        
+        # Calculate isolated nodes
+        isolated_nodes = _calculate_isolated_nodes(
+            data.get('nodes', []), 
+            data.get('links', [])
+        )
+        
+        log_story_map_graph_render(
+            user_id=user_id,
+            node_count=node_count,
+            link_count=link_count,
+            isolated_nodes=isolated_nodes
+        )
+        
+        rec_logger.info(f"[STORY_MAP] Graph render logged for user {user_id}")
+        
+        return jsonify({'success': True, 'logged': 'graph_render'}), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[STORY_MAP] Render log failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-node-action', methods=['POST'])
+def log_node_action():
+    """
+    Log node creation, editing, or deletion.
+    Called from frontend after node operations.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        action_type = data.get('actionType')  # 'create' | 'edit' | 'delete' | 'view'
+        node_data = data.get('nodeData')
+        processing_time_ms = data.get('processingTimeMs')
+        
+        if not user_id or not action_type or not node_data:
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        log_story_map_node_action(
+            user_id=user_id,
+            action_type=action_type,
+            node_data=node_data,
+            processing_time_ms=processing_time_ms
+        )
+        
+        rec_logger.info(f"[STORY_MAP] Node {action_type} logged")
+        
+        return jsonify({'success': True, 'logged': f'node_{action_type}'}), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[STORY_MAP] Node action log failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-link-action', methods=['POST'])
+def log_link_action():
+    """
+    Log link creation, editing, or deletion.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        action_type = data.get('actionType')  # 'create' | 'edit' | 'delete' | 'view'
+        link_data = data.get('linkData')
+        
+        if not user_id or not action_type or not link_data:
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        log_story_map_link_action(
+            user_id=user_id,
+            action_type=action_type,
+            link_data=link_data
+        )
+        
+        rec_logger.info(f"[STORY_MAP] Link {action_type} logged")
+        
+        return jsonify({'success': True, 'logged': f'link_{action_type}'}), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[STORY_MAP] Link action log failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-merge', methods=['POST'])
+def log_merge():
+    """
+    Log node merge operation.
+    Critical metric for duplicate detection effectiveness.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        merged_node_count = data.get('mergedNodeCount')
+        primary_node_label = data.get('primaryNodeLabel')
+        processing_time_ms = data.get('processingTimeMs')
+        
+        if not user_id or not merged_node_count or not primary_node_label:
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        log_story_map_merge(
+            user_id=user_id,
+            merged_node_count=merged_node_count,
+            primary_node_label=primary_node_label,
+            processing_time_ms=processing_time_ms
+        )
+        
+        rec_logger.info(f"[STORY_MAP] Merge logged: {merged_node_count} nodes")
+        
+        return jsonify({'success': True, 'logged': 'merge'}), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[STORY_MAP] Merge log failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-analysis-panel', methods=['POST'])
+def log_analysis_panel():
+    """
+    Log analysis panel interactions.
+    Tracks how users engage with AI feedback.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        interaction_type = data.get('interactionType')
+        duration_ms = data.get('durationMs')
+        issue_interacted_with = data.get('issueInteractedWith')
+        
+        if not user_id or not interaction_type:
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        log_story_map_analysis_panel_interaction(
+            user_id=user_id,
+            interaction_type=interaction_type,
+            duration_ms=duration_ms,
+            issue_interacted_with=issue_interacted_with
+        )
+        
+        rec_logger.info(f"[STORY_MAP] Analysis panel {interaction_type} logged")
+        
+        return jsonify({'success': True, 'logged': f'panel_{interaction_type}'}), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[STORY_MAP] Panel interaction log failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-view-toggle', methods=['POST'])
+def log_view_toggle():
+    """
+    Log view mode toggle (node vs label view).
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        view_mode = data.get('viewMode')  # 'node' | 'label'
+        
+        if not user_id or not view_mode:
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        log_story_map_view_toggle(
+            user_id=user_id,
+            view_mode=view_mode
+        )
+        
+        rec_logger.info(f"[STORY_MAP] View toggle to {view_mode} logged")
+        
+        return jsonify({'success': True, 'logged': 'view_toggle'}), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[STORY_MAP] View toggle log failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-merge-mode', methods=['POST'])
+def log_merge_mode():
+    """
+    Log merge mode interactions.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        action_type = data.get('actionType')  # 'enter' | 'exit' | 'select_first' | etc.
+        nodes_selected = data.get('nodesSelected')
+        
+        if not user_id or not action_type:
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        log_story_map_merge_mode(
+            user_id=user_id,
+            action_type=action_type,
+            nodes_selected=nodes_selected
+        )
+        
+        rec_logger.info(f"[STORY_MAP] Merge mode {action_type} logged")
+        
+        return jsonify({'success': True, 'logged': f'merge_mode_{action_type}'}), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[STORY_MAP] Merge mode log failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/summary/<user_id>', methods=['GET'])
+def get_user_story_map_summary(user_id):
+    """
+    Get comprehensive Story Map summary for admin dashboard.
+    """
+    try:
+        summary = get_story_map_summary(user_id)
+        
+        rec_logger.info(f"[STORY_MAP] Summary retrieved for {user_id}")
+        
+        return jsonify({
+            'userId': user_id,
+            'summary': summary
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[STORY_MAP] Summary retrieval failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/debug/clear-mapping-cache', methods=['POST'])
 def clear_mapping_cache():
@@ -3944,6 +4463,333 @@ def clear_mapping_cache():
     except Exception as e:
         rec_logger.exception(f"[CACHE] Failed to clear cache: {e}")
         return jsonify({'error': str(e)}), 500
+
+
+
+# ============================================
+# ADMIN ANALYTICS ENDPOINTS
+# ============================================
+
+@app.route('/admin/analytics/users-list', methods=['GET'])
+def get_users_list():
+    """
+    Get list of all users with basic stats.
+    Used for dropdown in admin dashboard.
+    """
+    try:
+        analytics_ref = db.reference('analytics')
+        all_data = analytics_ref.get() or {}
+        
+        users = []
+        for user_id, user_data in all_data.items():
+            journey = user_data.get('toolJourney', {})
+            total_interactions = len(journey)
+            
+            users.append({
+                'userId': user_id,
+                'totalInteractions': total_interactions
+            })
+        
+        # Sort by most active first
+        users.sort(key=lambda x: x['totalInteractions'], reverse=True)
+        
+        rec_logger.info(f"[ADMIN] Returning {len(users)} users")
+        
+        return jsonify({
+            'users': users,
+            'count': len(users)
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[ADMIN] Failed to get users list: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/admin/analytics/user/<user_id>', methods=['GET'])
+def get_user_analytics(user_id):
+    """
+    Get complete analytics for a single user.
+    Used by researcher dashboard.
+    """
+    try:
+        analytics_ref = db.reference(f"analytics/{user_id}")
+        data = analytics_ref.get() or {}
+        
+        if not data:
+            return jsonify({
+                'error': 'User not found',
+                'userId': user_id
+            }), 404
+        
+        # Get user metadata
+        user_ref = db.reference(f"users/{user_id}")
+        user_data = user_ref.get() or {}
+        
+        # Calculate derived metrics
+        tool_journey = data.get('toolJourney', {})
+        transitions = data.get('stageTransitions', {})
+        
+        # Chronological journey
+        journey_list = [
+            {
+                'timestamp': v['timestamp'],
+                'tool': v['tool'],
+                'stage': v['stage'],
+                'interactionType': v.get('interactionType'),
+                'metadata': v.get('metadata', {})
+            }
+            for v in tool_journey.values()
+        ]
+        journey_list.sort(key=lambda x: x['timestamp'])
+        
+        # Stage time distribution
+        stage_times = _calculate_stage_times(journey_list)
+        
+        # Recursion count
+        recursion_events = [
+            t for t in transitions.values()
+            if t.get('transitionType') == 'backward'
+        ]
+        
+        rec_logger.info(f"[ADMIN] Loaded analytics for user {user_id}")
+        
+        return jsonify({
+            'userId': user_id,
+            'userMetadata': {
+                'studyGroup': user_data.get('studyGroup'),
+                'condition': user_data.get('condition')
+            },
+            'toolUsage': data.get('toolUsage', {}),
+            'journey': journey_list,
+            'stageTimeDistribution': stage_times,
+            'stageTransitions': list(transitions.values()),
+            'recursionEvents': recursion_events,
+            'recursionCount': len(recursion_events),
+            'totalToolInteractions': len(journey_list),
+            'featureMetrics': data.get('featureMetrics', {}),
+            'outcomeMetrics': data.get('outcomeMetrics', {})
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[ADMIN] Failed to get user analytics: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/admin/analytics/study-summary', methods=['GET'])
+def get_study_summary():
+    """
+    Get aggregate analytics across ALL users.
+    """
+    try:
+        analytics_ref = db.reference('analytics')
+        all_data = analytics_ref.get() or {}
+        
+        users_ref = db.reference('users')
+        all_users = users_ref.get() or {}
+        
+        summary = {
+            'totalParticipants': len(all_data),
+            'studyGroups': {
+                'tool_first': 0,
+                'no_tool_first': 0
+            },
+            'avgToolUsagePerUser': {},
+            'toolPopularity': {},
+            'avgStageTime': {},
+            'recursionStats': {
+                'totalRecursions': 0,
+                'avgRecursionsPerUser': 0,
+                'mostCommonTransition': None,
+                'commonTriggers': {}
+            },
+            'outcomeAverages': {}
+        }
+        
+        # Aggregate tool usage
+        all_tool_usage = []
+        all_stage_times = defaultdict(list)
+        all_recursions = []
+        all_coherence_scores = []
+        all_feedback_scores = []
+        
+        for user_id, user_data in all_data.items():
+            # Study group counts
+            user_info = all_users.get(user_id, {})
+            study_group = user_info.get('studyGroup')
+            if study_group in summary['studyGroups']:
+                summary['studyGroups'][study_group] += 1
+            
+            # Tool usage
+            tool_usage = user_data.get('toolUsage', {})
+            all_tool_usage.append(tool_usage)
+            for tool, count in tool_usage.items():
+                summary['toolPopularity'][tool] = summary['toolPopularity'].get(tool, 0) + count
+            
+            # Stage times
+            journey = user_data.get('toolJourney', {})
+            journey_list = sorted(journey.values(), key=lambda x: x.get('timestamp', 0))
+            stage_times = _calculate_stage_times(journey_list)
+            for stage, time in stage_times.items():
+                all_stage_times[stage].append(time)
+            
+            # Stage transitions (recursion)
+            transitions = user_data.get('stageTransitions', {})
+            for trans in transitions.values():
+                if trans.get('transitionType') == 'backward':
+                    all_recursions.append(trans)
+            
+            # Outcome metrics
+            outcomes = user_data.get('outcomeMetrics', {})
+            coherence_scores = outcomes.get('timelineCoherenceScores', [])
+            if coherence_scores:
+                all_coherence_scores.extend(coherence_scores)
+            
+            feedback_scores = outcomes.get('feedbackScores', [])
+            if feedback_scores:
+                all_feedback_scores.extend(feedback_scores)
+        
+        # Calculate averages
+        if all_tool_usage:
+            all_tools = set(tool for usage in all_tool_usage for tool in usage.keys())
+            for tool in all_tools:
+                counts = [usage.get(tool, 0) for usage in all_tool_usage]
+                summary['avgToolUsagePerUser'][tool] = statistics.mean(counts)
+        
+        # Average stage times
+        for stage, times in all_stage_times.items():
+            if times:
+                summary['avgStageTime'][stage] = statistics.mean(times)
+        
+        # Recursion stats
+        summary['recursionStats']['totalRecursions'] = len(all_recursions)
+        if len(all_data) > 0:
+            summary['recursionStats']['avgRecursionsPerUser'] = len(all_recursions) / len(all_data)
+        
+        if all_recursions:
+            # Most common transition
+            transition_counts = {}
+            for r in all_recursions:
+                key = f"{r['from']} → {r['to']}"
+                transition_counts[key] = transition_counts.get(key, 0) + 1
+            summary['recursionStats']['mostCommonTransition'] = max(
+                transition_counts.items(),
+                key=lambda x: x[1]
+            )
+        
+        # Outcome averages
+        if all_coherence_scores:
+            summary['outcomeAverages']['avgTimelineCoherence'] = statistics.mean(all_coherence_scores)
+        if all_feedback_scores:
+            summary['outcomeAverages']['avgFeedbackScore'] = statistics.mean(all_feedback_scores)
+        
+        rec_logger.info(f"[ADMIN] Loaded study summary for {summary['totalParticipants']} participants")
+        
+        return jsonify(summary), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[ADMIN] Failed to get study summary: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/admin/analytics/export-csv', methods=['GET'])
+def export_study_data_csv():
+    """
+    Export all study data as CSV for statistical analysis.
+    Returns a CSV file download.
+    """
+    try:
+        import csv
+        from io import StringIO
+        
+        analytics_ref = db.reference('analytics')
+        all_data = analytics_ref.get() or {}
+        
+        users_ref = db.reference('users')
+        all_users = users_ref.get() or {}
+        
+        # Create CSV
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Header row
+        writer.writerow([
+            'user_id',
+            'study_group',
+            'total_tool_uses',
+            'story_map_uses',
+            'mentor_text_uses',
+            'book_rec_uses',
+            'timeline_uses',
+            'chat_uses',
+            'feedback_uses',
+            'total_recursions',
+            'avg_coherence_score',
+            'avg_feedback_score',
+            'final_coherence_score',
+            'final_feedback_score',
+            'total_time_minutes'
+        ])
+        
+        # Data rows
+        for user_id, user_data in all_data.items():
+            user_info = all_users.get(user_id, {})
+            tool_usage = user_data.get('toolUsage', {})
+            transitions = user_data.get('stageTransitions', {})
+            outcomes = user_data.get('outcomeMetrics', {})
+            
+            # Count recursions
+            recursions = sum(
+                1 for t in transitions.values()
+                if t.get('transitionType') == 'backward'
+            )
+            
+            # Get outcome scores
+            coherence_scores = outcomes.get('timelineCoherenceScores', [])
+            feedback_scores = outcomes.get('feedbackScores', [])
+            
+            # Calculate total time
+            journey = user_data.get('toolJourney', {})
+            journey_list = sorted(journey.values(), key=lambda x: x.get('timestamp', 0))
+            if len(journey_list) >= 2:
+                total_time_ms = journey_list[-1]['timestamp'] - journey_list[0]['timestamp']
+                total_time_minutes = total_time_ms / 60000
+            else:
+                total_time_minutes = 0
+            
+            writer.writerow([
+                user_id,
+                user_info.get('studyGroup', ''),
+                sum(tool_usage.values()),
+                tool_usage.get('storyMap', 0),
+                tool_usage.get('mentorText', 0),
+                tool_usage.get('bookRecs', 0),
+                tool_usage.get('timeline', 0),
+                tool_usage.get('bsChatbot', 0) + tool_usage.get('dtChatbot', 0),
+                tool_usage.get('feedback', 0),
+                recursions,
+                statistics.mean(coherence_scores) if coherence_scores else '',
+                statistics.mean(feedback_scores) if feedback_scores else '',
+                coherence_scores[-1] if coherence_scores else '',
+                feedback_scores[-1] if feedback_scores else '',
+                round(total_time_minutes, 1)
+            ])
+        
+        # Prepare response
+        output.seek(0)
+        
+        from flask import make_response
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=study_data_{int(time.time())}.csv'
+        
+        rec_logger.info(f"[ADMIN] Exported CSV for {len(all_data)} users")
+        
+        return response
+        
+    except Exception as e:
+        rec_logger.exception(f"[ADMIN] Failed to export CSV: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 # ============================================
 # RUN SERVER

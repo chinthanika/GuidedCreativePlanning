@@ -18,6 +18,7 @@ const Navbar = () => {
         <NavLink to="/chatbot">Chatbot</NavLink>
         <NavLink to="/library">Library</NavLink>
         <NavLink to="/story-editor">Story Editor</NavLink>
+        <NavLink to="/admin-dashboard">Admin Dashboard</NavLink>
       </NavMenu>
 
       {/* Right-Aligned Section */}
