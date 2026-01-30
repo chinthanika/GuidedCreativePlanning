@@ -206,6 +206,64 @@ def trigger_auto_title_if_needed(user_id, session_id, message_count):
     
     threading.Thread(target=generate_title, daemon=True).start()
 
+@app.route('/api/guidance/chat', methods=['POST'])
+def guidance_chat():
+    try:
+        body = request.get_json()
+        system_prompt = body.get('system', '')
+        messages = body.get('messages', [])
+
+        if not messages:
+            return jsonify({'error': 'No messages provided'}), 400
+
+        deepseek_messages = [
+            {"role": "system", "content": system_prompt}
+        ]
+        for m in messages:
+            deepseek_messages.append({"role": m["role"], "content": m["content"]})
+
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=deepseek_messages,
+            max_tokens=300,
+            stream=False
+        )
+
+        content = response.choices[0].message.content
+        return jsonify({'content': content}), 200
+
+    except Exception as e:
+        import traceback
+        print(f"[GuidanceAssistant] ERROR: {e}")
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+def _calculate_stage_times(journey_list):
+    """Calculate time spent in each TLC stage."""
+    stage_times = {}
+    
+    for i in range(len(journey_list) - 1):
+        stage = journey_list[i].get('stage')
+        if not stage:
+            continue
+        
+        duration = journey_list[i+1]['timestamp'] - journey_list[i]['timestamp']
+        stage_times[stage] = stage_times.get(stage, 0) + duration
+    
+    return stage_times
+
+def _calculate_isolated_nodes(nodes, links):
+    """Calculate number of nodes with no connections."""
+    connected_nodes = set()
+    for link in links:
+        connected_nodes.add(link.get('source'))
+        connected_nodes.add(link.get('target'))
+    
+    total_nodes = len(nodes)
+    connected_count = len(connected_nodes)
+    
+    return total_nodes - connected_count
+
 # ============================================
 # PAGE VIEW TRACKING ENDPOINTS
 # ============================================
