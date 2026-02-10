@@ -505,6 +505,155 @@ export async function logIterationPattern(userId, iterationData) {
   }
 }
 
+// ============================================
+// GRAPH VISUALIZATION INTERACTIONS
+// ============================================
+
+/**
+ * Log graph visualization interactions (zoom, pan, hover)
+ * @param {string} userId - Firebase user ID
+ * @param {string} interactionType - 'zoom' | 'pan' | 'node_hover' | 'link_hover'
+ * @param {object} metadata - Interaction-specific data
+ */
+export async function logGraphInteraction(userId, interactionType, metadata = {}) {
+  if (!userId) return;
+  
+  try {
+    await fetch(`${API_BASE}/api/log-ui-interaction`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        feature: 'storyMap',
+        action: `graph_${interactionType}`,
+        metadata: {
+          ...metadata,
+          timestamp: Date.now()
+        }
+      })
+    });
+  } catch (error) {
+    console.error('[Analytics] Graph interaction log failed:', error);
+  }
+}
+
+// ============================================
+// COGNITIVE LOAD INDICATORS
+// ============================================
+
+/**
+ * Log cognitive load indicators (errors, modal abandonment, repeated edits)
+ * @param {string} userId - Firebase user ID
+ * @param {string} indicatorType - 'validation_error' | 'modal_abandoned' | 'repeated_edit' | 'undo' | 'redo'
+ * @param {object} metadata - Context data
+ */
+export async function logCognitiveLoad(userId, indicatorType, metadata = {}) {
+  if (!userId) return;
+  
+  try {
+    await fetch(`${API_BASE}/api/log-ui-interaction`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        feature: 'storyMap',
+        action: `cognitive_load_${indicatorType}`,
+        metadata: {
+          ...metadata,
+          timestamp: Date.now()
+        }
+      })
+    });
+  } catch (error) {
+    console.error('[Analytics] Cognitive load log failed:', error);
+  }
+}
+
+// ============================================
+// TEMPLATE USAGE TRACKING
+// ============================================
+
+/**
+ * Log template usage (node/link creation with field completion data)
+ * @param {string} userId - Firebase user ID
+ * @param {string} templateType - 'node_creation' | 'link_creation' | 'node_edit' | 'link_edit'
+ * @param {object} metadata - Template-specific data
+ */
+export async function logTemplateUsage(userId, templateType, metadata = {}) {
+  if (!userId) return;
+  
+  try {
+    await fetch(`${API_BASE}/api/log-ui-interaction`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        feature: 'storyMap',
+        action: `template_${templateType}`,
+        metadata: {
+          ...metadata,
+          timestamp: Date.now()
+        }
+      })
+    });
+  } catch (error) {
+    console.error('[Analytics] Template usage log failed:', error);
+  }
+}
+
+// ============================================
+// BATCH LOGGER (for rapid interactions)
+// ============================================
+
+/**
+ * Create a batch logger for multiple rapid interactions
+ * Useful for drag-and-drop, graph editing, etc.
+ */
+export function createStoryMapBatchLogger(userId) {
+  let batch = [];
+  let flushTimeout = null;
+  
+  const flush = async () => {
+    if (batch.length === 0) return;
+    
+    try {
+      await fetch(`${API_BASE}/api/log-ui-batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          feature: 'storyMap',
+          interactions: batch
+        })
+      });
+      batch = [];
+    } catch (error) {
+      console.error('[Analytics] Batch log failed:', error);
+      batch = [];
+    }
+  };
+  
+  return {
+    log: (action, metadata = {}) => {
+      batch.push({
+        action,
+        metadata,
+        timestamp: Date.now()
+      });
+      
+      // Auto-flush after 5 seconds of inactivity
+      clearTimeout(flushTimeout);
+      flushTimeout = setTimeout(flush, 5000);
+      
+      // Auto-flush if batch gets too large
+      if (batch.length >= 10) {
+        flush();
+      }
+    },
+    flush
+  };
+}
+
 // Export all functions
 export default {
   logPageView,
@@ -523,5 +672,9 @@ export default {
   logMergeModeAction,
   trackAnalysisPanelTime,
   createGraphBatchLogger,
-  logIterationPattern
+  logIterationPattern,
+  logGraphInteraction,
+  logCognitiveLoad,
+  logTemplateUsage,
+  createStoryMapBatchLogger
 };
