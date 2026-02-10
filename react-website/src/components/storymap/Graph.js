@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import ForceGraph2D from "react-force-graph-2d";
 import SpriteText from "three-spritetext";
 import { useAuthValue } from '../../Firebase/AuthContext';
@@ -11,17 +11,33 @@ const Graph = ({ data, getNodeSize, handleNodeClick, handleLinkClick }) => {
   const { currentUser } = useAuthValue();
   const userId = currentUser ? currentUser.uid : null;
   
-  const graphRef = useRef(); // Reference to the ForceGraph2D instance
-  const forceGraphRef = useRef(); // Reference to the ForceGraph2D component
-  const [showNodeLabels, setShowNodeLabels] = useState(false); // Toggle state for node labels
+  const graphRef = useRef();
+  const forceGraphRef = useRef();
+  const [showNodeLabels, setShowNodeLabels] = useState(false);
   
-  // Analytics state
+  // Analytics state with throttling
   const [lastZoomLevel, setLastZoomLevel] = useState(1);
-  const [zoomChangeCount, setZoomChangeCount] = useState(0);
-  const [panCount, setPanCount] = useState(0);
-  const [nodeHoverCount, setNodeHoverCount] = useState(0);
-  const [linkHoverCount, setLinkHoverCount] = useState(0);
-  const lastInteractionTime = useRef(Date.now());
+  const analyticsTimers = useRef({
+    zoom: null,
+    pan: null,
+    nodeHover: null,
+    linkHover: null
+  });
+  const interactionCounts = useRef({
+    zoomChanges: 0,
+    panMoves: 0,
+    nodeHovers: 0,
+    linkHovers: 0
+  });
+  
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(analyticsTimers.current).forEach(timer => {
+        if (timer) clearTimeout(timer);
+      });
+    };
+  }, []);
   
   useEffect(() => {
     const handleResize = () => {
@@ -31,17 +47,13 @@ const Graph = ({ data, getNodeSize, handleNodeClick, handleLinkClick }) => {
       }
     };
     
-    // Attach resize listener
     window.addEventListener("resize", handleResize);
-    
-    // Initial resize
     handleResize();
     
-    // Cleanup listener on unmount
     return () => window.removeEventListener("resize", handleResize);
   }, []);
   
-  // Track zoom changes
+  // OPTIMIZED: Track zoom changes with debouncing (only log after user stops zooming)
   useEffect(() => {
     if (!forceGraphRef.current) return;
     
@@ -49,73 +61,100 @@ const Graph = ({ data, getNodeSize, handleNodeClick, handleLinkClick }) => {
       if (forceGraphRef.current) {
         const currentZoom = forceGraphRef.current.zoom();
         if (currentZoom && Math.abs(currentZoom - lastZoomLevel) > 0.1) {
+          interactionCounts.current.zoomChanges++;
+          const direction = currentZoom > lastZoomLevel ? 'in' : 'out';
           setLastZoomLevel(currentZoom);
-          setZoomChangeCount(prev => prev + 1);
           
-          // Log zoom interaction
-          if (userId) {
-            logGraphInteraction(userId, 'zoom', {
-              zoomLevel: currentZoom.toFixed(2),
-              direction: currentZoom > lastZoomLevel ? 'in' : 'out'
-            });
+          // Clear existing timer
+          if (analyticsTimers.current.zoom) {
+            clearTimeout(analyticsTimers.current.zoom);
           }
+          
+          // DEBOUNCE: Only log after user stops zooming for 2 seconds
+          analyticsTimers.current.zoom = setTimeout(() => {
+            if (userId) {
+              logGraphInteraction(userId, 'zoom', {
+                zoomLevel: currentZoom.toFixed(2),
+                direction,
+                totalZoomChanges: interactionCounts.current.zoomChanges
+              });
+            }
+          }, 2000);
         }
       }
-    }, 500); // Check every 500ms
+    }, 500);
     
     return () => clearInterval(checkZoom);
   }, [lastZoomLevel, userId]);
   
-  // Track camera position changes (pan)
-  const handleCameraPositionChange = () => {
-    setPanCount(prev => prev + 1);
+  // OPTIMIZED: Track pan with heavy debouncing
+  const handleCameraPositionChange = useCallback(() => {
+    if (!userId) return;
     
-    // Throttle pan logging (only log every 3rd pan)
-    if (panCount % 3 === 0 && userId) {
-      const timeSinceLastInteraction = Date.now() - lastInteractionTime.current;
-      
+    interactionCounts.current.panMoves++;
+    
+    // Clear existing timer
+    if (analyticsTimers.current.pan) {
+      clearTimeout(analyticsTimers.current.pan);
+    }
+    
+    // DEBOUNCE: Only log after user stops panning for 3 seconds
+    analyticsTimers.current.pan = setTimeout(() => {
       logGraphInteraction(userId, 'pan', {
-        panCount: panCount + 1,
-        timeSinceLastInteraction
+        totalPanMoves: interactionCounts.current.panMoves
       });
-      
-      lastInteractionTime.current = Date.now();
-    }
-  };
+      // Reset counter after logging
+      interactionCounts.current.panMoves = 0;
+    }, 3000);
+  }, [userId]);
   
-  // Track node hover
-  const handleNodeHover = (node) => {
-    if (node) {
-      setNodeHoverCount(prev => prev + 1);
-      
-      // Log every 5th hover to avoid spam
-      if (nodeHoverCount % 5 === 0 && userId) {
-        logGraphInteraction(userId, 'node_hover', {
-          nodeLabel: node.label,
-          nodeGroup: node.group,
-          nodeLevel: node.level,
-          totalHovers: nodeHoverCount + 1
-        });
-      }
+  // OPTIMIZED: Track node hover with heavy throttling
+  const handleNodeHover = useCallback((node) => {
+    if (!node || !userId) return;
+    
+    interactionCounts.current.nodeHovers++;
+    
+    // Clear existing timer
+    if (analyticsTimers.current.nodeHover) {
+      clearTimeout(analyticsTimers.current.nodeHover);
     }
-  };
+    
+    // DEBOUNCE: Only log after user stops hovering for 2 seconds
+    // This captures when they've finished exploring nodes
+    analyticsTimers.current.nodeHover = setTimeout(() => {
+      logGraphInteraction(userId, 'node_hover_session', {
+        totalNodesHovered: interactionCounts.current.nodeHovers,
+        lastNodeLabel: node.label,
+        lastNodeGroup: node.group
+      });
+      // Reset counter
+      interactionCounts.current.nodeHovers = 0;
+    }, 2000);
+  }, [userId]);
   
-  // Track link hover
-  const handleLinkHover = (link) => {
-    if (link) {
-      setLinkHoverCount(prev => prev + 1);
-      
-      // Log every 5th hover
-      if (linkHoverCount % 5 === 0 && userId) {
-        logGraphInteraction(userId, 'link_hover', {
-          linkType: link.type,
-          totalHovers: linkHoverCount + 1
-        });
-      }
+  // OPTIMIZED: Track link hover with heavy throttling
+  const handleLinkHover = useCallback((link) => {
+    if (!link || !userId) return;
+    
+    interactionCounts.current.linkHovers++;
+    
+    // Clear existing timer
+    if (analyticsTimers.current.linkHover) {
+      clearTimeout(analyticsTimers.current.linkHover);
     }
-  };
+    
+    // DEBOUNCE: Only log after user stops hovering for 2 seconds
+    analyticsTimers.current.linkHover = setTimeout(() => {
+      logGraphInteraction(userId, 'link_hover_session', {
+        totalLinksHovered: interactionCounts.current.linkHovers,
+        lastLinkType: link.type
+      });
+      // Reset counter
+      interactionCounts.current.linkHovers = 0;
+    }, 2000);
+  }, [userId]);
   
-  // Handle view toggle with analytics
+  // Handle view toggle (this is fine - user-triggered action)
   const handleViewToggle = () => {
     const newView = !showNodeLabels;
     setShowNodeLabels(newView);
@@ -124,6 +163,9 @@ const Graph = ({ data, getNodeSize, handleNodeClick, handleLinkClick }) => {
       logViewToggle(userId, newView ? 'label' : 'node');
     }
   };
+  
+  // CRITICAL FIX: Remove onEngineTick completely - it fires 60 times per second!
+  // Pan tracking is now handled only when user actually interacts with the graph
   
   return (
     <div
@@ -134,7 +176,6 @@ const Graph = ({ data, getNodeSize, handleNodeClick, handleLinkClick }) => {
         position: "relative",
       }}
     >
-      {/* Toggle Button */}
       <button
         onClick={handleViewToggle}
         style={{
@@ -171,7 +212,6 @@ const Graph = ({ data, getNodeSize, handleNodeClick, handleLinkClick }) => {
         nodeLabel={(node) => node.label}
         nodeCanvasObject={(node, ctx, globalScale) => {
           if (showNodeLabels) {
-            // Draw node label directly on the node
             const label = node.label;
             const fontSize = 12 / globalScale;
             ctx.font = `${fontSize}px Sans-Serif`;
@@ -197,13 +237,9 @@ const Graph = ({ data, getNodeSize, handleNodeClick, handleLinkClick }) => {
         onLinkClick={handleLinkClick}
         onNodeHover={handleNodeHover}
         onLinkHover={handleLinkHover}
-        onZoom={() => {
-          // Zoom handled by useEffect interval
-        }}
-        onEngineTick={() => {
-          // Track panning via camera position changes
-          handleCameraPositionChange();
-        }}
+        // REMOVED: onZoom - handled by interval with debouncing
+        // REMOVED: onEngineTick - this was firing 60 times per second!
+        onBackgroundClick={handleCameraPositionChange} // Track pan only on actual interaction
       />
     </div>
   );

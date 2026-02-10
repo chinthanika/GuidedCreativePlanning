@@ -728,3 +728,70 @@
     box-shadow: none !important;
   }
 }
+
+/* Add these styles to admin-dashboard.css for Story Map analytics section */
+
+/* Story Map Section Wrapper */
+.admin-dashboard-story-map-section {
+  background-color: var(--background-paper);
+  border: 2px solid var(--primary-light);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-dashboard-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--divider);
+}
+
+/* Highlighted Stat Box (for important metrics) */
+.admin-dashboard-stat-highlight {
+  background: linear-gradient(135deg, #F3E8FF 0%, #DBEAFE 100%);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.admin-dashboard-stat-highlight-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-dashboard-stat-highlight-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--primary-main);
+  margin: 0 0 0.25rem 0;
+}
+
+.admin-dashboard-stat-highlight-description {
+  font-size: 12px;
+  color: var(--text-disabled);
+  margin: 0;
+}
+
+/* Make distribution grid more flexible for Story Map */
+.admin-dashboard-story-map-section .admin-dashboard-distribution-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* Ensure all charts in Story Map section have consistent spacing */
+.admin-dashboard-story-map-section .admin-dashboard-charts-grid {
+  margin-top: 1.5rem;
+}
+
+.admin-dashboard-story-map-section .admin-dashboard-info-card {
+  margin-top: 1.5rem;
+}

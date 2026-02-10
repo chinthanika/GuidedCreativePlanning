@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
     BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-    XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+    XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+    AreaChart, Area, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts';
 import { 
     Users, Activity, Clock, TrendingUp, Download,
-    RefreshCw, Search, Filter, Eye, Trash2, MessageSquare
+    RefreshCw, Search, Filter, Eye, Trash2, MessageSquare,
+    Map, BookOpen, Calendar, FileText, Zap, CheckCircle,
+    AlertCircle, XCircle, Layers, GitMerge
 } from 'lucide-react';
 import './admin-dashboard.css';
 
@@ -139,7 +142,7 @@ const AdminDashboard = () => {
                             📊 Study Analytics Dashboard
                         </h1>
                         <p className="admin-dashboard-subtitle">
-                            Real-time metrics for your research study
+                            Comprehensive metrics for the TLC Framework study
                         </p>
                     </div>
 
@@ -347,7 +350,7 @@ const OverviewView = ({ data }) => {
     );
 };
 
-// User View Component
+// User View Component (ENHANCED with Story Map metrics)
 const UserView = ({ data }) => {
     // Prepare tool usage data
     const toolUsageData = Object.entries(data.toolUsage || {}).map(([tool, count]) => ({
@@ -363,6 +366,9 @@ const UserView = ({ data }) => {
 
     // Recent journey events
     const recentJourney = data.journey?.slice(-10).reverse() || [];
+
+    // Story Map metrics (if available)
+    const storyMapMetrics = data.featureMetrics?.storyMap || null;
 
     return (
         <div className="admin-dashboard-content">
@@ -438,6 +444,11 @@ const UserView = ({ data }) => {
                 </ChartCard>
             </div>
 
+            {/* Story Map Metrics (NEW - DETAILED) */}
+            {storyMapMetrics && (
+                <StoryMapMetricsSection metrics={storyMapMetrics} />
+            )}
+
             {/* Recent Journey */}
             <div className="admin-dashboard-journey">
                 <h3 className="admin-dashboard-chart-title">
@@ -512,6 +523,320 @@ const UserView = ({ data }) => {
     );
 };
 
+// NEW: Story Map Metrics Section (COMPREHENSIVE)
+const StoryMapMetricsSection = ({ metrics }) => {
+    // Prepare data for charts
+    const nodeActionData = Object.entries(metrics.nodeActions || {}).map(([action, count]) => ({
+        name: action,
+        count: count
+    }));
+
+    const linkActionData = Object.entries(metrics.linkActions || {}).map(([action, count]) => ({
+        name: action,
+        count: count
+    }));
+
+    const issuesBySeverityData = Object.entries(metrics.issuesBySeverity || {}).map(([severity, count]) => ({
+        name: severity,
+        count: count
+    }));
+
+    const issuesByCategoryData = Object.entries(metrics.issuesByCategory || {}).map(([category, count]) => ({
+        name: category,
+        count: count
+    }));
+
+    return (
+        <div className="admin-dashboard-story-map-section">
+            <h3 className="admin-dashboard-section-title">
+                <Map className="w-6 h-6" />
+                Story Map Analytics (Detailed)
+            </h3>
+
+            {/* Summary Cards */}
+            <div className="admin-dashboard-stats-grid">
+                <StatCard
+                    icon={<Eye className="w-5 h-5" />}
+                    label="Graph Renders"
+                    value={metrics.totalGraphRenders || 0}
+                    color="blue"
+                />
+                <StatCard
+                    icon={<Zap className="w-5 h-5" />}
+                    label="Analyses Run"
+                    value={metrics.totalAnalyses || 0}
+                    color="purple"
+                />
+                <StatCard
+                    icon={<GitMerge className="w-5 h-5" />}
+                    label="Node Merges"
+                    value={metrics.totalMerges || 0}
+                    color="pink"
+                />
+                <StatCard
+                    icon={<CheckCircle className="w-5 h-5" />}
+                    label="Avg Health Score"
+                    value={metrics.graphSizeStats?.avgNodesPerAnalysis?.toFixed(1) || '0.0'}
+                    color="green"
+                />
+            </div>
+
+            {/* Node and Link Actions */}
+            <div className="admin-dashboard-charts-grid">
+                <ChartCard title="Node Actions">
+                    <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={nodeActionData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+                            <XAxis dataKey="name" stroke="#52525B" />
+                            <YAxis stroke="#52525B" />
+                            <Tooltip />
+                            <Bar dataKey="count" fill="#3B82F6" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </ChartCard>
+
+                <ChartCard title="Link Actions">
+                    <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={linkActionData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+                            <XAxis dataKey="name" stroke="#52525B" />
+                            <YAxis stroke="#52525B" />
+                            <Tooltip />
+                            <Bar dataKey="count" fill="#EC4899" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </ChartCard>
+            </div>
+
+            {/* Issues Analysis */}
+            <div className="admin-dashboard-charts-grid">
+                <ChartCard title="Issues by Severity">
+                    <ResponsiveContainer width="100%" height={250}>
+                        <PieChart>
+                            <Pie
+                                data={issuesBySeverityData}
+                                dataKey="count"
+                                nameKey="name"
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={80}
+                                label
+                            >
+                                <Cell fill="#EF4444" /> {/* high */}
+                                <Cell fill="#F59E0B" /> {/* medium */}
+                                <Cell fill="#10B981" /> {/* low */}
+                            </Pie>
+                            <Tooltip />
+                            <Legend />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </ChartCard>
+
+                <ChartCard title="Issues by Category">
+                    <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={issuesByCategoryData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+                            <XAxis dataKey="name" stroke="#52525B" />
+                            <YAxis stroke="#52525B" />
+                            <Tooltip />
+                            <Bar dataKey="count" fill="#7C3AED" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </ChartCard>
+            </div>
+
+            {/* Graph Size Stats */}
+            <div className="admin-dashboard-info-card">
+                <h3 className="admin-dashboard-info-title">
+                    <Layers className="w-5 h-5" />
+                    Graph Size Statistics
+                </h3>
+                <div className="admin-dashboard-info-grid">
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Avg Nodes per Analysis</p>
+                        <p className="admin-dashboard-info-item-value">
+                            {metrics.graphSizeStats?.avgNodesPerAnalysis?.toFixed(1) || '0.0'}
+                        </p>
+                    </div>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Avg Links per Analysis</p>
+                        <p className="admin-dashboard-info-item-value">
+                            {metrics.graphSizeStats?.avgLinksPerAnalysis?.toFixed(1) || '0.0'}
+                        </p>
+                    </div>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Total Analyses</p>
+                        <p className="admin-dashboard-info-item-value">
+                            {metrics.graphSizeStats?.analysisCount || 0}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Merge Statistics */}
+            {metrics.mergeStats && (
+                <div className="admin-dashboard-info-card">
+                    <h3 className="admin-dashboard-info-title">
+                        <GitMerge className="w-5 h-5" />
+                        Merge Statistics (Duplicate Detection)
+                    </h3>
+                    <div className="admin-dashboard-info-grid">
+                        <div className="admin-dashboard-info-item">
+                            <p className="admin-dashboard-info-item-label">Total Nodes Merged</p>
+                            <p className="admin-dashboard-info-item-value">
+                                {metrics.mergeStats.totalNodesMerged || 0}
+                            </p>
+                        </div>
+                        <div className="admin-dashboard-info-item">
+                            <p className="admin-dashboard-info-item-label">Merge Events</p>
+                            <p className="admin-dashboard-info-item-value">
+                                {metrics.mergeStats.mergeEvents || 0}
+                            </p>
+                        </div>
+                        <div className="admin-dashboard-info-item">
+                            <p className="admin-dashboard-info-item-label">Avg Nodes per Merge</p>
+                            <p className="admin-dashboard-info-item-value">
+                                {metrics.mergeStats.avgNodesPerMerge?.toFixed(1) || '0.0'}
+                            </p>
+                        </div>
+                    </div>
+                    {metrics.mergeCompletionRate !== undefined && (
+                        <div className="admin-dashboard-stat-highlight">
+                            <p className="admin-dashboard-stat-highlight-label">Merge Completion Rate</p>
+                            <p className="admin-dashboard-stat-highlight-value">
+                                {metrics.mergeCompletionRate.toFixed(1)}%
+                            </p>
+                            <p className="admin-dashboard-stat-highlight-description">
+                                Percentage of merge sessions completed
+                            </p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Analysis Panel Engagement */}
+            {metrics.analysisPanelInteractions && (
+                <div className="admin-dashboard-info-card">
+                    <h3 className="admin-dashboard-info-title">
+                        <Activity className="w-5 h-5" />
+                        Analysis Panel Engagement
+                    </h3>
+                    <div className="admin-dashboard-distribution-grid">
+                        {Object.entries(metrics.analysisPanelInteractions).map(([action, count]) => (
+                            <div key={action} className="admin-dashboard-distribution-item">
+                                <span className="admin-dashboard-distribution-item-name">
+                                    {action.replace(/_/g, ' ')}
+                                </span>
+                                <span className="admin-dashboard-distribution-item-value">{count}</span>
+                            </div>
+                        ))}
+                    </div>
+                    {metrics.avgTimeInAnalysisPanel && (
+                        <div className="admin-dashboard-stat-box blue" style={{ marginTop: '1rem' }}>
+                            <p className="admin-dashboard-stat-box-label">Avg Time in Panel</p>
+                            <p className="admin-dashboard-stat-box-value">
+                                {(metrics.avgTimeInAnalysisPanel / 1000).toFixed(1)}s
+                            </p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Content Creation Ratio (AI vs Manual) */}
+            {metrics.contentCreationRatio && (
+                <div className="admin-dashboard-info-card">
+                    <h3 className="admin-dashboard-info-title">
+                        <Zap className="w-5 h-5" />
+                        Content Creation Ratio (User Agency Metric)
+                    </h3>
+                    <div className="admin-dashboard-info-grid">
+                        <div className="admin-dashboard-info-item">
+                            <p className="admin-dashboard-info-item-label">Manual Creation</p>
+                            <p className="admin-dashboard-info-item-value" style={{ color: '#3B82F6' }}>
+                                {metrics.contentCreationRatio.manualPercentage}%
+                            </p>
+                            <p className="admin-dashboard-info-item-subtext">
+                                {metrics.contentCreationRatio.manualNodes} nodes
+                            </p>
+                        </div>
+                        <div className="admin-dashboard-info-item">
+                            <p className="admin-dashboard-info-item-label">AI-Generated</p>
+                            <p className="admin-dashboard-info-item-value" style={{ color: '#7C3AED' }}>
+                                {metrics.contentCreationRatio.aiPercentage}%
+                            </p>
+                            <p className="admin-dashboard-info-item-subtext">
+                                {metrics.contentCreationRatio.aiNodes} nodes
+                            </p>
+                        </div>
+                        <div className="admin-dashboard-info-item">
+                            <p className="admin-dashboard-info-item-label">Total Nodes</p>
+                            <p className="admin-dashboard-info-item-value">
+                                {metrics.contentCreationRatio.totalNodes}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Issue Interactions (AI Effectiveness) */}
+            {metrics.issueInteractions && (
+                <div className="admin-dashboard-info-card">
+                    <h3 className="admin-dashboard-info-title">
+                        <CheckCircle className="w-5 h-5" />
+                        AI Suggestions (Acceptance vs Dismissal)
+                    </h3>
+                    <div className="admin-dashboard-distribution-grid">
+                        {Object.entries(metrics.issueInteractions).map(([category, stats]) => (
+                            <div key={category} className="admin-dashboard-stat-box green">
+                                <p className="admin-dashboard-stat-box-label">{category}</p>
+                                <p className="admin-dashboard-stat-box-value">
+                                    {stats.acceptanceRate}% accepted
+                                </p>
+                                <p className="admin-dashboard-info-item-subtext">
+                                    {stats.accepted} accepted, {stats.dismissed} dismissed
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Iteration Stats (Framework Testing) */}
+            {metrics.iterationStats && (
+                <div className="admin-dashboard-info-card">
+                    <h3 className="admin-dashboard-info-title">
+                        <RefreshCw className="w-5 h-5" />
+                        Iteration Patterns (TLC Framework Metric)
+                    </h3>
+                    <div className="admin-dashboard-info-grid">
+                        <div className="admin-dashboard-info-item">
+                            <p className="admin-dashboard-info-item-label">Total Iterations</p>
+                            <p className="admin-dashboard-info-item-value">
+                                {metrics.iterationStats.totalIterations || 0}
+                            </p>
+                        </div>
+                        <div className="admin-dashboard-info-item">
+                            <p className="admin-dashboard-info-item-label">Avg Actions per Iteration</p>
+                            <p className="admin-dashboard-info-item-value">
+                                {metrics.iterationStats.avgActionsPerIteration?.toFixed(1) || '0.0'}
+                            </p>
+                        </div>
+                        <div className="admin-dashboard-info-item">
+                            <p className="admin-dashboard-info-item-label">Analysis Influence Rate</p>
+                            <p className="admin-dashboard-info-item-value">
+                                {metrics.iterationStats.analysisInfluenceRate}%
+                            </p>
+                            <p className="admin-dashboard-info-item-subtext">
+                                Iterations triggered by AI analysis
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // Reusable Components
 const StatCard = ({ icon, label, value, color }) => {
     return (
@@ -534,19 +859,26 @@ const ChartCard = ({ title, children }) => {
     );
 };
 
-// Feature Metrics Display Component
+// Feature Metrics Display Component (KEEP EXISTING)
 const FeatureMetricsCard = ({ feature, metrics }) => {
+    // Skip storyMap since we have a dedicated section now
+    if (feature === 'storyMap') {
+        return null;
+    }
+
     const formatFeatureName = (name) => {
         const names = {
             'mentorText': 'Mentor Text Analysis',
-            'storyMap': 'Story Map',
             'timeline': 'Timeline',
             'bookRecs': 'Book Recommendations',
+            'bookRecommendations': 'Book Recommendations',
             'feedback': 'Feedback Assistant',
+            'feedbackAssistant': 'Feedback Assistant',
             'bsChatbot': 'Brainstorming Chat',
-            'dtChatbot': 'Deep Thinking Chat'
+            'dtChatbot': 'Deep Thinking Chat',
+            'reflectiveChatbot': 'Reflective Chatbot'
         };
-        return names[name] || name;
+        return names[feature] || feature;
     };
 
     // Render different metrics based on feature type
