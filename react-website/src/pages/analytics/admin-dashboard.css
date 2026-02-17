@@ -795,3 +795,18 @@
 .admin-dashboard-story-map-section .admin-dashboard-info-card {
   margin-top: 1.5rem;
 }
+
+/* Validation highlight card — used for the "Framework Validation" sections
+   in both StoryMap and MentorText analytics panels */
+.admin-dashboard-validation-card {
+  border-color: var(--primary-light) !important;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f3ff 100%);
+}
+
+/* Small explanatory text that sits below an info-title inside info cards */
+.admin-dashboard-info-subtext {
+  font-size: 12px;
+  color: var(--text-disabled);
+  margin: 0;
+  line-height: 1.5;
+}
