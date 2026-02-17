@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
     X, BookOpen, Lightbulb, Target, Award, 
     ChevronDown, ChevronUp, Loader2, Trash2 
 } from 'lucide-react';
 
+import { logUIInteraction } from '../../utils/analytics';
 import './analysis-details.css';
 
 const API_BASE = process.env.REACT_APP_AI_SERVER_URL || "http://localhost:5000";
@@ -20,6 +21,28 @@ const AnalysisDetailModal = ({
     const [loading, setLoading] = useState(!initialData);
     const [error, setError] = useState(null);
     const [expandedPoints, setExpandedPoints] = useState(new Set());
+
+    // Track how long the user views this analysis
+    const viewOpenTimeRef = useRef(null);
+
+    useEffect(() => {
+        if (isOpen) {
+            // Record when modal opened
+            viewOpenTimeRef.current = Date.now();
+        } else if (viewOpenTimeRef.current) {
+            // Modal closed — log view duration
+            const durationMs = Date.now() - viewOpenTimeRef.current;
+            if (userId) {
+                logUIInteraction(userId, 'mentorText', 'view_analysis_complete', {
+                    analysisId: analysisId || 'new',
+                    durationMs,
+                    // Flag: was this a freshly created analysis or a saved one being reviewed?
+                    viewType: initialData ? 'immediate_post_creation' : 'library_review'
+                });
+            }
+            viewOpenTimeRef.current = null;
+        }
+    }, [isOpen, userId, analysisId, initialData]);
 
     useEffect(() => {
         if (isOpen && !initialData && analysisId && userId) {
@@ -117,7 +140,7 @@ const AnalysisDetailModal = ({
                             {/* Genre & Focus Badges */}
                             <div className="analysis-detail-badges">
                                 <div className="analysis-genre-badge">
-                                    📖 {analysis.genreIdentified || 'General Fiction'}
+                                    ðŸ“– {analysis.genreIdentified || 'General Fiction'}
                                 </div>
                                 <div className="analysis-focus-badge">
                                     Focus: {analysis.metadata?.userProvided?.focus?.replace(/_/g, ' ') || 'general'}

@@ -56,23 +56,10 @@ from utils.analytics.mentor_text_logger import (
     log_mentor_text_filter
 )
 
-from utils.analytics.story_map_logger import (
-    log_story_map_graph_render,
-    log_story_map_node_action,
-    log_story_map_link_action,
-    log_story_map_merge,
-    log_story_map_analysis,
-    log_story_map_analysis_panel_interaction,
-    log_story_map_view_toggle,
-    log_story_map_merge_mode,
-    log_story_map_iteration_pattern,
-    log_story_map_ai_vs_manual_ratio,
-    get_story_map_summary
-)
 
 app = Flask(__name__)
 
-CORS(app, origins="http://localhost:3000")
+CORS(app)
 
 # ============================================
 # LOGGING SETUP
@@ -220,18 +207,6 @@ def _calculate_stage_times(journey_list):
     
     return stage_times
 
-def _calculate_isolated_nodes(nodes, links):
-    """Calculate number of nodes with no connections."""
-    connected_nodes = set()
-    for link in links:
-        connected_nodes.add(link.get('source'))
-        connected_nodes.add(link.get('target'))
-    
-    total_nodes = len(nodes)
-    connected_count = len(connected_nodes)
-    
-    return total_nodes - connected_count
-
 # ============================================
 # PAGE VIEW TRACKING ENDPOINTS
 # ============================================
@@ -240,7 +215,7 @@ def _calculate_isolated_nodes(nodes, links):
 def log_page_view():
     """
     Track when user navigates to a tool page.
-    FIXED with proper error handling.
+    Called by frontend on page mount.
     """
     try:
         data = request.json
@@ -252,30 +227,23 @@ def log_page_view():
         if not user_id or not page_name:
             return jsonify({'error': 'userId and pageName required'}), 400
         
-        # WRAP log_tool_interaction in try-except
-        try:
-            log_tool_interaction(
-                user_id=user_id,
-                tool_name=page_name,
-                interaction_type='page_view',
-                tlc_stage=tlc_stage,
-                metadata={'timestamp': timestamp}
-            )
-        except Exception as log_error:
-            rec_logger.warning(f"[PAGE_VIEW] log_tool_interaction failed: {log_error}")
+        # Log as tool interaction
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name=page_name,
+            interaction_type='page_view',
+            tlc_stage=tlc_stage,
+            metadata={'timestamp': timestamp}
+        )
         
-        # Track page view separately - also wrap in try-except
-        page_view_id = None
-        try:
-            page_views_ref = db.reference(f"analytics/{user_id}/pageViews")
-            page_view_id = page_views_ref.push({
-                'pageName': page_name,
-                'entryTimestamp': timestamp,
-                'exitTimestamp': None,
-                'duration': None
-            }).key
-        except Exception as page_error:
-            rec_logger.warning(f"[PAGE_VIEW] Page view tracking failed: {page_error}")
+        # Track page view separately for timing analysis
+        page_views_ref = db.reference(f"analytics/{user_id}/pageViews")
+        page_view_id = page_views_ref.push({
+            'pageName': page_name,
+            'entryTimestamp': timestamp,
+            'exitTimestamp': None,  # Will be filled on exit
+            'duration': None
+        }).key
         
         rec_logger.info(f"[PAGE_VIEW] {user_id} entered {page_name}")
         
@@ -286,14 +254,15 @@ def log_page_view():
         }), 200
         
     except Exception as e:
-        rec_logger.exception(f"[PAGE_VIEW] Endpoint error: {e}")
+        rec_logger.exception(f"[PAGE_VIEW] Error: {e}")
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/log-page-exit', methods=['POST'])
 def log_page_exit():
     """
     Track when user exits a tool page.
-    FIXED with proper error handling.
+    Called by frontend on page unmount.
     """
     try:
         data = request.json
@@ -305,40 +274,36 @@ def log_page_exit():
         if not user_id or not page_name:
             return jsonify({'error': 'userId and pageName required'}), 400
         
-        # Find matching entry - wrap in try-except
-        matching_view_key = None
-        try:
-            page_views_ref = db.reference(f"analytics/{user_id}/pageViews")
-            all_views = page_views_ref.order_by_child('entryTimestamp').get() or {}
-            
-            for view_key, view_data in reversed(list(all_views.items())):
-                if (view_data.get('pageName') == page_name and 
-                    view_data.get('exitTimestamp') is None):
-                    matching_view_key = view_key
-                    break
-            
-            if matching_view_key:
-                page_views_ref.child(matching_view_key).update({
-                    'exitTimestamp': timestamp,
-                    'duration': duration_ms
-                })
-        except Exception as view_error:
-            rec_logger.warning(f"[PAGE_EXIT] Page view update failed: {view_error}")
+        # Find the most recent page view for this page
+        page_views_ref = db.reference(f"analytics/{user_id}/pageViews")
+        all_views = page_views_ref.order_by_child('entryTimestamp').get() or {}
         
-        # Track in feature metrics - wrap in try-except
-        try:
-            feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/{page_name}")
-            total_time = feature_ref.child('totalTimeInFeature').get() or 0
-            feature_ref.child('totalTimeInFeature').set(total_time + duration_ms)
-        except Exception as metrics_error:
-            rec_logger.warning(f"[PAGE_EXIT] Feature metrics update failed: {metrics_error}")
+        # Find matching entry (most recent view of this page with no exit)
+        matching_view_key = None
+        for view_key, view_data in reversed(list(all_views.items())):
+            if (view_data.get('pageName') == page_name and 
+                view_data.get('exitTimestamp') is None):
+                matching_view_key = view_key
+                break
+        
+        if matching_view_key:
+            # Update with exit data
+            page_views_ref.child(matching_view_key).update({
+                'exitTimestamp': timestamp,
+                'duration': duration_ms
+            })
+        
+        # Also track in feature metrics
+        feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/{page_name}")
+        total_time = feature_ref.child('totalTimeInFeature').get() or 0
+        feature_ref.child('totalTimeInFeature').set(total_time + duration_ms)
         
         rec_logger.info(f"[PAGE_EXIT] {user_id} exited {page_name} after {duration_ms}ms")
         
         return jsonify({'success': True, 'logged': 'page_exit'}), 200
         
     except Exception as e:
-        rec_logger.exception(f"[PAGE_EXIT] Endpoint error: {e}")
+        rec_logger.exception(f"[PAGE_EXIT] Error: {e}")
         return jsonify({'error': str(e)}), 500
 
 
@@ -346,7 +311,14 @@ def log_page_exit():
 def log_ui_interaction():
     """
     Endpoint for frontend to log UI-only interactions.
-    NOW WITH PROPER ERROR HANDLING to prevent crashes.
+    
+    Expected body:
+    {
+        "userId": "user_123",
+        "feature": "mentorText",
+        "action": "open_analysis" | "search" | "filter" | etc.,
+        "metadata": { ... feature-specific data ... }
+    }
     """
     try:
         data = request.json
@@ -358,11 +330,11 @@ def log_ui_interaction():
         if not user_id or not feature or not action:
             return jsonify({'error': 'userId, feature, and action required'}), 400
         
-        # Map feature to TLC stage
+        # Map feature to TLC stage (default to joint_construction for UI interactions)
         stage_map = {
             'bookRecs': 'building_knowledge',
             'mentorText': 'modelling',
-            'storyMap': 'modelling',
+            'storyMap': 'jpint_construction',
             'timeline': 'joint_construction',
             'bsChatbot': 'joint_construction',
             'dtChatbot': 'joint_construction',
@@ -371,49 +343,88 @@ def log_ui_interaction():
         
         tlc_stage = stage_map.get(feature, 'joint_construction')
         
-        # CRITICAL FIX: Wrap in try-except to fail gracefully
-        try:
-            log_tool_interaction(
-                user_id=user_id,
-                tool_name=feature,
-                interaction_type=action,
-                tlc_stage=tlc_stage,
-                metadata=metadata
-            )
-        except Exception as log_error:
-            # Log the error but don't crash the endpoint
-            rec_logger.warning(f"[UI_LOG] log_tool_interaction failed (non-critical): {log_error}")
-            # Continue to feature-specific metrics
+        # Log the interaction
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name=feature,
+            interaction_type=action,
+            tlc_stage=tlc_stage,
+            metadata=metadata
+        )
         
         # Update feature-specific metrics if needed
-        # Wrap each in try-except for safety
-        try:
-            if feature == 'bookRecs' and action == 'save_book':
-                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/bookRecommendations/savedBooks")
-                total_saved = feature_ref.child('totalSaved').get() or 0
-                feature_ref.child('totalSaved').set(total_saved + 1)
-            
-            elif feature == 'mentorText' and action == 'search':
-                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/mentorText")
-                total_searches = feature_ref.child('totalSearches').get() or 0
-                feature_ref.child('totalSearches').set(total_searches + 1)
-            
-            elif feature == 'mentorText' and action == 'filter':
-                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/mentorText")
-                filter_type = metadata.get('filterType')
-                if filter_type:
-                    filter_count = feature_ref.child(f'filterUsage/{filter_type}').get() or 0
-                    feature_ref.child(f'filterUsage/{filter_type}').set(filter_count + 1)
-        except Exception as metrics_error:
-            rec_logger.warning(f"[UI_LOG] Feature metrics update failed: {metrics_error}")
+        if feature == 'bookRecs' and action == 'save_book':
+            feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/bookRecommendations/savedBooks")
+            total_saved = feature_ref.child('totalSaved').get() or 0
+            feature_ref.child('totalSaved').set(total_saved + 1)
         
+        elif feature == 'mentorText' and action == 'search':
+            feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/mentorText")
+            total_searches = feature_ref.child('totalSearches').get() or 0
+            feature_ref.child('totalSearches').set(total_searches + 1)
+        
+        elif feature == 'mentorText' and action == 'filter':
+            feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/mentorText")
+            filter_type = metadata.get('filterType')
+            if filter_type:
+                filter_count = feature_ref.child(f'filterUsage/{filter_type}').get() or 0
+                feature_ref.child(f'filterUsage/{filter_type}').set(filter_count + 1)
+
+        elif feature == 'mentorText' and action == 'view_analysis_complete':
+            # Fired by AnalysisDetailModal on close — records how long student reviewed an analysis
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/mentorText")
+                duration_ms = metadata.get('durationMs', 0)
+                analysis_id = metadata.get('analysisId')
+                view_type = metadata.get('viewType', 'library_review')
+
+                total_view_time = feature_ref.child('totalReviewTimeMs').get() or 0
+                feature_ref.child('totalReviewTimeMs').set(total_view_time + duration_ms)
+
+                total_views = feature_ref.child('totalAnalysisViews').get() or 0
+                feature_ref.child('totalAnalysisViews').set(total_views + 1)
+
+                avg_review_time = (total_view_time + duration_ms) / (total_views + 1)
+                feature_ref.child('avgReviewTimeMs').set(round(avg_review_time, 1))
+
+                # Per-analysis engagement log
+                if analysis_id and analysis_id != 'new':
+                    feature_ref.child(f'analysisViews/{analysis_id}').push({
+                        'timestamp': int(time.time() * 1000),
+                        'durationMs': duration_ms,
+                        'viewType': view_type
+                    })
+            except Exception as view_err:
+                rec_logger.warning(f"[UI_LOG] view_analysis_complete metrics failed: {view_err}")
+
+        elif feature == 'storyMap' and action == 'edited_after_generation':
+            # Fired when user manually edits the map within 10 min of AI generation
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/storyMap")
+                edit_after_gen_count = feature_ref.child('editsAfterGeneration').get() or 0
+                feature_ref.child('editsAfterGeneration').set(edit_after_gen_count + 1)
+                feature_ref.child('lastEditAfterGenerationTimestamp').set(int(time.time() * 1000))
+            except Exception as edit_err:
+                rec_logger.warning(f"[UI_LOG] edited_after_generation metrics failed: {edit_err}")
+
+        elif feature == 'storyMap' and action == 'edited_after_analysis':
+            # Fired when user manually edits the map within 10 min of receiving analysis feedback
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/storyMap")
+                edit_after_analysis_count = feature_ref.child('editsAfterAnalysis').get() or 0
+                feature_ref.child('editsAfterAnalysis').set(edit_after_analysis_count + 1)
+                feature_ref.child('lastEditAfterAnalysisTimestamp').set(int(time.time() * 1000))
+            except Exception as edit_err:
+                rec_logger.warning(f"[UI_LOG] edited_after_analysis metrics failed: {edit_err}")
+
         rec_logger.info(f"[UI_LOG] {user_id} - {feature}.{action}")
         
         return jsonify({'success': True, 'logged': action}), 200
         
     except Exception as e:
-        rec_logger.exception(f"[UI_LOG] Endpoint error: {e}")
+        rec_logger.exception(f"[UI_LOG] Error: {e}")
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/log-ui-batch', methods=['POST'])
 def log_ui_batch():
@@ -3160,21 +3171,34 @@ Return analysis in the specified JSON format."""
             f"L:{analysis['severity_counts']['low']})"
         )
 
+        # ============================================
+        # ANALYTICS LOGGING
+        # ============================================
         try:
-            log_story_map_analysis(
+            from utils.analytics.story_map_logger import log_story_map_analysis as _log_sm_analysis
+            _log_sm_analysis(
                 user_id=user_id,
                 overall_score=analysis.get('overall_score', 0),
                 overall_health=analysis.get('overall_health', 'unknown'),
                 node_count=len(nodes),
                 link_count=len(links),
                 issues_found=analysis.get('issues', []),
-                genre_inferred=analysis.get('genre_insights', {}).get('detected_genre'),
+                genre_inferred=analysis.get('genre_insights', {}).get('detected_genre') if isinstance(analysis.get('genre_insights'), dict) else None,
                 processing_time_ms=int((time.time() - request_start) * 1000)
             )
             rec_logger.info("[STORY_MAP] Analysis metrics logged")
         except Exception as log_err:
-            rec_logger.warning(f"[STORY_MAP] Failed to log analysis: {log_err}")
-        
+            rec_logger.warning(f"[STORY_MAP] Failed to log analysis metrics: {log_err}")
+
+        # Store longitudinal score for improvement tracking (same pattern as timeline coherence)
+        try:
+            scores_ref = db.reference(f"analytics/{user_id}/outcomeMetrics/storyMapAnalysisScores")
+            scores = scores_ref.get() or []
+            scores.append(analysis.get('overall_score', 0))
+            scores_ref.set(scores)
+        except Exception as score_err:
+            rec_logger.warning(f"[STORY_MAP] Failed to store longitudinal score: {score_err}")
+
         return jsonify(analysis), 200
         
     except Exception as e:
@@ -4224,215 +4248,6 @@ def get_mapping_metrics():
         rec_logger.exception(f"[METRICS] Failed to get mapping metrics: {e}")
         return jsonify({'error': str(e)}), 500
 
-# ============================================
-# STORY MAP ANALYTICS ENDPOINTS
-# ============================================
-
-@app.route('/api/story-map/log-render', methods=['POST'])
-def log_story_map_render_endpoint():
-    """Log graph render with error handling."""
-    try:
-        data = request.json
-        user_id = data.get('userId')
-        node_count = data.get('nodeCount', 0)
-        link_count = data.get('linkCount', 0)
-        nodes = data.get('nodes', [])
-        links = data.get('links', [])
-        
-        if not user_id:
-            return jsonify({'error': 'userId required'}), 400
-        
-        # Calculate isolated nodes
-        isolated_nodes = _calculate_isolated_nodes(nodes, links)
-        
-        try:
-            from utils.analytics.story_map_logger import log_story_map_graph_render
-            log_story_map_graph_render(user_id, node_count, link_count, isolated_nodes)
-        except Exception as log_error:
-            rec_logger.warning(f"[STORY_MAP] Graph render logging failed: {log_error}")
-        
-        return jsonify({'success': True, 'logged': 'graph_render'}), 200
-        
-    except Exception as e:
-        rec_logger.exception(f"[STORY_MAP] Graph render endpoint error: {e}")
-        return jsonify({'error': str(e)}), 500
-
-
-@app.route('/api/story-map/log-node-action', methods=['POST'])
-def log_story_map_node_action_endpoint():
-    """Log node action with error handling."""
-    try:
-        data = request.json
-        user_id = data.get('userId')
-        action_type = data.get('actionType')
-        node_data = data.get('nodeData')
-        processing_time_ms = data.get('processingTimeMs')
-        
-        if not user_id or not action_type or not node_data:
-            return jsonify({'error': 'Missing required fields'}), 400
-        
-        try:
-            from utils.analytics.story_map_logger import log_story_map_node_action
-            log_story_map_node_action(user_id, action_type, node_data, processing_time_ms)
-        except Exception as log_error:
-            rec_logger.warning(f"[STORY_MAP] Node action logging failed: {log_error}")
-        
-        return jsonify({'success': True, 'logged': f'node_{action_type}'}), 200
-        
-    except Exception as e:
-        rec_logger.exception(f"[STORY_MAP] Node action endpoint error: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/story-map/log-link-action', methods=['POST'])
-def log_story_map_link_action_endpoint():
-    """Log link action with error handling."""
-    try:
-        data = request.json
-        user_id = data.get('userId')
-        action_type = data.get('actionType')
-        link_data = data.get('linkData')
-        
-        if not user_id or not action_type or not link_data:
-            return jsonify({'error': 'Missing required fields'}), 400
-        
-        try:
-            from utils.analytics.story_map_logger import log_story_map_link_action
-            log_story_map_link_action(user_id, action_type, link_data)
-        except Exception as log_error:
-            rec_logger.warning(f"[STORY_MAP] Link action logging failed: {log_error}")
-        
-        return jsonify({'success': True, 'logged': f'link_{action_type}'}), 200
-        
-    except Exception as e:
-        rec_logger.exception(f"[STORY_MAP] Link action endpoint error: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/story-map/log-merge', methods=['POST'])
-def log_story_map_merge_endpoint():
-    """Log merge with error handling."""
-    try:
-        data = request.json
-        user_id = data.get('userId')
-        merged_node_count = data.get('mergedNodeCount')
-        primary_node_label = data.get('primaryNodeLabel')
-        processing_time_ms = data.get('processingTimeMs')
-        
-        if not user_id or not merged_node_count or not primary_node_label:
-            return jsonify({'error': 'Missing required fields'}), 400
-        
-        try:
-            from utils.analytics.story_map_logger import log_story_map_merge
-            log_story_map_merge(user_id, merged_node_count, primary_node_label, processing_time_ms)
-        except Exception as log_error:
-            rec_logger.warning(f"[STORY_MAP] Merge logging failed: {log_error}")
-        
-        return jsonify({'success': True, 'logged': 'merge'}), 200
-        
-    except Exception as e:
-        rec_logger.exception(f"[STORY_MAP] Merge endpoint error: {e}")
-        return jsonify({'error': str(e)}), 500
-
-
-@app.route('/api/story-map/log-analysis-panel', methods=['POST'])
-def log_story_map_analysis_panel_endpoint():
-    """Log analysis panel interaction with error handling."""
-    try:
-        data = request.json
-        user_id = data.get('userId')
-        interaction_type = data.get('interactionType')
-        duration_ms = data.get('durationMs')
-        issue_interacted_with = data.get('issueInteractedWith')
-        
-        if not user_id or not interaction_type:
-            return jsonify({'error': 'Missing required fields'}), 400
-        
-        try:
-            from utils.analytics.story_map_logger import log_story_map_analysis_panel_interaction
-            log_story_map_analysis_panel_interaction(
-                user_id, interaction_type, duration_ms, issue_interacted_with
-            )
-        except Exception as log_error:
-            rec_logger.warning(f"[STORY_MAP] Analysis panel logging failed: {log_error}")
-        
-        return jsonify({'success': True, 'logged': f'panel_{interaction_type}'}), 200
-        
-    except Exception as e:
-        rec_logger.exception(f"[STORY_MAP] Analysis panel endpoint error: {e}")
-        return jsonify({'error': str(e)}), 500
-
-
-
-@app.route('/api/story-map/log-view-toggle', methods=['POST'])
-def log_story_map_view_toggle_endpoint():
-    """
-    Log view toggle (node vs label view).
-    FIXED with proper error handling.
-    """
-    try:
-        data = request.json
-        user_id = data.get('userId')
-        view_mode = data.get('viewMode')
-        
-        if not user_id or not view_mode:
-            return jsonify({'error': 'userId and viewMode required'}), 400
-        
-        # WRAP IN TRY-EXCEPT to fail gracefully
-        try:
-            from utils.analytics.story_map_logger import log_story_map_view_toggle
-            log_story_map_view_toggle(user_id, view_mode)
-        except Exception as log_error:
-            rec_logger.warning(f"[STORY_MAP] View toggle logging failed: {log_error}")
-            # Don't crash - just log the error
-        
-        return jsonify({'success': True, 'logged': 'view_toggle'}), 200
-        
-    except Exception as e:
-        rec_logger.exception(f"[STORY_MAP] View toggle endpoint error: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/story-map/log-merge-mode', methods=['POST'])
-def log_story_map_merge_mode_endpoint():
-    """Log merge mode with error handling."""
-    try:
-        data = request.json
-        user_id = data.get('userId')
-        action_type = data.get('actionType')
-        nodes_selected = data.get('nodesSelected')
-        
-        if not user_id or not action_type:
-            return jsonify({'error': 'Missing required fields'}), 400
-        
-        try:
-            from utils.analytics.story_map_logger import log_story_map_merge_mode
-            log_story_map_merge_mode(user_id, action_type, nodes_selected)
-        except Exception as log_error:
-            rec_logger.warning(f"[STORY_MAP] Merge mode logging failed: {log_error}")
-        
-        return jsonify({'success': True, 'logged': f'merge_mode_{action_type}'}), 200
-        
-    except Exception as e:
-        rec_logger.exception(f"[STORY_MAP] Merge mode endpoint error: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/story-map/summary/<user_id>', methods=['GET'])
-def get_user_story_map_summary(user_id):
-    """
-    Get comprehensive Story Map summary for admin dashboard.
-    """
-    try:
-        summary = get_story_map_summary(user_id)
-        
-        rec_logger.info(f"[STORY_MAP] Summary retrieved for {user_id}")
-        
-        return jsonify({
-            'userId': user_id,
-            'summary': summary
-        }), 200
-        
-    except Exception as e:
-        rec_logger.exception(f"[STORY_MAP] Summary retrieval failed: {e}")
-        return jsonify({'error': str(e)}), 500
-
 
 @app.route('/api/debug/clear-mapping-cache', methods=['POST'])
 def clear_mapping_cache():
@@ -4653,7 +4468,7 @@ def get_study_summary():
             # Most common transition
             transition_counts = {}
             for r in all_recursions:
-                key = f"{r['from']} → {r['to']}"
+                key = f"{r['from']} â†’ {r['to']}"
                 transition_counts[key] = transition_counts.get(key, 0) + 1
             summary['recursionStats']['mostCommonTransition'] = max(
                 transition_counts.items(),

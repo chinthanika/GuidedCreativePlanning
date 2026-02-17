@@ -1,0 +1,130 @@
+/* -------------------------
+   STATUS & SCORE
+--------------------------*/
+
+.feedback-status {
+  margin-top: 8px;
+  color: var(--text-secondary);
+}
+
+.feedback-summary-text {
+  margin: 8px 0 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.feedback-isolated {
+  color: var(--error-main);
+}
+
+.feedback-priority-count {
+  margin-top: 4px;
+}
+
+/* -------------------------
+   CATEGORY
+--------------------------*/
+
+.category-header.clickable {
+  cursor: pointer;
+}
+
+.category-content {
+  margin-top: 12px;
+  padding-left: 24px;
+}
+
+/* -------------------------
+   ISSUE CONTAINER
+--------------------------*/
+
+.issue-container {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.issue-container:last-child {
+  border-bottom: none;
+}
+
+.issue-names {
+  margin-bottom: 8px;
+}
+
+.entity-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  margin: 0 4px 4px 0;
+  background: var(--background-default);
+  border: 1px solid var(--divider);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* -------------------------
+   SEVERITY ROW
+--------------------------*/
+
+.issue-severity-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.severity-icon {
+  font-size: 14px;
+}
+
+.issue-reasoning {
+  flex: 1;
+}
+
+/* -------------------------
+   QUESTION
+--------------------------*/
+
+.issue-question {
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--background-default);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* -------------------------
+   MERGE BUTTON
+--------------------------*/
+
+.merge-button {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: var(--primary-main);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.2s ease;
+}
+
+.merge-button:hover {
+  opacity: 0.9;
+}
+
+/* -------------------------
+   CONFIDENCE
+--------------------------*/
+
+.issue-confidence {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-disabled);
+}
