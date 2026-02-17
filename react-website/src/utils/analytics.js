@@ -654,6 +654,120 @@ export function createStoryMapBatchLogger(userId) {
   };
 }
 
+// ============================================
+// TIMELINE ANALYTICS
+// TLC Stage: Joint Construction — AI as Reflective Guide
+// ============================================
+
+/**
+ * Log Timeline page entry.
+ * Returns a pageViewKey the component stores and sends back on exit,
+ * so the backend can match entry → exit and compute duration.
+ *
+ * Usage (in useEffect on mount):
+ *   const key = await logTimelinePageView(userId);
+ *   pageViewKeyRef.current = key;
+ *
+ * @param {string} userId - Firebase user ID
+ * @returns {string|null} pageViewKey for later use in logTimelinePageExit
+ */
+export async function logTimelinePageView(userId) {
+  if (!userId) return null;
+  try {
+    const res = await fetch(`${API_BASE}/api/timeline/log-page-view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId })
+    });
+    const data = await res.json();
+    return data?.pageViewKey ?? null;
+  } catch (error) {
+    console.warn('[TimelineAnalytics] logTimelinePageView failed:', error);
+    return null;
+  }
+}
+
+/**
+ * Log Timeline page exit with duration.
+ * Uses navigator.sendBeacon when available so the log fires reliably
+ * even if the user closes the tab.
+ *
+ * Usage (in useEffect cleanup / beforeunload):
+ *   logTimelinePageExit(userId, Date.now() - entryTime, pageViewKeyRef.current);
+ *
+ * @param {string} userId        - Firebase user ID
+ * @param {number} durationMs    - Time spent on page in milliseconds
+ * @param {string|null} pageViewKey - Key returned by logTimelinePageView
+ */
+export function logTimelinePageExit(userId, durationMs, pageViewKey = null) {
+  if (!userId) return;
+  const payload = JSON.stringify({ userId, durationMs, pageViewKey });
+
+  // sendBeacon is fire-and-forget and survives page unload
+  if (navigator.sendBeacon) {
+    const blob = new Blob([payload], { type: 'application/json' });
+    navigator.sendBeacon(`${API_BASE}/api/timeline/log-page-exit`, blob);
+  } else {
+    // Fallback for browsers without sendBeacon
+    fetch(`${API_BASE}/api/timeline/log-page-exit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+      keepalive: true   // Chrome/Edge — keeps request alive past page unload
+    }).catch(() => {});
+  }
+}
+
+/**
+ * Log Timeline event actions (created / edited / reordered / deleted).
+ *
+ * @param {string} userId     - Firebase user ID
+ * @param {'created'|'edited'|'reordered'|'deleted'} action
+ * @param {object} event      - The event object { id, stage, isMainEvent, ... }
+ * @param {object} [extra]    - Extra fields per action type:
+ *   created:   { hasDate: bool, descriptionLength: number }
+ *   reordered: { fromIndex: number, toIndex: number }
+ */
+export async function logTimelineEventAction(userId, action, event, extra = {}) {
+  if (!userId || !action || !event) return;
+  try {
+    await fetch(`${API_BASE}/api/timeline/log-event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        action,
+        eventId:     event.id          || '',
+        stage:       event.stage       || 'unknown',
+        isMainEvent: event.isMainEvent || false,
+        ...extra
+      })
+    });
+  } catch (error) {
+    console.warn('[TimelineAnalytics] logTimelineEventAction failed:', error);
+  }
+}
+
+/**
+ * Log which Timeline layout mode the student is using.
+ * Call once on mount (default) and again whenever the student switches.
+ *
+ * @param {string} userId - Firebase user ID
+ * @param {'linear'|'freytag'} mode
+ */
+export async function logTimelineMode(userId, mode) {
+  if (!userId || !mode) return;
+  try {
+    await fetch(`${API_BASE}/api/timeline/log-mode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, mode })
+    });
+  } catch (error) {
+    console.warn('[TimelineAnalytics] logTimelineMode failed:', error);
+  }
+}
+
 // Export all functions
 export default {
   logPageView,
@@ -676,5 +790,10 @@ export default {
   logGraphInteraction,
   logCognitiveLoad,
   logTemplateUsage,
-  createStoryMapBatchLogger
+  createStoryMapBatchLogger,
+  // Timeline
+  logTimelinePageView,
+  logTimelinePageExit,
+  logTimelineEventAction,
+  logTimelineMode,
 };

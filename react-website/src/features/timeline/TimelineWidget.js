@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuthValue } from '../../Firebase/AuthContext';
 import NewEventModal from "../../components/timeline/NewEventModal";
 import EventDetailsModal from "../../components/timeline/EventDetailsModal";
+import {
+    logTimelinePageView,
+    logTimelinePageExit,
+    logTimelineEventAction,
+    logTimelineMode,
+} from '../../utils/analytics';
 import './timeline.css';
 
 const TimelineCardGrid = () => {
@@ -24,12 +30,46 @@ const TimelineCardGrid = () => {
     const [loading, setLoading] = useState(false);
     const [reordering, setReordering] = useState(false);
     const [toast, setToast] = useState(null);
-    
+
     // AI Integration State
     const [aiInsight, setAiInsight] = useState(null);
     const [showAiPanel, setShowAiPanel] = useState(false);
     const [aiLoading, setAiLoading] = useState(false);
     const [coherenceReport, setCoherenceReport] = useState(null);
+
+    // ── Analytics refs ──────────────────────────────────────────────────────
+    const pageEntryTime = useRef(null);   // ms timestamp set on mount
+    const pageViewKey   = useRef(null);   // key returned by logTimelinePageView
+    const modeSentRef   = useRef(false);  // guard: only log default mode once
+
+    // ── Page-view lifecycle ─────────────────────────────────────────────────
+    useEffect(() => {
+        if (!userId) return;
+
+        pageEntryTime.current = Date.now();
+
+        logTimelinePageView(userId).then(key => {
+            pageViewKey.current = key;
+        });
+
+        return () => {
+            const durationMs = pageEntryTime.current
+                ? Date.now() - pageEntryTime.current
+                : 0;
+            logTimelinePageExit(userId, durationMs, pageViewKey.current);
+        };
+    }, [userId]);
+
+    // ── Mode tracking ───────────────────────────────────────────────────────
+    // Fires once after first data load; call logTimelineMode again if a
+    // mode-switcher is added in future.
+    useEffect(() => {
+        if (!userId || modeSentRef.current || events.length === 0) return;
+        modeSentRef.current = true;
+        logTimelineMode(userId, 'linear');
+    }, [userId, events]);
+
+    // ───────────────────────────────────────────────────────────────────────
 
     const stages = [
         "introduction",
@@ -40,11 +80,11 @@ const TimelineCardGrid = () => {
     ];
 
     const stageColors = {
-        introduction: '#A7C7E7',
-        'rising action': '#C1E1C1',
-        climax: '#FAA0A0',
+        introduction:     '#A7C7E7',
+        'rising action':  '#C1E1C1',
+        climax:           '#FAA0A0',
         'falling action': '#FFFAA0',
-        resolution: '#C3B1E1',
+        resolution:       '#C3B1E1',
     };
 
     const showToast = (message, type = 'success') => {
@@ -79,30 +119,30 @@ const TimelineCardGrid = () => {
         }
     };
 
-    // AI Feature 1: Reflective Guide - Causal Reasoning Prompts
+    // ── AI Feature 1: Reflective Guide ──────────────────────────────────────
     const getAiInsight = async (event, context = 'reorder') => {
         if (!event || events.length < 2) return;
-        
+
         setAiLoading(true);
         setShowAiPanel(true);
         setCoherenceReport(null);
-        
+
         try {
             const response = await axios.post(`${AI_API_BASE}/api/timeline/reflect`, {
                 userId,
                 event: {
-                    id: event.id,
-                    title: event.title,
+                    id:          event.id,
+                    title:       event.title,
                     description: event.description,
-                    stage: event.stage,
-                    order: event.order
+                    stage:       event.stage,
+                    order:       event.order
                 },
                 timeline: events.map(e => ({
-                    id: e.id,
-                    title: e.title,
+                    id:          e.id,
+                    title:       e.title,
                     description: e.description,
-                    stage: e.stage,
-                    order: e.order,
+                    stage:       e.stage,
+                    order:       e.order,
                     isMainEvent: e.isMainEvent
                 })),
                 context
@@ -117,7 +157,7 @@ const TimelineCardGrid = () => {
         }
     };
 
-    // AI Feature 2: Feedback Assistant - Coherence Check
+    // ── AI Feature 2: Coherence Check ───────────────────────────────────────
     const checkTimelineCoherence = async () => {
         if (events.length < 3) {
             showToast("Add at least 3 events to check coherence", "info");
@@ -132,18 +172,18 @@ const TimelineCardGrid = () => {
             const response = await axios.post(`${AI_API_BASE}/api/timeline/coherence`, {
                 userId,
                 timeline: events.map(e => ({
-                    id: e.id,
-                    title: e.title,
+                    id:          e.id,
+                    title:       e.title,
                     description: e.description,
-                    stage: e.stage,
-                    order: e.order,
-                    date: e.date,
+                    stage:       e.stage,
+                    order:       e.order,
+                    date:        e.date,
                     isMainEvent: e.isMainEvent
                 }))
             });
 
             setCoherenceReport(response.data);
-            setAiInsight(null); // Clear any previous single-event insights
+            setAiInsight(null);
         } catch (error) {
             console.error("Coherence check error:", error);
             showToast("Failed to check timeline coherence", "error");
@@ -152,7 +192,7 @@ const TimelineCardGrid = () => {
         }
     };
 
-    // Drag-and-drop handlers
+    // ── Drag-and-drop ────────────────────────────────────────────────────────
     const handleDragStart = (e, index) => {
         setDraggedIndex(index);
         e.dataTransfer.effectAllowed = 'move';
@@ -179,6 +219,7 @@ const TimelineCardGrid = () => {
 
         const items = [...events];
         const draggedItem = items[draggedIndex];
+        const fromIndex = draggedIndex;
 
         items.splice(draggedIndex, 1);
         items.splice(dropIndex, 0, draggedItem);
@@ -193,13 +234,18 @@ const TimelineCardGrid = () => {
         setDragOverIndex(null);
         setReordering(true);
 
-        // Trigger AI insight after reordering
+        // ── Analytics ────────────────────────────────────────────────────
+        logTimelineEventAction(userId, 'reordered', draggedItem, {
+            fromIndex,
+            toIndex: dropIndex,
+        });
+
         getAiInsight(draggedItem, 'reorder');
 
         try {
             const updates = updatedItems.map(ev => ({
                 eventId: ev.id,
-                order: ev.order,
+                order:   ev.order,
             }));
 
             await axios.post(`${API_BASE}/events/batch-update`, {
@@ -232,7 +278,9 @@ const TimelineCardGrid = () => {
         }
 
         try {
-            const maxOrder = events.length > 0 ? Math.max(...events.map(e => e.order ?? 0)) : 0;
+            const maxOrder = events.length > 0
+                ? Math.max(...events.map(e => e.order ?? 0))
+                : 0;
 
             const eventData = {
                 ...newEvent,
@@ -247,11 +295,16 @@ const TimelineCardGrid = () => {
                 updates: eventData,
             });
 
+            // ── Analytics ──────────────────────────────────────────────
+            logTimelineEventAction(userId, 'created', { id: newFirebaseKey, ...eventData }, {
+                hasDate:           Boolean(eventData.date),
+                descriptionLength: (eventData.description || '').length,
+            });
+
             fetchEvents();
             setIsNewEventModalOpen(false);
             showToast("Event added successfully!", "success");
 
-            // Trigger AI insight for new event
             setTimeout(() => {
                 getAiInsight({ ...eventData, id: newFirebaseKey }, 'add');
             }, 500);
@@ -262,9 +315,7 @@ const TimelineCardGrid = () => {
     };
 
     const handleEditEvent = (event, e) => {
-        if (e) {
-            e.stopPropagation();
-        }
+        if (e) e.stopPropagation();
         setSelectedEvent(event);
         setIsEventDetailsModalOpen(true);
         setFlippedCard(null);
@@ -278,11 +329,13 @@ const TimelineCardGrid = () => {
                 updates: updatedEvent,
             });
 
+            // ── Analytics ──────────────────────────────────────────────
+            logTimelineEventAction(userId, 'edited', updatedEvent);
+
             fetchEvents();
             setIsEventDetailsModalOpen(false);
             showToast("Event updated successfully!", "success");
 
-            // Trigger AI insight after editing
             getAiInsight(updatedEvent, 'edit');
         } catch (error) {
             console.error("Error updating event:", error);
@@ -303,6 +356,9 @@ const TimelineCardGrid = () => {
                 eventId: eventToDelete.id,
             });
 
+            // ── Analytics ──────────────────────────────────────────────
+            logTimelineEventAction(userId, 'deleted', eventToDelete);
+
             fetchEvents();
             setShowDeleteModal(false);
             setEventToDelete(null);
@@ -319,6 +375,9 @@ const TimelineCardGrid = () => {
                 userId,
                 eventId: event.id,
             });
+
+            // ── Analytics ──────────────────────────────────────────────
+            logTimelineEventAction(userId, 'deleted', event);
 
             fetchEvents();
             setIsEventDetailsModalOpen(false);
@@ -371,8 +430,8 @@ const TimelineCardGrid = () => {
             <div className="timeline-header">
                 <h2>Story Timeline</h2>
                 <div className="timeline-header-actions">
-                    <button 
-                        onClick={checkTimelineCoherence} 
+                    <button
+                        onClick={checkTimelineCoherence}
                         className="timeline-btn btn-ai-check"
                         disabled={events.length < 3}
                         title="Check timeline for inconsistencies and pacing issues"
@@ -386,8 +445,8 @@ const TimelineCardGrid = () => {
             </div>
 
             <p className="timeline-info">
-                <strong>Tip:</strong> Drag cards to reorder events. Click a card to flip and see details. 
-                AI will provide insights as you build your timeline.
+                <strong>Tip:</strong> Drag cards to reorder events. Click a card to flip and see
+                details. AI will provide insights as you build your timeline.
             </p>
 
             {/* AI Insight Panel */}
@@ -395,10 +454,7 @@ const TimelineCardGrid = () => {
                 <div className="ai-insight-panel">
                     <div className="ai-panel-header">
                         <h3>🤖 AI Writing Assistant</h3>
-                        <button 
-                            onClick={() => setShowAiPanel(false)} 
-                            className="ai-panel-close"
-                        >
+                        <button onClick={() => setShowAiPanel(false)} className="ai-panel-close">
                             ✕
                         </button>
                     </div>
@@ -406,14 +462,15 @@ const TimelineCardGrid = () => {
                     {aiLoading ? (
                         <div className="ai-loading">
                             <div className="spinner"></div>
-                            <p>Analyzing your timeline...</p>
+                            <p>Analysing your timeline…</p>
                         </div>
                     ) : coherenceReport ? (
                         <div className="coherence-report">
                             <div className="report-score">
                                 <div className="score-circle" style={{
-                                    borderColor: coherenceReport.overallScore >= 7 ? '#4caf50' : 
-                                                coherenceReport.overallScore >= 5 ? '#ff9800' : '#f44336'
+                                    borderColor: coherenceReport.overallScore >= 7 ? '#4caf50'
+                                               : coherenceReport.overallScore >= 5 ? '#ff9800'
+                                               : '#f44336'
                                 }}>
                                     <span className="score-value">{coherenceReport.overallScore}</span>
                                     <span className="score-label">/10</span>
@@ -421,10 +478,17 @@ const TimelineCardGrid = () => {
                                 <div className="score-description">
                                     <h4>Timeline Coherence</h4>
                                     <p>{coherenceReport.summary}</p>
+                                    {/* Score-change badge — appears from 2nd check onwards */}
+                                    {coherenceReport.scoreChange != null && (
+                                        <p className={`score-change ${coherenceReport.scoreChange >= 0 ? 'positive' : 'negative'}`}>
+                                            {coherenceReport.scoreChange >= 0 ? '▲' : '▼'}&nbsp;
+                                            {Math.abs(coherenceReport.scoreChange).toFixed(1)} from last check
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
-                            {coherenceReport.issues && coherenceReport.issues.length > 0 && (
+                            {coherenceReport.issues?.length > 0 && (
                                 <div className="report-section">
                                     <h4>⚠️ Issues Found</h4>
                                     <ul className="issue-list">
@@ -442,12 +506,12 @@ const TimelineCardGrid = () => {
                                 </div>
                             )}
 
-                            {coherenceReport.strengths && coherenceReport.strengths.length > 0 && (
+                            {coherenceReport.strengths?.length > 0 && (
                                 <div className="report-section">
                                     <h4>✨ Strengths</h4>
                                     <ul className="strength-list">
-                                        {coherenceReport.strengths.map((strength, idx) => (
-                                            <li key={idx}>{strength}</li>
+                                        {coherenceReport.strengths.map((s, idx) => (
+                                            <li key={idx}>{s}</li>
                                         ))}
                                     </ul>
                                 </div>
@@ -459,8 +523,8 @@ const TimelineCardGrid = () => {
                                     <p>{coherenceReport.pacing.assessment}</p>
                                     {coherenceReport.pacing.suggestions && (
                                         <ul className="pacing-suggestions">
-                                            {coherenceReport.pacing.suggestions.map((sugg, idx) => (
-                                                <li key={idx}>{sugg}</li>
+                                            {coherenceReport.pacing.suggestions.map((s, idx) => (
+                                                <li key={idx}>{s}</li>
                                             ))}
                                         </ul>
                                     )}
@@ -471,15 +535,15 @@ const TimelineCardGrid = () => {
                         <div className="single-event-insight">
                             <h4 className="insight-title">
                                 {aiInsight.context === 'reorder' && '🔄 Reordering Reflection'}
-                                {aiInsight.context === 'add' && '✨ New Event Insight'}
-                                {aiInsight.context === 'edit' && '✏️ Edit Reflection'}
+                                {aiInsight.context === 'add'     && '✨ New Event Insight'}
+                                {aiInsight.context === 'edit'    && '✏️ Edit Reflection'}
                             </h4>
-                            
+
                             <div className="insight-event-context">
                                 <strong>Event:</strong> {aiInsight.event?.title}
                             </div>
 
-                            {aiInsight.questions && aiInsight.questions.length > 0 && (
+                            {aiInsight.questions?.length > 0 && (
                                 <div className="insight-questions">
                                     <h5>💭 Consider These Questions:</h5>
                                     <ul>
@@ -497,7 +561,7 @@ const TimelineCardGrid = () => {
                                 </div>
                             )}
 
-                            {aiInsight.suggestions && aiInsight.suggestions.length > 0 && (
+                            {aiInsight.suggestions?.length > 0 && (
                                 <div className="insight-suggestions">
                                     <h5>💡 Suggestions:</h5>
                                     <ul>
@@ -542,17 +606,19 @@ const TimelineCardGrid = () => {
                         <div
                             className={`card-inner ${flippedCard === event.id ? 'flipped' : ''}`}
                             onClick={(e) => {
-                                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
-                                    return;
-                                }
+                                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
                                 handleCardClick(event.id);
                             }}
                         >
                             <div
                                 className={`card-front ${event.isMainEvent ? 'main-event' : ''}`}
                                 style={{
-                                    backgroundColor: !event.useImageAsBackground ? stageColors[event.stage] : undefined,
-                                    backgroundImage: event.useImageAsBackground && event.imageUrl ? `url(${event.imageUrl})` : undefined,
+                                    backgroundColor: !event.useImageAsBackground
+                                        ? stageColors[event.stage]
+                                        : undefined,
+                                    backgroundImage: event.useImageAsBackground && event.imageUrl
+                                        ? `url(${event.imageUrl})`
+                                        : undefined,
                                 }}
                             >
                                 <div className="card-front-content">
@@ -566,7 +632,6 @@ const TimelineCardGrid = () => {
                                         )}
                                     </div>
                                 </div>
-
                                 <div className="card-footer">
                                     {event.date && (
                                         <span className="card-date">{event.date}</span>
@@ -577,7 +642,12 @@ const TimelineCardGrid = () => {
 
                             <div className="card-back" style={{ borderTop: `4px solid ${stageColors[event.stage]}` }}>
                                 <div>
-                                    <h4 className="card-back-header" style={{ borderBottomColor: stageColors[event.stage] }}>Details</h4>
+                                    <h4
+                                        className="card-back-header"
+                                        style={{ borderBottomColor: stageColors[event.stage] }}
+                                    >
+                                        Details
+                                    </h4>
                                     <p className="card-description">{event.description}</p>
                                 </div>
 
@@ -634,13 +704,20 @@ const TimelineCardGrid = () => {
                     <div className="modal-content">
                         <h3>Delete Event?</h3>
                         <p>
-                            Are you sure you want to delete "{eventToDelete?.title}"? This action cannot be undone.
+                            Are you sure you want to delete "{eventToDelete?.title}"?
+                            This action cannot be undone.
                         </p>
                         <div className="modal-actions">
-                            <button onClick={() => setShowDeleteModal(false)} className="btn-cancel">
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="btn-cancel"
+                            >
                                 Cancel
                             </button>
-                            <button onClick={handleConfirmDelete} className="btn-confirm-delete">
+                            <button
+                                onClick={handleConfirmDelete}
+                                className="btn-confirm-delete"
+                            >
                                 Delete
                             </button>
                         </div>

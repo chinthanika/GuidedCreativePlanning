@@ -7,7 +7,7 @@ import {
 import { 
     Users, Activity, Clock, TrendingUp, Download,
     RefreshCw, Eye, Map, BookOpen, FileText, Zap, CheckCircle,
-    AlertCircle, GitMerge, Layers
+    AlertCircle, GitMerge, Layers, Calendar
 } from 'lucide-react';
 import './admin-dashboard.css';
 
@@ -209,9 +209,6 @@ const UserView = ({ data }) => {
         name: stage.replace(/_/g, ' '), minutes: Math.round(time / 60000)
     }));
 
-    // ── Longitudinal scores ──────────────────────────────────────────────────
-    // outcomeMetrics/storyMapAnalysisScores  — written by analyze_story_map (NEW this session)
-    // outcomeMetrics/timelineCoherenceScores — existing
     const smScores = (data.outcomeMetrics?.storyMapAnalysisScores  || []).map((s, i) => ({ run: i + 1, score: s }));
     const tlScores = (data.outcomeMetrics?.timelineCoherenceScores || []).map((s, i) => ({ run: i + 1, score: s }));
 
@@ -256,7 +253,7 @@ const UserView = ({ data }) => {
                 </ChartCard>
             </div>
 
-            {/* Longitudinal score improvement — only shown when ≥2 data points */}
+            {/* Longitudinal score improvement */}
             {(smScores.length >= 2 || tlScores.length >= 2) && (
                 <div className="admin-dashboard-info-card">
                     <h3 className="admin-dashboard-info-title">📈 Score Improvement Over Time</h3>
@@ -295,18 +292,19 @@ const UserView = ({ data }) => {
             )}
 
             {/* Feature-specific dedicated sections */}
-            {data.featureMetrics?.storyMap  && <StoryMapMetricsSection  metrics={data.featureMetrics.storyMap}  />}
-            {data.featureMetrics?.mentorText && <MentorTextMetricsSection metrics={data.featureMetrics.mentorText} />}
+            {data.featureMetrics?.storyMap   && <StoryMapMetricsSection   metrics={data.featureMetrics.storyMap}   />}
+            {data.featureMetrics?.mentorText  && <MentorTextMetricsSection  metrics={data.featureMetrics.mentorText}  />}
+            {data.featureMetrics?.timeline    && <TimelineMetricsSection    metrics={data.featureMetrics.timeline}    />}
 
-            {/* All other features — generic fallback */}
+            {/* Generic fallback for anything else */}
             {Object.entries(data.featureMetrics || {})
-                .filter(([k]) => k !== 'storyMap' && k !== 'mentorText')
+                .filter(([k]) => !['storyMap', 'mentorText', 'timeline'].includes(k))
                 .length > 0 && (
                 <div className="admin-dashboard-feature-metrics">
                     <h3 className="admin-dashboard-chart-title">📊 Other Feature Metrics</h3>
                     <div className="admin-dashboard-feature-metrics-list">
                         {Object.entries(data.featureMetrics)
-                            .filter(([k]) => k !== 'storyMap' && k !== 'mentorText')
+                            .filter(([k]) => !['storyMap', 'mentorText', 'timeline'].includes(k))
                             .map(([feature, metrics]) => (
                                 <FeatureMetricsCard key={feature} feature={feature} metrics={metrics} />
                             ))}
@@ -325,7 +323,7 @@ const UserView = ({ data }) => {
                                 <span className="admin-dashboard-journey-tool">{ev.tool}</span>
                                 <span className="admin-dashboard-journey-action">{ev.interactionType}</span>
                             </div>
-                            <span className="admin-dashboard-journey-badge">{ev.stage}</span>
+                            <span className={`admin-dashboard-journey-badge ${ev.stage}`}>{ev.stage?.replace(/_/g, ' ')}</span>
                         </div>
                     ))}
                 </div>
@@ -354,41 +352,16 @@ const UserView = ({ data }) => {
 };
 
 // ─── Story Map Section ─────────────────────────────────────────────────────────
-//
-// Displays ONLY fields that are verified to be written by the backend.
-//
-// WRITTEN — shown here:
-//   featureMetrics/storyMap/totalGenerations       logger.py log_story_map_generation()
-//   featureMetrics/storyMap/generationTriggers/    logger.py log_story_map_generation()
-//   featureMetrics/storyMap/totalAnalyses          logger.py log_story_map_analysis() + new ai_server block
-//   featureMetrics/storyMap/analysisResults/       logger.py log_story_map_analysis()
-//     └─ each entry: overallScore, issuesBySeverity{high,medium,low}, genreInferred, timestamp
-//   featureMetrics/storyMap/totalTimeInFeature     ai_server.py log-page-exit endpoint
-//   featureMetrics/storyMap/editsAfterGeneration   ai_server.py log-ui-interaction (NEW)
-//   featureMetrics/storyMap/editsAfterAnalysis     ai_server.py log-ui-interaction (NEW)
-//   featureMetrics/storyMap/lastEditAfterGenerationTimestamp (NEW)
-//   featureMetrics/storyMap/lastEditAfterAnalysisTimestamp  (NEW)
-//   outcomeMetrics/storyMapAnalysisScores          ai_server.py analyze_story_map (NEW)
-//
-// NOT WRITTEN — removed from display vs. old dashboard:
-//   totalGraphRenders, nodeActions, linkActions, totalMerges, mergeStats,
-//   graphSizeStats (top-level), issuesByCategory (top-level),
-//   analysisPanelInteractions, avgTimeInAnalysisPanel, mergeCompletionRate,
-//   contentCreationRatio, issueInteractions, iterationStats
-//
 const StoryMapMetricsSection = ({ metrics }) => {
     const totalGenerations = metrics.totalGenerations     || 0;
     const totalAnalyses    = metrics.totalAnalyses        || 0;
     const editsAfterGen    = metrics.editsAfterGeneration || 0;
     const editsAfterAna    = metrics.editsAfterAnalysis   || 0;
 
-    // analysisResults is a Firebase push-list (object with random keys).
-    // Each entry: { overallScore, issuesBySeverity: { high, medium, low }, genreInferred, timestamp }
     const analysisResultsList = metrics.analysisResults
         ? Object.values(metrics.analysisResults)
         : [];
 
-    // Cumulative severity totals across all analysis runs
     const severityTotals = analysisResultsList.reduce(
         (acc, r) => {
             acc.high   += r.issuesBySeverity?.high   || 0;
@@ -404,13 +377,11 @@ const StoryMapMetricsSection = ({ metrics }) => {
         { name: 'Low',    count: severityTotals.low,    fill: '#10B981' },
     ].filter(d => d.count > 0);
 
-    // Score trend from analysisResults (sorted by timestamp)
     const scoreTrend = analysisResultsList
         .filter(r => r.overallScore != null)
         .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
         .map((r, i) => ({ run: i + 1, score: r.overallScore }));
 
-    // Generation stats from generationTriggers push-list
     const triggersList = metrics.generationTriggers ? Object.values(metrics.generationTriggers) : [];
     const avgNodes = triggersList.length
         ? (triggersList.reduce((s, t) => s + (t.nodesExtracted || 0), 0) / triggersList.length).toFixed(1)
@@ -428,7 +399,6 @@ const StoryMapMetricsSection = ({ metrics }) => {
                 <Map className="w-6 h-6" /> Story Map Analytics
             </h3>
 
-            {/* Summary counts */}
             <div className="admin-dashboard-stats-grid">
                 <StatCard icon={<Zap         className="w-5 h-5" />} label="AI Generations"     value={totalGenerations}                         color="blue"   />
                 <StatCard icon={<Activity    className="w-5 h-5" />} label="Analyses Run"       value={totalAnalyses}                            color="purple" />
@@ -436,7 +406,6 @@ const StoryMapMetricsSection = ({ metrics }) => {
                 <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Edits After Anal."  value={`${editsAfterAna} / ${totalAnalyses}`}    color="pink"   />
             </div>
 
-            {/* Framework validation: the two new editedAfter flags */}
             <div className="admin-dashboard-info-card admin-dashboard-validation-card" style={{ marginTop: '1.5rem' }}>
                 <h3 className="admin-dashboard-info-title">
                     <CheckCircle className="w-5 h-5" style={{ color: '#7C3AED' }} />
@@ -474,7 +443,6 @@ const StoryMapMetricsSection = ({ metrics }) => {
                 )}
             </div>
 
-            {/* Issue severity + score trend */}
             {(issuesBySeverityData.length > 0 || scoreTrend.length >= 2) && (
                 <div className="admin-dashboard-charts-grid" style={{ marginTop: '1.5rem' }}>
                     {issuesBySeverityData.length > 0 && (
@@ -506,14 +474,13 @@ const StoryMapMetricsSection = ({ metrics }) => {
                 </div>
             )}
 
-            {/* Generation stats derived from generationTriggers push-list */}
             {triggersList.length > 0 && (
                 <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
                     <h3 className="admin-dashboard-info-title">
                         <Zap className="w-5 h-5" /> Generation Details
                     </h3>
                     <div className="admin-dashboard-info-grid">
-                        <InfoItem label="Avg Nodes Extracted" value={orDash(avgNodes)} />
+                        <InfoItem label="Avg Nodes Extracted"  value={orDash(avgNodes)} />
                         <InfoItem label="Avg Input Word Count" value={orDash(avgWords)} />
                         <InfoItem label="Avg Processing Time"  value={fmtSec(avgGenMs)} />
                     </div>
@@ -523,33 +490,210 @@ const StoryMapMetricsSection = ({ metrics }) => {
     );
 };
 
+// ─── Timeline Section ──────────────────────────────────────────────────────────
+//
+// WRITTEN by timeline_logger.py + timeline routes:
+//   featureMetrics/timeline/totalTimeMs
+//   featureMetrics/timeline/totalEventsCreated
+//   featureMetrics/timeline/majorEventsCreated
+//   featureMetrics/timeline/minorEventsCreated
+//   featureMetrics/timeline/totalManualEdits
+//   featureMetrics/timeline/totalReorders
+//   featureMetrics/timeline/totalEventsDeleted
+//   featureMetrics/timeline/stageDistribution/   (per narrative stage)
+//   featureMetrics/timeline/lastModeUsed
+//   featureMetrics/timeline/modeUsage/           (linear | freytag counts)
+//   featureMetrics/timeline/totalCoherenceChecks
+//   featureMetrics/timeline/firstCoherenceScore
+//   featureMetrics/timeline/lastCoherenceScore
+//   featureMetrics/timeline/coherenceChecks/     (push-list, per-check detail)
+//   outcomeMetrics/timelineCoherenceScores       (longitudinal array)
+//
+const TimelineMetricsSection = ({ metrics }) => {
+    const totalCreated  = metrics.totalEventsCreated  || 0;
+    const majorEvents   = metrics.majorEventsCreated  || 0;
+    const minorEvents   = metrics.minorEventsCreated  || 0;
+    const totalEdits    = metrics.totalManualEdits    || 0;
+    const totalReorders = metrics.totalReorders       || 0;
+    const totalDeleted  = metrics.totalEventsDeleted  || 0;
+    const totalChecks   = metrics.totalCoherenceChecks || 0;
+
+    // Net events still on the timeline
+    const netEvents = totalCreated - totalDeleted;
+
+    // Stage distribution bar data
+    const stageDistData = Object.entries(metrics.stageDistribution || {})
+        .map(([stage, count]) => ({ name: stage, count }));
+
+    // Mode usage pie data
+    const modeData = Object.entries(metrics.modeUsage || {})
+        .map(([mode, count]) => ({ name: mode, count }));
+
+    // Per-check coherence detail (push-list → array, sorted by checkNumber)
+    const checksList = metrics.coherenceChecks
+        ? Object.values(metrics.coherenceChecks).sort((a, b) => (a.checkNumber || 0) - (b.checkNumber || 0))
+        : [];
+
+    // Score trend for the line chart (needs ≥2 points to be meaningful)
+    const scoreTrend = checksList
+        .filter(c => c.overallScore != null)
+        .map(c => ({ run: c.checkNumber, score: c.overallScore }));
+
+    // First → last improvement
+    const firstScore = metrics.firstCoherenceScore;
+    const lastScore  = metrics.lastCoherenceScore;
+    const scoreImprovement = (firstScore != null && lastScore != null && totalChecks >= 2)
+        ? (lastScore - firstScore).toFixed(1)
+        : null;
+
+    return (
+        <div className="admin-dashboard-story-map-section" style={{ borderColor: '#3b82f655' }}>
+            <h3 className="admin-dashboard-section-title">
+                <Calendar className="w-6 h-6" /> Timeline Analytics
+                <span style={{ fontSize: '0.8rem', fontWeight: 400, color: '#6b7280', marginLeft: '0.75rem' }}>
+                    TLC: Joint Construction — AI as Reflective Guide
+                </span>
+            </h3>
+
+            {/* Top-level counts */}
+            <div className="admin-dashboard-stats-grid">
+                <StatCard icon={<Activity    className="w-5 h-5" />} label="Events Created"     value={totalCreated}  color="blue"   />
+                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Net Events"         value={netEvents}     color="green"  />
+                <StatCard icon={<Layers      className="w-5 h-5" />} label="Manual Edits"       value={totalEdits}    color="purple" />
+                <StatCard icon={<RefreshCw   className="w-5 h-5" />} label="Coherence Checks"   value={totalChecks}   color="pink"   />
+            </div>
+
+            {/* Framework validation card */}
+            <div className="admin-dashboard-info-card admin-dashboard-validation-card" style={{ marginTop: '1.5rem' }}>
+                <h3 className="admin-dashboard-info-title">
+                    <TrendingUp className="w-5 h-5" style={{ color: '#3B82F6' }} />
+                    Scaffolded Planning — Framework Validation
+                </h3>
+                <p className="admin-dashboard-info-subtext" style={{ marginBottom: '1rem' }}>
+                    Longitudinal coherence scores show whether the AI's reflective prompts improved structural quality over time. Score improvement is the primary Joint Construction signal.
+                </p>
+                <div className="admin-dashboard-info-grid">
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">First Coherence Score</p>
+                        <p className="admin-dashboard-info-item-value">{firstScore != null ? firstScore : '—'}</p>
+                        <p className="admin-dashboard-info-item-subtext">/ 10</p>
+                    </div>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Latest Coherence Score</p>
+                        <p className="admin-dashboard-info-item-value" style={{ color: '#3B82F6' }}>
+                            {lastScore != null ? lastScore : '—'}
+                        </p>
+                        <p className="admin-dashboard-info-item-subtext">/ 10</p>
+                    </div>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Score Improvement</p>
+                        <p className="admin-dashboard-info-item-value" style={{
+                            color: scoreImprovement > 0 ? '#16A34A' : scoreImprovement < 0 ? '#DC2626' : '#52525B'
+                        }}>
+                            {scoreImprovement != null ? (scoreImprovement > 0 ? `+${scoreImprovement}` : scoreImprovement) : '—'}
+                        </p>
+                        <p className="admin-dashboard-info-item-subtext">first → last check</p>
+                    </div>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Total Time on Page</p>
+                        <p className="admin-dashboard-info-item-value">{fmtMin(metrics.totalTimeMs)}</p>
+                        <p className="admin-dashboard-info-item-subtext">cumulative</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Event composition + mode usage */}
+            <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
+                <h3 className="admin-dashboard-info-title">Event Composition</h3>
+                <div className="admin-dashboard-info-grid">
+                    <InfoItem label="Major Events"  value={majorEvents}   sub={pct(majorEvents, totalCreated) + ' of total'} />
+                    <InfoItem label="Minor Events"  value={minorEvents}   sub={pct(minorEvents, totalCreated) + ' of total'} />
+                    <InfoItem label="Reorders"      value={totalReorders} sub="drag-and-drop moves" />
+                    <InfoItem label="Deletions"     value={totalDeleted}  sub="events removed" />
+                    <InfoItem label="Mode Used"     value={metrics.lastModeUsed || '—'} />
+                </div>
+            </div>
+
+            {/* Stage distribution + coherence score trend side by side */}
+            {(stageDistData.length > 0 || scoreTrend.length >= 2) && (
+                <div className="admin-dashboard-charts-grid" style={{ marginTop: '1.5rem' }}>
+                    {stageDistData.length > 0 && (
+                        <ChartCard title="Events per Narrative Stage">
+                            <ResponsiveContainer width="100%" height={250}>
+                                <BarChart data={stageDistData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+                                    <XAxis dataKey="name" stroke="#52525B" tick={{ fontSize: 11 }} />
+                                    <YAxis stroke="#52525B" allowDecimals={false} />
+                                    <Tooltip />
+                                    <Bar dataKey="count" fill="#3B82F6" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </ChartCard>
+                    )}
+                    {scoreTrend.length >= 2 && (
+                        <ChartCard title="Coherence Score Trend">
+                            <ResponsiveContainer width="100%" height={250}>
+                                <LineChart data={scoreTrend}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+                                    <XAxis dataKey="run" label={{ value: 'Check #', position: 'insideBottom', offset: -2 }} />
+                                    <YAxis domain={[0, 10]} />
+                                    <Tooltip />
+                                    <Line type="monotone" dataKey="score" stroke="#3B82F6" strokeWidth={2} dot />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </ChartCard>
+                    )}
+                </div>
+            )}
+
+            {/* Per-check detail table — only shown when there are checks */}
+            {checksList.length > 0 && (
+                <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
+                    <h3 className="admin-dashboard-info-title">Coherence Check History</h3>
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '2px solid var(--border-light)', textAlign: 'left' }}>
+                                    <th style={{ padding: '8px 12px', color: '#6b7280' }}>#</th>
+                                    <th style={{ padding: '8px 12px', color: '#6b7280' }}>Score</th>
+                                    <th style={{ padding: '8px 12px', color: '#6b7280' }}>Change</th>
+                                    <th style={{ padding: '8px 12px', color: '#6b7280' }}>Events</th>
+                                    <th style={{ padding: '8px 12px', color: '#6b7280' }}>Issues (H/M/L)</th>
+                                    <th style={{ padding: '8px 12px', color: '#6b7280' }}>Genre</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {checksList.map((c, i) => {
+                                    const change = c.scoreChange;
+                                    return (
+                                        <tr key={i} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                            <td style={{ padding: '8px 12px' }}>{c.checkNumber}</td>
+                                            <td style={{ padding: '8px 12px', fontWeight: 600 }}>{c.overallScore ?? '—'}</td>
+                                            <td style={{ padding: '8px 12px', color: change > 0 ? '#16A34A' : change < 0 ? '#DC2626' : '#6b7280' }}>
+                                                {change != null ? (change > 0 ? `+${change}` : change) : '—'}
+                                            </td>
+                                            <td style={{ padding: '8px 12px' }}>{c.eventCount ?? '—'}</td>
+                                            <td style={{ padding: '8px 12px' }}>
+                                                <span style={{ color: '#EF4444' }}>{c.issuesBySeverity?.high ?? 0}</span>
+                                                {' / '}
+                                                <span style={{ color: '#F59E0B' }}>{c.issuesBySeverity?.medium ?? 0}</span>
+                                                {' / '}
+                                                <span style={{ color: '#10B981' }}>{c.issuesBySeverity?.low ?? 0}</span>
+                                            </td>
+                                            <td style={{ padding: '8px 12px', color: '#6b7280' }}>{c.genreUsed || '—'}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // ─── Mentor Text Section ───────────────────────────────────────────────────────
-//
-// WRITTEN — shown here:
-//   featureMetrics/mentorText/totalAnalyses              log_mentor_text_analysis()
-//   featureMetrics/mentorText/analysesByFocus/           log_mentor_text_analysis()
-//   featureMetrics/mentorText/analysesByGenre/           log_mentor_text_analysis()
-//   featureMetrics/mentorText/qualityDistribution/       log_mentor_text_analysis()
-//   featureMetrics/mentorText/teachingPointsStats        log_mentor_text_analysis()
-//   featureMetrics/mentorText/excerptLengthStats         log_mentor_text_analysis()
-//   featureMetrics/mentorText/processingTimeStats        log_mentor_text_analysis()
-//   featureMetrics/mentorText/firstAnalysisTimestamp     log_mentor_text_analysis()
-//   featureMetrics/mentorText/lastAnalysisTimestamp      log_mentor_text_analysis()
-//   featureMetrics/mentorText/dailyAnalyses/             log_mentor_text_analysis()
-//   featureMetrics/mentorText/totalAnalysisViews         log_mentor_text_view() + new view_analysis_complete
-//   featureMetrics/mentorText/totalReviewTimeMs          new view_analysis_complete handler
-//   featureMetrics/mentorText/avgReviewTimeMs            new view_analysis_complete handler
-//   featureMetrics/mentorText/totalDeletions             log_mentor_text_deletion()
-//   featureMetrics/mentorText/deletionsAfterViewing      log_mentor_text_deletion()
-//   featureMetrics/mentorText/immediateDeletions         log_mentor_text_deletion()
-//   featureMetrics/mentorText/retentionRate              log_mentor_text_deletion()
-//   featureMetrics/mentorText/totalSearches              ai_server.py log-ui-interaction
-//   featureMetrics/mentorText/filterUsage/              ai_server.py log-ui-interaction
-//   featureMetrics/mentorText/totalTimeInFeature         log-page-exit endpoint
-//
-// REMOVED vs. old dashboard (never written):
-//   searchSuccessRate, totalFilterUses (now derived from filterUsage map)
-//
 const MentorTextMetricsSection = ({ metrics }) => {
     const totalAnalyses  = metrics.totalAnalyses      || 0;
     const totalViews     = metrics.totalAnalysisViews || 0;
@@ -565,12 +709,10 @@ const MentorTextMetricsSection = ({ metrics }) => {
     const focusData  = Object.entries(metrics.analysesByFocus || {}).map(([name, count]) => ({ name: name.replace(/_/g, ' '), count }));
     const genreData  = Object.entries(metrics.analysesByGenre || {}).map(([name, count]) => ({ name, count }));
 
-    // dailyAnalyses is a map of "YYYY-MM-DD" → count
     const dailyData  = Object.entries(metrics.dailyAnalyses || {})
         .sort(([a], [b]) => a.localeCompare(b))
-        .map(([date, count]) => ({ date: date.slice(5), count })); // strip year → MM-DD
+        .map(([date, count]) => ({ date: date.slice(5), count }));
 
-    // totalFilterUses is derived — filterUsage is a map of filterType → count
     const filterEntries   = Object.entries(metrics.filterUsage || {});
     const totalFilterUses = filterEntries.reduce((s, [, v]) => s + v, 0);
 
@@ -587,7 +729,6 @@ const MentorTextMetricsSection = ({ metrics }) => {
                 <StatCard icon={<Activity    className="w-5 h-5" />} label="Reviews / Analysis"  value={viewRatio}                                              color="pink"   />
             </div>
 
-            {/* Review engagement — NEW fields from AnalysisDetailModal tracking */}
             <div className="admin-dashboard-info-card admin-dashboard-validation-card" style={{ marginTop: '1.5rem' }}>
                 <h3 className="admin-dashboard-info-title">
                     <Eye className="w-5 h-5" style={{ color: '#F59E0B' }} />
@@ -614,7 +755,6 @@ const MentorTextMetricsSection = ({ metrics }) => {
                     </div>
                 </div>
 
-                {/* First / last usage */}
                 {(metrics.firstAnalysisTimestamp || metrics.lastAnalysisTimestamp) && (
                     <div className="admin-dashboard-info-grid" style={{ marginTop: '1rem', gridTemplateColumns: 'repeat(2,1fr)' }}>
                         {metrics.firstAnalysisTimestamp && (
@@ -631,7 +771,6 @@ const MentorTextMetricsSection = ({ metrics }) => {
                 )}
             </div>
 
-            {/* Deletion behaviour */}
             {totalDeletions > 0 && (
                 <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
                     <h3 className="admin-dashboard-info-title">
@@ -647,7 +786,6 @@ const MentorTextMetricsSection = ({ metrics }) => {
                 </div>
             )}
 
-            {/* Focus areas + genres */}
             {(focusData.length > 0 || genreData.length > 0) && (
                 <div className="admin-dashboard-charts-grid" style={{ marginTop: '1.5rem' }}>
                     {focusData.length > 0 && (
@@ -679,7 +817,6 @@ const MentorTextMetricsSection = ({ metrics }) => {
                 </div>
             )}
 
-            {/* Daily usage sparkline */}
             {dailyData.length > 1 && (
                 <div className="admin-dashboard-chart-card" style={{ marginTop: '1.5rem' }}>
                     <h3 className="admin-dashboard-chart-title">Daily Analyses</h3>
@@ -695,7 +832,6 @@ const MentorTextMetricsSection = ({ metrics }) => {
                 </div>
             )}
 
-            {/* AI quality stats */}
             <div className="admin-dashboard-stats-row" style={{ marginTop: '1.5rem' }}>
                 <div className="admin-dashboard-stat-box blue">
                     <p className="admin-dashboard-stat-box-label">Avg Teaching Points</p>
@@ -713,7 +849,6 @@ const MentorTextMetricsSection = ({ metrics }) => {
                 </div>
             </div>
 
-            {/* Quality distribution */}
             {metrics.qualityDistribution && (
                 <div className="admin-dashboard-quality" style={{ marginTop: '1.5rem' }}>
                     <p className="admin-dashboard-quality-title">Quality Distribution</p>
@@ -729,9 +864,8 @@ const MentorTextMetricsSection = ({ metrics }) => {
                 </div>
             )}
 
-            {/* Search + filter */}
             <div className="admin-dashboard-engagement-row" style={{ marginTop: '1.5rem' }}>
-                <MetricBox label="Library Searches" value={totalSearches}  icon="🔍" />
+                <MetricBox label="Library Searches" value={totalSearches}   icon="🔍" />
                 <MetricBox label="Filter Uses"       value={totalFilterUses} icon="🎛️" />
             </div>
 
@@ -752,16 +886,15 @@ const MentorTextMetricsSection = ({ metrics }) => {
     );
 };
 
-// ─── Generic fallback for other features ──────────────────────────────────────
+// ─── Generic fallback ──────────────────────────────────────────────────────────
 const FeatureMetricsCard = ({ feature, metrics }) => {
     const names = {
-        timeline:           'Timeline',
-        bookRecs:           'Book Recommendations',
-        bookRecommendations:'Book Recommendations',
-        feedback:           'Feedback Assistant',
-        bsChatbot:          'Brainstorming Chat',
-        dtChatbot:          'Deep Thinking Chat',
-        reflectiveChatbot:  'Reflective Chatbot',
+        bookRecs:            'Book Recommendations',
+        bookRecommendations: 'Book Recommendations',
+        feedback:            'Feedback Assistant',
+        bsChatbot:           'Brainstorming Chat',
+        dtChatbot:           'Deep Thinking Chat',
+        reflectiveChatbot:   'Reflective Chatbot',
     };
     return (
         <div className="admin-dashboard-feature-card">
