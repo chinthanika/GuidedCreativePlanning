@@ -56,6 +56,16 @@ from utils.analytics.mentor_text_logger import (
     log_mentor_text_filter
 )
 
+from utils.analytics.timeline_logger import (
+    log_timeline_page_view,
+    log_timeline_page_exit,
+    log_timeline_event_created,
+    log_timeline_event_edited,
+    log_timeline_event_reordered,
+    log_timeline_event_deleted,
+    log_timeline_mode_used,
+    log_timeline_coherence_check,
+)
 
 app = Flask(__name__)
 
@@ -334,7 +344,7 @@ def log_ui_interaction():
         stage_map = {
             'bookRecs': 'building_knowledge',
             'mentorText': 'modelling',
-            'storyMap': 'jpint_construction',
+            'storyMap': 'joint_construction',
             'timeline': 'joint_construction',
             'bsChatbot': 'joint_construction',
             'dtChatbot': 'joint_construction',
@@ -3320,6 +3330,22 @@ Provide feedback in the specified JSON format."""
             stage = event.get('stage', 'unknown')
             stage_distribution[stage] = stage_distribution.get(stage, 0) + 1
         result['stageDistribution'] = stage_distribution
+
+        try:
+            check_stats = log_timeline_coherence_check(
+                user_id=user_id,
+                overall_score=result.get('overallScore', 0),
+                event_count=len(timeline),
+                issues_found=result.get('issues', []),
+                genre_used=result.get('genreInferred'),
+            )
+            # Surface score-change delta to the frontend
+            result['scoreChange']   = check_stats.get('scoreChange')
+            result['checkNumber']   = check_stats.get('checkNumber')
+            result['previousScore'] = check_stats.get('previousScore')
+        except Exception as log_err:
+            rec_logger.warning(f"[TIMELINE_COHERENCE] Analytics log failed: {log_err}")
+
         
         total_time = time.time() - request_start
         rec_logger.info(
@@ -4264,6 +4290,155 @@ def clear_mapping_cache():
         return jsonify({'error': str(e)}), 500
 
 
+# ============================================
+# TIMELINE ANALYTICS ROUTES
+# ============================================
+
+@app.route('/api/timeline/log-page-view', methods=['POST'])
+def timeline_log_page_view():
+    """
+    Called by the frontend on mount.
+    Returns a pageViewKey the frontend stores and sends back on exit.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+
+        key = log_timeline_page_view(user_id)
+        return jsonify({'success': True, 'pageViewKey': key}), 200
+
+    except Exception as e:
+        rec_logger.exception(f"[TIMELINE_LOG] page_view error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/timeline/log-page-exit', methods=['POST'])
+def timeline_log_page_exit():
+    """
+    Called by the frontend on unmount (via sendBeacon).
+    Closes the open page-view record and accumulates total feature time.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        duration_ms = data.get('durationMs', 0)
+        page_view_key = data.get('pageViewKey')
+
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+
+        log_timeline_page_exit(user_id, duration_ms, page_view_key)
+        return jsonify({'success': True}), 200
+
+    except Exception as e:
+        rec_logger.exception(f"[TIMELINE_LOG] page_exit error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/timeline/log-event', methods=['POST'])
+def timeline_log_event():
+    """
+    Single endpoint for all event-level analytics actions.
+
+    Expected body:
+    {
+        "userId":           "...",
+        "action":           "created" | "edited" | "reordered" | "deleted",
+        "eventId":          "...",
+        "stage":            "rising action",
+        "isMainEvent":      false,
+
+        // created only:
+        "hasDate":          true,
+        "descriptionLength": 142,
+
+        // reordered only:
+        "fromIndex":        2,
+        "toIndex":          0
+    }
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        action = data.get('action')
+        event_id = data.get('eventId', '')
+        stage = data.get('stage', 'unknown')
+        is_main_event = data.get('isMainEvent', False)
+
+        if not user_id or not action:
+            return jsonify({'error': 'userId and action required'}), 400
+
+        if action == 'created':
+            log_timeline_event_created(
+                user_id=user_id,
+                event_id=event_id,
+                stage=stage,
+                is_main_event=is_main_event,
+                has_date=data.get('hasDate', False),
+                description_length=data.get('descriptionLength', 0),
+            )
+
+        elif action == 'edited':
+            log_timeline_event_edited(
+                user_id=user_id,
+                event_id=event_id,
+                stage=stage,
+                is_main_event=is_main_event,
+            )
+
+        elif action == 'reordered':
+            log_timeline_event_reordered(
+                user_id=user_id,
+                event_id=event_id,
+                from_index=data.get('fromIndex', 0),
+                to_index=data.get('toIndex', 0),
+            )
+
+        elif action == 'deleted':
+            log_timeline_event_deleted(
+                user_id=user_id,
+                event_id=event_id,
+                stage=stage,
+            )
+
+        else:
+            return jsonify({'error': f'Unknown action: {action}'}), 400
+
+        rec_logger.info(f"[TIMELINE_LOG] event.{action} for {user_id}")
+        return jsonify({'success': True, 'logged': action}), 200
+
+    except Exception as e:
+        rec_logger.exception(f"[TIMELINE_LOG] log-event error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/timeline/log-mode', methods=['POST'])
+def timeline_log_mode():
+    """
+    Called when the student selects or switches the timeline layout mode.
+
+    Expected body:
+    {
+        "userId": "...",
+        "mode":   "linear" | "freytag"
+    }
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        mode = data.get('mode', 'linear')
+
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+
+        log_timeline_mode_used(user_id, mode)
+        return jsonify({'success': True, 'mode': mode}), 200
+
+    except Exception as e:
+        rec_logger.exception(f"[TIMELINE_LOG] log-mode error: {e}")
+        return jsonify({'error': str(e)}), 500
 
 # ============================================
 # ADMIN ANALYTICS ENDPOINTS
