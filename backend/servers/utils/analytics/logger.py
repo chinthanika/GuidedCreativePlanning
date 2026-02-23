@@ -87,7 +87,10 @@ def log_tool_interaction(user_id, tool_name, interaction_type, tlc_stage, metada
     usage_ref.set(current_count + 1)
     
     # 3. Check for stage transition
-    _check_stage_transition(user_id, tlc_stage, tool_name, session_id)
+    try:
+        _check_stage_transition(user_id, tlc_stage, tool_name, session_id)
+    except Exception as e:
+        pass
     
     # 4. Update last active timestamp
     db.reference(f"analytics/{user_id}/sessionMetadata").update({
