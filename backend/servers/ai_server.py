@@ -47,7 +47,7 @@ from prompts.timeline_reflection_prompt import TIMELINE_REFLECTION_PROMPT, TIMEL
 from prompts.story_map_analysis_prompt import STORY_MAP_ANALYSIS_PROMPT
 from prompts.mentor_analysis_prompt import MENTOR_TEXT_ANALYSIS_SYSTEM_PROMPT, build_mentor_analysis_user_prompt, validate_analysis_output
 
-from utils.analytics.logger import log_tool_interaction, get_current_session_id
+from utils.analytics.logger import log_tool_interaction, get_current_session_id, log_book_recommendation
 from utils.analytics.mentor_text_logger import (
     log_mentor_text_analysis,
     log_mentor_text_view,
@@ -367,7 +367,41 @@ def log_ui_interaction():
             feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/bookRecommendations/savedBooks")
             total_saved = feature_ref.child('totalSaved').get() or 0
             feature_ref.child('totalSaved').set(total_saved + 1)
-        
+
+        elif feature == 'bookRecs' and action == 'view_book_details':
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/bookRecommendations")
+                views = feature_ref.child('totalBooksViewed').get() or 0
+                feature_ref.child('totalBooksViewed').set(views + 1)
+                book_id = metadata.get('bookId')
+                if book_id:
+                    feature_ref.child(f'bookViews/{book_id}').push({
+                        'timestamp': int(time.time() * 1000),
+                        'relevanceScore': metadata.get('relevanceScore')
+                    })
+            except Exception as view_err:
+                rec_logger.warning(f"[UI_LOG] view_book_details metrics failed: {view_err}")
+
+        elif feature == 'bookRecs' and action == 'pass_book':
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/bookRecommendations")
+                passed = feature_ref.child('totalBooksPassed').get() or 0
+                feature_ref.child('totalBooksPassed').set(passed + 1)
+            except Exception as pass_err:
+                rec_logger.warning(f"[UI_LOG] pass_book metrics failed: {pass_err}")
+
+        elif feature == 'bookRecs' and action == 'recommendations_received':
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/bookRecommendations")
+                returned = metadata.get('booksReturned', 0)
+                total_returned = feature_ref.child('totalBooksReturned').get() or 0
+                feature_ref.child('totalBooksReturned').set(total_returned + returned)
+            except Exception as rate_err:
+                rec_logger.warning(f"[UI_LOG] recommendations_received metrics failed: {rate_err}")
+
+        elif feature == 'bookRecs' and action == 'request_recommendations':
+            pass  # journey-only, no counter needed — log_tool_interaction above handles it
+
         elif feature == 'mentorText' and action == 'search':
             feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/mentorText")
             total_searches = feature_ref.child('totalSearches').get() or 0
@@ -1621,8 +1655,10 @@ def get_book_recommendations():
         mode = data.get('mode', 'brainstorming')
         filters = data.get('filters', {})
         limit = data.get('limit', 5)
-        generate_explanations = data.get('generateExplanations', True)  # NEW: Optional flag
-        
+        generate_explanations = data.get('generateExplanations', True) 
+
+        # Books the user has already seen or passed — don't return these again
+        exclude_book_ids = set(data.get('excludeBookIds', []))
         if not user_id or not session_id:
             return jsonify({
                 'error': 'Missing required fields',
@@ -1792,6 +1828,13 @@ def get_book_recommendations():
             rec_logger.error(f"[REC] Ranking failed: {e}")
             ranked_books = books[:limit]
         
+        # Strip books the user already saw or passed this session
+        if exclude_book_ids:
+            before = len(ranked_books)
+            ranked_books = [b for b in ranked_books if b.get('id') not in exclude_book_ids]
+            rec_logger.info(f"[REC] After seen-book exclusion: {len(ranked_books)} books "
+                            f"(removed {before - len(ranked_books)} of {before})")
+        
         # Step 4: Generate explanations (NEW!)
         if generate_explanations and ranked_books:
             explain_start = time.time()
@@ -1866,6 +1909,15 @@ def get_book_recommendations():
         # Log metrics (non-blocking)
         def log_metrics():
             try:
+                # 1. Log to Firebase analytics (featureMetrics + toolJourney)
+                log_book_recommendation(
+                    user_id=user_id,
+                    extracted_elements=story_elements,
+                    books_returned=len(explained_books),
+                    books_viewed_count=0  # views tracked client-side
+                )
+
+                # 2. Also update session-API metadata (existing behaviour)
                 metrics_data = {
                     'timestamp': int(time.time() * 1000),
                     'booksDisplayed': len(explained_books),
@@ -1878,9 +1930,10 @@ def get_book_recommendations():
                         'open_library': sum(1 for b in explained_books if b.get('source') == 'open_library'),
                         'curated': sum(1 for b in explained_books if b.get('source') == 'curated')
                     },
-                    'explanationsGenerated': generate_explanations
+                    'explanationsGenerated': generate_explanations,
+                    'excludedBookCount': len(exclude_book_ids)
                 }
-                
+
                 requests.post(
                     f"{session_api_url}/session/update_metadata",
                     json={
