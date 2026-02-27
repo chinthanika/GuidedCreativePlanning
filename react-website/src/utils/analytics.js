@@ -768,6 +768,218 @@ export async function logTimelineMode(userId, mode) {
   }
 }
 
+// ============================================
+// CHATBOT ANALYTICS
+// TLC Stage: Joint Construction — AI as Reflective Guide
+// ============================================
+
+/**
+ * Log chatbot page entry.
+ * Call in useEffect on mount inside ChatWindow.
+ * Returns a pageViewKey to pass back on exit.
+ *
+ * @param {string} userId - Firebase user ID
+ * @returns {string|null} pageViewKey
+ */
+export async function logChatPageView(userId) {
+  if (!userId) return null;
+  try {
+    const res = await fetch(`${API_BASE}/api/log-page-view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        pageName: 'reflectiveChatbot',
+        tlcStage: 'joint_construction',
+        timestamp: Date.now()
+      })
+    });
+    const data = await res.json();
+    return data?.pageViewId ?? null;
+  } catch (error) {
+    console.warn('[ChatAnalytics] logChatPageView failed:', error);
+    return null;
+  }
+}
+
+/**
+ * Log chatbot page exit with duration.
+ * Uses sendBeacon so it fires reliably on tab close.
+ * Call in useEffect cleanup / beforeunload inside ChatWindow.
+ *
+ * @param {string} userId     - Firebase user ID
+ * @param {number} durationMs - Time spent on page
+ * @param {string|null} pageViewId - ID returned by logChatPageView
+ */
+export function logChatPageExit(userId, durationMs, pageViewId = null) {
+  if (!userId) return;
+  const payload = JSON.stringify({
+    userId,
+    pageName: 'reflectiveChatbot',
+    durationMs,
+    pageViewId,
+    timestamp: Date.now()
+  });
+
+  if (navigator.sendBeacon) {
+    const blob = new Blob([payload], { type: 'application/json' });
+    navigator.sendBeacon(`${API_BASE}/api/log-page-exit`, blob);
+  } else {
+    fetch(`${API_BASE}/api/log-page-exit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+      keepalive: true
+    }).catch(() => {});
+  }
+}
+
+/**
+ * Log when a new chat session starts and which mode was chosen.
+ * Also increments the per-user total session counter on the backend.
+ * Call this immediately after a new session is created in ChatWindow.
+ *
+ * @param {string} userId    - Firebase user ID
+ * @param {string} sessionId - The new session ID
+ * @param {'brainstorming'|'deepthinking'} mode - Starting mode
+ */
+export async function logChatSessionStart(userId, sessionId, mode) {
+  if (!userId || !sessionId) return;
+  try {
+    await fetch(`${API_BASE}/api/chat/log-session-start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, sessionId, mode, timestamp: Date.now() })
+    });
+  } catch (error) {
+    console.warn('[ChatAnalytics] logChatSessionStart failed:', error);
+  }
+}
+
+/**
+ * Log when the student sets (or changes) their focus area at the start of a session.
+ * Call this when the user sends their first message or explicitly picks a focus.
+ *
+ * @param {string} userId    - Firebase user ID
+ * @param {string} sessionId - Current session ID
+ * @param {string} focusArea - 'character' | 'plot' | 'setting' | 'theme' | 'conflict'
+ * @param {'brainstorming'|'deepthinking'} mode
+ */
+export async function logChatFocusArea(userId, sessionId, focusArea, mode) {
+  if (!userId || !sessionId || !focusArea) return;
+  try {
+    await fetch(`${API_BASE}/api/log-ui-interaction`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        feature: mode === 'brainstorming' ? 'bsChatbot' : 'dtChatbot',
+        action: 'focus_area_set',
+        metadata: { sessionId, focusArea, mode, timestamp: Date.now() }
+      })
+    });
+  } catch (error) {
+    console.warn('[ChatAnalytics] logChatFocusArea failed:', error);
+  }
+}
+
+/**
+ * Log when the student switches mode (BS ↔ DT) mid-session.
+ *
+ * @param {string} userId    - Firebase user ID
+ * @param {string} sessionId - Current session ID
+ * @param {'brainstorming'|'deepthinking'} fromMode
+ * @param {'brainstorming'|'deepthinking'} toMode
+ */
+export async function logChatModeSwitch(userId, sessionId, fromMode, toMode) {
+  if (!userId || !sessionId) return;
+  try {
+    await fetch(`${API_BASE}/api/log-ui-interaction`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        feature: 'reflectiveChatbot',
+        action: 'mode_switch',
+        metadata: { sessionId, fromMode, toMode, timestamp: Date.now() }
+      })
+    });
+  } catch (error) {
+    console.warn('[ChatAnalytics] logChatModeSwitch failed:', error);
+  }
+}
+
+/**
+ * Log a user message with its length so the backend can compute
+ * per-session message-length trends (the primary metacognitive deepening signal).
+ *
+ * Call this in handleSend() in ChatWindow, BEFORE awaiting sendMessage(),
+ * so it captures the raw user input length.
+ *
+ * @param {string} userId      - Firebase user ID
+ * @param {string} sessionId   - Current session ID
+ * @param {number} messageLength - Character count of the user message
+ * @param {number} messageIndex  - Position in session (0-based count of user msgs so far)
+ * @param {'brainstorming'|'deepthinking'} mode
+ * @param {string|null} currentStage - BS CPS stage if known (Clarify/Ideate/Develop/Implement)
+ */
+export async function logChatUserMessage(userId, sessionId, messageLength, messageIndex, mode, currentStage = null) {
+  if (!userId || !sessionId) return;
+  try {
+    await fetch(`${API_BASE}/api/chat/log-message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        sessionId,
+        messageLength,
+        messageIndex,
+        mode,
+        currentStage,
+        timestamp: Date.now()
+      })
+    });
+  } catch (error) {
+    console.warn('[ChatAnalytics] logChatUserMessage failed:', error);
+  }
+}
+
+/**
+ * Log a CPS stage transition for Brainstorming mode.
+ * This mirrors the stage switch into the main analytics tree
+ * so it appears in the cross-study stage transition log.
+ *
+ * Call this whenever BSConversationFlowManager.switch_stage() is triggered.
+ * The best place is right after the backend returns a response that includes
+ * a stage change (you can detect this by comparing stage before/after).
+ *
+ * @param {string} userId    - Firebase user ID
+ * @param {string} sessionId - Current session ID
+ * @param {string} fromStage - e.g. 'Clarify'
+ * @param {string} toStage   - e.g. 'Ideate'
+ * @param {'auto'|'manual'} trigger - Whether user or system triggered it
+ */
+export async function logChatStageTransition(userId, sessionId, fromStage, toStage, trigger = 'auto') {
+  if (!userId || !sessionId || !fromStage || !toStage) return;
+  try {
+    await fetch(`${API_BASE}/api/chat/log-stage-transition`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        sessionId,
+        fromStage,
+        toStage,
+        trigger,
+        timestamp: Date.now()
+      })
+    });
+  } catch (error) {
+    console.warn('[ChatAnalytics] logChatStageTransition failed:', error);
+  }
+}
+
+
 // Export all functions
 export default {
   logPageView,
@@ -796,4 +1008,12 @@ export default {
   logTimelinePageExit,
   logTimelineEventAction,
   logTimelineMode,
+  // Chatbot
+  logChatPageView,
+  logChatPageExit,
+  logChatSessionStart,
+  logChatFocusArea,
+  logChatModeSwitch,
+  logChatUserMessage,
+  logChatStageTransition
 };

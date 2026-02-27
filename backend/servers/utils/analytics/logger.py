@@ -105,40 +105,37 @@ def log_tool_interaction(user_id, tool_name, interaction_type, tlc_stage, metada
 
 
 def _check_stage_transition(user_id, new_stage, tool_name, session_id):
-    """
-    Internal function to detect and log stage transitions.
-    Identifies recursion (backward movement through TLC stages).
-    """
-    # Get last 2 journey entries
     journey_ref = db.reference(f"analytics/{user_id}/toolJourney")
-    recent = journey_ref.order_by_child('timestamp').limit_to_last(2).get()
-    
+    try:
+        recent = journey_ref.order_by_child('timestamp').limit_to_last(2).get()
+    except Exception:
+        return
+
     if not recent or len(recent) < 2:
-        return  # Not enough data to compare
-    
+        return
+
     entries = sorted(recent.values(), key=lambda x: x['timestamp'])
-    prev_stage = entries[-2].get('stage')
-    
-    if not prev_stage or prev_stage == new_stage:
-        return  # No transition
-    
-    # Transition detected!
+    prev_entry = entries[-2]
+    prev_stage = prev_entry.get('stage')
+    prev_tool = prev_entry.get('tool')
+
+    # Only detect transitions when the tool changes, not every interaction
+    if not prev_stage or prev_stage == new_stage or prev_tool == tool_name:
+        return
+
     stage_order = ['building_knowledge', 'modelling', 'joint_construction', 'independent_construction']
-    
     try:
         prev_idx = stage_order.index(prev_stage)
         new_idx = stage_order.index(new_stage)
-        
         if new_idx > prev_idx:
             transition_type = 'forward'
         elif new_idx < prev_idx:
-            transition_type = 'backward'  # RECURSION!
+            transition_type = 'backward'
         else:
             transition_type = 'lateral'
     except ValueError:
         transition_type = 'unknown'
-    
-    # Log transition
+
     transitions_ref = db.reference(f"analytics/{user_id}/stageTransitions")
     transitions_ref.push({
         'timestamp': int(time.time() * 1000),
@@ -148,7 +145,6 @@ def _check_stage_transition(user_id, new_stage, tool_name, session_id):
         'transitionType': transition_type,
         'sessionId': session_id
     })
-
 
 # ============================================
 # FEATURE-SPECIFIC LOGGING HELPERS
