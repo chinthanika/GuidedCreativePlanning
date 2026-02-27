@@ -47,7 +47,14 @@ from prompts.timeline_reflection_prompt import TIMELINE_REFLECTION_PROMPT, TIMEL
 from prompts.story_map_analysis_prompt import STORY_MAP_ANALYSIS_PROMPT
 from prompts.mentor_analysis_prompt import MENTOR_TEXT_ANALYSIS_SYSTEM_PROMPT, build_mentor_analysis_user_prompt, validate_analysis_output
 
-from utils.analytics.logger import log_tool_interaction, get_current_session_id, log_book_recommendation
+from utils.analytics.logger import (
+    log_tool_interaction,
+    get_current_session_id,
+    log_story_map_generation,
+    log_book_recommendation,
+    log_timeline_coherence,
+    log_feedback_submission,
+)
 from utils.analytics.mentor_text_logger import (
     log_mentor_text_analysis,
     log_mentor_text_view,
@@ -55,18 +62,27 @@ from utils.analytics.mentor_text_logger import (
     log_mentor_text_search,
     log_mentor_text_filter
 )
-
+from utils.analytics.story_map_logger import (
+    log_story_map_graph_render,
+    log_story_map_node_action,
+    log_story_map_link_action,
+    log_story_map_merge,
+    log_story_map_analysis as log_story_map_analysis_detailed,
+    log_story_map_analysis_panel_interaction,
+    log_story_map_view_toggle,
+    log_story_map_merge_mode,
+    log_story_map_iteration_pattern,
+)
 from utils.analytics.timeline_logger import (
     log_timeline_page_view,
     log_timeline_page_exit,
     log_timeline_event_created,
     log_timeline_event_edited,
-    log_timeline_event_reordered,
     log_timeline_event_deleted,
+    log_timeline_event_reordered,
     log_timeline_mode_used,
     log_timeline_coherence_check,
 )
-
 app = Flask(__name__)
 
 CORS(app, origins="*", supports_credentials=True) 
@@ -492,6 +508,34 @@ def log_ui_interaction():
                 feature_ref.child('lastEditAfterAnalysisTimestamp').set(int(time.time() * 1000))
             except Exception as edit_err:
                 rec_logger.warning(f"[UI_LOG] edited_after_analysis metrics failed: {edit_err}")
+        
+        elif feature == 'reflectiveChatbot' and action == 'focus_area_set':
+            # Track focus area distribution
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
+                focus_area = metadata.get('focusArea')
+                mode       = metadata.get('mode', 'unknown')
+                if focus_area:
+                    focus_count = feature_ref.child(f'focusAreas/{focus_area}').get() or 0
+                    feature_ref.child(f'focusAreas/{focus_area}').set(focus_count + 1)
+                    mode_focus_count = feature_ref.child(f'focusAreasByMode/{mode}/{focus_area}').get() or 0
+                    feature_ref.child(f'focusAreasByMode/{mode}/{focus_area}').set(mode_focus_count + 1)
+            except Exception as fa_err:
+                rec_logger.warning(f"[UI_LOG] focus_area_set metrics failed: {fa_err}")
+
+        elif feature == 'reflectiveChatbot' and action == 'mode_switch':
+            # Track how often students switch modes mid-session
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
+                from_mode = metadata.get('fromMode', 'unknown')
+                to_mode   = metadata.get('toMode', 'unknown')
+                switch_key = f'{from_mode}_to_{to_mode}'
+                switch_count = feature_ref.child(f'modeSwitches/{switch_key}').get() or 0
+                feature_ref.child(f'modeSwitches/{switch_key}').set(switch_count + 1)
+                total_switches = feature_ref.child('totalModeSwitches').get() or 0
+                feature_ref.child('totalModeSwitches').set(total_switches + 1)
+            except Exception as ms_err:
+                rec_logger.warning(f"[UI_LOG] mode_switch metrics failed: {ms_err}")
 
         rec_logger.info(f"[UI_LOG] {user_id} - {feature}.{action}")
         
@@ -1067,6 +1111,250 @@ Instructions:
         return jsonify({"error": str(e)}), 500
     
 # ============================================
+# Session start counter
+# ============================================
+
+@app.route('/api/chat/log-session-start', methods=['POST'])
+def log_chat_session_start():
+    """
+    Increment the per-user total session counter and record which mode
+    the session started in.
+
+    Called by the frontend logChatSessionStart() helper immediately after
+    a new chat session is created.
+
+    Expected body:
+    {
+        "userId":    "...",
+        "sessionId": "...",
+        "mode":      "brainstorming" | "deepthinking",
+        "timestamp": 1234567890
+    }
+    """
+    try:
+        data = request.json
+        user_id  = data.get('userId')
+        session_id = data.get('sessionId')
+        mode     = data.get('mode', 'brainstorming')
+        ts       = data.get('timestamp', int(time.time() * 1000))
+
+        if not user_id or not session_id:
+            return jsonify({'error': 'userId and sessionId required'}), 400
+
+        feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
+
+        # Increment total session count
+        total_sessions = feature_ref.child('totalSessions').get() or 0
+        feature_ref.child('totalSessions').set(total_sessions + 1)
+
+        # Increment per-mode session count
+        mode_key = 'bsSessions' if mode == 'brainstorming' else 'dtSessions'
+        mode_sessions = feature_ref.child(mode_key).get() or 0
+        feature_ref.child(mode_key).set(mode_sessions + 1)
+
+        # Log session start in the tool journey
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name='bsChatbot' if mode == 'brainstorming' else 'dtChatbot',
+            interaction_type='session_start',
+            tlc_stage='joint_construction',
+            metadata={'sessionId': session_id, 'mode': mode, 'timestamp': ts}
+        )
+
+        rec_logger.info(f"[CHAT_LOG] session_start for {user_id}, mode={mode}, total={total_sessions + 1}")
+        return jsonify({'success': True, 'totalSessions': total_sessions + 1}), 200
+
+    except Exception as e:
+        rec_logger.exception(f"[CHAT_LOG] log-session-start error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================
+# Per-message length tracking
+# ============================================
+
+@app.route('/api/chat/log-message', methods=['POST'])
+def log_chat_message():
+    """
+    Record a user message's length so we can compute per-session
+    message-length trends (the primary metacognitive deepening signal).
+
+    Expected body:
+    {
+        "userId":        "...",
+        "sessionId":     "...",
+        "messageLength": 142,       // character count
+        "messageIndex":  3,         // 0-based index of this user message in session
+        "mode":          "brainstorming" | "deepthinking",
+        "currentStage":  "Clarify",  // BS only; null for DT
+        "timestamp":     1234567890
+    }
+    """
+    try:
+        data = request.json
+        user_id        = data.get('userId')
+        session_id     = data.get('sessionId')
+        message_length = data.get('messageLength', 0)
+        message_index  = data.get('messageIndex', 0)
+        mode           = data.get('mode', 'brainstorming')
+        current_stage  = data.get('currentStage')
+        ts             = data.get('timestamp', int(time.time() * 1000))
+
+        if not user_id or not session_id:
+            return jsonify({'error': 'userId and sessionId required'}), 400
+
+        tool_name   = 'bsChatbot' if mode == 'brainstorming' else 'dtChatbot'
+        feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
+
+        # ── Per-session message-length trend array ──────────────────────────
+        # Stored as analytics/{userId}/chatSessions/{sessionId}/messageLengths
+        # Shape: [ { index, length, timestamp, stage? }, ... ]
+        session_ref = db.reference(
+            f"analytics/{user_id}/chatSessions/{session_id}/messageLengths"
+        )
+        entry = {
+            'index':     message_index,
+            'length':    message_length,
+            'timestamp': ts,
+        }
+        if current_stage:
+            entry['stage'] = current_stage
+        session_ref.push(entry)
+
+        # ── Running average message length across all sessions ───────────────
+        total_length = feature_ref.child('totalUserMessageChars').get() or 0
+        total_msgs   = feature_ref.child('userMessages').get() or 0
+        feature_ref.child('totalUserMessageChars').set(total_length + message_length)
+        # userMessages counter is already incremented by the existing log_chat_message
+        # helper in logger.py, so we read the already-updated value for the avg
+        if total_msgs > 0:
+            feature_ref.child('avgUserMessageLength').set(
+                round((total_length + message_length) / (total_msgs + 1), 1)
+            )
+
+        # ── Tool journey entry ───────────────────────────────────────────────
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name=tool_name,
+            interaction_type='user_message',
+            tlc_stage='joint_construction',
+            metadata={
+                'sessionId':     session_id,
+                'messageLength': message_length,
+                'messageIndex':  message_index,
+                'currentStage':  current_stage,
+            }
+        )
+
+        rec_logger.info(
+            f"[CHAT_LOG] user_message for {user_id}, "
+            f"session={session_id}, len={message_length}, idx={message_index}"
+        )
+        return jsonify({'success': True}), 200
+
+    except Exception as e:
+        rec_logger.exception(f"[CHAT_LOG] log-message error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================
+# BS CPS stage transition
+# ============================================
+
+@app.route('/api/chat/log-stage-transition', methods=['POST'])
+def log_chat_stage_transition():
+    """
+    Mirror a Brainstorming CPS stage transition into the main analytics tree
+    (analytics/{userId}/stageTransitions) so it appears alongside transitions
+    from other tools in the cross-study analysis.
+
+    The Session API's stageHistory already stores this inside the session doc;
+    this endpoint makes it available for aggregate queries without having to
+    join across every session document.
+
+    Expected body:
+    {
+        "userId":    "...",
+        "sessionId": "...",
+        "fromStage": "Clarify",
+        "toStage":   "Ideate",
+        "trigger":   "auto" | "manual",
+        "timestamp": 1234567890
+    }
+    """
+    try:
+        data       = request.json
+        user_id    = data.get('userId')
+        session_id = data.get('sessionId')
+        from_stage = data.get('fromStage')
+        to_stage   = data.get('toStage')
+        trigger    = data.get('trigger', 'auto')
+        ts         = data.get('timestamp', int(time.time() * 1000))
+
+        if not user_id or not from_stage or not to_stage:
+            return jsonify({'error': 'userId, fromStage, toStage required'}), 400
+
+        # Determine direction for recursion tracking
+        cps_order = {'Clarify': 0, 'Ideate': 1, 'Develop': 2, 'Implement': 3}
+        from_idx  = cps_order.get(from_stage, -1)
+        to_idx    = cps_order.get(to_stage, -1)
+
+        if from_idx == -1 or to_idx == -1:
+            direction = 'unknown'
+        elif to_idx > from_idx:
+            direction = 'forward'
+        elif to_idx < from_idx:
+            direction = 'backward'   # recursion event
+        else:
+            direction = 'lateral'
+
+        # Write to the shared stageTransitions node
+        transition_ref = db.reference(f"analytics/{user_id}/stageTransitions")
+        transition_ref.push({
+            'from':            from_stage,
+            'to':              to_stage,
+            'direction':       direction,
+            'transitionType':  direction,   # matches existing schema used by other tools
+            'tool':            'bsChatbot',
+            'trigger':         trigger,
+            'sessionId':       session_id,
+            'timestamp':       ts,
+        })
+
+        # Also update the tool journey so the transition shows in the timeline
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name='bsChatbot',
+            interaction_type='stage_transition',
+            tlc_stage='joint_construction',
+            metadata={
+                'fromStage': from_stage,
+                'toStage':   to_stage,
+                'direction': direction,
+                'trigger':   trigger,
+                'sessionId': session_id,
+            }
+        )
+
+        # Increment backward-transition (recursion) counter if applicable
+        if direction == 'backward':
+            feature_ref = db.reference(
+                f"analytics/{user_id}/featureMetrics/reflectiveChatbot"
+            )
+            recursions = feature_ref.child('totalRecursions').get() or 0
+            feature_ref.child('totalRecursions').set(recursions + 1)
+
+        rec_logger.info(
+            f"[CHAT_LOG] stage_transition {from_stage} → {to_stage} "
+            f"({direction}) for {user_id}"
+        )
+        return jsonify({'success': True, 'direction': direction}), 200
+
+    except Exception as e:
+        rec_logger.exception(f"[CHAT_LOG] log-stage-transition error: {e}")
+        return jsonify({'error': str(e)}), 500
+    
+# ============================================
 # SESSION MANAGEMENT ENDPOINTS
 # ============================================
 
@@ -1495,9 +1783,12 @@ def suggest_world_template():
 @app.route('/characters/extract', methods=['POST'])
 def extract_characters():
     char_logger.info("[CHAR] Extraction request")
+    request_start = time.time()
     
     data = request.json
     text = data.get('text', '')
+
+    user_id = data.get('userId')
 
     if not text:
         return jsonify({'error': 'text required'}), 400
@@ -1619,6 +1910,18 @@ def extract_characters():
             char_logger.info(f"[CHAR] Single extraction: {len(result.get('entities', []))} entities, "
                            f"{len(result.get('relationships', []))} relationships")
         
+        if user_id:
+            try:
+                log_story_map_generation(
+                    user_id=user_id,
+                    input_text=text,
+                    nodes_extracted=len(result.get('entities', [])),
+                    links_extracted=len(result.get('relationships', [])),
+                    processing_time_ms=int((time.time() - request_start) * 1000),
+                )
+            except Exception as log_err:
+                char_logger.warning(f"[CHAR] Analytics logging failed: {log_err}")
+
         return jsonify(result)
 
     except openai.APITimeoutError:
@@ -1999,6 +2302,16 @@ def get_book_recommendations():
                 )
             except Exception as e:
                 rec_logger.warning(f"[REC] Failed to log metrics: {e}")
+
+            try:
+                log_book_recommendation(
+                    user_id=user_id,
+                    extracted_elements=story_elements,
+                    books_returned=len(explained_books),
+                    books_viewed_count=0,
+                )
+            except Exception as log_err:
+                rec_logger.warning(f"[REC] Analytics logging failed: {log_err}")
         
         threading.Thread(target=log_metrics, daemon=True).start()
         
@@ -3315,6 +3628,20 @@ Return analysis in the specified JSON format."""
         except Exception as score_err:
             rec_logger.warning(f"[STORY_MAP] Failed to store longitudinal score: {score_err}")
 
+        try:
+            log_story_map_analysis_detailed(
+                user_id=user_id,
+                overall_score=analysis.get('overall_score', 0),
+                overall_health=analysis.get('overall_health', 'unknown'),
+                node_count=len(nodes),
+                link_count=len(links),
+                issues_found=analysis.get('issues', []),
+                genre_inferred=analysis.get('genre_context', {}).get('detected_genre'),
+                processing_time_ms=int(total_time * 1000),
+            )
+        except Exception as log_err:
+            rec_logger.warning(f"[STORY_MAP] Analytics logging failed: {log_err}")
+
         return jsonify(analysis), 200
         
     except Exception as e:
@@ -3459,6 +3786,17 @@ Provide feedback in the specified JSON format."""
             f"score: {result.get('overallScore', 'N/A')}"
         )
         
+        try:
+            log_timeline_coherence_check(
+                user_id=user_id,
+                overall_score=result.get('overallScore', 0),
+                event_count=len(timeline),
+                issues_found=result.get('issues', []),
+                genre_used=data.get('genre'),
+            )
+        except Exception as log_err:
+            rec_logger.warning(f"[TIMELINE_COHERENCE] Analytics logging failed: {log_err}")
+
         return jsonify(result), 200
         
     except Exception as e:
@@ -3600,6 +3938,22 @@ Generate reflective questions and suggestions in the specified JSON format."""
         total_time = time.time() - request_start
         rec_logger.info(f"[TIMELINE_REFLECT] Completed in {total_time:.2f}s")
         
+        try:
+            log_tool_interaction(
+                user_id=user_id,
+                tool_name='timeline',
+                interaction_type='event_reflect',
+                tlc_stage='joint_construction',
+                metadata={
+                    'context': context,
+                    'eventStage': event.get('stage'),
+                    'timelineLength': len(timeline),
+                    'processingTimeMs': int((time.time() - request_start) * 1000),
+                },
+            )
+        except Exception as log_err:
+            rec_logger.warning(f"[TIMELINE_REFLECT] Analytics logging failed: {log_err}")
+
         return jsonify(result), 200
         
     except Exception as e:
@@ -3848,6 +4202,19 @@ Start by requesting relevant context based on what you see in the draft."""
         total_time = time.time() - request_start
         rec_logger.info(f"[FEEDBACK] Total: {total_time:.2f}s ({iteration} iterations)")
         
+        try:
+            log_feedback_submission(
+                user_id=user_id,
+                word_count=word_count,
+                overall_score=final_feedback.get('overallScore', 0),
+                category_scores={
+                    k: v for k, v in final_feedback.items()
+                    if isinstance(v, (int, float)) and k != 'overallScore'
+                },
+            )
+        except Exception as log_err:
+            rec_logger.warning(f"[FEEDBACK] Analytics logging failed: {log_err}")
+
         return jsonify({
             'feedback': final_feedback,
             'processingTime': int(total_time * 1000),
@@ -4394,161 +4761,346 @@ def clear_mapping_cache():
     except Exception as e:
         rec_logger.exception(f"[CACHE] Failed to clear cache: {e}")
         return jsonify({'error': str(e)}), 500
-
-
-# ============================================
-# TIMELINE ANALYTICS ROUTES
+    
+    # ============================================
+# TIMELINE FRONTEND LOG ENDPOINTS
 # ============================================
 
 @app.route('/api/timeline/log-page-view', methods=['POST'])
 def timeline_log_page_view():
-    """
-    Called by the frontend on mount.
-    Returns a pageViewKey the frontend stores and sends back on exit.
-    """
     try:
-        data = request.json
+        data = request.json or {}
         user_id = data.get('userId')
         if not user_id:
             return jsonify({'error': 'userId required'}), 400
-
-        key = log_timeline_page_view(user_id)
+        key = log_timeline_page_view(user_id=user_id)
         return jsonify({'success': True, 'pageViewKey': key}), 200
-
     except Exception as e:
-        rec_logger.exception(f"[TIMELINE_LOG] page_view error: {e}")
         return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/timeline/log-page-exit', methods=['POST'])
 def timeline_log_page_exit():
-    """
-    Called by the frontend on unmount (via sendBeacon).
-    Closes the open page-view record and accumulates total feature time.
-    """
     try:
-        data = request.json
+        data = request.json or {}
         user_id = data.get('userId')
-        duration_ms = data.get('durationMs', 0)
-        page_view_key = data.get('pageViewKey')
-
         if not user_id:
             return jsonify({'error': 'userId required'}), 400
-
-        log_timeline_page_exit(user_id, duration_ms, page_view_key)
+        log_timeline_page_exit(
+            user_id=user_id,
+            duration_ms=data.get('durationMs', 0),
+            page_view_key=data.get('pageViewKey'),
+        )
         return jsonify({'success': True}), 200
-
     except Exception as e:
-        rec_logger.exception(f"[TIMELINE_LOG] page_exit error: {e}")
         return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/timeline/log-event', methods=['POST'])
 def timeline_log_event():
-    """
-    Single endpoint for all event-level analytics actions.
-
-    Expected body:
-    {
-        "userId":           "...",
-        "action":           "created" | "edited" | "reordered" | "deleted",
-        "eventId":          "...",
-        "stage":            "rising action",
-        "isMainEvent":      false,
-
-        // created only:
-        "hasDate":          true,
-        "descriptionLength": 142,
-
-        // reordered only:
-        "fromIndex":        2,
-        "toIndex":          0
-    }
-    """
+    """action: 'created' | 'edited' | 'deleted' | 'reordered'"""
     try:
-        data = request.json
+        data = request.json or {}
         user_id = data.get('userId')
         action = data.get('action')
-        event_id = data.get('eventId', '')
-        stage = data.get('stage', 'unknown')
-        is_main_event = data.get('isMainEvent', False)
-
         if not user_id or not action:
             return jsonify({'error': 'userId and action required'}), 400
-
+        event_id = data.get('eventId', '')
+        stage = data.get('stage', 'unknown')
+        is_main = data.get('isMainEvent', False)
         if action == 'created':
-            log_timeline_event_created(
-                user_id=user_id,
-                event_id=event_id,
-                stage=stage,
-                is_main_event=is_main_event,
-                has_date=data.get('hasDate', False),
-                description_length=data.get('descriptionLength', 0),
-            )
-
+            log_timeline_event_created(user_id, event_id, stage, is_main,
+                                       data.get('hasDate', False), data.get('descriptionLength', 0))
         elif action == 'edited':
-            log_timeline_event_edited(
-                user_id=user_id,
-                event_id=event_id,
-                stage=stage,
-                is_main_event=is_main_event,
-            )
-
-        elif action == 'reordered':
-            log_timeline_event_reordered(
-                user_id=user_id,
-                event_id=event_id,
-                from_index=data.get('fromIndex', 0),
-                to_index=data.get('toIndex', 0),
-            )
-
+            log_timeline_event_edited(user_id, event_id, stage, is_main)
         elif action == 'deleted':
-            log_timeline_event_deleted(
-                user_id=user_id,
-                event_id=event_id,
-                stage=stage,
-            )
-
+            log_timeline_event_deleted(user_id, event_id, stage)
+        elif action == 'reordered':
+            log_timeline_event_reordered(user_id, event_id, data.get('fromIndex', 0), data.get('toIndex', 0))
         else:
             return jsonify({'error': f'Unknown action: {action}'}), 400
-
-        rec_logger.info(f"[TIMELINE_LOG] event.{action} for {user_id}")
         return jsonify({'success': True, 'logged': action}), 200
-
     except Exception as e:
-        rec_logger.exception(f"[TIMELINE_LOG] log-event error: {e}")
         return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/timeline/log-mode', methods=['POST'])
 def timeline_log_mode():
-    """
-    Called when the student selects or switches the timeline layout mode.
-
-    Expected body:
-    {
-        "userId": "...",
-        "mode":   "linear" | "freytag"
-    }
-    """
     try:
-        data = request.json
+        data = request.json or {}
         user_id = data.get('userId')
-        mode = data.get('mode', 'linear')
+        mode = data.get('mode')
+        if not user_id or not mode:
+            return jsonify({'error': 'userId and mode required'}), 400
+        log_timeline_mode_used(user_id=user_id, mode=mode)
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
+
+# ============================================
+# STORY MAP FRONTEND LOG ENDPOINTS
+# ============================================
+
+@app.route('/api/story-map/log-render', methods=['POST'])
+def story_map_log_render():
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
         if not user_id:
             return jsonify({'error': 'userId required'}), 400
-
-        log_timeline_mode_used(user_id, mode)
-        return jsonify({'success': True, 'mode': mode}), 200
-
+        log_story_map_graph_render(user_id, data.get('nodeCount', 0),
+                                   data.get('linkCount', 0), data.get('isolatedNodes', 0))
+        return jsonify({'success': True}), 200
     except Exception as e:
-        rec_logger.exception(f"[TIMELINE_LOG] log-mode error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-node-action', methods=['POST'])
+def story_map_log_node_action():
+    """actionType: 'create' | 'edit' | 'delete' | 'view'"""
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        action_type = data.get('actionType')
+        if not user_id or not action_type:
+            return jsonify({'error': 'userId and actionType required'}), 400
+        log_story_map_node_action(user_id, action_type, data.get('nodeData', {}),
+                                  data.get('processingTimeMs'))
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-link-action', methods=['POST'])
+def story_map_log_link_action():
+    """actionType: 'create' | 'edit' | 'delete' | 'view'"""
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        action_type = data.get('actionType')
+        if not user_id or not action_type:
+            return jsonify({'error': 'userId and actionType required'}), 400
+        log_story_map_link_action(user_id, action_type, data.get('linkData', {}))
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-merge', methods=['POST'])
+def story_map_log_merge():
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+        log_story_map_merge(user_id, data.get('mergedNodeCount', 2),
+                            data.get('primaryNodeLabel', ''), data.get('processingTimeMs'))
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-analysis-panel', methods=['POST'])
+def story_map_log_analysis_panel():
+    """interactionType: 'open' | 'close' | 'expand_category' | 'view_issue' | 'accept_suggestion' | 'dismiss_issue'"""
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        interaction_type = data.get('interactionType')
+        if not user_id or not interaction_type:
+            return jsonify({'error': 'userId and interactionType required'}), 400
+        log_story_map_analysis_panel_interaction(user_id, interaction_type,
+                                                 data.get('durationMs'), data.get('issueInteractedWith'))
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-view-toggle', methods=['POST'])
+def story_map_log_view_toggle():
+    """viewMode: 'node' | 'label'"""
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        view_mode = data.get('viewMode')
+        if not user_id or not view_mode:
+            return jsonify({'error': 'userId and viewMode required'}), 400
+        log_story_map_view_toggle(user_id, view_mode)
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-merge-mode', methods=['POST'])
+def story_map_log_merge_mode():
+    """actionType: 'enter' | 'exit' | 'select_first' | 'select_second' | 'complete'"""
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        action_type = data.get('actionType')
+        if not user_id or not action_type:
+            return jsonify({'error': 'userId and actionType required'}), 400
+        log_story_map_merge_mode(user_id, action_type, data.get('nodesSelected'))
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-iteration', methods=['POST'])
+def story_map_log_iteration():
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+        log_story_map_iteration_pattern(user_id, {
+            'mapVersion': data.get('mapVersion', 1),
+            'actionsTaken': data.get('actionsTaken', 0),
+            'timeSpent': data.get('timeSpent', 0),
+            'triggeredByAnalysis': data.get('triggeredByAnalysis', False),
+        })
+        return jsonify({'success': True}), 200
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 # ============================================
 # ADMIN ANALYTICS ENDPOINTS
 # ============================================
+
+@app.route('/api/chat/log-session-start', methods=['POST'])
+def chat_log_session_start_endpoint():
+    """
+    { userId, mode, focusArea }
+    mode: 'brainstorming' | 'deepthinking'
+    """
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        mode = data.get('mode', 'brainstorming')
+        focus_area = data.get('focusArea')
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+
+        tool_name = 'bsChatbot' if mode == 'brainstorming' else 'dtChatbot'
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name=tool_name,
+            interaction_type='session_start',
+            tlc_stage='joint_construction',
+            metadata={'mode': mode, 'focusArea': focus_area},
+        )
+
+        feat_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
+        total = feat_ref.child('totalSessions').get() or 0
+        feat_ref.child('totalSessions').set(total + 1)
+        mode_key = 'bsSessions' if mode == 'brainstorming' else 'dtSessions'
+        mode_count = feat_ref.child(mode_key).get() or 0
+        feat_ref.child(mode_key).set(mode_count + 1)
+        if focus_area:
+            fa_count = feat_ref.child(f'focusAreas/{focus_area}').get() or 0
+            feat_ref.child(f'focusAreas/{focus_area}').set(fa_count + 1)
+
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        rec_logger.warning(f"[CHAT_LOG] log-session-start error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/chat/log-message', methods=['POST'])
+def chat_log_message_endpoint():
+    """
+    { userId, mode, role, messageLength, sessionId?, stage? }
+    role: 'user' | 'assistant'
+    """
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        mode = data.get('mode', 'brainstorming')
+        role = data.get('role', 'user')
+        message_length = data.get('messageLength', 0)
+        session_id = data.get('sessionId')
+        stage = data.get('stage')
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+
+        tool_name = 'bsChatbot' if mode == 'brainstorming' else 'dtChatbot'
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name=tool_name,
+            interaction_type='message',
+            tlc_stage='joint_construction',
+            metadata={'role': role, 'messageLength': message_length, 'stage': stage},
+        )
+
+        feat_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
+        total_msgs = feat_ref.child('totalMessages').get() or 0
+        feat_ref.child('totalMessages').set(total_msgs + 1)
+
+        if role == 'user':
+            user_msgs = feat_ref.child('userMessages').get() or 0
+            feat_ref.child('userMessages').set(user_msgs + 1)
+            # Rolling average message length
+            total_chars = feat_ref.child('totalUserMessageChars').get() or 0
+            new_total = total_chars + message_length
+            feat_ref.child('totalUserMessageChars').set(new_total)
+            feat_ref.child('avgUserMessageLength').set(new_total / (user_msgs + 1))
+            # Per-session message length log (for trend chart)
+            if session_id:
+                db.reference(f"chatSessions/{user_id}/{session_id}/messageLengths").push({
+                    'index': user_msgs,
+                    'length': message_length,
+                    'timestamp': int(time.time() * 1000),
+                    'stage': stage,
+                })
+
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        rec_logger.warning(f"[CHAT_LOG] log-message error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/chat/log-stage-transition', methods=['POST'])
+def chat_log_stage_transition_endpoint():
+    """
+    { userId, mode, fromStage, toStage, sessionId? }
+    For BS mode CPS stage tracking.
+    """
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        mode = data.get('mode', 'brainstorming')
+        from_stage = data.get('fromStage')
+        to_stage = data.get('toStage')
+        if not user_id or not from_stage or not to_stage:
+            return jsonify({'error': 'userId, fromStage, toStage required'}), 400
+
+        cps_order = ['clarify', 'ideate', 'develop', 'implement']
+        is_backward = (
+            from_stage.lower() in cps_order and
+            to_stage.lower() in cps_order and
+            cps_order.index(to_stage.lower()) < cps_order.index(from_stage.lower())
+        )
+
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name='bsChatbot',
+            interaction_type='cps_stage_transition',
+            tlc_stage='joint_construction',
+            metadata={'fromStage': from_stage, 'toStage': to_stage, 'isBackward': is_backward},
+        )
+
+        feat_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
+        stage_count = feat_ref.child(f'cpsStageReach/{to_stage}').get() or 0
+        feat_ref.child(f'cpsStageReach/{to_stage}').set(stage_count + 1)
+        if is_backward:
+            recursions = feat_ref.child('totalRecursions').get() or 0
+            feat_ref.child('totalRecursions').set(recursions + 1)
+
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        rec_logger.warning(f"[CHAT_LOG] log-stage-transition error: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/admin/analytics/users-list', methods=['GET'])
 def get_users_list():
@@ -4633,6 +5185,9 @@ def get_user_analytics(user_id):
         
         rec_logger.info(f"[ADMIN] Loaded analytics for user {user_id}")
         
+        chat_sessions_ref = db.reference(f"chatSessions/{user_id}")
+        chat_sessions_data = chat_sessions_ref.get() or {}
+
         return jsonify({
             'userId': user_id,
             'userMetadata': {
@@ -4647,7 +5202,8 @@ def get_user_analytics(user_id):
             'recursionCount': len(recursion_events),
             'totalToolInteractions': len(journey_list),
             'featureMetrics': data.get('featureMetrics', {}),
-            'outcomeMetrics': data.get('outcomeMetrics', {})
+            'outcomeMetrics': data.get('outcomeMetrics', {}),
+            'chatSessions': chat_sessions_data
         }), 200
         
     except Exception as e:

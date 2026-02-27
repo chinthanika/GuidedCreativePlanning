@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
     BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     AreaChart, Area
 } from 'recharts';
-import { 
+import {
     Users, Activity, Clock, TrendingUp, Download,
     RefreshCw, Eye, Map, BookOpen, FileText, Zap, CheckCircle,
-    AlertCircle, GitMerge, Layers, Calendar
+    AlertCircle, GitMerge, Layers, Calendar, MessageSquare,
+    Brain, Lightbulb, ArrowRight, Repeat
 } from 'lucide-react';
 import './admin-dashboard.css';
 
@@ -15,10 +16,11 @@ const API_BASE = process.env.REACT_APP_AI_SERVER_URL || "http://localhost:5000";
 const COLORS = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
 
 // ─── Formatting helpers ────────────────────────────────────────────────────────
-const fmtSec = (ms)   => ms != null ? `${(ms / 1000).toFixed(1)}s`         : '—';
-const fmtMin = (ms)   => ms != null ? `${Math.round(ms / 60000)}m`          : '—';
-const pct    = (n, d) => (d && d > 0) ? `${((n / d) * 100).toFixed(0)}%`   : '—';
-const orDash = (v)    => (v != null && v !== '') ? v                         : '—';
+const fmtSec = (ms)   => ms != null ? `${(ms / 1000).toFixed(1)}s`          : '—';
+const fmtMin = (ms)   => ms != null ? `${Math.round(ms / 60000)}m`           : '—';
+const pct    = (n, d) => (d && d > 0) ? `${((n / d) * 100).toFixed(0)}%`    : '—';
+const orDash = (v)    => (v != null && v !== '') ? v                          : '—';
+const round1 = (v)    => v != null ? Number(v).toFixed(1)                    : '—';
 
 // ─── Root ──────────────────────────────────────────────────────────────────────
 const AdminDashboard = () => {
@@ -146,6 +148,9 @@ const OverviewView = ({ data }) => {
         name: stage.replace(/_/g, ' '), minutes: Math.round(time / 60000)
     }));
 
+    // Chatbot overview aggregates (populated by backend study-summary endpoint)
+    const chatStats = data.chatbotStats || {};
+
     return (
         <div className="admin-dashboard-content">
             <div className="admin-dashboard-stats-grid">
@@ -191,6 +196,26 @@ const OverviewView = ({ data }) => {
                 </div>
             </div>
 
+            {/* Chatbot aggregate block — only shown if backend supplies it */}
+            {(chatStats.totalChatSessions != null) && (
+                <div className="admin-dashboard-info-card">
+                    <h3 className="admin-dashboard-info-title">
+                        <MessageSquare className="w-5 h-5" style={{ color: '#7C3AED' }} />
+                        Reflective Chatbot — Study-Wide Summary
+                    </h3>
+                    <div className="admin-dashboard-info-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
+                        <InfoItem label="Total Chat Sessions"      value={orDash(chatStats.totalChatSessions)}                        />
+                        <InfoItem label="BS Sessions"              value={orDash(chatStats.totalBsSessions)}   sub="Brainstorming"    />
+                        <InfoItem label="DT Sessions"              value={orDash(chatStats.totalDtSessions)}   sub="Deep Thinking"    />
+                        <InfoItem label="Avg Msgs / Session"       value={round1(chatStats.avgMessagesPerSession)}                    />
+                        <InfoItem label="Avg Msg Length (chars)"   value={round1(chatStats.avgUserMessageLength)}                     />
+                        <InfoItem label="Total CPS Recursions"     value={orDash(chatStats.totalCpsRecursions)} sub="backward transitions" />
+                        <InfoItem label="Avg BS Ideas / Session"   value={round1(chatStats.avgIdeasPerSession)}                       />
+                        <InfoItem label="Avg BS Creativity Score"  value={round1(chatStats.avgCreativityScore)} sub="fluency+flex+elab+orig" />
+                    </div>
+                </div>
+            )}
+
             <div className="admin-dashboard-info-card">
                 <h3 className="admin-dashboard-info-title">👥 Study Group Distribution</h3>
                 <div className="admin-dashboard-info-grid">
@@ -209,7 +234,7 @@ const UserView = ({ data }) => {
         name: stage.replace(/_/g, ' '), minutes: Math.round(time / 60000)
     }));
 
-    const smScores = (data.outcomeMetrics?.storyMapAnalysisScores  || []).map((s, i) => ({ run: i + 1, score: s }));
+    const smScores = (data.outcomeMetrics?.storyMapHealthScores || []).map(entry => typeof entry === 'object' ? entry.score : entry)
     const tlScores = (data.outcomeMetrics?.timelineCoherenceScores || []).map((s, i) => ({ run: i + 1, score: s }));
 
     const recentJourney = (data.journey || []).slice(-10).reverse();
@@ -292,19 +317,21 @@ const UserView = ({ data }) => {
             )}
 
             {/* Feature-specific dedicated sections */}
-            {data.featureMetrics?.storyMap   && <StoryMapMetricsSection   metrics={data.featureMetrics.storyMap}   />}
-            {data.featureMetrics?.mentorText  && <MentorTextMetricsSection  metrics={data.featureMetrics.mentorText}  />}
-            {data.featureMetrics?.timeline    && <TimelineMetricsSection    metrics={data.featureMetrics.timeline}    />}
+            {data.featureMetrics?.storyMap          && <StoryMapMetricsSection          metrics={data.featureMetrics.storyMap}          />}
+            {data.featureMetrics?.mentorText         && <MentorTextMetricsSection         metrics={data.featureMetrics.mentorText}         />}
+            {data.featureMetrics?.timeline           && <TimelineMetricsSection           metrics={data.featureMetrics.timeline}           />}
+            {data.featureMetrics?.reflectiveChatbot  && <ReflectiveChatbotMetricsSection  metrics={data.featureMetrics.reflectiveChatbot}
+                                                                                          chatSessions={data.chatSessions || {}}           />}
 
             {/* Generic fallback for anything else */}
             {Object.entries(data.featureMetrics || {})
-                .filter(([k]) => !['storyMap', 'mentorText', 'timeline'].includes(k))
+                .filter(([k]) => !['storyMap', 'mentorText', 'timeline', 'reflectiveChatbot'].includes(k))
                 .length > 0 && (
                 <div className="admin-dashboard-feature-metrics">
                     <h3 className="admin-dashboard-chart-title">📊 Other Feature Metrics</h3>
                     <div className="admin-dashboard-feature-metrics-list">
                         {Object.entries(data.featureMetrics)
-                            .filter(([k]) => !['storyMap', 'mentorText', 'timeline'].includes(k))
+                            .filter(([k]) => !['storyMap', 'mentorText', 'timeline', 'reflectiveChatbot'].includes(k))
                             .map(([feature, metrics]) => (
                                 <FeatureMetricsCard key={feature} feature={feature} metrics={metrics} />
                             ))}
@@ -344,6 +371,339 @@ const UserView = ({ data }) => {
                                 <span className={`admin-dashboard-transition-badge ${t.transitionType}`}>{t.transitionType}</span>
                             </div>
                         ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// ─── Reflective Chatbot Section ────────────────────────────────────────────────
+//
+// DATA PATHS (written by logger.py + new ai_server endpoints):
+//
+//  featureMetrics/reflectiveChatbot/
+//    totalSessions           — from /api/chat/log-session-start
+//    bsSessions              — BS-mode session count
+//    dtSessions              — DT-mode session count
+//    totalMessages           — all messages (user + assistant)
+//    userMessages            — user messages only
+//    avgUserMessageLength    — running average character count
+//    totalUserMessageChars   — cumulative chars (for avg)
+//    totalModeSwitches       — from log_ui_interaction mode_switch handler
+//    modeSwitches/           — { bs_to_dt: N, dt_to_bs: N }
+//    focusAreas/             — { character: N, plot: N, setting: N, theme: N, conflict: N }
+//    focusAreasByMode/       — nested by mode
+//    totalRecursions         — backward CPS stage transitions
+//    totalTimeInFeature      — cumulative page-dwell ms (from page-exit logs)
+//
+//  chatSessions/{sessionId}/messageLengths/  — push-list of { index, length, timestamp, stage? }
+//  (passed in as chatSessions prop)
+//
+//  Brainstorming-specific (written by BSConversationFlowManager):
+//    bsChatbot/ideas/        — push-list of ideas with { scamperTechnique, fluency, flexibility,
+//                              elaboration, originality }
+//    bsChatbot/stageHistory/ — per-session CPS stage transitions
+//
+const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions }) => {
+    const totalSessions    = metrics.totalSessions      || 0;
+    const bsSessions       = metrics.bsSessions         || 0;
+    const dtSessions       = metrics.dtSessions         || 0;
+    const totalMessages    = metrics.totalMessages      || 0;
+    const userMessages     = metrics.userMessages       || 0;
+    const assistantMsgs    = totalMessages - userMessages;
+    const avgMsgLength     = metrics.avgUserMessageLength;
+    const totalSwitches    = metrics.totalModeSwitches  || 0;
+    const totalRecursions  = metrics.totalRecursions    || 0;
+    const totalTimeMs      = metrics.totalTimeInFeature;
+
+    // Mode distribution pie
+    const modeData = [
+        { name: 'Brainstorming (CPS)', count: bsSessions },
+        { name: 'Deep Thinking (Socratic)', count: dtSessions },
+    ].filter(d => d.count > 0);
+
+    // Focus area bar chart
+    const focusData = Object.entries(metrics.focusAreas || {})
+        .map(([name, count]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), count }))
+        .sort((a, b) => b.count - a.count);
+
+    // Mode switches breakdown
+    const modeSwitchEntries = Object.entries(metrics.modeSwitches || {});
+
+    // ── Message-length trend across all sessions ────────────────────────────
+    // chatSessions is a map: { sessionId: { messageLengths: { pushKey: { index, length, timestamp, stage } } } }
+    // We flatten and sort by timestamp to build a cross-session trend line.
+    const allLengthEntries = [];
+    Object.values(chatSessions || {}).forEach(session => {
+        const msgs = session.messageLengths || {};
+        Object.values(msgs).forEach(m => {
+            if (m.length != null) allLengthEntries.push(m);
+        });
+    });
+    allLengthEntries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    const messageLengthTrend = allLengthEntries.map((m, i) => ({
+        msgNum: i + 1,
+        length: m.length,
+        stage:  m.stage || null,
+    }));
+
+    // ── Per-session message count distribution ──────────────────────────────
+    const sessionMsgCounts = Object.values(chatSessions || {}).map(s => {
+        const msgs = s.messageLengths || {};
+        return Object.keys(msgs).length;
+    }).filter(n => n > 0).sort((a, b) => a - b);
+    const avgMsgsPerSession = sessionMsgCounts.length
+        ? (sessionMsgCounts.reduce((a, b) => a + b, 0) / sessionMsgCounts.length).toFixed(1)
+        : null;
+
+    // ── CPS stage transition history (across sessions) ──────────────────────
+    // Sourced from analytics/{userId}/stageTransitions filtered to bsChatbot
+    // The parent passes data.stageTransitions — we receive what we can derive here.
+    // We just count recursions from metrics.totalRecursions.
+
+    // ── Brainstorming creativity metrics ───────────────────────────────────
+    // bsChatbot ideas are stored separately under bsChatbot/ideas in Firebase.
+    // The parent UserView passes featureMetrics.reflectiveChatbot; creativity
+    // sub-metrics may arrive in metrics.creativityMetrics if the backend
+    // aggregates them. We support both paths.
+    const creativity = metrics.creativityMetrics || {};
+    const avgFluency      = creativity.avgFluency;
+    const avgFlexibility  = creativity.avgFlexibility;
+    const avgElaboration  = creativity.avgElaboration;
+    const avgOriginality  = creativity.avgOriginality;
+    const totalIdeas      = creativity.totalIdeas || metrics.totalIdeas;
+    const avgIdeasSession = creativity.avgIdeasPerSession || metrics.avgIdeasPerBsSession;
+
+    // SCAMPER coverage
+    const scamperCoverage = metrics.scamperCoverage || creativity.scamperCoverage || {};
+    const scamperData = Object.entries(scamperCoverage)
+        .map(([technique, count]) => ({ name: technique, count }))
+        .sort((a, b) => b.count - a.count);
+
+    // CPS stage distribution (how many times each stage was reached)
+    const cpsStageData = Object.entries(metrics.cpsStageReach || {})
+        .map(([stage, count]) => ({ name: stage, count }));
+
+    const hasCreativity = avgFluency != null || totalIdeas != null || scamperData.length > 0;
+
+    return (
+        <div className="admin-dashboard-story-map-section" style={{ borderColor: '#8b5cf655' }}>
+            <h3 className="admin-dashboard-section-title">
+                <MessageSquare className="w-6 h-6" style={{ color: '#8b5cf6' }} />
+                Reflective Chatbot Analytics
+                <span style={{ fontSize: '0.8rem', fontWeight: 400, color: '#6b7280', marginLeft: '0.75rem' }}>
+                    TLC: Joint Construction — AI as Reflective Guide
+                </span>
+            </h3>
+
+            {/* ── Top-level counts ── */}
+            <div className="admin-dashboard-stats-grid">
+                <StatCard icon={<MessageSquare className="w-5 h-5" />} label="Total Sessions"      value={totalSessions}                      color="purple" />
+                <StatCard icon={<Activity      className="w-5 h-5" />} label="Total Messages"      value={totalMessages}                      color="blue"   />
+                <StatCard icon={<Repeat        className="w-5 h-5" />} label="CPS Recursions"      value={totalRecursions}                    color="pink"   />
+                <StatCard icon={<Clock         className="w-5 h-5" />} label="Time on Page"        value={fmtMin(totalTimeMs)}                color="green"  />
+            </div>
+
+            {/* ── Framework validation card ── */}
+            <div className="admin-dashboard-info-card admin-dashboard-validation-card" style={{ marginTop: '1.5rem' }}>
+                <h3 className="admin-dashboard-info-title">
+                    <TrendingUp className="w-5 h-5" style={{ color: '#8b5cf6' }} />
+                    Metacognitive Deepening — Framework Validation
+                </h3>
+                <p className="admin-dashboard-info-subtext" style={{ marginBottom: '1rem' }}>
+                    The primary signal is <strong>message length trend within a session</strong> — rising length indicates the student is elaborating more deeply over time, validating the Reflective Guide AI role. CPS recursions (backward stage transitions) indicate iterative refinement.
+                </p>
+                <div className="admin-dashboard-info-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">User Messages</p>
+                        <p className="admin-dashboard-info-item-value" style={{ color: '#8b5cf6' }}>{userMessages}</p>
+                        <p className="admin-dashboard-info-item-subtext">{pct(userMessages, totalMessages)} of total</p>
+                    </div>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Assistant Messages</p>
+                        <p className="admin-dashboard-info-item-value">{assistantMsgs}</p>
+                        <p className="admin-dashboard-info-item-subtext">scaffolding turns</p>
+                    </div>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Avg Msg Length</p>
+                        <p className="admin-dashboard-info-item-value" style={{ color: '#8b5cf6' }}>
+                            {avgMsgLength != null ? `${Math.round(avgMsgLength)} ch` : '—'}
+                        </p>
+                        <p className="admin-dashboard-info-item-subtext">user messages, all sessions</p>
+                    </div>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Avg Msgs / Session</p>
+                        <p className="admin-dashboard-info-item-value">{orDash(avgMsgsPerSession)}</p>
+                        <p className="admin-dashboard-info-item-subtext">user messages only</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Message-length trend chart ── */}
+            {messageLengthTrend.length >= 3 && (
+                <div className="admin-dashboard-chart-card" style={{ marginTop: '1.5rem' }}>
+                    <h3 className="admin-dashboard-chart-title">
+                        User Message Length Over Time
+                        <span style={{ fontSize: '12px', fontWeight: 400, color: '#6b7280', marginLeft: '0.5rem' }}>
+                            — rising slope = metacognitive deepening
+                        </span>
+                    </h3>
+                    <ResponsiveContainer width="100%" height={220}>
+                        <AreaChart data={messageLengthTrend}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+                            <XAxis dataKey="msgNum" label={{ value: 'Message #', position: 'insideBottom', offset: -2 }} />
+                            <YAxis label={{ value: 'Characters', angle: -90, position: 'insideLeft', offset: 10 }} />
+                            <Tooltip formatter={(v) => [`${v} chars`, 'Length']} />
+                            <Area type="monotone" dataKey="length" stroke="#8b5cf6" fill="#f3e8ff" strokeWidth={2} dot={false} />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
+
+            {/* ── Mode distribution + focus areas ── */}
+            <div className="admin-dashboard-charts-grid" style={{ marginTop: '1.5rem' }}>
+                {modeData.length > 0 && (
+                    <ChartCard title="Sessions by Mode">
+                        <ResponsiveContainer width="100%" height={220}>
+                            <PieChart>
+                                <Pie data={modeData} dataKey="count" nameKey="name"
+                                     cx="50%" cy="50%" outerRadius={80} label>
+                                    {modeData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                </Pie>
+                                <Tooltip /><Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </ChartCard>
+                )}
+                {focusData.length > 0 && (
+                    <ChartCard title="Focus Areas Declared at Session Start">
+                        <ResponsiveContainer width="100%" height={220}>
+                            <BarChart data={focusData} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+                                <XAxis type="number" stroke="#52525B" allowDecimals={false} />
+                                <YAxis dataKey="name" type="category" width={90} stroke="#52525B" tick={{ fontSize: 12 }} />
+                                <Tooltip />
+                                <Bar dataKey="count" fill="#8b5cf6" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </ChartCard>
+                )}
+            </div>
+
+            {/* ── Session-level detail ── */}
+            <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
+                <h3 className="admin-dashboard-info-title">Session Breakdown</h3>
+                <div className="admin-dashboard-info-grid">
+                    <InfoItem label="Brainstorming Sessions" value={bsSessions}   sub={pct(bsSessions, totalSessions) + ' of total'} />
+                    <InfoItem label="Deep Thinking Sessions" value={dtSessions}   sub={pct(dtSessions, totalSessions) + ' of total'} />
+                    <InfoItem label="Mode Switches"          value={totalSwitches} sub="mid-session BS↔DT changes"                   />
+                </div>
+                {modeSwitchEntries.length > 0 && (
+                    <div className="admin-dashboard-distribution-card" style={{ marginTop: '1rem' }}>
+                        <p className="admin-dashboard-distribution-title">Switch Direction Breakdown</p>
+                        <div className="admin-dashboard-distribution-list">
+                            {modeSwitchEntries.map(([dir, count]) => (
+                                <div key={dir} className="admin-dashboard-distribution-item">
+                                    <span className="admin-dashboard-distribution-item-name">{dir.replace(/_/g, ' ')}</span>
+                                    <span className="admin-dashboard-distribution-item-value">{count}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* ── CPS Stage progression ── */}
+            {(cpsStageData.length > 0 || totalRecursions > 0) && (
+                <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
+                    <h3 className="admin-dashboard-info-title">
+                        <ArrowRight className="w-5 h-5" />
+                        CPS Stage Progression (Brainstorming)
+                    </h3>
+                    <p className="admin-dashboard-info-subtext" style={{ marginBottom: '1rem' }}>
+                        The four CPS stages are Clarify → Ideate → Develop → Implement. Backward transitions (recursions) indicate iterative refinement — a positive creativity signal.
+                    </p>
+                    {cpsStageData.length > 0 && (
+                        <ResponsiveContainer width="100%" height={180}>
+                            <BarChart data={cpsStageData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+                                <XAxis dataKey="name" stroke="#52525B" />
+                                <YAxis stroke="#52525B" allowDecimals={false} />
+                                <Tooltip />
+                                <Bar dataKey="count" fill="#ec4899" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    )}
+                    <div className="admin-dashboard-info-grid" style={{ marginTop: '1rem' }}>
+                        <InfoItem label="Total CPS Recursions" value={totalRecursions} sub="backward stage transitions" />
+                        <InfoItem label="Recursion Rate"       value={bsSessions > 0 ? round1(totalRecursions / bsSessions) + ' / session' : '—'} />
+                    </div>
+                </div>
+            )}
+
+            {/* ── Brainstorming Creativity Metrics ── */}
+            {hasCreativity && (
+                <div className="admin-dashboard-story-map-section"
+                     style={{ borderColor: '#f59e0b55', marginTop: '1.5rem', borderWidth: '1px' }}>
+                    <h3 className="admin-dashboard-section-title" style={{ borderBottomColor: '#f59e0b33' }}>
+                        <Lightbulb className="w-6 h-6" style={{ color: '#f59e0b' }} />
+                        Brainstorming Creativity Metrics (CPS Mode)
+                    </h3>
+
+                    {/* Four creativity dimensions */}
+                    <div className="admin-dashboard-stats-grid">
+                        <StatCard icon={<Zap          className="w-5 h-5" />} label="Avg Fluency"      value={round1(avgFluency)}     color="blue"   />
+                        <StatCard icon={<GitMerge     className="w-5 h-5" />} label="Avg Flexibility"  value={round1(avgFlexibility)} color="purple" />
+                        <StatCard icon={<Layers       className="w-5 h-5" />} label="Avg Elaboration"  value={round1(avgElaboration)} color="green"  />
+                        <StatCard icon={<Brain        className="w-5 h-5" />} label="Avg Originality"  value={round1(avgOriginality)} color="pink"   />
+                    </div>
+
+                    <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
+                        <p className="admin-dashboard-info-subtext" style={{ marginBottom: '0.75rem' }}>
+                            Scores are CFM evaluations (0–10 scale): <strong>Fluency</strong> = number of ideas generated; <strong>Flexibility</strong> = variety of categories; <strong>Elaboration</strong> = depth of detail; <strong>Originality</strong> = novelty compared to session list.
+                        </p>
+                        <div className="admin-dashboard-info-grid">
+                            <InfoItem label="Total Ideas Generated"    value={orDash(totalIdeas)}      sub="user-generated only"            />
+                            <InfoItem label="Avg Ideas / BS Session"   value={round1(avgIdeasSession)} sub="fluency proxy"                  />
+                            <InfoItem label="SCAMPER Techniques Used"  value={scamperData.length > 0 ? scamperData.length + ' distinct' : '—'} />
+                        </div>
+                    </div>
+
+                    {/* SCAMPER technique coverage */}
+                    {scamperData.length > 0 && (
+                        <div style={{ marginTop: '1.5rem' }}>
+                            <ChartCard title="SCAMPER Technique Coverage">
+                                <ResponsiveContainer width="100%" height={220}>
+                                    <BarChart data={scamperData}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+                                        <XAxis dataKey="name" stroke="#52525B" tick={{ fontSize: 12 }} />
+                                        <YAxis stroke="#52525B" allowDecimals={false} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill="#f59e0b" />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </ChartCard>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* ── Deep Thinking proxy metrics ── */}
+            {dtSessions > 0 && (
+                <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
+                    <h3 className="admin-dashboard-info-title">
+                        <Brain className="w-5 h-5" style={{ color: '#3b82f6' }} />
+                        Deep Thinking (Socratic) Mode
+                    </h3>
+                    <p className="admin-dashboard-info-subtext" style={{ marginBottom: '1rem' }}>
+                        Reasoning quality in DT mode is assessed post-hoc from message-length trends. Rising message length within a session indicates the student is constructing more elaborated reasoning over time.
+                    </p>
+                    <div className="admin-dashboard-info-grid">
+                        <InfoItem label="DT Sessions"      value={dtSessions} />
+                        <InfoItem label="% of Total"       value={pct(dtSessions, totalSessions)} />
+                        <InfoItem label="Time on Page"     value={fmtMin(totalTimeMs)}
+                                  sub="shared across both modes" />
                     </div>
                 </div>
             )}
@@ -491,24 +851,6 @@ const StoryMapMetricsSection = ({ metrics }) => {
 };
 
 // ─── Timeline Section ──────────────────────────────────────────────────────────
-//
-// WRITTEN by timeline_logger.py + timeline routes:
-//   featureMetrics/timeline/totalTimeMs
-//   featureMetrics/timeline/totalEventsCreated
-//   featureMetrics/timeline/majorEventsCreated
-//   featureMetrics/timeline/minorEventsCreated
-//   featureMetrics/timeline/totalManualEdits
-//   featureMetrics/timeline/totalReorders
-//   featureMetrics/timeline/totalEventsDeleted
-//   featureMetrics/timeline/stageDistribution/   (per narrative stage)
-//   featureMetrics/timeline/lastModeUsed
-//   featureMetrics/timeline/modeUsage/           (linear | freytag counts)
-//   featureMetrics/timeline/totalCoherenceChecks
-//   featureMetrics/timeline/firstCoherenceScore
-//   featureMetrics/timeline/lastCoherenceScore
-//   featureMetrics/timeline/coherenceChecks/     (push-list, per-check detail)
-//   outcomeMetrics/timelineCoherenceScores       (longitudinal array)
-//
 const TimelineMetricsSection = ({ metrics }) => {
     const totalCreated  = metrics.totalEventsCreated  || 0;
     const majorEvents   = metrics.majorEventsCreated  || 0;
@@ -517,29 +859,19 @@ const TimelineMetricsSection = ({ metrics }) => {
     const totalReorders = metrics.totalReorders       || 0;
     const totalDeleted  = metrics.totalEventsDeleted  || 0;
     const totalChecks   = metrics.totalCoherenceChecks || 0;
+    const netEvents     = totalCreated - totalDeleted;
 
-    // Net events still on the timeline
-    const netEvents = totalCreated - totalDeleted;
-
-    // Stage distribution bar data
     const stageDistData = Object.entries(metrics.stageDistribution || {})
         .map(([stage, count]) => ({ name: stage, count }));
 
-    // Mode usage pie data
-    const modeData = Object.entries(metrics.modeUsage || {})
-        .map(([mode, count]) => ({ name: mode, count }));
-
-    // Per-check coherence detail (push-list → array, sorted by checkNumber)
     const checksList = metrics.coherenceChecks
         ? Object.values(metrics.coherenceChecks).sort((a, b) => (a.checkNumber || 0) - (b.checkNumber || 0))
         : [];
 
-    // Score trend for the line chart (needs ≥2 points to be meaningful)
     const scoreTrend = checksList
         .filter(c => c.overallScore != null)
         .map(c => ({ run: c.checkNumber, score: c.overallScore }));
 
-    // First → last improvement
     const firstScore = metrics.firstCoherenceScore;
     const lastScore  = metrics.lastCoherenceScore;
     const scoreImprovement = (firstScore != null && lastScore != null && totalChecks >= 2)
@@ -555,22 +887,20 @@ const TimelineMetricsSection = ({ metrics }) => {
                 </span>
             </h3>
 
-            {/* Top-level counts */}
             <div className="admin-dashboard-stats-grid">
-                <StatCard icon={<Activity    className="w-5 h-5" />} label="Events Created"     value={totalCreated}  color="blue"   />
-                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Net Events"         value={netEvents}     color="green"  />
-                <StatCard icon={<Layers      className="w-5 h-5" />} label="Manual Edits"       value={totalEdits}    color="purple" />
-                <StatCard icon={<RefreshCw   className="w-5 h-5" />} label="Coherence Checks"   value={totalChecks}   color="pink"   />
+                <StatCard icon={<Activity    className="w-5 h-5" />} label="Events Created"   value={totalCreated} color="blue"   />
+                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Net Events"       value={netEvents}    color="green"  />
+                <StatCard icon={<Layers      className="w-5 h-5" />} label="Manual Edits"     value={totalEdits}   color="purple" />
+                <StatCard icon={<RefreshCw   className="w-5 h-5" />} label="Coherence Checks" value={totalChecks}  color="pink"   />
             </div>
 
-            {/* Framework validation card */}
             <div className="admin-dashboard-info-card admin-dashboard-validation-card" style={{ marginTop: '1.5rem' }}>
                 <h3 className="admin-dashboard-info-title">
                     <TrendingUp className="w-5 h-5" style={{ color: '#3B82F6' }} />
                     Scaffolded Planning — Framework Validation
                 </h3>
                 <p className="admin-dashboard-info-subtext" style={{ marginBottom: '1rem' }}>
-                    Longitudinal coherence scores show whether the AI's reflective prompts improved structural quality over time. Score improvement is the primary Joint Construction signal.
+                    Longitudinal coherence scores show whether the AI's reflective prompts improved structural quality over time.
                 </p>
                 <div className="admin-dashboard-info-grid">
                     <div className="admin-dashboard-info-item">
@@ -602,7 +932,6 @@ const TimelineMetricsSection = ({ metrics }) => {
                 </div>
             </div>
 
-            {/* Event composition + mode usage */}
             <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
                 <h3 className="admin-dashboard-info-title">Event Composition</h3>
                 <div className="admin-dashboard-info-grid">
@@ -614,7 +943,6 @@ const TimelineMetricsSection = ({ metrics }) => {
                 </div>
             </div>
 
-            {/* Stage distribution + coherence score trend side by side */}
             {(stageDistData.length > 0 || scoreTrend.length >= 2) && (
                 <div className="admin-dashboard-charts-grid" style={{ marginTop: '1.5rem' }}>
                     {stageDistData.length > 0 && (
@@ -646,7 +974,6 @@ const TimelineMetricsSection = ({ metrics }) => {
                 </div>
             )}
 
-            {/* Per-check detail table — only shown when there are checks */}
             {checksList.length > 0 && (
                 <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
                     <h3 className="admin-dashboard-info-title">Coherence Check History</h3>
@@ -894,7 +1221,6 @@ const FeatureMetricsCard = ({ feature, metrics }) => {
         feedback:            'Feedback Assistant',
         bsChatbot:           'Brainstorming Chat',
         dtChatbot:           'Deep Thinking Chat',
-        reflectiveChatbot:   'Reflective Chatbot',
     };
     return (
         <div className="admin-dashboard-feature-card">
