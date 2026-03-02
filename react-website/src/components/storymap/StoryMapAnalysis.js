@@ -17,13 +17,15 @@ export default function StoryMapAnalysis({
 }) {
   const { currentUser } = useAuthValue();
   const userId = currentUser ? currentUser.uid : null;
+
   const [analysis, setAnalysis] = useState(cachedAnalysis);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState({});
   const hasAnalyzedRef = useRef(false);
 
-  const AI_API_BASE_URL = process.env.REACT_APP_AI_API_BASE_URL || 'http://localhost:5000/';
+  // const AI_API_BASE_URL = process.env.REACT_APP_AI_API_BASE_URL || 'http://localhost:5000/';
+  const AI_API_BASE_URL = 'http://localhost:5000';
 
   // Load cached analysis if provided
   useEffect(() => {
@@ -56,7 +58,7 @@ export default function StoryMapAnalysis({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: 'current_user_id',
+          userId: userId,
           nodes: data.nodes,
           links: data.links,
           genre: 'fantasy',
