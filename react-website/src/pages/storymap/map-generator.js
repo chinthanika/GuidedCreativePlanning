@@ -303,7 +303,8 @@ function deduplicateLinks(newLinks, existingLinks, idMapping) {
 }
 
 function MapGenerator() {
-  const url_base = process.env.REACT_APP_AI_SERVER_URL || 'http://10.163.7.106:5000';
+  // const url_base = process.env.REACT_APP_AI_SERVER_URL || 'http:localhost:5000';
+  const url_base = 'http://localhost:5000';
   const url = `${url_base}/characters/extract`;
 
   const { currentUser } = useAuthValue()
@@ -429,6 +430,7 @@ function MapGenerator() {
         nodes: cleanedNodes,
         links: cleanedLinks
       });
+      sessionStorage.setItem('storyMapGeneratedAt', Date.now().toString());
 
       setExtractionProgress('Complete!');
       alert(`Cleanup complete!\n\nNodes: ${rawNodes.length} → ${cleanedNodes.length}\nLinks: ${rawLinks.length} → ${cleanedLinks.length}`);
@@ -467,7 +469,7 @@ function MapGenerator() {
 
     try {
       const response = await axios.post(url,
-        { text: text },
+        { text: text, userId: currentUser.uid },
         {
           timeout: 360000,
           headers: { 'Content-Type': 'application/json' }
@@ -626,6 +628,7 @@ function MapGenerator() {
         nodes: finalNodes,
         links: validatedLinks
       });
+      sessionStorage.setItem('storyMapGeneratedAt', Date.now().toString());
 
       console.log('✅ Successfully saved to Firebase');
 
@@ -669,10 +672,10 @@ function MapGenerator() {
 
       {/* Cleanup Button (only shows when cleanup mode enabled) */}
       {isCleanupMode && (
-        <div className="cleanup-section" style={{ 
-          padding: '15px', 
-          marginBottom: '15px', 
-          backgroundColor: '#fff3cd', 
+        <div className="cleanup-section" style={{
+          padding: '15px',
+          marginBottom: '15px',
+          backgroundColor: '#fff3cd',
           border: '2px solid #ffc107',
           borderRadius: '8px'
         }}>
@@ -693,8 +696,8 @@ function MapGenerator() {
             onClick={cleanupDatabase}
             disabled={isLoading}
             className="map-generator-btn"
-            style={{ 
-              backgroundColor: '#ffc107', 
+            style={{
+              backgroundColor: '#ffc107',
               color: '#000',
               fontWeight: 'bold'
             }}

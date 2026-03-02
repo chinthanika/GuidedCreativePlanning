@@ -332,6 +332,11 @@ const WritingStudio = () => {
 
   const handleCloseFeedback = () => {
     setFeedbackOpen(false);
+
+    if (panelTimeTracker) {
+      panelTimeTracker();
+      setPanelTimeTracker(null);
+    }
   };
 
   if (loading) {

@@ -25,7 +25,7 @@ import {
   trackAnalysisPanelTime
 } from '../../utils/analytics';
 
-// ✅ NEW: page-level and UI interaction tracking
+// page-level and UI interaction tracking
 import { logPageView, logPageExit, logUIInteraction } from '../../utils/analytics';
 
 import './story-map.css';
@@ -57,18 +57,18 @@ function StoryMap() {
   const [sessionStartTime] = useState(Date.now());
   const [actionCount, setActionCount] = useState(0);
 
-  // ✅ NEW: track when the last AI generation and last AI analysis happened
+  // track when the last AI generation and last AI analysis happened
   // so we can detect whether subsequent manual edits fall within the watch window
   const lastGenerationTimeRef = useRef(null);
   const lastAnalysisTimeRef = useRef(null);
 
-  // ✅ NEW: flags to avoid firing the same editedAfter event more than once per generation/analysis
+  // flags to avoid firing the same editedAfter event more than once per generation/analysis
   const editedAfterGenerationFiredRef = useRef(false);
   const editedAfterAnalysisFiredRef = useRef(false);
 
   const graphRef = ref(database, `stories/${userId}/graph/`);
 
-  // ✅ NEW: page view on mount, page exit on unmount
+  // page view on mount, page exit on unmount
   useEffect(() => {
     if (!userId) return;
 
@@ -79,6 +79,16 @@ function StoryMap() {
       const duration = Date.now() - entryTime;
       logPageExit(userId, 'storyMap', duration);
     };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    const generatedAt = sessionStorage.getItem('storyMapGeneratedAt');
+    if (generatedAt) {
+      lastGenerationTimeRef.current = parseInt(generatedAt);
+      editedAfterGenerationFiredRef.current = false;
+      sessionStorage.removeItem('storyMapGeneratedAt');
+    }
   }, [userId]);
 
   useEffect(() => {
@@ -112,12 +122,9 @@ function StoryMap() {
     return 10 / level;
   };
 
-  // ✅ NEW: helper called by every manual edit action to check if it falls
-  // within the post-generation or post-analysis watch window
-  const checkAndFireEditedAfterFlags = useCallback(() => {
+  const checkEditedAfterGeneration = useCallback(() => {
     if (!userId) return;
     const now = Date.now();
-
     if (
       lastGenerationTimeRef.current &&
       !editedAfterGenerationFiredRef.current &&
@@ -128,7 +135,11 @@ function StoryMap() {
         msAfterGeneration: now - lastGenerationTimeRef.current
       });
     }
+  }, [userId]);
 
+  const checkEditedAfterAnalysis = useCallback(() => {
+    if (!userId) return;
+    const now = Date.now();
     if (
       lastAnalysisTimeRef.current &&
       !editedAfterAnalysisFiredRef.current &&
@@ -247,8 +258,9 @@ function StoryMap() {
       logNodeAction(userId, 'edit', updatedNode);
       setActionCount(prev => prev + 1);
 
-      // ✅ NEW: check if this edit falls within a post-generation or post-analysis window
-      checkAndFireEditedAfterFlags();
+      // check if this edit falls within a post-generation or post-analysis window
+      checkEditedAfterGeneration();
+      checkEditedAfterAnalysis();
 
     } else {
       console.error("Error: updatedNode.id is undefined");
@@ -278,8 +290,9 @@ function StoryMap() {
       logNodeAction(userId, 'delete', nodeData);
       setActionCount(prev => prev + 1);
 
-      // ✅ NEW: deletion is also a manual edit
-      checkAndFireEditedAfterFlags();
+      // deletion is also a manual edit
+      checkEditedAfterGeneration();
+      checkEditedAfterAnalysis();
 
       return { ...prevData, nodes: updatedNodes, links: updatedLinks };
     });
@@ -329,8 +342,9 @@ function StoryMap() {
 
     setActionCount(prev => prev + 1);
 
-    // ✅ NEW: adding a node is a manual edit
-    checkAndFireEditedAfterFlags();
+    // adding a node is a manual edit
+    checkEditedAfterGeneration();
+    checkEditedAfterAnalysis();
 
     closeNewNodeModal();
   };
@@ -392,8 +406,9 @@ function StoryMap() {
     logLinkAction(userId, 'create', newLink);
     setActionCount(prev => prev + 1);
 
-    // ✅ NEW: adding a link is a manual edit
-    checkAndFireEditedAfterFlags();
+    // adding a link is a manual edit
+    checkEditedAfterGeneration();
+    checkEditedAfterAnalysis();
 
     closeNewLinkModal();
   };
@@ -443,8 +458,9 @@ function StoryMap() {
     logLinkAction(userId, 'edit', { ...linkDetails, source, target, type });
     setActionCount(prev => prev + 1);
 
-    // ✅ NEW: editing a link is a manual edit
-    checkAndFireEditedAfterFlags();
+    // editing a link is a manual edit
+    checkEditedAfterGeneration();
+    checkEditedAfterAnalysis();
 
     closeEditLinkModal();
   };
@@ -543,10 +559,6 @@ function StoryMap() {
       setTextInput("");
       setSelectedNode({});
       setSelectedLink({});
-
-      // ✅ NEW: record that a generation just happened and reset the edit flags
-      lastGenerationTimeRef.current = Date.now();
-      editedAfterGenerationFiredRef.current = false;
     }
   }
 
