@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-    X, BookOpen, Lightbulb, Target, Award, 
-    ChevronDown, ChevronUp, Loader2, Trash2 
+import {
+    X, BookOpen, Lightbulb, Target, Award,
+    ChevronDown, ChevronUp, Loader2, Trash2
 } from 'lucide-react';
 
 import { logUIInteraction } from '../../utils/analytics';
@@ -9,12 +9,12 @@ import './analysis-details.css';
 
 const API_BASE = process.env.REACT_APP_AI_SERVER_URL || "http://localhost:5000";
 
-const AnalysisDetailModal = ({ 
-    analysisId, 
-    userId, 
-    isOpen, 
-    onClose, 
+const AnalysisDetailModal = ({
+    analysisId,
+    userId,
+    isOpen,
     onDelete,
+    onClose,
     initialData = null  // For showing results immediately after creation
 }) => {
     const [analysis, setAnalysis] = useState(initialData);
@@ -24,6 +24,14 @@ const AnalysisDetailModal = ({
 
     // Track how long the user views this analysis
     const viewOpenTimeRef = useRef(null);
+
+    const viewStartTimeRef = React.useRef(null);
+
+    useEffect(() => {
+        if (isOpen && analysisId && userId) {
+            viewStartTimeRef.current = Date.now();
+        }
+    }, [isOpen, analysisId, userId]);
 
     useEffect(() => {
         if (isOpen) {
@@ -86,17 +94,35 @@ const AnalysisDetailModal = ({
         setExpandedPoints(newExpanded);
     };
 
+    const handleClose = () => {
+        if (viewStartTimeRef.current && userId && analysisId) {
+            const duration = Date.now() - viewStartTimeRef.current;
+            fetch(`${API_BASE}/api/log/ui-interaction`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId,
+                    feature: 'mentorText',
+                    action: 'view_analysis_complete',
+                    metadata: { analysisId, durationMs: duration }
+                })
+            });
+            viewStartTimeRef.current = null;
+        }
+        onClose();
+    };
+
     const handleDelete = () => {
         onDelete(analysisId);
-        onClose();
+        handleClose();
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="analysis-detail-overlay" onClick={onClose}>
-            <div 
-                className="analysis-detail-modal" 
+        <div className="analysis-detail-overlay" onClick={handleClose}>
+            <div
+                className="analysis-detail-modal"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -115,7 +141,7 @@ const AnalysisDetailModal = ({
                                 <Trash2 className="w-5 h-5" />
                             </button>
                         )}
-                        <button onClick={onClose} className="analysis-detail-close-btn">
+                        <button onClick={handleClose} className="analysis-detail-close-btn">
                             <X className="w-6 h-6" />
                         </button>
                     </div>
@@ -176,7 +202,7 @@ const AnalysisDetailModal = ({
 
                                 {analysis.teachingPoints?.map((point, idx) => (
                                     <div key={idx} className="analysis-teaching-point">
-                                        <div 
+                                        <div
                                             className="analysis-point-header"
                                             onClick={() => togglePoint(idx)}
                                         >

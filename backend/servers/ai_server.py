@@ -54,6 +54,7 @@ from utils.analytics.logger import (
     log_book_recommendation,
     log_timeline_coherence,
     log_feedback_submission,
+    log_chat_message,
 )
 from utils.analytics.mentor_text_logger import (
     log_mentor_text_analysis,
@@ -626,6 +627,10 @@ def brainstorming_chat():
         cfm_session.save_message("user", user_message, 
                                 stage=cfm_session.get_stage(), visible=True)
 
+        try:
+            log_chat_message(user_id, 'brainstorming', 'user', len(user_message), cfm_session.get_stage())
+        except Exception as e:
+            bs_logger.warning(f"[BS] log_chat_message failed: {e}")
         # Build prompt
         recent = cfm_session.get_recent_messages(limit=10)
         session_snapshot = cfm_session.get_session_snapshot()
@@ -749,7 +754,11 @@ def brainstorming_chat():
         if chat_message:
             cfm_session.save_message("assistant", chat_message, 
                                     stage=cfm_session.get_stage(), visible=True)
-            
+            try:
+                log_chat_message(user_id, 'brainstorming', 'assistant', len(chat_message), cfm_session.get_stage())
+            except Exception as e:
+                bs_logger.warning(f"[BS] log_chat_message failed: {e}")
+
             try:
                 messages_ref = db.reference(f"chatSessions/{user_id}/{session_id}/messages")
                 all_messages = messages_ref.get() or {}
@@ -824,6 +833,11 @@ def deepthinking_chat():
 
         # Save user message
         cfm_session.save_message("user", user_message, visible=True)
+
+        try:
+            log_chat_message(user_id, 'deepthinking', 'user', len(user_message), None)
+        except Exception as e:
+            dt_logger.warning(f"[DT] log_chat_message failed: {e}")
 
         # Build prompt
         recent = cfm_session.get_recent_messages(limit=10)
@@ -1046,6 +1060,11 @@ Instructions:
             cfm_session.save_message("assistant", chat_message, visible=True)
 
             try:
+                log_chat_message(user_id, 'deepthinking', 'assistant', len(chat_message), None)
+            except Exception as e:
+                dt_logger.warning(f"[DT] log_chat_message failed: {e}")
+
+            try:
                 messages_ref = db.reference(f"chatSessions/{user_id}/{session_id}/messages")
                 all_messages = messages_ref.get() or {}
                 user_message_count = sum(1 for m in all_messages.values() 
@@ -1135,95 +1154,6 @@ def log_chat_session_start():
     except Exception as e:
         rec_logger.exception(f"[CHAT_LOG] log-session-start error: {e}")
         return jsonify({'error': str(e)}), 500
-
-
-# ============================================
-# Per-message length tracking
-# ============================================
-
-@app.route('/api/chat/log-message', methods=['POST'])
-def log_chat_message():
-    """
-    Record a user message's length so we can compute per-session
-    message-length trends (the primary metacognitive deepening signal).
-
-    Expected body:
-    {
-        "userId":        "...",
-        "sessionId":     "...",
-        "messageLength": 142,       // character count
-        "messageIndex":  3,         // 0-based index of this user message in session
-        "mode":          "brainstorming" | "deepthinking",
-        "currentStage":  "Clarify",  // BS only; null for DT
-        "timestamp":     1234567890
-    }
-    """
-    try:
-        data = request.json
-        user_id        = data.get('userId')
-        session_id     = data.get('sessionId')
-        message_length = data.get('messageLength', 0)
-        message_index  = data.get('messageIndex', 0)
-        mode           = data.get('mode', 'brainstorming')
-        current_stage  = data.get('currentStage')
-        ts             = data.get('timestamp', int(time.time() * 1000))
-
-        if not user_id or not session_id:
-            return jsonify({'error': 'userId and sessionId required'}), 400
-
-        tool_name   = 'bsChatbot' if mode == 'brainstorming' else 'dtChatbot'
-        feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
-
-        # ── Per-session message-length trend array ──────────────────────────
-        # Stored as analytics/{userId}/chatSessions/{sessionId}/messageLengths
-        # Shape: [ { index, length, timestamp, stage? }, ... ]
-        session_ref = db.reference(
-            f"analytics/{user_id}/chatSessions/{session_id}/messageLengths"
-        )
-        entry = {
-            'index':     message_index,
-            'length':    message_length,
-            'timestamp': ts,
-        }
-        if current_stage:
-            entry['stage'] = current_stage
-        session_ref.push(entry)
-
-        # ── Running average message length across all sessions ───────────────
-        total_length = feature_ref.child('totalUserMessageChars').get() or 0
-        total_msgs   = feature_ref.child('userMessages').get() or 0
-        feature_ref.child('totalUserMessageChars').set(total_length + message_length)
-        # userMessages counter is already incremented by the existing log_chat_message
-        # helper in logger.py, so we read the already-updated value for the avg
-        if total_msgs > 0:
-            feature_ref.child('avgUserMessageLength').set(
-                round((total_length + message_length) / (total_msgs + 1), 1)
-            )
-
-        # ── Tool journey entry ───────────────────────────────────────────────
-        log_tool_interaction(
-            user_id=user_id,
-            tool_name=tool_name,
-            interaction_type='user_message',
-            tlc_stage='joint_construction',
-            metadata={
-                'sessionId':     session_id,
-                'messageLength': message_length,
-                'messageIndex':  message_index,
-                'currentStage':  current_stage,
-            }
-        )
-
-        rec_logger.info(
-            f"[CHAT_LOG] user_message for {user_id}, "
-            f"session={session_id}, len={message_length}, idx={message_index}"
-        )
-        return jsonify({'success': True}), 200
-
-    except Exception as e:
-        rec_logger.exception(f"[CHAT_LOG] log-message error: {e}")
-        return jsonify({'error': str(e)}), 500
-
 
 # ============================================
 # BS CPS stage transition
@@ -4939,16 +4869,13 @@ def chat_log_session_start_endpoint():
         )
 
         feat_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
-        total = feat_ref.child('totalSessions').get() or 0
-        feat_ref.child('totalSessions').set(total + 1)
+        feat_ref.child('totalSessions').transaction(lambda c: (c or 0) + 1)
         mode_key = 'bsSessions' if mode == 'brainstorming' else 'dtSessions'
-        mode_count = feat_ref.child(mode_key).get() or 0
-        feat_ref.child(mode_key).set(mode_count + 1)
+        feat_ref.child(mode_key).transaction(lambda c: (c or 0) + 1)
         if focus_area:
-            fa_count = feat_ref.child(f'focusAreas/{focus_area}').get() or 0
-            feat_ref.child(f'focusAreas/{focus_area}').set(fa_count + 1)
+            feat_ref.child(f'focusAreas/{focus_area}').transaction(lambda c: (c or 0) + 1)
+            return jsonify({'success': True}), 200
 
-        return jsonify({'success': True}), 200
     except Exception as e:
         rec_logger.warning(f"[CHAT_LOG] log-session-start error: {e}")
         return jsonify({'error': str(e)}), 500
@@ -4981,17 +4908,16 @@ def chat_log_message_endpoint():
         )
 
         feat_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
-        total_msgs = feat_ref.child('totalMessages').get() or 0
-        feat_ref.child('totalMessages').set(total_msgs + 1)
+        feat_ref.child('totalMessages').transaction(lambda c: (c or 0) + 1)
 
         if role == 'user':
-            user_msgs = feat_ref.child('userMessages').get() or 0
-            feat_ref.child('userMessages').set(user_msgs + 1)
+            feat_ref.child('userMessages').transaction(lambda c: (c or 0) + 1)
             # Rolling average message length
             total_chars = feat_ref.child('totalUserMessageChars').get() or 0
             new_total = total_chars + message_length
+            user_msgs = feat_ref.child('userMessages').get() or 1
             feat_ref.child('totalUserMessageChars').set(new_total)
-            feat_ref.child('avgUserMessageLength').set(new_total / (user_msgs + 1))
+            feat_ref.child('avgUserMessageLength').set(new_total / user_msgs)
             # Per-session message length log (for trend chart)
             if session_id:
                 db.reference(f"chatSessions/{user_id}/{session_id}/messageLengths").push({
@@ -5001,7 +4927,7 @@ def chat_log_message_endpoint():
                     'stage': stage,
                 })
 
-        return jsonify({'success': True}), 200
+                return jsonify({'success': True}), 200
     except Exception as e:
         rec_logger.warning(f"[CHAT_LOG] log-message error: {e}")
         return jsonify({'error': str(e)}), 500
@@ -5086,10 +5012,6 @@ def get_users_list():
 
 @app.route('/admin/analytics/user/<user_id>', methods=['GET'])
 def get_user_analytics(user_id):
-    """
-    Get complete analytics for a single user.
-    Used by researcher dashboard.
-    """
     try:
         analytics_ref = db.reference(f"analytics/{user_id}")
         data = analytics_ref.get() or {}
@@ -5100,15 +5022,12 @@ def get_user_analytics(user_id):
                 'userId': user_id
             }), 404
         
-        # Get user metadata
         user_ref = db.reference(f"users/{user_id}")
         user_data = user_ref.get() or {}
         
-        # Calculate derived metrics
         tool_journey = data.get('toolJourney', {})
         transitions = data.get('stageTransitions', {})
         
-        # Chronological journey
         journey_list = [
             {
                 'timestamp': v['timestamp'],
@@ -5121,10 +5040,8 @@ def get_user_analytics(user_id):
         ]
         journey_list.sort(key=lambda x: x['timestamp'])
         
-        # Stage time distribution
         stage_times = _calculate_stage_times(journey_list)
         
-        # Recursion count
         recursion_events = [
             t for t in transitions.values()
             if t.get('transitionType') == 'backward'
@@ -5132,31 +5049,144 @@ def get_user_analytics(user_id):
         
         rec_logger.info(f"[ADMIN] Loaded analytics for user {user_id}")
         
-        chat_sessions_ref = db.reference(f"chatSessions/{user_id}")
-        chat_sessions_data = chat_sessions_ref.get() or {}
+        chat_sessions_data = {}
+        try:
+            chat_sessions_data = db.reference(f"chatSessions/{user_id}").get() or {}
+        except Exception as e:
+            rec_logger.warning(f"[ADMIN] chatSessions fetch failed: {e}")
+
+        # ── Aggregate brainstorming metrics across all chat sessions ─────────
+        bs_session_count  = 0
+        dt_session_count  = 0
+        all_ideas         = []
+        scamper_coverage  = {}
+        elaboration_dist  = {'Low': 0, 'Medium': 0, 'High': 0}
+        originality_dist  = {'Low': 0, 'Medium': 0, 'High': 0}
+        flexibility_cats  = {}
+        refined_count     = 0
+        score_map         = {'Low': 1, 'Medium': 2, 'High': 3}
+        elaboration_scores = []
+        originality_scores = []
+
+        for sid, session in chat_sessions_data.items():
+            if not isinstance(session, dict):
+                continue
+
+            messages = session.get('messages', {})
+
+            # Classify session by majority mode from actual message records
+            bs_msg_count = sum(
+                1 for m in messages.values()
+                if isinstance(m, dict) and m.get('mode') == 'brainstorming'
+            )
+            dt_msg_count = sum(
+                1 for m in messages.values()
+                if isinstance(m, dict) and m.get('mode') == 'deepthinking'
+            )
+
+            dominant_mode = 'deepthinking' if dt_msg_count > bs_msg_count else 'brainstorming'
+
+            if dominant_mode == 'deepthinking':
+                dt_session_count += 1
+                continue
+
+            # ── Brainstorming session ────────────────────────────────────────
+            bs_session_count += 1
+
+            ideas = session.get('ideas', {})
+            for idea in (ideas.values() if isinstance(ideas, dict) else []):
+                if not isinstance(idea, dict):
+                    continue
+
+                all_ideas.append(idea)
+
+                technique = idea.get('scamperTechnique')
+                if technique:
+                    scamper_coverage[technique] = scamper_coverage.get(technique, 0) + 1
+
+                evals    = idea.get('evaluations', {})
+                elab     = evals.get('elaboration')
+                orig     = evals.get('originality')
+                flex_cat = evals.get('flexibilityCategory') or idea.get('category')
+
+                if elab in elaboration_dist:
+                    elaboration_dist[elab] += 1
+                if elab in score_map:
+                    elaboration_scores.append(score_map[elab])
+
+                if orig in originality_dist:
+                    originality_dist[orig] += 1
+                if orig in score_map:
+                    originality_scores.append(score_map[orig])
+
+                if flex_cat:
+                    flexibility_cats[flex_cat] = flexibility_cats.get(flex_cat, 0) + 1
+
+                if idea.get('refined'):
+                    refined_count += 1
+
+        avg = lambda lst: round(sum(lst) / len(lst), 2) if lst else None
+
+        # Fluency  = avg ideas per BS session
+        ideas_per_session = (
+            round(len(all_ideas) / bs_session_count, 1) if bs_session_count else 0
+        )
+        # Flexibility = total distinct idea categories across all BS sessions
+        flex_count = len(flexibility_cats)
+
+        brainstorming_summary = {
+            'bsSessionCount':        bs_session_count,
+            'dtSessionCount':        dt_session_count,
+            'totalIdeas':            len(all_ideas),
+            'refinedIdeas':          refined_count,
+            'scamperCoverage':       scamper_coverage,
+            'elaborationDist':       elaboration_dist,
+            'originalityDist':       originality_dist,
+            'flexibilityCategories': flexibility_cats,
+            # Fluency  — raw: avg ideas per session (always computable)
+            'avgFluency':     ideas_per_session,
+            # Flexibility — raw: distinct categories (always computable)
+            'avgFlexibility': flex_count,
+            # Elaboration / Originality — 1–3 scale from per-idea evaluations
+            'avgElaboration': avg(elaboration_scores),
+            'avgOriginality': avg(originality_scores),
+        }
+
+        # Sync ground-truth session counts back to featureMetrics
+        try:
+            feat_ref = db.reference(
+                f"analytics/{user_id}/featureMetrics/reflectiveChatbot"
+            )
+            feat_ref.update({
+                'bsSessions':   bs_session_count,
+                'dtSessions':   dt_session_count,
+                'totalSessions': bs_session_count + dt_session_count,
+            })
+        except Exception as e:
+            rec_logger.warning(f"[ADMIN] Failed to sync session counts: {e}")
 
         return jsonify({
             'userId': user_id,
             'userMetadata': {
                 'studyGroup': user_data.get('studyGroup'),
-                'condition': user_data.get('condition')
+                'condition':  user_data.get('condition')
             },
-            'toolUsage': data.get('toolUsage', {}),
-            'journey': journey_list,
+            'toolUsage':             data.get('toolUsage', {}),
+            'journey':               journey_list,
             'stageTimeDistribution': stage_times,
-            'stageTransitions': list(transitions.values()),
-            'recursionEvents': recursion_events,
-            'recursionCount': len(recursion_events),
+            'stageTransitions':      list(transitions.values()),
+            'recursionEvents':       recursion_events,
+            'recursionCount':        len(recursion_events),
             'totalToolInteractions': len(journey_list),
-            'featureMetrics': data.get('featureMetrics', {}),
-            'outcomeMetrics': data.get('outcomeMetrics', {}),
-            'chatSessions': chat_sessions_data
+            'featureMetrics':        data.get('featureMetrics', {}),
+            'outcomeMetrics':        data.get('outcomeMetrics', {}),
+            'chatSessions':          chat_sessions_data,
+            'brainstormingSummary':  brainstorming_summary,
         }), 200
-        
+
     except Exception as e:
         rec_logger.exception(f"[ADMIN] Failed to get user analytics: {e}")
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/admin/analytics/study-summary', methods=['GET'])
 def get_study_summary():
