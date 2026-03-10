@@ -16,21 +16,21 @@ const API_BASE = process.env.REACT_APP_AI_SERVER_URL || "http://localhost:5000";
 const COLORS = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
 
 // ─── Formatting helpers ────────────────────────────────────────────────────────
-const fmtSec = (ms)   => ms != null ? `${(ms / 1000).toFixed(1)}s`          : '—';
-const fmtMin = (ms)   => ms != null ? `${Math.round(ms / 60000)}m`           : '—';
-const pct    = (n, d) => (d && d > 0) ? `${((n / d) * 100).toFixed(0)}%`    : '—';
-const orDash = (v)    => (v != null && v !== '') ? v                          : '—';
-const round1 = (v)    => v != null ? Number(v).toFixed(1)                    : '—';
+const fmtSec = (ms) => ms != null ? `${(ms / 1000).toFixed(1)}s` : '—';
+const fmtMin = (ms) => ms != null ? `${Math.round(ms / 60000)}m` : '—';
+const pct = (n, d) => (d && d > 0) ? `${((n / d) * 100).toFixed(0)}%` : '—';
+const orDash = (v) => (v != null && v !== '') ? v : '—';
+const round1 = (v) => v != null ? Number(v).toFixed(1) : '—';
 
 // ─── Root ──────────────────────────────────────────────────────────────────────
 const AdminDashboard = () => {
     const [selectedUserId, setSelectedUserId] = useState('');
-    const [allUsers,       setAllUsers]       = useState([]);
-    const [userData,       setUserData]       = useState(null);
-    const [studySummary,   setStudySummary]   = useState(null);
-    const [loading,        setLoading]        = useState(false);
-    const [error,          setError]          = useState(null);
-    const [viewMode,       setViewMode]       = useState('overview');
+    const [allUsers, setAllUsers] = useState([]);
+    const [userData, setUserData] = useState(null);
+    const [studySummary, setStudySummary] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [viewMode, setViewMode] = useState('overview');
 
     useEffect(() => { loadAllUsers(); }, []);
 
@@ -48,7 +48,7 @@ const AdminDashboard = () => {
             if (r.ok) setStudySummary(await r.json());
             else throw new Error('Failed to load study summary');
         } catch (e) { setError(e.message); }
-        finally     { setLoading(false); }
+        finally { setLoading(false); }
     };
 
     const loadUserAnalytics = async (userId) => {
@@ -58,7 +58,7 @@ const AdminDashboard = () => {
             if (r.ok) { setUserData(await r.json()); setViewMode('user'); }
             else throw new Error('Failed to load user analytics');
         } catch (e) { setError(e.message); }
-        finally     { setLoading(false); }
+        finally { setLoading(false); }
     };
 
     const handleExportCSV = async () => {
@@ -66,8 +66,8 @@ const AdminDashboard = () => {
             const r = await fetch(`${API_BASE}/admin/analytics/export-csv`);
             if (r.ok) {
                 const blob = await r.blob();
-                const url  = window.URL.createObjectURL(blob);
-                const a    = document.createElement('a');
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
                 a.href = url; a.download = `study_analytics_${Date.now()}.csv`;
                 document.body.appendChild(a); a.click();
                 document.body.removeChild(a); window.URL.revokeObjectURL(url);
@@ -136,7 +136,7 @@ const AdminDashboard = () => {
             )}
 
             {viewMode === 'overview' && studySummary && <OverviewView data={studySummary} />}
-            {viewMode === 'user'     && userData      && <UserView    data={userData}     />}
+            {viewMode === 'user' && userData && <UserView data={userData} />}
         </div>
     );
 };
@@ -144,7 +144,7 @@ const AdminDashboard = () => {
 // ─── Overview ──────────────────────────────────────────────────────────────────
 const OverviewView = ({ data }) => {
     const toolUsageData = Object.entries(data.toolPopularity || {}).map(([name, usage]) => ({ name, usage }));
-    const stageTimeData = Object.entries(data.avgStageTime   || {}).map(([stage, time]) => ({
+    const stageTimeData = Object.entries(data.avgStageTime || {}).map(([stage, time]) => ({
         name: stage.replace(/_/g, ' '), minutes: Math.round(time / 60000)
     }));
 
@@ -154,10 +154,10 @@ const OverviewView = ({ data }) => {
     return (
         <div className="admin-dashboard-content">
             <div className="admin-dashboard-stats-grid">
-                <StatCard icon={<Users      className="w-6 h-6" />} label="Total Participants"  value={data.totalParticipants || 0}                                                         color="purple" />
-                <StatCard icon={<Activity   className="w-6 h-6" />} label="Avg Recursions/User" value={data.recursionStats?.avgRecursionsPerUser?.toFixed(1) || '0.0'}                      color="pink"   />
-                <StatCard icon={<TrendingUp className="w-6 h-6" />} label="Total Tool Uses"     value={Object.values(data.toolPopularity || {}).reduce((a, b) => a + b, 0)}                 color="blue"   />
-                <StatCard icon={<Clock      className="w-6 h-6" />} label="Avg Timeline Score"  value={data.outcomeAverages?.avgTimelineCoherence?.toFixed(1) || 'N/A'}                     color="green"  />
+                <StatCard icon={<Users className="w-6 h-6" />} label="Total Participants" value={data.totalParticipants || 0} color="purple" />
+                <StatCard icon={<Activity className="w-6 h-6" />} label="Avg Recursions/User" value={data.recursionStats?.avgRecursionsPerUser?.toFixed(1) || '0.0'} color="pink" />
+                <StatCard icon={<TrendingUp className="w-6 h-6" />} label="Total Tool Uses" value={Object.values(data.toolPopularity || {}).reduce((a, b) => a + b, 0)} color="blue" />
+                <StatCard icon={<Clock className="w-6 h-6" />} label="Avg Timeline Score" value={data.outcomeAverages?.avgTimelineCoherence?.toFixed(1) || 'N/A'} color="green" />
             </div>
 
             <div className="admin-dashboard-charts-grid">
@@ -189,10 +189,10 @@ const OverviewView = ({ data }) => {
             <div className="admin-dashboard-info-card">
                 <h3 className="admin-dashboard-info-title">🔄 Recursion Patterns</h3>
                 <div className="admin-dashboard-info-grid">
-                    <InfoItem label="Total Recursions"       value={data.recursionStats?.totalRecursions || 0} />
+                    <InfoItem label="Total Recursions" value={data.recursionStats?.totalRecursions || 0} />
                     <InfoItem label="Most Common Transition" value={data.recursionStats?.mostCommonTransition?.[0] || 'N/A'}
-                              sub={`${data.recursionStats?.mostCommonTransition?.[1] || 0} times`} />
-                    <InfoItem label="Average per User"       value={data.recursionStats?.avgRecursionsPerUser?.toFixed(1) || '0.0'} />
+                        sub={`${data.recursionStats?.mostCommonTransition?.[1] || 0} times`} />
+                    <InfoItem label="Average per User" value={data.recursionStats?.avgRecursionsPerUser?.toFixed(1) || '0.0'} />
                 </div>
             </div>
 
@@ -204,14 +204,14 @@ const OverviewView = ({ data }) => {
                         Reflective Chatbot — Study-Wide Summary
                     </h3>
                     <div className="admin-dashboard-info-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
-                        <InfoItem label="Total Chat Sessions"      value={orDash(chatStats.totalChatSessions)}                        />
-                        <InfoItem label="BS Sessions"              value={orDash(chatStats.totalBsSessions)}   sub="Brainstorming"    />
-                        <InfoItem label="DT Sessions"              value={orDash(chatStats.totalDtSessions)}   sub="Deep Thinking"    />
-                        <InfoItem label="Avg Msgs / Session"       value={round1(chatStats.avgMessagesPerSession)}                    />
-                        <InfoItem label="Avg Msg Length (chars)"   value={round1(chatStats.avgUserMessageLength)}                     />
-                        <InfoItem label="Total CPS Recursions"     value={orDash(chatStats.totalCpsRecursions)} sub="backward transitions" />
-                        <InfoItem label="Avg BS Ideas / Session"   value={round1(chatStats.avgIdeasPerSession)}                       />
-                        <InfoItem label="Avg BS Creativity Score"  value={round1(chatStats.avgCreativityScore)} sub="fluency+flex+elab+orig" />
+                        <InfoItem label="Total Chat Sessions" value={orDash(chatStats.totalChatSessions)} />
+                        <InfoItem label="BS Sessions" value={orDash(chatStats.totalBsSessions)} sub="Brainstorming" />
+                        <InfoItem label="DT Sessions" value={orDash(chatStats.totalDtSessions)} sub="Deep Thinking" />
+                        <InfoItem label="Avg Msgs / Session" value={round1(chatStats.avgMessagesPerSession)} />
+                        <InfoItem label="Avg Msg Length (chars)" value={round1(chatStats.avgUserMessageLength)} />
+                        <InfoItem label="Total CPS Recursions" value={orDash(chatStats.totalCpsRecursions)} sub="backward transitions" />
+                        <InfoItem label="Avg BS Ideas / Session" value={round1(chatStats.avgIdeasPerSession)} />
+                        <InfoItem label="Avg BS Creativity Score" value={round1(chatStats.avgCreativityScore)} sub="fluency+flex+elab+orig" />
                     </div>
                 </div>
             )}
@@ -219,7 +219,7 @@ const OverviewView = ({ data }) => {
             <div className="admin-dashboard-info-card">
                 <h3 className="admin-dashboard-info-title">👥 Study Group Distribution</h3>
                 <div className="admin-dashboard-info-grid">
-                    <InfoItem label="Tool First"    value={data.studyGroups?.tool_first    || 0} color="#7C3AED" />
+                    <InfoItem label="Tool First" value={data.studyGroups?.tool_first || 0} color="#7C3AED" />
                     <InfoItem label="No Tool First" value={data.studyGroups?.no_tool_first || 0} color="#EC4899" />
                 </div>
             </div>
@@ -229,7 +229,7 @@ const OverviewView = ({ data }) => {
 
 // ─── User View ─────────────────────────────────────────────────────────────────
 const UserView = ({ data }) => {
-    const toolUsageData = Object.entries(data.toolUsage             || {}).map(([name, count]) => ({ name, count }));
+    const toolUsageData = Object.entries(data.toolUsage || {}).map(([name, count]) => ({ name, count }));
     const stageTimeData = Object.entries(data.stageTimeDistribution || {}).map(([stage, time]) => ({
         name: stage.replace(/_/g, ' '), minutes: Math.round(time / 60000)
     }));
@@ -245,10 +245,10 @@ const UserView = ({ data }) => {
             <div className="admin-dashboard-info-card">
                 <h2 className="admin-dashboard-chart-title">User: {data.userId}</h2>
                 <div className="admin-dashboard-info-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
-                    <InfoItem label="Study Group"        value={data.userMetadata?.studyGroup || 'N/A'} />
-                    <InfoItem label="Total Interactions" value={data.totalToolInteractions    || 0}     />
-                    <InfoItem label="Recursions"         value={data.recursionCount           || 0}     />
-                    <InfoItem label="Condition"          value={data.userMetadata?.condition  || 'N/A'} />
+                    <InfoItem label="Study Group" value={data.userMetadata?.studyGroup || 'N/A'} />
+                    <InfoItem label="Total Interactions" value={data.totalToolInteractions || 0} />
+                    <InfoItem label="Recursions" value={data.recursionCount || 0} />
+                    <InfoItem label="Condition" value={data.userMetadata?.condition || 'N/A'} />
                 </div>
             </div>
 
@@ -257,7 +257,7 @@ const UserView = ({ data }) => {
                     <ResponsiveContainer width="100%" height={250}>
                         <PieChart>
                             <Pie data={toolUsageData} dataKey="count" nameKey="name"
-                                 cx="50%" cy="50%" outerRadius={80} label>
+                                cx="50%" cy="50%" outerRadius={80} label>
                                 {toolUsageData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                             </Pie>
                             <Tooltip /><Legend />
@@ -317,27 +317,30 @@ const UserView = ({ data }) => {
             )}
 
             {/* Feature-specific dedicated sections */}
-            {data.featureMetrics?.storyMap          && <StoryMapMetricsSection          metrics={data.featureMetrics.storyMap}          />}
-            {data.featureMetrics?.mentorText         && <MentorTextMetricsSection         metrics={data.featureMetrics.mentorText}         />}
-            {data.featureMetrics?.timeline           && <TimelineMetricsSection           metrics={data.featureMetrics.timeline}           />}
-            {data.featureMetrics?.reflectiveChatbot  && <ReflectiveChatbotMetricsSection  metrics={data.featureMetrics.reflectiveChatbot}
-                                                                                          chatSessions={data.chatSessions || {}}           />}
+            {data.featureMetrics?.storyMap && <StoryMapMetricsSection metrics={data.featureMetrics.storyMap} />}
+            {data.featureMetrics?.mentorText && <MentorTextMetricsSection metrics={data.featureMetrics.mentorText} />}
+            {data.featureMetrics?.timeline && <TimelineMetricsSection metrics={data.featureMetrics.timeline} />}
+            {data.featureMetrics?.reflectiveChatbot && <ReflectiveChatbotMetricsSection
+                metrics={data.featureMetrics.reflectiveChatbot}
+                chatSessions={data.chatSessions || {}}
+                brainstorming={data.brainstormingSummary || {}}
+            />}
 
             {/* Generic fallback for anything else */}
             {Object.entries(data.featureMetrics || {})
                 .filter(([k]) => !['storyMap', 'mentorText', 'timeline', 'reflectiveChatbot'].includes(k))
                 .length > 0 && (
-                <div className="admin-dashboard-feature-metrics">
-                    <h3 className="admin-dashboard-chart-title">📊 Other Feature Metrics</h3>
-                    <div className="admin-dashboard-feature-metrics-list">
-                        {Object.entries(data.featureMetrics)
-                            .filter(([k]) => !['storyMap', 'mentorText', 'timeline', 'reflectiveChatbot'].includes(k))
-                            .map(([feature, metrics]) => (
-                                <FeatureMetricsCard key={feature} feature={feature} metrics={metrics} />
-                            ))}
+                    <div className="admin-dashboard-feature-metrics">
+                        <h3 className="admin-dashboard-chart-title">📊 Other Feature Metrics</h3>
+                        <div className="admin-dashboard-feature-metrics-list">
+                            {Object.entries(data.featureMetrics)
+                                .filter(([k]) => !['storyMap', 'mentorText', 'timeline', 'reflectiveChatbot'].includes(k))
+                                .map(([feature, metrics]) => (
+                                    <FeatureMetricsCard key={feature} feature={feature} metrics={metrics} />
+                                ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
             {/* Recent journey */}
             <div className="admin-dashboard-journey">
@@ -405,17 +408,17 @@ const UserView = ({ data }) => {
 //                              elaboration, originality }
 //    bsChatbot/stageHistory/ — per-session CPS stage transitions
 //
-const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions }) => {
-    const totalSessions    = metrics.totalSessions      || 0;
-    const bsSessions       = metrics.bsSessions         || 0;
-    const dtSessions       = metrics.dtSessions         || 0;
-    const totalMessages    = metrics.totalMessages      || 0;
-    const userMessages     = metrics.userMessages       || 0;
-    const assistantMsgs    = totalMessages - userMessages;
-    const avgMsgLength     = metrics.avgUserMessageLength;
-    const totalSwitches    = metrics.totalModeSwitches  || 0;
-    const totalRecursions  = metrics.totalRecursions    || 0;
-    const totalTimeMs      = metrics.totalTimeInFeature;
+const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions, brainstorming }) => {
+    const totalSessions = metrics.totalSessions || 0;
+    const bsSessions = metrics.bsSessions || 0;
+    const dtSessions = metrics.dtSessions || 0;
+    const totalMessages = metrics.totalMessages || 0;
+    const userMessages = metrics.userMessages || 0;
+    const assistantMsgs = totalMessages - userMessages;
+    const avgMsgLength = metrics.avgUserMessageLength;
+    const totalSwitches = metrics.totalModeSwitches || 0;
+    const totalRecursions = metrics.totalRecursions || 0;
+    const totalTimeMs = metrics.totalTimeInFeature;
 
     // Mode distribution pie
     const modeData = [
@@ -432,8 +435,6 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions }) => {
     const modeSwitchEntries = Object.entries(metrics.modeSwitches || {});
 
     // ── Message-length trend across all sessions ────────────────────────────
-    // chatSessions is a map: { sessionId: { messageLengths: { pushKey: { index, length, timestamp, stage } } } }
-    // We flatten and sort by timestamp to build a cross-session trend line.
     const allLengthEntries = [];
     Object.values(chatSessions || {}).forEach(session => {
         const msgs = session.messageLengths || {};
@@ -445,7 +446,7 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions }) => {
     const messageLengthTrend = allLengthEntries.map((m, i) => ({
         msgNum: i + 1,
         length: m.length,
-        stage:  m.stage || null,
+        stage: m.stage || null,
     }));
 
     // ── Per-session message count distribution ──────────────────────────────
@@ -457,35 +458,32 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions }) => {
         ? (sessionMsgCounts.reduce((a, b) => a + b, 0) / sessionMsgCounts.length).toFixed(1)
         : null;
 
-    // ── CPS stage transition history (across sessions) ──────────────────────
-    // Sourced from analytics/{userId}/stageTransitions filtered to bsChatbot
-    // The parent passes data.stageTransitions — we receive what we can derive here.
-    // We just count recursions from metrics.totalRecursions.
+    // CPS stage distribution
+    const cpsStageData = Object.entries(metrics.cpsStageReach || {})
+        .map(([stage, count]) => ({ name: stage, count }));
 
-    // ── Brainstorming creativity metrics ───────────────────────────────────
-    // bsChatbot ideas are stored separately under bsChatbot/ideas in Firebase.
-    // The parent UserView passes featureMetrics.reflectiveChatbot; creativity
-    // sub-metrics may arrive in metrics.creativityMetrics if the backend
-    // aggregates them. We support both paths.
-    const creativity = metrics.creativityMetrics || {};
-    const avgFluency      = creativity.avgFluency;
-    const avgFlexibility  = creativity.avgFlexibility;
-    const avgElaboration  = creativity.avgElaboration;
-    const avgOriginality  = creativity.avgOriginality;
-    const totalIdeas      = creativity.totalIdeas || metrics.totalIdeas;
-    const avgIdeasSession = creativity.avgIdeasPerSession || metrics.avgIdeasPerBsSession;
+    // ── Brainstorming creativity metrics (from brainstorming prop) ──────────
+    const avgFluency     = brainstorming.avgFluency;
+    const avgFlexibility = brainstorming.avgFlexibility;
+    const avgElaboration = brainstorming.avgElaboration;
+    const avgOriginality = brainstorming.avgOriginality;
+    const totalIdeas     = brainstorming.totalIdeas;
+    const refinedIdeas   = brainstorming.refinedIdeas;
 
-    // SCAMPER coverage
-    const scamperCoverage = metrics.scamperCoverage || creativity.scamperCoverage || {};
+    const scamperCoverage = brainstorming.scamperCoverage || {};
     const scamperData = Object.entries(scamperCoverage)
         .map(([technique, count]) => ({ name: technique, count }))
         .sort((a, b) => b.count - a.count);
 
-    // CPS stage distribution (how many times each stage was reached)
-    const cpsStageData = Object.entries(metrics.cpsStageReach || {})
-        .map(([stage, count]) => ({ name: stage, count }));
+    const elaborationData = Object.entries(brainstorming.elaborationDist || {})
+        .map(([name, count]) => ({ name, count }));
+    const originalityData = Object.entries(brainstorming.originalityDist || {})
+        .map(([name, count]) => ({ name, count }));
+    const flexCatData = Object.entries(brainstorming.flexibilityCategories || {})
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count);
 
-    const hasCreativity = avgFluency != null || totalIdeas != null || scamperData.length > 0;
+    const hasCreativity = (totalIdeas > 0) || scamperData.length > 0;
 
     return (
         <div className="admin-dashboard-story-map-section" style={{ borderColor: '#8b5cf655' }}>
@@ -499,10 +497,10 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions }) => {
 
             {/* ── Top-level counts ── */}
             <div className="admin-dashboard-stats-grid">
-                <StatCard icon={<MessageSquare className="w-5 h-5" />} label="Total Sessions"      value={totalSessions}                      color="purple" />
-                <StatCard icon={<Activity      className="w-5 h-5" />} label="Total Messages"      value={totalMessages}                      color="blue"   />
-                <StatCard icon={<Repeat        className="w-5 h-5" />} label="CPS Recursions"      value={totalRecursions}                    color="pink"   />
-                <StatCard icon={<Clock         className="w-5 h-5" />} label="Time on Page"        value={fmtMin(totalTimeMs)}                color="green"  />
+                <StatCard icon={<MessageSquare className="w-5 h-5" />} label="Total Sessions"   value={totalSessions}          color="purple" />
+                <StatCard icon={<Activity      className="w-5 h-5" />} label="Total Messages"   value={totalMessages}          color="blue"   />
+                <StatCard icon={<Repeat        className="w-5 h-5" />} label="CPS Recursions"   value={totalRecursions}        color="pink"   />
+                <StatCard icon={<Clock         className="w-5 h-5" />} label="Time on Page"     value={fmtMin(totalTimeMs)}    color="green"  />
             </div>
 
             {/* ── Framework validation card ── */}
@@ -512,7 +510,9 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions }) => {
                     Metacognitive Deepening — Framework Validation
                 </h3>
                 <p className="admin-dashboard-info-subtext" style={{ marginBottom: '1rem' }}>
-                    The primary signal is <strong>message length trend within a session</strong> — rising length indicates the student is elaborating more deeply over time, validating the Reflective Guide AI role. CPS recursions (backward stage transitions) indicate iterative refinement.
+                    The primary signal is <strong>message length trend within a session</strong> — rising length indicates
+                    the student is elaborating more deeply over time, validating the Reflective Guide AI role.
+                    CPS recursions (backward stage transitions) indicate iterative refinement.
                 </p>
                 <div className="admin-dashboard-info-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
                     <div className="admin-dashboard-info-item">
@@ -568,7 +568,7 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions }) => {
                         <ResponsiveContainer width="100%" height={220}>
                             <PieChart>
                                 <Pie data={modeData} dataKey="count" nameKey="name"
-                                     cx="50%" cy="50%" outerRadius={80} label>
+                                    cx="50%" cy="50%" outerRadius={80} label>
                                     {modeData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                                 </Pie>
                                 <Tooltip /><Legend />
@@ -595,9 +595,9 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions }) => {
             <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
                 <h3 className="admin-dashboard-info-title">Session Breakdown</h3>
                 <div className="admin-dashboard-info-grid">
-                    <InfoItem label="Brainstorming Sessions" value={bsSessions}   sub={pct(bsSessions, totalSessions) + ' of total'} />
-                    <InfoItem label="Deep Thinking Sessions" value={dtSessions}   sub={pct(dtSessions, totalSessions) + ' of total'} />
-                    <InfoItem label="Mode Switches"          value={totalSwitches} sub="mid-session BS↔DT changes"                   />
+                    <InfoItem label="Brainstorming Sessions" value={bsSessions} sub={pct(bsSessions, totalSessions) + ' of total'} />
+                    <InfoItem label="Deep Thinking Sessions" value={dtSessions} sub={pct(dtSessions, totalSessions) + ' of total'} />
+                    <InfoItem label="Mode Switches"          value={totalSwitches} sub="mid-session BS↔DT changes" />
                 </div>
                 {modeSwitchEntries.length > 0 && (
                     <div className="admin-dashboard-distribution-card" style={{ marginTop: '1rem' }}>
@@ -622,7 +622,8 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions }) => {
                         CPS Stage Progression (Brainstorming)
                     </h3>
                     <p className="admin-dashboard-info-subtext" style={{ marginBottom: '1rem' }}>
-                        The four CPS stages are Clarify → Ideate → Develop → Implement. Backward transitions (recursions) indicate iterative refinement — a positive creativity signal.
+                        The four CPS stages are Clarify → Ideate → Develop → Implement. Backward transitions
+                        (recursions) indicate iterative refinement — a positive creativity signal.
                     </p>
                     {cpsStageData.length > 0 && (
                         <ResponsiveContainer width="100%" height={180}>
@@ -637,7 +638,7 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions }) => {
                     )}
                     <div className="admin-dashboard-info-grid" style={{ marginTop: '1rem' }}>
                         <InfoItem label="Total CPS Recursions" value={totalRecursions} sub="backward stage transitions" />
-                        <InfoItem label="Recursion Rate"       value={bsSessions > 0 ? round1(totalRecursions / bsSessions) + ' / session' : '—'} />
+                        <InfoItem label="Recursion Rate" value={bsSessions > 0 ? round1(totalRecursions / bsSessions) + ' / session' : '—'} />
                     </div>
                 </div>
             )}
@@ -645,32 +646,32 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions }) => {
             {/* ── Brainstorming Creativity Metrics ── */}
             {hasCreativity && (
                 <div className="admin-dashboard-story-map-section"
-                     style={{ borderColor: '#f59e0b55', marginTop: '1.5rem', borderWidth: '1px' }}>
+                    style={{ borderColor: '#f59e0b55', marginTop: '1.5rem', borderWidth: '1px' }}>
                     <h3 className="admin-dashboard-section-title" style={{ borderBottomColor: '#f59e0b33' }}>
                         <Lightbulb className="w-6 h-6" style={{ color: '#f59e0b' }} />
                         Brainstorming Creativity Metrics (CPS Mode)
                     </h3>
 
-                    {/* Four creativity dimensions */}
                     <div className="admin-dashboard-stats-grid">
-                        <StatCard icon={<Zap          className="w-5 h-5" />} label="Avg Fluency"      value={round1(avgFluency)}     color="blue"   />
-                        <StatCard icon={<GitMerge     className="w-5 h-5" />} label="Avg Flexibility"  value={round1(avgFlexibility)} color="purple" />
-                        <StatCard icon={<Layers       className="w-5 h-5" />} label="Avg Elaboration"  value={round1(avgElaboration)} color="green"  />
-                        <StatCard icon={<Brain        className="w-5 h-5" />} label="Avg Originality"  value={round1(avgOriginality)} color="pink"   />
+                        <StatCard label="Avg Ideas / Session"  value={avgFluency     ?? '—'} color="blue"   />
+                        <StatCard label="Flexibility (cats)"   value={avgFlexibility  ?? '—'} color="purple" />
+                        <StatCard label="Avg Elaboration"      value={avgElaboration != null ? `${avgElaboration}/3` : '—'} color="green" />
+                        <StatCard label="Avg Originality"      value={avgOriginality != null ? `${avgOriginality}/3` : '—'} color="pink"  />
                     </div>
 
                     <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
                         <p className="admin-dashboard-info-subtext" style={{ marginBottom: '0.75rem' }}>
-                            Scores are CFM evaluations (0–10 scale): <strong>Fluency</strong> = number of ideas generated; <strong>Flexibility</strong> = variety of categories; <strong>Elaboration</strong> = depth of detail; <strong>Originality</strong> = novelty compared to session list.
+                            <strong>Fluency</strong> = avg ideas per session; <strong>Flexibility</strong> = distinct
+                            idea categories; <strong>Elaboration</strong> and <strong>Originality</strong> averaged
+                            from per-idea CFM evaluations (1 = Low, 2 = Medium, 3 = High).
                         </p>
                         <div className="admin-dashboard-info-grid">
-                            <InfoItem label="Total Ideas Generated"    value={orDash(totalIdeas)}      sub="user-generated only"            />
-                            <InfoItem label="Avg Ideas / BS Session"   value={round1(avgIdeasSession)} sub="fluency proxy"                  />
-                            <InfoItem label="SCAMPER Techniques Used"  value={scamperData.length > 0 ? scamperData.length + ' distinct' : '—'} />
+                            <InfoItem label="Total Ideas Generated" value={totalIdeas   ?? '—'} sub="user-generated only" />
+                            <InfoItem label="Refined Ideas"          value={refinedIdeas ?? '—'} sub="combined variations" />
+                            <InfoItem label="SCAMPER Techniques"     value={scamperData.length > 0 ? `${scamperData.length} distinct` : '—'} />
                         </div>
                     </div>
 
-                    {/* SCAMPER technique coverage */}
                     {scamperData.length > 0 && (
                         <div style={{ marginTop: '1.5rem' }}>
                             <ChartCard title="SCAMPER Technique Coverage">
@@ -679,6 +680,53 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions }) => {
                                         <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
                                         <XAxis dataKey="name" stroke="#52525B" tick={{ fontSize: 12 }} />
                                         <YAxis stroke="#52525B" allowDecimals={false} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill="#f59e0b" />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </ChartCard>
+                        </div>
+                    )}
+
+                    {(elaborationData.length > 0 || originalityData.length > 0) && (
+                        <div className="admin-dashboard-charts-grid" style={{ marginTop: '1.5rem' }}>
+                            {elaborationData.length > 0 && (
+                                <ChartCard title="Elaboration Distribution">
+                                    <ResponsiveContainer width="100%" height={200}>
+                                        <BarChart data={elaborationData}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+                                            <XAxis dataKey="name" stroke="#52525B" />
+                                            <YAxis stroke="#52525B" allowDecimals={false} />
+                                            <Tooltip />
+                                            <Bar dataKey="count" fill="#10b981" />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </ChartCard>
+                            )}
+                            {originalityData.length > 0 && (
+                                <ChartCard title="Originality Distribution">
+                                    <ResponsiveContainer width="100%" height={200}>
+                                        <BarChart data={originalityData}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+                                            <XAxis dataKey="name" stroke="#52525B" />
+                                            <YAxis stroke="#52525B" allowDecimals={false} />
+                                            <Tooltip />
+                                            <Bar dataKey="count" fill="#8b5cf6" />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </ChartCard>
+                            )}
+                        </div>
+                    )}
+
+                    {flexCatData.length > 0 && (
+                        <div style={{ marginTop: '1.5rem' }}>
+                            <ChartCard title="Flexibility Categories">
+                                <ResponsiveContainer width="100%" height={200}>
+                                    <BarChart data={flexCatData} layout="vertical">
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+                                        <XAxis type="number" stroke="#52525B" allowDecimals={false} />
+                                        <YAxis dataKey="name" type="category" width={80} stroke="#52525B" tick={{ fontSize: 12 }} />
                                         <Tooltip />
                                         <Bar dataKey="count" fill="#f59e0b" />
                                     </BarChart>
@@ -697,13 +745,14 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions }) => {
                         Deep Thinking (Socratic) Mode
                     </h3>
                     <p className="admin-dashboard-info-subtext" style={{ marginBottom: '1rem' }}>
-                        Reasoning quality in DT mode is assessed post-hoc from message-length trends. Rising message length within a session indicates the student is constructing more elaborated reasoning over time.
+                        Reasoning quality in DT mode is assessed post-hoc from message-length trends.
+                        Rising message length within a session indicates the student is constructing
+                        more elaborated reasoning over time.
                     </p>
                     <div className="admin-dashboard-info-grid">
-                        <InfoItem label="DT Sessions"      value={dtSessions} />
-                        <InfoItem label="% of Total"       value={pct(dtSessions, totalSessions)} />
-                        <InfoItem label="Time on Page"     value={fmtMin(totalTimeMs)}
-                                  sub="shared across both modes" />
+                        <InfoItem label="DT Sessions"   value={dtSessions} />
+                        <InfoItem label="% of Total"    value={pct(dtSessions, totalSessions)} />
+                        <InfoItem label="Time on Page"  value={fmtMin(totalTimeMs)} sub="shared across both modes" />
                     </div>
                 </div>
             )}
@@ -713,10 +762,10 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions }) => {
 
 // ─── Story Map Section ─────────────────────────────────────────────────────────
 const StoryMapMetricsSection = ({ metrics }) => {
-    const totalGenerations = metrics.totalGenerations     || 0;
-    const totalAnalyses    = metrics.totalAnalyses        || 0;
-    const editsAfterGen    = metrics.editsAfterGeneration || 0;
-    const editsAfterAna    = metrics.editsAfterAnalysis   || 0;
+    const totalGenerations = metrics.totalGenerations || 0;
+    const totalAnalyses = metrics.totalAnalyses || 0;
+    const editsAfterGen = metrics.editsAfterGeneration || 0;
+    const editsAfterAna = metrics.editsAfterAnalysis || 0;
 
     const analysisResultsList = metrics.analysisResults
         ? Object.values(metrics.analysisResults)
@@ -724,17 +773,17 @@ const StoryMapMetricsSection = ({ metrics }) => {
 
     const severityTotals = analysisResultsList.reduce(
         (acc, r) => {
-            acc.high   += r.issuesBySeverity?.high   || 0;
+            acc.high += r.issuesBySeverity?.high || 0;
             acc.medium += r.issuesBySeverity?.medium || 0;
-            acc.low    += r.issuesBySeverity?.low    || 0;
+            acc.low += r.issuesBySeverity?.low || 0;
             return acc;
         },
         { high: 0, medium: 0, low: 0 }
     );
     const issuesBySeverityData = [
-        { name: 'High',   count: severityTotals.high,   fill: '#EF4444' },
+        { name: 'High', count: severityTotals.high, fill: '#EF4444' },
         { name: 'Medium', count: severityTotals.medium, fill: '#F59E0B' },
-        { name: 'Low',    count: severityTotals.low,    fill: '#10B981' },
+        { name: 'Low', count: severityTotals.low, fill: '#10B981' },
     ].filter(d => d.count > 0);
 
     const scoreTrend = analysisResultsList
@@ -747,7 +796,7 @@ const StoryMapMetricsSection = ({ metrics }) => {
         ? (triggersList.reduce((s, t) => s + (t.nodesExtracted || 0), 0) / triggersList.length).toFixed(1)
         : null;
     const avgWords = triggersList.length
-        ? (triggersList.reduce((s, t) => s + (t.wordCount      || 0), 0) / triggersList.length).toFixed(0)
+        ? (triggersList.reduce((s, t) => s + (t.wordCount || 0), 0) / triggersList.length).toFixed(0)
         : null;
     const avgGenMs = triggersList.length
         ? triggersList.reduce((s, t) => s + (t.processingTimeMs || 0), 0) / triggersList.length
@@ -760,10 +809,10 @@ const StoryMapMetricsSection = ({ metrics }) => {
             </h3>
 
             <div className="admin-dashboard-stats-grid">
-                <StatCard icon={<Zap         className="w-5 h-5" />} label="AI Generations"     value={totalGenerations}                         color="blue"   />
-                <StatCard icon={<Activity    className="w-5 h-5" />} label="Analyses Run"       value={totalAnalyses}                            color="purple" />
-                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Edits After Gen."   value={`${editsAfterGen} / ${totalGenerations}`} color="green"  />
-                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Edits After Anal."  value={`${editsAfterAna} / ${totalAnalyses}`}    color="pink"   />
+                <StatCard icon={<Zap className="w-5 h-5" />} label="AI Generations" value={totalGenerations} color="blue" />
+                <StatCard icon={<Activity className="w-5 h-5" />} label="Analyses Run" value={totalAnalyses} color="purple" />
+                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Edits After Gen." value={`${editsAfterGen} / ${totalGenerations}`} color="green" />
+                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Edits After Anal." value={`${editsAfterAna} / ${totalAnalyses}`} color="pink" />
             </div>
 
             <div className="admin-dashboard-info-card admin-dashboard-validation-card" style={{ marginTop: '1.5rem' }}>
@@ -810,7 +859,7 @@ const StoryMapMetricsSection = ({ metrics }) => {
                             <ResponsiveContainer width="100%" height={250}>
                                 <PieChart>
                                     <Pie data={issuesBySeverityData} dataKey="count" nameKey="name"
-                                         cx="50%" cy="50%" outerRadius={80} label>
+                                        cx="50%" cy="50%" outerRadius={80} label>
                                         {issuesBySeverityData.map((e, i) => <Cell key={i} fill={e.fill} />)}
                                     </Pie>
                                     <Tooltip /><Legend />
@@ -840,9 +889,9 @@ const StoryMapMetricsSection = ({ metrics }) => {
                         <Zap className="w-5 h-5" /> Generation Details
                     </h3>
                     <div className="admin-dashboard-info-grid">
-                        <InfoItem label="Avg Nodes Extracted"  value={orDash(avgNodes)} />
+                        <InfoItem label="Avg Nodes Extracted" value={orDash(avgNodes)} />
                         <InfoItem label="Avg Input Word Count" value={orDash(avgWords)} />
-                        <InfoItem label="Avg Processing Time"  value={fmtSec(avgGenMs)} />
+                        <InfoItem label="Avg Processing Time" value={fmtSec(avgGenMs)} />
                     </div>
                 </div>
             )}
@@ -852,14 +901,14 @@ const StoryMapMetricsSection = ({ metrics }) => {
 
 // ─── Timeline Section ──────────────────────────────────────────────────────────
 const TimelineMetricsSection = ({ metrics }) => {
-    const totalCreated  = metrics.totalEventsCreated  || 0;
-    const majorEvents   = metrics.majorEventsCreated  || 0;
-    const minorEvents   = metrics.minorEventsCreated  || 0;
-    const totalEdits    = metrics.totalManualEdits    || 0;
-    const totalReorders = metrics.totalReorders       || 0;
-    const totalDeleted  = metrics.totalEventsDeleted  || 0;
-    const totalChecks   = metrics.totalCoherenceChecks || 0;
-    const netEvents     = totalCreated - totalDeleted;
+    const totalCreated = metrics.totalEventsCreated || 0;
+    const majorEvents = metrics.majorEventsCreated || 0;
+    const minorEvents = metrics.minorEventsCreated || 0;
+    const totalEdits = metrics.totalManualEdits || 0;
+    const totalReorders = metrics.totalReorders || 0;
+    const totalDeleted = metrics.totalEventsDeleted || 0;
+    const totalChecks = metrics.totalCoherenceChecks || 0;
+    const netEvents = totalCreated - totalDeleted;
 
     const stageDistData = Object.entries(metrics.stageDistribution || {})
         .map(([stage, count]) => ({ name: stage, count }));
@@ -873,7 +922,7 @@ const TimelineMetricsSection = ({ metrics }) => {
         .map(c => ({ run: c.checkNumber, score: c.overallScore }));
 
     const firstScore = metrics.firstCoherenceScore;
-    const lastScore  = metrics.lastCoherenceScore;
+    const lastScore = metrics.lastCoherenceScore;
     const scoreImprovement = (firstScore != null && lastScore != null && totalChecks >= 2)
         ? (lastScore - firstScore).toFixed(1)
         : null;
@@ -888,10 +937,10 @@ const TimelineMetricsSection = ({ metrics }) => {
             </h3>
 
             <div className="admin-dashboard-stats-grid">
-                <StatCard icon={<Activity    className="w-5 h-5" />} label="Events Created"   value={totalCreated} color="blue"   />
-                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Net Events"       value={netEvents}    color="green"  />
-                <StatCard icon={<Layers      className="w-5 h-5" />} label="Manual Edits"     value={totalEdits}   color="purple" />
-                <StatCard icon={<RefreshCw   className="w-5 h-5" />} label="Coherence Checks" value={totalChecks}  color="pink"   />
+                <StatCard icon={<Activity className="w-5 h-5" />} label="Events Created" value={totalCreated} color="blue" />
+                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Net Events" value={netEvents} color="green" />
+                <StatCard icon={<Layers className="w-5 h-5" />} label="Manual Edits" value={totalEdits} color="purple" />
+                <StatCard icon={<RefreshCw className="w-5 h-5" />} label="Coherence Checks" value={totalChecks} color="pink" />
             </div>
 
             <div className="admin-dashboard-info-card admin-dashboard-validation-card" style={{ marginTop: '1.5rem' }}>
@@ -935,11 +984,11 @@ const TimelineMetricsSection = ({ metrics }) => {
             <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
                 <h3 className="admin-dashboard-info-title">Event Composition</h3>
                 <div className="admin-dashboard-info-grid">
-                    <InfoItem label="Major Events"  value={majorEvents}   sub={pct(majorEvents, totalCreated) + ' of total'} />
-                    <InfoItem label="Minor Events"  value={minorEvents}   sub={pct(minorEvents, totalCreated) + ' of total'} />
-                    <InfoItem label="Reorders"      value={totalReorders} sub="drag-and-drop moves" />
-                    <InfoItem label="Deletions"     value={totalDeleted}  sub="events removed" />
-                    <InfoItem label="Mode Used"     value={metrics.lastModeUsed || '—'} />
+                    <InfoItem label="Major Events" value={majorEvents} sub={pct(majorEvents, totalCreated) + ' of total'} />
+                    <InfoItem label="Minor Events" value={minorEvents} sub={pct(minorEvents, totalCreated) + ' of total'} />
+                    <InfoItem label="Reorders" value={totalReorders} sub="drag-and-drop moves" />
+                    <InfoItem label="Deletions" value={totalDeleted} sub="events removed" />
+                    <InfoItem label="Mode Used" value={metrics.lastModeUsed || '—'} />
                 </div>
             </div>
 
@@ -1022,10 +1071,10 @@ const TimelineMetricsSection = ({ metrics }) => {
 
 // ─── Mentor Text Section ───────────────────────────────────────────────────────
 const MentorTextMetricsSection = ({ metrics }) => {
-    const totalAnalyses  = metrics.totalAnalyses      || 0;
-    const totalViews     = metrics.totalAnalysisViews || 0;
-    const totalDeletions = metrics.totalDeletions     || 0;
-    const totalSearches  = metrics.totalSearches      || 0;
+    const totalAnalyses = metrics.totalAnalyses || 0;
+    const totalViews = metrics.totalAnalysisViews || 0;
+    const totalDeletions = metrics.totalDeletions || 0;
+    const totalSearches = metrics.totalSearches || 0;
 
     const retentionRate = metrics.retentionRate != null
         ? metrics.retentionRate
@@ -1033,14 +1082,14 @@ const MentorTextMetricsSection = ({ metrics }) => {
 
     const viewRatio = totalAnalyses > 0 ? (totalViews / totalAnalyses).toFixed(1) : '—';
 
-    const focusData  = Object.entries(metrics.analysesByFocus || {}).map(([name, count]) => ({ name: name.replace(/_/g, ' '), count }));
-    const genreData  = Object.entries(metrics.analysesByGenre || {}).map(([name, count]) => ({ name, count }));
+    const focusData = Object.entries(metrics.analysesByFocus || {}).map(([name, count]) => ({ name: name.replace(/_/g, ' '), count }));
+    const genreData = Object.entries(metrics.analysesByGenre || {}).map(([name, count]) => ({ name, count }));
 
-    const dailyData  = Object.entries(metrics.dailyAnalyses || {})
+    const dailyData = Object.entries(metrics.dailyAnalyses || {})
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([date, count]) => ({ date: date.slice(5), count }));
 
-    const filterEntries   = Object.entries(metrics.filterUsage || {});
+    const filterEntries = Object.entries(metrics.filterUsage || {});
     const totalFilterUses = filterEntries.reduce((s, [, v]) => s + v, 0);
 
     return (
@@ -1050,10 +1099,10 @@ const MentorTextMetricsSection = ({ metrics }) => {
             </h3>
 
             <div className="admin-dashboard-stats-grid">
-                <StatCard icon={<FileText    className="w-5 h-5" />} label="Analyses Created"    value={totalAnalyses}                                          color="purple" />
-                <StatCard icon={<Eye         className="w-5 h-5" />} label="Total Reviews"       value={totalViews}                                             color="blue"   />
-                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Retention Rate"      value={retentionRate != null ? `${retentionRate}%` : '—'}      color="green"  />
-                <StatCard icon={<Activity    className="w-5 h-5" />} label="Reviews / Analysis"  value={viewRatio}                                              color="pink"   />
+                <StatCard icon={<FileText className="w-5 h-5" />} label="Analyses Created" value={totalAnalyses} color="purple" />
+                <StatCard icon={<Eye className="w-5 h-5" />} label="Total Reviews" value={totalViews} color="blue" />
+                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Retention Rate" value={retentionRate != null ? `${retentionRate}%` : '—'} color="green" />
+                <StatCard icon={<Activity className="w-5 h-5" />} label="Reviews / Analysis" value={viewRatio} color="pink" />
             </div>
 
             <div className="admin-dashboard-info-card admin-dashboard-validation-card" style={{ marginTop: '1.5rem' }}>
@@ -1104,11 +1153,11 @@ const MentorTextMetricsSection = ({ metrics }) => {
                         <AlertCircle className="w-5 h-5" /> Deletion Behaviour
                     </h3>
                     <div className="admin-dashboard-info-grid">
-                        <InfoItem label="Total Deletions"       value={totalDeletions}                      />
+                        <InfoItem label="Total Deletions" value={totalDeletions} />
                         <InfoItem label="Deleted After Viewing" value={metrics.deletionsAfterViewing || 0}
-                                  sub="Reviewed, then removed" />
-                        <InfoItem label="Deleted Immediately"   value={metrics.immediateDeletions    || 0}
-                                  sub="Never reviewed" />
+                            sub="Reviewed, then removed" />
+                        <InfoItem label="Deleted Immediately" value={metrics.immediateDeletions || 0}
+                            sub="Never reviewed" />
                     </div>
                 </div>
             )}
@@ -1192,8 +1241,8 @@ const MentorTextMetricsSection = ({ metrics }) => {
             )}
 
             <div className="admin-dashboard-engagement-row" style={{ marginTop: '1.5rem' }}>
-                <MetricBox label="Library Searches" value={totalSearches}   icon="🔍" />
-                <MetricBox label="Filter Uses"       value={totalFilterUses} icon="🎛️" />
+                <MetricBox label="Library Searches" value={totalSearches} icon="🔍" />
+                <MetricBox label="Filter Uses" value={totalFilterUses} icon="🎛️" />
             </div>
 
             {filterEntries.length > 0 && (
@@ -1216,11 +1265,11 @@ const MentorTextMetricsSection = ({ metrics }) => {
 // ─── Generic fallback ──────────────────────────────────────────────────────────
 const FeatureMetricsCard = ({ feature, metrics }) => {
     const names = {
-        bookRecs:            'Book Recommendations',
+        bookRecs: 'Book Recommendations',
         bookRecommendations: 'Book Recommendations',
-        feedback:            'Feedback Assistant',
-        bsChatbot:           'Brainstorming Chat',
-        dtChatbot:           'Deep Thinking Chat',
+        feedback: 'Feedback Assistant',
+        bsChatbot: 'Brainstorming Chat',
+        dtChatbot: 'Deep Thinking Chat',
     };
     return (
         <div className="admin-dashboard-feature-card">
