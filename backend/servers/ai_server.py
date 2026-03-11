@@ -47,7 +47,7 @@ from prompts.mentor_analysis_prompt import MENTOR_TEXT_ANALYSIS_SYSTEM_PROMPT, b
 
 app = Flask(__name__)
 
-CORS(app)
+CORS(app, origins="*", supports_credentials=True) 
 
 # ============================================
 # LOGGING SETUP
