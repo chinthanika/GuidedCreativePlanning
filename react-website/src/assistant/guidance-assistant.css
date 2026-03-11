@@ -1,0 +1,342 @@
+/* ─── GuidanceAssistant — StoryPath Guide ──────────────────────────────────── */
+/* Soft editorial aesthetic — warm ivory, deep ink, gold accent                 */
+
+.ga-root {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+    font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+/* ─── Trigger button ───────────────────────────────────────────────────────── */
+.ga-trigger {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: linear-gradient(135deg, #2c1810 0%, #4a2c1a 100%);
+    box-shadow:
+        0 4px 20px rgba(44, 24, 16, 0.35),
+        0 0 0 2px rgba(212, 175, 100, 0.3);
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ga-trigger:hover {
+    transform: scale(1.08);
+    box-shadow:
+        0 6px 28px rgba(44, 24, 16, 0.45),
+        0 0 0 3px rgba(212, 175, 100, 0.5);
+}
+
+.ga-trigger-open {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.3),
+        0 0 0 2px rgba(212, 175, 100, 0.2);
+}
+
+.ga-trigger-icon {
+    font-size: 1.25rem;
+    color: #d4af64;
+    line-height: 1;
+    transition: transform 0.2s ease;
+}
+
+.ga-trigger:hover .ga-trigger-icon {
+    transform: rotate(15deg);
+}
+
+.ga-trigger-open .ga-trigger-icon {
+    color: #a0a0a0;
+    font-size: 1rem;
+}
+
+.ga-trigger-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 10px;
+    height: 10px;
+    background: #e55b4d;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    animation: ga-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes ga-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+}
+
+/* ─── Chat window ──────────────────────────────────────────────────────────── */
+.ga-window {
+    width: 340px;
+    max-height: 480px;
+    background: #faf7f2;
+    border-radius: 16px;
+    box-shadow:
+        0 24px 60px rgba(44, 24, 16, 0.18),
+        0 4px 16px rgba(44, 24, 16, 0.1),
+        0 0 0 1px rgba(212, 175, 100, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: ga-slide-up 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes ga-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ─── Header ───────────────────────────────────────────────────────────────── */
+.ga-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.125rem 0.875rem;
+    background: linear-gradient(135deg, #2c1810 0%, #3d2214 100%);
+    border-bottom: 1px solid rgba(212, 175, 100, 0.2);
+}
+
+.ga-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+
+.ga-avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(212, 175, 100, 0.15);
+    border: 1px solid rgba(212, 175, 100, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    color: #d4af64;
+    flex-shrink: 0;
+}
+
+.ga-header-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #f5edd8;
+    margin: 0;
+    letter-spacing: 0.01em;
+}
+
+.ga-header-subtitle {
+    font-size: 0.7rem;
+    color: rgba(212, 175, 100, 0.7);
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-style: italic;
+}
+
+.ga-close-btn {
+    background: none;
+    border: none;
+    color: rgba(245, 237, 216, 0.5);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0.25rem;
+    line-height: 1;
+    transition: color 0.15s ease;
+    border-radius: 4px;
+}
+
+.ga-close-btn:hover {
+    color: #f5edd8;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Messages area ────────────────────────────────────────────────────────── */
+.ga-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    scroll-behavior: smooth;
+}
+
+.ga-messages::-webkit-scrollbar {
+    width: 4px;
+}
+.ga-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+.ga-messages::-webkit-scrollbar-thumb {
+    background: rgba(44, 24, 16, 0.15);
+    border-radius: 2px;
+}
+
+.ga-message {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.ga-message-user {
+    flex-direction: row-reverse;
+}
+
+.ga-message-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2c1810, #4a2c1a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.625rem;
+    color: #d4af64;
+    flex-shrink: 0;
+    margin-bottom: 2px;
+}
+
+/* ─── Bubbles ──────────────────────────────────────────────────────────────── */
+.ga-bubble {
+    max-width: 82%;
+    padding: 0.625rem 0.875rem;
+    border-radius: 14px;
+    font-size: 0.83rem;
+    line-height: 1.55;
+    color: #1a1208;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.ga-message-assistant .ga-bubble {
+    background: #fff;
+    border-radius: 4px 14px 14px 14px;
+    box-shadow: 0 1px 4px rgba(44, 24, 16, 0.08);
+    border: 1px solid rgba(44, 24, 16, 0.06);
+}
+
+.ga-message-user .ga-bubble {
+    background: linear-gradient(135deg, #2c1810, #4a2c1a);
+    color: #f5edd8;
+    border-radius: 14px 4px 14px 14px;
+}
+
+/* ─── Typing indicator ─────────────────────────────────────────────────────── */
+.ga-typing {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.75rem 1rem;
+    min-width: 52px;
+}
+
+.ga-typing span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #c4a882;
+    animation: ga-bounce 1.2s ease-in-out infinite;
+    display: block;
+}
+
+.ga-typing span:nth-child(2) { animation-delay: 0.18s; }
+.ga-typing span:nth-child(3) { animation-delay: 0.36s; }
+
+@keyframes ga-bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-5px); opacity: 1; }
+}
+
+/* ─── Input area ───────────────────────────────────────────────────────────── */
+.ga-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid rgba(44, 24, 16, 0.08);
+    background: #faf7f2;
+}
+
+.ga-input {
+    flex: 1;
+    border: 1px solid rgba(44, 24, 16, 0.15);
+    border-radius: 10px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.82rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #1a1208;
+    background: #fff;
+    resize: none;
+    line-height: 1.4;
+    min-height: 36px;
+    max-height: 80px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ga-input::placeholder {
+    color: #b8a898;
+}
+
+.ga-input:focus {
+    border-color: rgba(212, 175, 100, 0.6);
+    box-shadow: 0 0 0 3px rgba(212, 175, 100, 0.1);
+}
+
+.ga-send-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #2c1810, #4a2c1a);
+    color: #d4af64;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+    padding: 0;
+    line-height: 1;
+}
+
+.ga-send-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #3d2214, #5c3820);
+    transform: scale(1.05);
+}
+
+.ga-send-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* ─── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .ga-root {
+        bottom: 1rem;
+        right: 1rem;
+    }
+
+    .ga-window {
+        width: calc(100vw - 2rem);
+        max-height: 420px;
+    }
+}
