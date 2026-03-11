@@ -181,6 +181,38 @@ def trigger_auto_title_if_needed(user_id, session_id, message_count):
     
     threading.Thread(target=generate_title, daemon=True).start()
 
+@app.route('/api/guidance/chat', methods=['POST'])
+def guidance_chat():
+    try:
+        body = request.get_json()
+        system_prompt = body.get('system', '')
+        messages = body.get('messages', [])
+
+        if not messages:
+            return jsonify({'error': 'No messages provided'}), 400
+
+        deepseek_messages = [
+            {"role": "system", "content": system_prompt}
+        ]
+        for m in messages:
+            deepseek_messages.append({"role": m["role"], "content": m["content"]})
+
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=deepseek_messages,
+            max_tokens=300,
+            stream=False
+        )
+
+        content = response.choices[0].message.content
+        return jsonify({'content': content}), 200
+
+    except Exception as e:
+        import traceback
+        print(f"[GuidanceAssistant] ERROR: {e}")
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
 # ============================================
 # BRAINSTORMING CHAT (FIXED)
 # ============================================
