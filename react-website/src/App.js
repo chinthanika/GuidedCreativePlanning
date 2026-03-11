@@ -22,6 +22,7 @@ import StoryEditorPage from './pages/storyeditor/story';
 import Chatbot from './pages/chatbot/chatbot'; // Import the Chatbot page
 import StoryWorld from './pages/world/world';  
 import LibraryPage from './pages/recommender/LibraryPage';
+import GuidanceAssistant from './assistant/GuidanceAssistant';
 
 function App() {
 
@@ -59,6 +60,7 @@ return (
                     </PrivateRoute>
                 }/>
             </Routes>
+                <GuidanceAssistant />
         </AuthProvider>
     </Router>
 );
