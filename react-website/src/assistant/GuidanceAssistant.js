@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuthValue } from '../Firebase/AuthContext';
 import { database } from '../Firebase/firebase';
@@ -59,17 +59,6 @@ const TOOL_MAP = {
     },
 };
 
-const PAGE_SUGGESTIONS = {
-    '/library': "You're exploring book recommendations — great starting point for building genre knowledge.",
-    '/mentor-text': "You're analysing mentor texts — this is where you learn what makes great stories work.",
-    '/map-generator': "You're generating a story map — perfect for turning a rough idea into a visual structure.",
-    '/story-map': "You're on the Story Map — this is where your story structure takes shape.",
-    '/story-timeline': "You're working on your timeline — great for getting events in the right order.",
-    '/story-world': "You're building your story world — setting and context matter more than people think.",
-    '/chatbot': "You're in the Reflective Chatbot — ideal for developing ideas or deepening your thinking.",
-    '/story-editor': "You're in the Story Editor — this is the final stage where you write and refine.",
-};
-
 // ─── System prompt builder ─────────────────────────────────────────────────────
 function buildSystemPrompt(contextSnapshot) {
     const { currentPage, toolsUsed, tlcStagesReached, currentTool } = contextSnapshot;
@@ -116,8 +105,7 @@ YOUR GUIDANCE RULES:
 
 // ─── Opening message builder ───────────────────────────────────────────────────
 async function fetchOpeningMessage(contextSnapshot, signal) {
-    const { currentPage, toolsUsed } = contextSnapshot;
-    const pageSuggestion = PAGE_SUGGESTIONS[currentPage] || "Welcome to StoryPath!";
+    const { toolsUsed } = contextSnapshot;
     const hasUsedTools = toolsUsed && toolsUsed.length > 0;
 
     const userPrompt = hasUsedTools
@@ -231,13 +219,14 @@ const GuidanceAssistant = () => {
         abortRef.current?.abort();
     };
 
-    // Reset conversation when page changes
+
     useEffect(() => {
         if (isOpen) {
             setMessages([]);
             setContextSnapshot(null);
             handleOpen();
         }
+        // eslint-disable-next-line
     }, [location.pathname]);
 
     // Scroll to bottom
