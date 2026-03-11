@@ -35,6 +35,9 @@ const NewItemModal = ({
         required: false
     });
 
+    const [guidingQuestion, setGuidingQuestion] = useState('');
+    const [showPedagogy, setShowPedagogy] = useState({});
+
     // Helper function to format field names for display
     const formatFieldName = (fieldName) => {
         // Convert camelCase or PascalCase to Title Case with spaces
@@ -66,6 +69,8 @@ const NewItemModal = ({
         setSuggestedFields([]);
         setCustomFields([]);
         setAiError(null);
+        setGuidingQuestion(''); // NEW
+        setShowPedagogy({}); // NEW
         closeModal();
     };
 
@@ -106,16 +111,14 @@ const NewItemModal = ({
         setAiError(null);
 
         try {
-            // Get parent template fields if they exist
             const parentTemplateFields = parentTemplate ? parentTemplate.fields : [];
-
-            // Get existing custom fields (inherited ones)
             const existingCustomFields = customFields.reduce((acc, field) => {
                 acc[field.fieldName] = field;
                 return acc;
             }, {});
 
-            const AI_SERVER_URL = process.env.REACT_APP_AI_SERVER_URL || 'https://guidedcreativeplanning-ai.onrender.com' || "http://localhost:5000";
+            // const AI_SERVER_URL = process.env.REACT_APP_AI_SERVER_URL || 'https://guidedcreativeplanning-ai.onrender.com' || "http://localhost:5000";
+            const AI_SERVER_URL =  "http://localhost:5000";
 
             console.log(`Calling ${AI_SERVER_URL}.\n Requesting AI suggestions.`);
 
@@ -129,6 +132,7 @@ const NewItemModal = ({
             });
 
             const suggested = response.data.suggestedFields || [];
+            const guiding = response.data.guidingQuestion || ''; // NEW: Capture guiding question
 
             // Mark inherited fields as accepted, new fields as pending
             const fieldsWithStatus = suggested.map(field => ({
@@ -138,6 +142,15 @@ const NewItemModal = ({
             }));
 
             setSuggestedFields(fieldsWithStatus);
+            setGuidingQuestion(guiding); // NEW: Set guiding question
+
+            // NEW: Initialize pedagogy toggle state
+            const initialShowState = {};
+            fieldsWithStatus.forEach(field => {
+                initialShowState[field.fieldName] = false;
+            });
+            setShowPedagogy(initialShowState);
+
             setStep(3);
         } catch (error) {
             console.error('AI suggestion error:', error);
@@ -146,6 +159,7 @@ const NewItemModal = ({
             setLoadingAI(false);
         }
     };
+
 
     const handleAcceptField = (field) => {
         setSuggestedFields(suggestedFields.map(f =>
@@ -212,6 +226,14 @@ const NewItemModal = ({
         ));
     };
 
+    const togglePedagogy = (fieldName) => {
+        setShowPedagogy(prev => ({
+            ...prev,
+            [fieldName]: !prev[fieldName]
+        }));
+    };
+
+
     const handleSave = () => {
         const finalFields = customFields.filter(f => f.accepted !== false);
 
@@ -239,7 +261,14 @@ const NewItemModal = ({
 
         const template = templateChoice !== 'none' ? {
             name: `${itemType} Template`,
-            fields: finalFields,
+            fields: finalFields.map(f => ({
+                fieldName: f.fieldName,
+                fieldType: f.fieldType,
+                description: f.description,
+                required: f.required || false,
+                pedagogicalRationale: f.pedagogicalRationale, // NEW
+                reflectivePrompt: f.reflectivePrompt // NEW
+            })),
             inheritedFrom: parentTemplate?.firebaseKey || null
         } : null;
 
@@ -437,13 +466,29 @@ const NewItemModal = ({
                             {/* AI Suggestions */}
                             {templateChoice === 'ai' && suggestedFields.length > 0 && (
                                 <>
+                                    {/* NEW: Guiding Question Banner */}
+                                    {guidingQuestion && (
+                                        <div style={{
+                                            padding: '1rem',
+                                            backgroundColor: 'var(--success-main)',
+                                            color: 'white',
+                                            borderRadius: '8px',
+                                            marginBottom: '1rem'
+                                        }}>
+                                            <strong style={{ fontSize: '0.9rem' }}>🎯 Big Picture:</strong>
+                                            <p style={{ fontSize: '0.9rem', margin: '0.5rem 0 0 0', lineHeight: 1.5 }}>
+                                                {guidingQuestion}
+                                            </p>
+                                        </div>
+                                    )}
+
                                     <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
                                         <button
                                             onClick={handleAcceptAll}
                                             style={{
                                                 flex: 1,
                                                 padding: '0.5rem',
-                                                backgroundColor: '#28a745',
+                                                backgroundColor: 'var(--success-main)',
                                                 color: 'white',
                                                 border: 'none',
                                                 borderRadius: '6px',
@@ -458,7 +503,7 @@ const NewItemModal = ({
                                             style={{
                                                 flex: 1,
                                                 padding: '0.5rem',
-                                                backgroundColor: '#dc3545',
+                                                backgroundColor: 'var(--error-main)',
                                                 color: 'white',
                                                 border: 'none',
                                                 borderRadius: '6px',
@@ -470,16 +515,16 @@ const NewItemModal = ({
                                         </button>
                                     </div>
 
-                                    <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '1rem' }}>
+                                    <div style={{ maxHeight: '400px', overflowY: 'auto', marginBottom: '1rem' }}>
                                         {suggestedFields.map((field, idx) => (
                                             <div
                                                 key={idx}
                                                 style={{
                                                     padding: '0.75rem',
-                                                    border: `2px solid ${field.accepted ? '#28a745' : '#dee2e6'}`,
+                                                    border: `2px solid ${field.accepted ? 'var(--success-main)' : 'var(--divider)'}`,
                                                     borderRadius: '8px',
                                                     marginBottom: '0.5rem',
-                                                    backgroundColor: field.accepted ? '#d4edda' : 'white'
+                                                    backgroundColor: field.accepted ? '#d4edda' : 'var(--background-paper)'
                                                 }}
                                             >
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
@@ -488,7 +533,7 @@ const NewItemModal = ({
                                                         <span style={{
                                                             marginLeft: '0.5rem',
                                                             padding: '0.2rem 0.5rem',
-                                                            backgroundColor: '#e9ecef',
+                                                            backgroundColor: 'var(--border-light)',
                                                             borderRadius: '4px',
                                                             fontSize: '0.8rem'
                                                         }}>
@@ -498,25 +543,84 @@ const NewItemModal = ({
                                                             <span style={{
                                                                 marginLeft: '0.5rem',
                                                                 padding: '0.2rem 0.5rem',
-                                                                backgroundColor: '#d1ecf1',
+                                                                backgroundColor: 'var(--border-light)',
                                                                 borderRadius: '4px',
                                                                 fontSize: '0.8rem',
-                                                                color: '#0c5460'
+                                                                color: 'var(--text-disabled)'
                                                             }}>
                                                                 inherited
                                                             </span>
                                                         )}
-                                                        <p style={{ margin: '0.25rem 0 0 0', color: '#666', fontSize: '0.85rem' }}>
+                                                        <p style={{ margin: '0.25rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                                                             {field.description}
                                                         </p>
+
+                                                        {/* NEW: Pedagogical Content Toggle */}
+                                                        {(field.pedagogicalRationale || field.reflectivePrompt) && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => togglePedagogy(field.fieldName)}
+                                                                    style={{
+                                                                        marginTop: '0.5rem',
+                                                                        padding: '0.5rem 1rem',
+                                                                        backgroundColor: 'transparent',
+                                                                        color: 'var(--primary-main)',
+                                                                        border: '1px solid var(--primary-main)',
+                                                                        borderRadius: '6px',
+                                                                        cursor: 'pointer',
+                                                                        fontSize: '0.85rem',
+                                                                        width: '100%'
+                                                                    }}
+                                                                >
+                                                                    {showPedagogy[field.fieldName] ? '📚 Hide Guidance' : '💡 Show Why This Matters'}
+                                                                </button>
+
+                                                                {showPedagogy[field.fieldName] && (
+                                                                    <>
+                                                                        {field.pedagogicalRationale && (
+                                                                            <div style={{
+                                                                                marginTop: '0.5rem',
+                                                                                padding: '0.75rem',
+                                                                                backgroundColor: 'var(--border-light)',
+                                                                                borderLeft: '3px solid var(--primary-main)',
+                                                                                borderRadius: '4px'
+                                                                            }}>
+                                                                                <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                                                                                    Why this matters:
+                                                                                </strong>
+                                                                                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.5rem 0 0 0' }}>
+                                                                                    {field.pedagogicalRationale}
+                                                                                </p>
+                                                                            </div>
+                                                                        )}
+
+                                                                        {field.reflectivePrompt && (
+                                                                            <div style={{
+                                                                                marginTop: '0.5rem',
+                                                                                padding: '0.75rem',
+                                                                                backgroundColor: 'var(--warning-main)',
+                                                                                color: 'white',
+                                                                                borderRadius: '4px',
+                                                                                opacity: 0.9
+                                                                            }}>
+                                                                                <strong style={{ fontSize: '0.85rem' }}>Think about:</strong>
+                                                                                <p style={{ fontSize: '0.85rem', margin: '0.5rem 0 0 0' }}>
+                                                                                    {field.reflectivePrompt}
+                                                                                </p>
+                                                                            </div>
+                                                                        )}
+                                                                    </>
+                                                                )}
+                                                            </>
+                                                        )}
                                                     </div>
-                                                    <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                                    <div style={{ display: 'flex', gap: '0.25rem', marginLeft: '0.5rem' }}>
                                                         {!field.accepted && (
                                                             <button
                                                                 onClick={() => handleAcceptField(field)}
                                                                 style={{
                                                                     padding: '0.25rem 0.5rem',
-                                                                    backgroundColor: '#28a745',
+                                                                    backgroundColor: 'var(--success-main)',
                                                                     color: 'white',
                                                                     border: 'none',
                                                                     borderRadius: '4px',
@@ -532,7 +636,7 @@ const NewItemModal = ({
                                                                 onClick={() => handleRejectField(field)}
                                                                 style={{
                                                                     padding: '0.25rem 0.5rem',
-                                                                    backgroundColor: '#dc3545',
+                                                                    backgroundColor: 'var(--error-main)',
                                                                     color: 'white',
                                                                     border: 'none',
                                                                     borderRadius: '4px',

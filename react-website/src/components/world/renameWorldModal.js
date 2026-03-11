@@ -26,7 +26,11 @@ const RenameWorldModal = ({ isOpen, closeModal, currentName, onSave }) => {
 
     return (
         <div className="world-modal-overlay" onClick={handleClose}>
-            <div className="world-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div 
+                className="world-modal-content" 
+                onClick={(e) => e.stopPropagation()} 
+                style={{ maxWidth: '400px' }}
+            >
                 <h3 className="world-modal-header">
                     📖 Rename World
                 </h3>
