@@ -5,7 +5,7 @@ const ItemDetailsModal = ({ isOpen, closeModal, item, template, onSave, onDelete
     const [isEditing, setIsEditing] = useState(false);
     const [editedItem, setEditedItem] = useState(item || {});
     const [editedTemplate, setEditedTemplate] = useState(template || null);
-    
+
     // Field management state
     const [isManagingFields, setIsManagingFields] = useState(false);
     const [loadingAI, setLoadingAI] = useState(false);
@@ -155,8 +155,8 @@ const ItemDetailsModal = ({ isOpen, closeModal, item, template, onSave, onDelete
         // Update template
         const updatedTemplate = {
             ...editedTemplate,
-            fields: editedTemplate.fields.map(f => 
-                f.fieldName === oldFieldName 
+            fields: editedTemplate.fields.map(f =>
+                f.fieldName === oldFieldName
                     ? { ...f, fieldName: newFieldName }
                     : f
             )
@@ -176,8 +176,8 @@ const ItemDetailsModal = ({ isOpen, closeModal, item, template, onSave, onDelete
     const handleUpdateFieldDescription = (fieldName, description) => {
         const updatedTemplate = {
             ...editedTemplate,
-            fields: editedTemplate.fields.map(f => 
-                f.fieldName === fieldName 
+            fields: editedTemplate.fields.map(f =>
+                f.fieldName === fieldName
                     ? { ...f, description }
                     : f
             )
@@ -190,7 +190,7 @@ const ItemDetailsModal = ({ isOpen, closeModal, item, template, onSave, onDelete
 
         try {
             const AI_SERVER_URL = process.env.REACT_APP_AI_SERVER_URL || "http://10.163.7.9:5000";
-            
+
             console.log(`Calling ${AI_SERVER_URL}.\n Requesting AI suggestions with:`, {
                 userId: item.userId || 'unknown',
                 itemName: editedItem.name,
@@ -258,7 +258,7 @@ const ItemDetailsModal = ({ isOpen, closeModal, item, template, onSave, onDelete
         // Safely access customFields
         const customFields = editedItem.customFields || {};
         const value = customFields[field.fieldName];
-        
+
         return (
             <div className="form-group" key={field.fieldName}>
                 <label>
@@ -317,7 +317,7 @@ const ItemDetailsModal = ({ isOpen, closeModal, item, template, onSave, onDelete
                         {field.description}
                     </p>
                 )}
-                
+
                 {!isManagingFields && isEditing ? (
                     field.fieldType === 'array' ? (
                         <textarea
@@ -370,6 +370,19 @@ const ItemDetailsModal = ({ isOpen, closeModal, item, template, onSave, onDelete
                         color: '#666'
                     }}>
                         Type: {field.fieldType}
+                    </div>
+                )}
+                {!isManagingFields && field.reflectivePrompt && (
+                    <div style={{
+                        marginTop: '0.4rem',
+                        padding: '0.6rem 0.75rem',
+                        backgroundColor: '#fff8e1',
+                        borderLeft: '3px solid #f59e0b',
+                        borderRadius: '4px',
+                        fontSize: '0.82rem',
+                        color: '#78350f'
+                    }}>
+                        💭 <em>{field.reflectivePrompt}</em>
                     </div>
                 )}
             </div>
@@ -477,7 +490,7 @@ const ItemDetailsModal = ({ isOpen, closeModal, item, template, onSave, onDelete
                         <>
                             <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '2px solid #e9ecef' }} />
                             <h5 style={{ marginBottom: '0.75rem', color: '#333' }}>Add New Field</h5>
-                            
+
                             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'flex-end' }}>
                                 <div style={{ flex: 2 }}>
                                     <label style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem', display: 'block' }}>Field Name</label>
