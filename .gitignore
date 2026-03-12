@@ -17,3 +17,5 @@ react-website/src/Firebase/structuredcreativeplanning-firebase-adminsdk-y05ga-29
 backend/Firebase/structuredcreativeplanning-fdea4acca240.json
 backend/node_modules
 backend/servers/logs/
+backend/servers/logs/bs_cfm_debug.log
+backend/servers/logs/dt_cfm_debug.log
