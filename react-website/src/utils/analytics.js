@@ -1,535 +1,444 @@
 // src/utils/analytics.js
 /**
  * Frontend analytics utilities for tracking user interactions.
- * Handles both page views and UI interactions.
+ * Handles page views, UI interactions, world AI events, and cross-feature session tracking.
  */
 
 const API_BASE = process.env.REACT_APP_AI_SERVER_URL || "http://localhost:5000";
 
-/**
- * Track when user navigates to a tool page.
- * 
- * @param {string} userId - Firebase user ID
- * @param {string} pageName - 'mentorText' | 'storyMap' | 'timeline' | 'bookRecs' | 'chat' | 'feedback'
- * @param {string} tlcStage - 'building_knowledge' | 'modelling' | 'joint_construction' | 'independent_construction'
- */
+// ============================================
+// PAGE VIEW / EXIT (generic)
+// ============================================
+
 export async function logPageView(userId, pageName, tlcStage) {
-  if (!userId || !pageName) {
-    console.warn('[Analytics] logPageView: Missing userId or pageName');
-    return;
-  }
-  
+  if (!userId || !pageName) return;
   try {
-    await fetch(`${API_BASE}/api/log-page-view`, {
+    const res = await fetch(`${API_BASE}/api/log-page-view`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        pageName,
-        tlcStage,
-        timestamp: Date.now()
-      })
+      body: JSON.stringify({ userId, pageName, tlcStage, timestamp: Date.now() })
     });
+    const data = await res.json();
+    return data?.pageViewId ?? null;
   } catch (error) {
     console.error('[Analytics] Page view log failed:', error);
-    // Don't block UI if logging fails
+    return null;
   }
 }
 
-/**
- * Track when user exits a tool page.
- * 
- * @param {string} userId - Firebase user ID
- * @param {string} pageName - Tool page name
- * @param {number} durationMs - Time spent on page in milliseconds
- */
-export async function logPageExit(userId, pageName, durationMs) {
-  if (!userId || !pageName) {
-    console.warn('[Analytics] logPageExit: Missing userId or pageName');
-    return;
+export function logPageExit(userId, pageName, durationMs, pageViewId = null) {
+  if (!userId || !pageName) return;
+  const payload = JSON.stringify({ userId, pageName, durationMs, pageViewId, timestamp: Date.now() });
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon(`${API_BASE}/api/log-page-exit`, new Blob([payload], { type: 'application/json' }));
+  } else {
+    fetch(`${API_BASE}/api/log-page-exit`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true
+    }).catch(() => {});
   }
-  
+}
+
+// ============================================
+// GENERIC UI INTERACTION
+// ============================================
+
+export async function logUIInteraction(userId, feature, action, metadata = {}) {
+  if (!userId || !feature || !action) return;
   try {
-    await fetch(`${API_BASE}/api/log-page-exit`, {
+    await fetch(`${API_BASE}/api/log-ui-interaction`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        pageName,
-        durationMs,
-        timestamp: Date.now()
-      })
+      body: JSON.stringify({ userId, feature, action, metadata })
     });
   } catch (error) {
-    console.error('[Analytics] Page exit log failed:', error);
-    // Don't block UI if logging fails
+    console.error('[Analytics] UI interaction log failed:', error);
   }
 }
 
+// ============================================
+// CROSS-FEATURE SESSION TRACKING
+// These functions fire on every page navigation and capture the
+// whole-project signals: tool journey, stage transitions, tool re-use.
+// Call logToolEntry() on every page mount and logToolExit() on every unmount.
+// ============================================
+
 /**
- * Track UI interactions (button clicks, saves, etc.)
- * 
- * @param {string} userId - Firebase user ID
- * @param {string} feature - 'mentorText' | 'storyMap' | 'timeline' | 'bookRecs' | 'chat' | 'feedback'
- * @param {string} action - Action type (e.g., 'open_analysis', 'search', 'filter', 'save_book')
- * @param {object} metadata - Feature-specific data
+ * Log that the student entered a tool page.
+ * Fires the cross-feature tool journey entry on the backend.
+ * Returns an entryTimestamp so logToolExit() can compute duration.
+ *
+ * TLC stage map:
+ *   library / bookRecs  → building_knowledge
+ *   mentorText          → modelling
+ *   storyMap (generate) → modelling  /  storyMap (analyze) → joint_construction
+ *   timeline / chatbot / storyWorld → joint_construction
+ *   storyEditor / feedback          → independent_construction
+ *
+ * @param {string} userId
+ * @param {string} toolName  — 'bookRecs'|'mentorText'|'storyMap'|'timeline'|'chatbot'|'worldAI'|'feedback'
+ * @param {string} tlcStage  — TLC stage for this tool
+ * @returns {number} entryTimestamp (ms) to pass to logToolExit
  */
-export async function logUIInteraction(userId, feature, action, metadata = {}) {
-  if (!userId || !feature || !action) {
-    console.warn('[Analytics] logUIInteraction: Missing required fields');
-    return;
-  }
-  
+export async function logToolEntry(userId, toolName, tlcStage) {
+  if (!userId || !toolName) return Date.now();
+  const entryTimestamp = Date.now();
   try {
     await fetch(`${API_BASE}/api/log-ui-interaction`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userId,
-        feature,
-        action,
-        metadata
+        feature: toolName,
+        action: 'tool_entry',
+        metadata: { tlcStage, entryTimestamp }
       })
     });
   } catch (error) {
-    console.error('[Analytics] UI interaction log failed:', error);
-    // Don't block UI if logging fails
+    console.warn('[Analytics] logToolEntry failed:', error);
+  }
+  return entryTimestamp;
+}
+
+/**
+ * Log that the student left a tool page.
+ * Uses sendBeacon so it fires reliably on tab close / navigation.
+ *
+ * @param {string} userId
+ * @param {string} toolName
+ * @param {string} tlcStage
+ * @param {number} entryTimestamp  — value returned by logToolEntry
+ */
+export function logToolExit(userId, toolName, tlcStage, entryTimestamp) {
+  if (!userId || !toolName || !entryTimestamp) return;
+  const durationMs = Date.now() - entryTimestamp;
+  const payload = JSON.stringify({
+    userId,
+    feature: toolName,
+    action: 'tool_exit',
+    metadata: { tlcStage, durationMs, entryTimestamp }
+  });
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon(
+      `${API_BASE}/api/log-ui-interaction`,
+      new Blob([payload], { type: 'application/json' })
+    );
+  } else {
+    fetch(`${API_BASE}/api/log-ui-interaction`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true
+    }).catch(() => {});
   }
 }
 
 /**
- * Debounce helper for search interactions.
- * 
- * @param {Function} func - Function to debounce
- * @param {number} wait - Wait time in milliseconds
- * @returns {Function} Debounced function
+ * Convenience hook-style helper.
+ * Call once at the top of each tool page component:
+ *
+ *   useToolTracking(userId, 'worldAI', 'joint_construction');
+ *
+ * It logs entry on mount and exit on unmount automatically.
+ *
+ * @param {string} userId
+ * @param {string} toolName
+ * @param {string} tlcStage
  */
-export function debounce(func, wait = 500) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
-
-/**
- * Create a debounced search logger.
- * Usage:
- * const logSearch = createDebouncedSearchLogger(userId, 'mentorText', analyses);
- * logSearch('fantasy'); // Will only log after 500ms of no typing
- * 
- * @param {string} userId - Firebase user ID
- * @param {string} feature - Feature name
- * @param {Array} data - Data to search through
- * @returns {Function} Debounced search logger
- */
-export function createDebouncedSearchLogger(userId, feature, data) {
-  return debounce((query) => {
-    if (query.length >= 3) {
-      // Only log meaningful searches (3+ characters)
-      const resultsCount = data.filter(item => 
-        JSON.stringify(item).toLowerCase().includes(query.toLowerCase())
-      ).length;
-      
-      logUIInteraction(userId, feature, 'search', {
-        query,
-        resultsCount
-      });
-    }
-  }, 500);
-}
-
-/**
- * Track feature usage time (for modals, detail views, etc.)
- * Returns a cleanup function to call when feature is closed.
- * 
- * Usage:
- * const stopTracking = trackFeatureTime(userId, 'mentorText', 'view_analysis', { analysisId });
- * // ... user interacts with feature ...
- * stopTracking(); // Logs duration when done
- * 
- * @param {string} userId - Firebase user ID
- * @param {string} feature - Feature name
- * @param {string} action - Action being tracked
- * @param {object} metadata - Additional metadata
- * @returns {Function} Cleanup function to stop tracking
- */
-export function trackFeatureTime(userId, feature, action, metadata = {}) {
-  const startTime = Date.now();
-  
+export function useToolTracking(userId, toolName, tlcStage) {
+  // This is a plain function that returns a useEffect-compatible pattern.
+  // In the component, call it inside useEffect manually:
+  //
+  //   useEffect(() => {
+  //     return useToolTracking(userId, 'worldAI', 'joint_construction');
+  //   }, [userId]);
+  //
+  // Or use the React hook version below: useToolTrackingEffect
+  let entryTs = null;
+  logToolEntry(userId, toolName, tlcStage).then(ts => { entryTs = ts; });
   return () => {
-    const duration = Date.now() - startTime;
-    logUIInteraction(userId, feature, `${action}_complete`, {
-      ...metadata,
-      durationMs: duration
-    });
+    if (entryTs) logToolExit(userId, toolName, tlcStage, entryTs);
   };
 }
+
+// ============================================
+// WORLD AI ANALYTICS
+// TLC Stage: Joint Construction — AI as Reflective Guide
+// ============================================
 
 /**
- * Batch logger for multiple rapid interactions.
- * Useful for drag-and-drop, graph editing, etc.
- * 
- * Usage:
- * const batchLogger = createBatchLogger(userId, 'storyMap');
- * batchLogger.log('move_node', { nodeId: '1' });
- * batchLogger.log('move_node', { nodeId: '2' });
- * batchLogger.flush(); // Sends all batched logs
- * 
- * @param {string} userId - Firebase user ID
- * @param {string} feature - Feature name
- * @returns {Object} Batch logger with log() and flush() methods
+ * Log when the student chooses a template option and the AI is called.
+ * Call this in NewItemModal right before the AI request fires.
+ *
+ * @param {string} userId
+ * @param {string} itemType   — e.g. 'Magic System'
+ * @param {string} templateChoice — 'ai' | 'manual' | 'inherit' | 'none'
  */
-export function createBatchLogger(userId, feature) {
-  let batch = [];
-  let flushTimeout = null;
-  
-  const flush = async () => {
-    if (batch.length === 0) return;
-    
-    try {
-      await fetch(`${API_BASE}/api/log-ui-batch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          feature,
-          interactions: batch
-        })
-      });
-      batch = [];
-    } catch (error) {
-      console.error('[Analytics] Batch log failed:', error);
-      batch = []; // Clear batch even on error
-    }
-  };
-  
-  return {
-    log: (action, metadata = {}) => {
-      batch.push({
-        action,
-        metadata,
-        timestamp: Date.now()
-      });
-      
-      // Auto-flush after 5 seconds of inactivity
-      clearTimeout(flushTimeout);
-      flushTimeout = setTimeout(flush, 5000);
-      
-      // Auto-flush if batch gets too large
-      if (batch.length >= 10) {
-        flush();
-      }
-    },
-    flush
-  };
-}
-
-export async function logStoryMapRender(userId, nodes, links) {
-  if (!userId) {
-    console.warn('[StoryMapAnalytics] Missing userId');
-    return;
-  }
-  
+export async function logWorldTemplateRequest(userId, itemType, templateChoice) {
+  if (!userId) return;
   try {
-    await fetch(`${API_BASE}/api/story-map/log-render`, {
+    await fetch(`${API_BASE}/api/log-ui-interaction`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userId,
-        nodeCount: nodes.length,
-        linkCount: links.length,
-        nodes,  // For calculating isolated nodes
-        links
+        feature: 'worldAI',
+        action: 'template_request',
+        metadata: { itemType, templateChoice, timestamp: Date.now() }
       })
+    });
+  } catch (error) {
+    console.warn('[WorldAnalytics] logWorldTemplateRequest failed:', error);
+  }
+}
+
+/**
+ * Log when a new item is saved from NewItemModal.
+ * Captures acceptance rate — the key metric for whether AI scaffolding was used.
+ *
+ * @param {string} userId
+ * @param {string} itemType
+ * @param {string} templateChoice — 'ai' | 'manual' | 'inherit' | 'none'
+ * @param {number} fieldsSuggested — how many fields AI returned (0 if not AI)
+ * @param {number} fieldsAccepted  — how many AI fields student kept
+ * @param {number} fieldsAddedManually — how many fields student added themselves
+ * @param {number} filledFields   — fields with non-empty values at save time
+ * @param {number} totalFields    — total fields on the item at save time
+ */
+export async function logWorldItemCreated(
+  userId,
+  itemType,
+  templateChoice,
+  fieldsSuggested,
+  fieldsAccepted,
+  fieldsAddedManually,
+  filledFields,
+  totalFields
+) {
+  if (!userId) return;
+  try {
+    await fetch(`${API_BASE}/api/log-ui-interaction`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        feature: 'worldAI',
+        action: 'item_created',
+        metadata: {
+          itemType,
+          templateChoice,
+          fieldsSuggested,
+          fieldsAccepted,
+          fieldsAddedManually,
+          filledFields,
+          totalFields,
+          acceptanceRate: fieldsSuggested > 0
+            ? Math.round((fieldsAccepted / fieldsSuggested) * 100) / 100
+            : null,
+          completionRate: totalFields > 0
+            ? Math.round((filledFields / totalFields) * 100) / 100
+            : null,
+          timestamp: Date.now()
+        }
+      })
+    });
+  } catch (error) {
+    console.warn('[WorldAnalytics] logWorldItemCreated failed:', error);
+  }
+}
+
+/**
+ * Log when a student returns to edit an existing item (saves changes via ItemDetailsModal).
+ *
+ * @param {string} userId
+ * @param {string} itemType
+ * @param {number} fieldsAdded   — new fields added in this edit session
+ * @param {number} fieldsRemoved — fields removed in this edit session
+ * @param {number} filledFields  — fields with non-empty values after edit
+ * @param {number} totalFields   — total fields after edit
+ */
+export async function logWorldItemEdited(
+  userId,
+  itemType,
+  fieldsAdded,
+  fieldsRemoved,
+  filledFields,
+  totalFields
+) {
+  if (!userId) return;
+  try {
+    await fetch(`${API_BASE}/api/log-ui-interaction`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        feature: 'worldAI',
+        action: 'item_edited',
+        metadata: {
+          itemType,
+          fieldsAdded,
+          fieldsRemoved,
+          filledFields,
+          totalFields,
+          completionRate: totalFields > 0
+            ? Math.round((filledFields / totalFields) * 100) / 100
+            : null,
+          timestamp: Date.now()
+        }
+      })
+    });
+  } catch (error) {
+    console.warn('[WorldAnalytics] logWorldItemEdited failed:', error);
+  }
+}
+
+/**
+ * Log when the student views the reflective prompt for a field.
+ * This is the engagement signal for the pedagogical scaffolding.
+ *
+ * @param {string} userId
+ * @param {string} fieldName
+ * @param {string} itemType
+ */
+export async function logWorldReflectivePromptViewed(userId, fieldName, itemType) {
+  if (!userId) return;
+  try {
+    await fetch(`${API_BASE}/api/log-ui-interaction`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        feature: 'worldAI',
+        action: 'reflective_prompt_viewed',
+        metadata: { fieldName, itemType, timestamp: Date.now() }
+      })
+    });
+  } catch (error) {
+    console.warn('[WorldAnalytics] logWorldReflectivePromptViewed failed:', error);
+  }
+}
+
+// ============================================
+// STORY MAP ANALYTICS
+// ============================================
+
+export async function logStoryMapRender(userId, nodes, links) {
+  if (!userId) return;
+  try {
+    await fetch(`${API_BASE}/api/story-map/log-render`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, nodeCount: nodes.length, linkCount: links.length, nodes, links })
     });
   } catch (error) {
     console.error('[StoryMapAnalytics] Render log failed:', error);
   }
 }
 
-/**
- * Log node action (create, edit, delete, view)
- */
 export async function logNodeAction(userId, actionType, nodeData, processingTimeMs = null) {
-  if (!userId || !actionType || !nodeData) {
-    console.warn('[StoryMapAnalytics] Missing required fields for node action');
-    return;
-  }
-  
+  if (!userId || !actionType || !nodeData) return;
   try {
     await fetch(`${API_BASE}/api/story-map/log-node-action`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        actionType,
-        nodeData,
-        processingTimeMs
-      })
+      body: JSON.stringify({ userId, actionType, nodeData, processingTimeMs })
     });
   } catch (error) {
     console.error('[StoryMapAnalytics] Node action log failed:', error);
   }
 }
 
-/**
- * Log link action (create, edit, delete, view)
- */
 export async function logLinkAction(userId, actionType, linkData) {
-  if (!userId || !actionType || !linkData) {
-    console.warn('[StoryMapAnalytics] Missing required fields for link action');
-    return;
-  }
-  
+  if (!userId || !actionType || !linkData) return;
   try {
     await fetch(`${API_BASE}/api/story-map/log-link-action`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        actionType,
-        linkData
-      })
+      body: JSON.stringify({ userId, actionType, linkData })
     });
   } catch (error) {
     console.error('[StoryMapAnalytics] Link action log failed:', error);
   }
 }
 
-/**
- * Log node merge operation
- * CRITICAL metric for duplicate detection effectiveness
- */
 export async function logNodeMerge(userId, mergedNodeCount, primaryNodeLabel, processingTimeMs = null) {
-  if (!userId || !mergedNodeCount || !primaryNodeLabel) {
-    console.warn('[StoryMapAnalytics] Missing required fields for merge');
-    return;
-  }
-  
+  if (!userId || !mergedNodeCount || !primaryNodeLabel) return;
   try {
     await fetch(`${API_BASE}/api/story-map/log-merge`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        mergedNodeCount,
-        primaryNodeLabel,
-        processingTimeMs
-      })
+      body: JSON.stringify({ userId, mergedNodeCount, primaryNodeLabel, processingTimeMs })
     });
   } catch (error) {
     console.error('[StoryMapAnalytics] Merge log failed:', error);
   }
 }
 
-/**
- * Log analysis panel interactions
- * Tracks engagement with AI feedback (AI as Deconstructor)
- */
-export async function logAnalysisPanelInteraction(
-  userId, 
-  interactionType, 
-  durationMs = null,
-  issueInteractedWith = null
-) {
-  if (!userId || !interactionType) {
-    console.warn('[StoryMapAnalytics] Missing required fields for panel interaction');
-    return;
-  }
-  
+export async function logAnalysisPanelInteraction(userId, interactionType, durationMs = null, issueInteractedWith = null) {
+  if (!userId || !interactionType) return;
   try {
     await fetch(`${API_BASE}/api/story-map/log-analysis-panel`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        interactionType,
-        durationMs,
-        issueInteractedWith
-      })
+      body: JSON.stringify({ userId, interactionType, durationMs, issueInteractedWith })
     });
   } catch (error) {
     console.error('[StoryMapAnalytics] Panel interaction log failed:', error);
   }
 }
 
-/**
- * Log view toggle (node vs label view)
- */
 export async function logViewToggle(userId, viewMode) {
-  if (!userId || !viewMode) {
-    console.warn('[StoryMapAnalytics] Missing required fields for view toggle');
-    return;
-  }
-  
+  if (!userId || !viewMode) return;
   try {
     await fetch(`${API_BASE}/api/story-map/log-view-toggle`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        viewMode
-      })
+      body: JSON.stringify({ userId, viewMode })
     });
   } catch (error) {
     console.error('[StoryMapAnalytics] View toggle log failed:', error);
   }
 }
 
-/**
- * Log merge mode interactions
- */
 export async function logMergeModeAction(userId, actionType, nodesSelected = null) {
-  if (!userId || !actionType) {
-    console.warn('[StoryMapAnalytics] Missing required fields for merge mode');
-    return;
-  }
-  
+  if (!userId || !actionType) return;
   try {
     await fetch(`${API_BASE}/api/story-map/log-merge-mode`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        actionType,
-        nodesSelected
-      })
+      body: JSON.stringify({ userId, actionType, nodesSelected })
     });
   } catch (error) {
     console.error('[StoryMapAnalytics] Merge mode log failed:', error);
   }
 }
 
-/**
- * Create a time tracker for analysis panel
- * Returns cleanup function to log duration on close
- */
 export function trackAnalysisPanelTime(userId, issueInteractedWith = null) {
   const startTime = Date.now();
-  
   return () => {
     const duration = Date.now() - startTime;
     logAnalysisPanelInteraction(userId, 'close', duration, issueInteractedWith);
   };
 }
 
-/**
- * Batch logger for rapid graph manipulations
- * Useful for drag-and-drop node positioning
- */
-export function createGraphBatchLogger(userId) {
-  let batch = [];
-  let flushTimeout = null;
-  
-  const flush = async () => {
-    if (batch.length === 0) return;
-    
-    try {
-      // Group by action type
-      const grouped = batch.reduce((acc, action) => {
-        const type = action.actionType;
-        if (!acc[type]) acc[type] = [];
-        acc[type].push(action);
-        return acc;
-      }, {});
-      
-      // Send batch for each action type
-      for (const [actionType, actions] of Object.entries(grouped)) {
-        // For now, just log the count
-        console.log(`[StoryMapAnalytics] Batched ${actions.length} ${actionType} actions`);
-      }
-      
-      batch = [];
-    } catch (error) {
-      console.error('[StoryMapAnalytics] Batch flush failed:', error);
-      batch = [];
-    }
-  };
-  
-  return {
-    logNodeAction: (actionType, nodeData) => {
-      batch.push({
-        type: 'node',
-        actionType,
-        nodeData,
-        timestamp: Date.now()
-      });
-      
-      // Auto-flush after 3 seconds of inactivity
-      clearTimeout(flushTimeout);
-      flushTimeout = setTimeout(flush, 3000);
-      
-      // Auto-flush if batch gets too large
-      if (batch.length >= 10) {
-        flush();
-      }
-    },
-    flush
-  };
-}
-
-/**
- * Helper to calculate iteration metrics
- * Call this when user makes significant changes after analysis
- */
 export async function logIterationPattern(userId, iterationData) {
-  /**
-   * iterationData = {
-   *   mapVersion: int,
-   *   actionsTaken: int,
-   *   timeSpent: int (ms),
-   *   triggeredByAnalysis: bool
-   * }
-   */
-  if (!userId || !iterationData) {
-    console.warn('[StoryMapAnalytics] Missing iteration data');
-    return;
-  }
-  
+  if (!userId || !iterationData) return;
   try {
     await fetch(`${API_BASE}/api/story-map/log-iteration`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        iterationData
-      })
+      body: JSON.stringify({ userId, iterationData })
     });
   } catch (error) {
     console.error('[StoryMapAnalytics] Iteration log failed:', error);
   }
 }
 
-// ============================================
-// GRAPH VISUALIZATION INTERACTIONS
-// ============================================
-
-/**
- * Log graph visualization interactions (zoom, pan, hover)
- * @param {string} userId - Firebase user ID
- * @param {string} interactionType - 'zoom' | 'pan' | 'node_hover' | 'link_hover'
- * @param {object} metadata - Interaction-specific data
- */
 export async function logGraphInteraction(userId, interactionType, metadata = {}) {
   if (!userId) return;
-  
   try {
     await fetch(`${API_BASE}/api/log-ui-interaction`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId,
-        feature: 'storyMap',
-        action: `graph_${interactionType}`,
-        metadata: {
-          ...metadata,
-          timestamp: Date.now()
-        }
+        userId, feature: 'storyMap', action: `graph_${interactionType}`,
+        metadata: { ...metadata, timestamp: Date.now() }
       })
     });
   } catch (error) {
@@ -537,31 +446,15 @@ export async function logGraphInteraction(userId, interactionType, metadata = {}
   }
 }
 
-// ============================================
-// COGNITIVE LOAD INDICATORS
-// ============================================
-
-/**
- * Log cognitive load indicators (errors, modal abandonment, repeated edits)
- * @param {string} userId - Firebase user ID
- * @param {string} indicatorType - 'validation_error' | 'modal_abandoned' | 'repeated_edit' | 'undo' | 'redo'
- * @param {object} metadata - Context data
- */
 export async function logCognitiveLoad(userId, indicatorType, metadata = {}) {
   if (!userId) return;
-  
   try {
     await fetch(`${API_BASE}/api/log-ui-interaction`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId,
-        feature: 'storyMap',
-        action: `cognitive_load_${indicatorType}`,
-        metadata: {
-          ...metadata,
-          timestamp: Date.now()
-        }
+        userId, feature: 'storyMap', action: `cognitive_load_${indicatorType}`,
+        metadata: { ...metadata, timestamp: Date.now() }
       })
     });
   } catch (error) {
@@ -569,31 +462,15 @@ export async function logCognitiveLoad(userId, indicatorType, metadata = {}) {
   }
 }
 
-// ============================================
-// TEMPLATE USAGE TRACKING
-// ============================================
-
-/**
- * Log template usage (node/link creation with field completion data)
- * @param {string} userId - Firebase user ID
- * @param {string} templateType - 'node_creation' | 'link_creation' | 'node_edit' | 'link_edit'
- * @param {object} metadata - Template-specific data
- */
 export async function logTemplateUsage(userId, templateType, metadata = {}) {
   if (!userId) return;
-  
   try {
     await fetch(`${API_BASE}/api/log-ui-interaction`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId,
-        feature: 'storyMap',
-        action: `template_${templateType}`,
-        metadata: {
-          ...metadata,
-          timestamp: Date.now()
-        }
+        userId, feature: 'storyMap', action: `template_${templateType}`,
+        metadata: { ...metadata, timestamp: Date.now() }
       })
     });
   } catch (error) {
@@ -602,75 +479,9 @@ export async function logTemplateUsage(userId, templateType, metadata = {}) {
 }
 
 // ============================================
-// BATCH LOGGER (for rapid interactions)
-// ============================================
-
-/**
- * Create a batch logger for multiple rapid interactions
- * Useful for drag-and-drop, graph editing, etc.
- */
-export function createStoryMapBatchLogger(userId) {
-  let batch = [];
-  let flushTimeout = null;
-  
-  const flush = async () => {
-    if (batch.length === 0) return;
-    
-    try {
-      await fetch(`${API_BASE}/api/log-ui-batch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          feature: 'storyMap',
-          interactions: batch
-        })
-      });
-      batch = [];
-    } catch (error) {
-      console.error('[Analytics] Batch log failed:', error);
-      batch = [];
-    }
-  };
-  
-  return {
-    log: (action, metadata = {}) => {
-      batch.push({
-        action,
-        metadata,
-        timestamp: Date.now()
-      });
-      
-      // Auto-flush after 5 seconds of inactivity
-      clearTimeout(flushTimeout);
-      flushTimeout = setTimeout(flush, 5000);
-      
-      // Auto-flush if batch gets too large
-      if (batch.length >= 10) {
-        flush();
-      }
-    },
-    flush
-  };
-}
-
-// ============================================
 // TIMELINE ANALYTICS
-// TLC Stage: Joint Construction — AI as Reflective Guide
 // ============================================
 
-/**
- * Log Timeline page entry.
- * Returns a pageViewKey the component stores and sends back on exit,
- * so the backend can match entry → exit and compute duration.
- *
- * Usage (in useEffect on mount):
- *   const key = await logTimelinePageView(userId);
- *   pageViewKeyRef.current = key;
- *
- * @param {string} userId - Firebase user ID
- * @returns {string|null} pageViewKey for later use in logTimelinePageExit
- */
 export async function logTimelinePageView(userId) {
   if (!userId) return null;
   try {
@@ -687,47 +498,18 @@ export async function logTimelinePageView(userId) {
   }
 }
 
-/**
- * Log Timeline page exit with duration.
- * Uses navigator.sendBeacon when available so the log fires reliably
- * even if the user closes the tab.
- *
- * Usage (in useEffect cleanup / beforeunload):
- *   logTimelinePageExit(userId, Date.now() - entryTime, pageViewKeyRef.current);
- *
- * @param {string} userId        - Firebase user ID
- * @param {number} durationMs    - Time spent on page in milliseconds
- * @param {string|null} pageViewKey - Key returned by logTimelinePageView
- */
 export function logTimelinePageExit(userId, durationMs, pageViewKey = null) {
   if (!userId) return;
   const payload = JSON.stringify({ userId, durationMs, pageViewKey });
-
-  // sendBeacon is fire-and-forget and survives page unload
   if (navigator.sendBeacon) {
-    const blob = new Blob([payload], { type: 'application/json' });
-    navigator.sendBeacon(`${API_BASE}/api/timeline/log-page-exit`, blob);
+    navigator.sendBeacon(`${API_BASE}/api/timeline/log-page-exit`, new Blob([payload], { type: 'application/json' }));
   } else {
-    // Fallback for browsers without sendBeacon
     fetch(`${API_BASE}/api/timeline/log-page-exit`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: payload,
-      keepalive: true   // Chrome/Edge — keeps request alive past page unload
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true
     }).catch(() => {});
   }
 }
 
-/**
- * Log Timeline event actions (created / edited / reordered / deleted).
- *
- * @param {string} userId     - Firebase user ID
- * @param {'created'|'edited'|'reordered'|'deleted'} action
- * @param {object} event      - The event object { id, stage, isMainEvent, ... }
- * @param {object} [extra]    - Extra fields per action type:
- *   created:   { hasDate: bool, descriptionLength: number }
- *   reordered: { fromIndex: number, toIndex: number }
- */
 export async function logTimelineEventAction(userId, action, event, extra = {}) {
   if (!userId || !action || !event) return;
   try {
@@ -735,10 +517,9 @@ export async function logTimelineEventAction(userId, action, event, extra = {}) 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId,
-        action,
-        eventId:     event.id          || '',
-        stage:       event.stage       || 'unknown',
+        userId, action,
+        eventId: event.id || '',
+        stage: event.stage || 'unknown',
         isMainEvent: event.isMainEvent || false,
         ...extra
       })
@@ -748,13 +529,6 @@ export async function logTimelineEventAction(userId, action, event, extra = {}) 
   }
 }
 
-/**
- * Log which Timeline layout mode the student is using.
- * Call once on mount (default) and again whenever the student switches.
- *
- * @param {string} userId - Firebase user ID
- * @param {'linear'|'freytag'} mode
- */
 export async function logTimelineMode(userId, mode) {
   if (!userId || !mode) return;
   try {
@@ -770,29 +544,15 @@ export async function logTimelineMode(userId, mode) {
 
 // ============================================
 // CHATBOT ANALYTICS
-// TLC Stage: Joint Construction — AI as Reflective Guide
 // ============================================
 
-/**
- * Log chatbot page entry.
- * Call in useEffect on mount inside ChatWindow.
- * Returns a pageViewKey to pass back on exit.
- *
- * @param {string} userId - Firebase user ID
- * @returns {string|null} pageViewKey
- */
 export async function logChatPageView(userId) {
   if (!userId) return null;
   try {
     const res = await fetch(`${API_BASE}/api/log-page-view`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        pageName: 'reflectiveChatbot',
-        tlcStage: 'joint_construction',
-        timestamp: Date.now()
-      })
+      body: JSON.stringify({ userId, pageName: 'reflectiveChatbot', tlcStage: 'joint_construction', timestamp: Date.now() })
     });
     const data = await res.json();
     return data?.pageViewId ?? null;
@@ -802,47 +562,18 @@ export async function logChatPageView(userId) {
   }
 }
 
-/**
- * Log chatbot page exit with duration.
- * Uses sendBeacon so it fires reliably on tab close.
- * Call in useEffect cleanup / beforeunload inside ChatWindow.
- *
- * @param {string} userId     - Firebase user ID
- * @param {number} durationMs - Time spent on page
- * @param {string|null} pageViewId - ID returned by logChatPageView
- */
 export function logChatPageExit(userId, durationMs, pageViewId = null) {
   if (!userId) return;
-  const payload = JSON.stringify({
-    userId,
-    pageName: 'reflectiveChatbot',
-    durationMs,
-    pageViewId,
-    timestamp: Date.now()
-  });
-
+  const payload = JSON.stringify({ userId, pageName: 'reflectiveChatbot', durationMs, pageViewId, timestamp: Date.now() });
   if (navigator.sendBeacon) {
-    const blob = new Blob([payload], { type: 'application/json' });
-    navigator.sendBeacon(`${API_BASE}/api/log-page-exit`, blob);
+    navigator.sendBeacon(`${API_BASE}/api/log-page-exit`, new Blob([payload], { type: 'application/json' }));
   } else {
     fetch(`${API_BASE}/api/log-page-exit`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: payload,
-      keepalive: true
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true
     }).catch(() => {});
   }
 }
 
-/**
- * Log when a new chat session starts and which mode was chosen.
- * Also increments the per-user total session counter on the backend.
- * Call this immediately after a new session is created in ChatWindow.
- *
- * @param {string} userId    - Firebase user ID
- * @param {string} sessionId - The new session ID
- * @param {'brainstorming'|'deepthinking'} mode - Starting mode
- */
 export async function logChatSessionStart(userId, sessionId, mode) {
   if (!userId || !sessionId) return;
   try {
@@ -856,15 +587,6 @@ export async function logChatSessionStart(userId, sessionId, mode) {
   }
 }
 
-/**
- * Log when the student sets (or changes) their focus area at the start of a session.
- * Call this when the user sends their first message or explicitly picks a focus.
- *
- * @param {string} userId    - Firebase user ID
- * @param {string} sessionId - Current session ID
- * @param {string} focusArea - 'character' | 'plot' | 'setting' | 'theme' | 'conflict'
- * @param {'brainstorming'|'deepthinking'} mode
- */
 export async function logChatFocusArea(userId, sessionId, focusArea, mode) {
   if (!userId || !sessionId || !focusArea) return;
   try {
@@ -883,14 +605,6 @@ export async function logChatFocusArea(userId, sessionId, focusArea, mode) {
   }
 }
 
-/**
- * Log when the student switches mode (BS ↔ DT) mid-session.
- *
- * @param {string} userId    - Firebase user ID
- * @param {string} sessionId - Current session ID
- * @param {'brainstorming'|'deepthinking'} fromMode
- * @param {'brainstorming'|'deepthinking'} toMode
- */
 export async function logChatModeSwitch(userId, sessionId, fromMode, toMode) {
   if (!userId || !sessionId) return;
   try {
@@ -898,9 +612,7 @@ export async function logChatModeSwitch(userId, sessionId, fromMode, toMode) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId,
-        feature: 'reflectiveChatbot',
-        action: 'mode_switch',
+        userId, feature: 'reflectiveChatbot', action: 'mode_switch',
         metadata: { sessionId, fromMode, toMode, timestamp: Date.now() }
       })
     });
@@ -909,86 +621,137 @@ export async function logChatModeSwitch(userId, sessionId, fromMode, toMode) {
   }
 }
 
-/**
- * Log a user message with its length so the backend can compute
- * per-session message-length trends (the primary metacognitive deepening signal).
- *
- * Call this in handleSend() in ChatWindow, BEFORE awaiting sendMessage(),
- * so it captures the raw user input length.
- *
- * @param {string} userId      - Firebase user ID
- * @param {string} sessionId   - Current session ID
- * @param {number} messageLength - Character count of the user message
- * @param {number} messageIndex  - Position in session (0-based count of user msgs so far)
- * @param {'brainstorming'|'deepthinking'} mode
- * @param {string|null} currentStage - BS CPS stage if known (Clarify/Ideate/Develop/Implement)
- */
 export async function logChatUserMessage(userId, sessionId, messageLength, messageIndex, mode, currentStage = null) {
   if (!userId || !sessionId) return;
   try {
     await fetch(`${API_BASE}/api/chat/log-message`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        sessionId,
-        messageLength,
-        messageIndex,
-        mode,
-        currentStage,
-        timestamp: Date.now()
-      })
+      body: JSON.stringify({ userId, sessionId, messageLength, messageIndex, mode, currentStage, timestamp: Date.now() })
     });
   } catch (error) {
     console.warn('[ChatAnalytics] logChatUserMessage failed:', error);
   }
 }
 
-/**
- * Log a CPS stage transition for Brainstorming mode.
- * This mirrors the stage switch into the main analytics tree
- * so it appears in the cross-study stage transition log.
- *
- * Call this whenever BSConversationFlowManager.switch_stage() is triggered.
- * The best place is right after the backend returns a response that includes
- * a stage change (you can detect this by comparing stage before/after).
- *
- * @param {string} userId    - Firebase user ID
- * @param {string} sessionId - Current session ID
- * @param {string} fromStage - e.g. 'Clarify'
- * @param {string} toStage   - e.g. 'Ideate'
- * @param {'auto'|'manual'} trigger - Whether user or system triggered it
- */
 export async function logChatStageTransition(userId, sessionId, fromStage, toStage, trigger = 'auto') {
   if (!userId || !sessionId || !fromStage || !toStage) return;
   try {
     await fetch(`${API_BASE}/api/chat/log-stage-transition`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        sessionId,
-        fromStage,
-        toStage,
-        trigger,
-        timestamp: Date.now()
-      })
+      body: JSON.stringify({ userId, sessionId, fromStage, toStage, trigger, timestamp: Date.now() })
     });
   } catch (error) {
     console.warn('[ChatAnalytics] logChatStageTransition failed:', error);
   }
 }
 
+// ============================================
+// UTILITY HELPERS
+// ============================================
 
-// Export all functions
+export function debounce(func, wait = 500) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => { clearTimeout(timeout); func(...args); };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+export function createDebouncedSearchLogger(userId, feature, data) {
+  return debounce((query) => {
+    if (query.length >= 3) {
+      const resultsCount = data.filter(item =>
+        JSON.stringify(item).toLowerCase().includes(query.toLowerCase())
+      ).length;
+      logUIInteraction(userId, feature, 'search', { query, resultsCount });
+    }
+  }, 500);
+}
+
+export function trackFeatureTime(userId, feature, action, metadata = {}) {
+  const startTime = Date.now();
+  return () => {
+    const duration = Date.now() - startTime;
+    logUIInteraction(userId, feature, `${action}_complete`, { ...metadata, durationMs: duration });
+  };
+}
+
+export function createBatchLogger(userId, feature) {
+  let batch = [];
+  let flushTimeout = null;
+
+  const flush = async () => {
+    if (batch.length === 0) return;
+    try {
+      await fetch(`${API_BASE}/api/log-ui-batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, feature, interactions: batch })
+      });
+      batch = [];
+    } catch (error) {
+      console.error('[Analytics] Batch log failed:', error);
+      batch = [];
+    }
+  };
+
+  return {
+    log: (action, metadata = {}) => {
+      batch.push({ action, metadata, timestamp: Date.now() });
+      clearTimeout(flushTimeout);
+      flushTimeout = setTimeout(flush, 5000);
+      if (batch.length >= 10) flush();
+    },
+    flush
+  };
+}
+
+export function createGraphBatchLogger(userId) {
+  let batch = [];
+  let flushTimeout = null;
+
+  const flush = async () => {
+    if (batch.length === 0) return;
+    batch = [];
+  };
+
+  return {
+    logNodeAction: (actionType, nodeData) => {
+      batch.push({ type: 'node', actionType, nodeData, timestamp: Date.now() });
+      clearTimeout(flushTimeout);
+      flushTimeout = setTimeout(flush, 3000);
+      if (batch.length >= 10) flush();
+    },
+    flush
+  };
+}
+
+export function createStoryMapBatchLogger(userId) {
+  return createBatchLogger(userId, 'storyMap');
+}
+
+// ============================================
+// EXPORTS
+// ============================================
+
 export default {
+  // Generic
   logPageView,
   logPageExit,
   logUIInteraction,
-  debounce,
-  createDebouncedSearchLogger,
-  trackFeatureTime,
-  createBatchLogger,
+  // Cross-feature session
+  logToolEntry,
+  logToolExit,
+  useToolTracking,
+  // World AI
+  logWorldTemplateRequest,
+  logWorldItemCreated,
+  logWorldItemEdited,
+  logWorldReflectivePromptViewed,
+  // Story Map
   logStoryMapRender,
   logNodeAction,
   logLinkAction,
@@ -997,11 +760,11 @@ export default {
   logViewToggle,
   logMergeModeAction,
   trackAnalysisPanelTime,
-  createGraphBatchLogger,
   logIterationPattern,
   logGraphInteraction,
   logCognitiveLoad,
   logTemplateUsage,
+  createGraphBatchLogger,
   createStoryMapBatchLogger,
   // Timeline
   logTimelinePageView,
@@ -1015,5 +778,10 @@ export default {
   logChatFocusArea,
   logChatModeSwitch,
   logChatUserMessage,
-  logChatStageTransition
+  logChatStageTransition,
+  // Utilities
+  debounce,
+  createDebouncedSearchLogger,
+  trackFeatureTime,
+  createBatchLogger,
 };

@@ -55,6 +55,10 @@ from utils.analytics.logger import (
     log_timeline_coherence,
     log_feedback_submission,
     log_chat_message,
+    log_world_ai_template_suggestion,
+    log_world_item_created,
+    log_world_item_edited,
+    log_world_field_completion,
 )
 from utils.analytics.mentor_text_logger import (
     log_mentor_text_analysis,
@@ -451,6 +455,45 @@ def log_ui_interaction():
         elif feature == 'bookRecs' and action == 'request_recommendations':
             pass  # journey-only, no counter needed — log_tool_interaction above handles it
 
+        elif feature == 'worldAI' and action == 'item_created':
+            try:
+                log_world_item_created(
+                    user_id=user_id,
+                    item_type=metadata.get('itemType', 'unknown'),
+                    template_choice=metadata.get('templateChoice', 'none'),
+                    fields_accepted=metadata.get('fieldsAccepted', 0),
+                    fields_suggested=metadata.get('fieldsSuggested', 0),
+                    fields_added_manually=metadata.get('fieldsAddedManually', 0)
+                )
+                # Also log field completion separately
+                if metadata.get('totalFields', 0) > 0:
+                    log_world_field_completion(
+                        user_id=user_id,
+                        item_type=metadata.get('itemType', 'unknown'),
+                        total_fields=metadata.get('totalFields', 0),
+                        filled_fields=metadata.get('filledFields', 0)
+                    )
+            except Exception as e:
+                rec_logger.warning(f"[UI_LOG] World item_created log failed: {e}")
+
+        elif feature == 'worldAI' and action == 'item_edited':
+            try:
+                log_world_item_edited(
+                    user_id=user_id,
+                    item_type=metadata.get('itemType', 'unknown'),
+                    fields_added=metadata.get('fieldsAdded', 0),
+                    fields_removed=metadata.get('fieldsRemoved', 0)
+                )
+                if metadata.get('totalFields', 0) > 0:
+                    log_world_field_completion(
+                        user_id=user_id,
+                        item_type=metadata.get('itemType', 'unknown'),
+                        total_fields=metadata.get('totalFields', 0),
+                        filled_fields=metadata.get('filledFields', 0)
+                    )
+            except Exception as e:
+                rec_logger.warning(f"[UI_LOG] World item_edited log failed: {e}")
+
         elif feature == 'mentorText' and action == 'search':
             feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/mentorText")
             total_searches = feature_ref.child('totalSearches').get() or 0
@@ -537,6 +580,17 @@ def log_ui_interaction():
                 feature_ref.child('totalModeSwitches').set(total_switches + 1)
             except Exception as ms_err:
                 rec_logger.warning(f"[UI_LOG] mode_switch metrics failed: {ms_err}")
+        elif action in ('tool_entry', 'tool_exit'):
+            try:
+                log_tool_interaction(
+                    user_id=user_id,
+                    tool_name=feature,
+                    interaction_type=action,
+                    tlc_stage=metadata.get('tlcStage', 'joint_construction'),
+                    metadata=metadata
+                )
+            except Exception as e:
+                rec_logger.warning(f"[UI_LOG] Tool entry/exit log failed: {e}")
 
         rec_logger.info(f"[UI_LOG] {user_id} - {feature}.{action}")
         
@@ -1698,6 +1752,17 @@ def suggest_world_template():
 
         world_logger.info(f"[WORLD] Suggested {len(validated_fields)} fields ({len(parent_template_fields)} inherited) with pedagogical guidance")
         
+        # Analytics logging (non-blocking)
+        try:
+            log_world_ai_template_suggestion(
+                user_id=user_id,
+                item_type=item_type,
+                fields_suggested=len(validated_fields),
+                template_choice='ai'  # This endpoint is only called for AI choice
+            )
+        except Exception as log_err:
+            world_logger.warning(f"[WORLD] Analytics log failed: {log_err}")
+
         return jsonify({
             'suggestedFields': validated_fields,
             'guidingQuestion': guiding_question

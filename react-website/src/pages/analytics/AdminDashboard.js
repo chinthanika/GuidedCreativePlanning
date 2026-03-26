@@ -8,7 +8,8 @@ import {
     Users, Activity, Clock, TrendingUp, Download,
     RefreshCw, Eye, Map, BookOpen, FileText, Zap, CheckCircle,
     AlertCircle, GitMerge, Layers, Calendar, MessageSquare,
-    Brain, Lightbulb, ArrowRight, Repeat
+    Brain, Lightbulb, ArrowRight, Repeat, Globe, CheckSquare,
+    PenTool, RotateCcw
 } from 'lucide-react';
 import './admin-dashboard.css';
 
@@ -54,9 +55,25 @@ const AdminDashboard = () => {
     const loadUserAnalytics = async (userId) => {
         setLoading(true); setError(null);
         try {
-            const r = await fetch(`${API_BASE}/admin/analytics/user/${userId}`);
-            if (r.ok) { setUserData(await r.json()); setViewMode('user'); }
-            else throw new Error('Failed to load user analytics');
+            const [analyticsRes, savedBooksRes] = await Promise.all([
+                fetch(`${API_BASE}/admin/analytics/user/${userId}`),
+                fetch(`${API_BASE}/api/book-recommendations/saved`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId })
+                })
+            ]);
+            if (!analyticsRes.ok) throw new Error('Failed to load user analytics');
+            const analyticsData = await analyticsRes.json();
+            // Merge saved books into the analytics payload keyed by bookId
+            if (savedBooksRes.ok) {
+                const savedData = await savedBooksRes.json();
+                const savedMap = {};
+                (savedData.savedBooks || []).forEach(b => { savedMap[b.firebaseId || b.id] = b; });
+                analyticsData.savedBooks = savedMap;
+            }
+            setUserData(analyticsData);
+            setViewMode('user');
         } catch (e) { setError(e.message); }
         finally { setLoading(false); }
     };
@@ -148,8 +165,8 @@ const OverviewView = ({ data }) => {
         name: stage.replace(/_/g, ' '), minutes: Math.round(time / 60000)
     }));
 
-    // Chatbot overview aggregates (populated by backend study-summary endpoint)
     const chatStats = data.chatbotStats || {};
+    const worldStats = data.worldAI || {};
 
     return (
         <div className="admin-dashboard-content">
@@ -196,7 +213,7 @@ const OverviewView = ({ data }) => {
                 </div>
             </div>
 
-            {/* Chatbot aggregate block — only shown if backend supplies it */}
+            {/* Chatbot aggregate block */}
             {(chatStats.totalChatSessions != null) && (
                 <div className="admin-dashboard-info-card">
                     <h3 className="admin-dashboard-info-title">
@@ -212,6 +229,23 @@ const OverviewView = ({ data }) => {
                         <InfoItem label="Total CPS Recursions" value={orDash(chatStats.totalCpsRecursions)} sub="backward transitions" />
                         <InfoItem label="Avg BS Ideas / Session" value={round1(chatStats.avgIdeasPerSession)} />
                         <InfoItem label="Avg BS Creativity Score" value={round1(chatStats.avgCreativityScore)} sub="fluency+flex+elab+orig" />
+                    </div>
+                </div>
+            )}
+
+            {/* World AI aggregate block */}
+            {(worldStats.totalItemsCreated != null) && (
+                <div className="admin-dashboard-info-card">
+                    <h3 className="admin-dashboard-info-title">
+                        <Globe className="w-5 h-5" style={{ color: '#6366F1' }} />
+                        Story World — Study-Wide Summary
+                    </h3>
+                    <div className="admin-dashboard-info-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
+                        <InfoItem label="Total Items Created" value={orDash(worldStats.totalItemsCreated)} />
+                        <InfoItem label="Total AI Suggestions" value={orDash(worldStats.totalTemplateSuggestions)} />
+                        <InfoItem label="Total Edits" value={orDash(worldStats.totalItemEdits)} />
+                        <InfoItem label="Avg Field Acceptance" value={worldStats.avgAcceptanceRate != null ? `${Math.round(worldStats.avgAcceptanceRate * 100)}%` : '—'} sub="AI fields kept" />
+                        <InfoItem label="Avg Field Completion" value={worldStats.avgCompletionRate != null ? `${Math.round(worldStats.avgCompletionRate * 100)}%` : '—'} sub="fields filled at save" />
                     </div>
                 </div>
             )}
@@ -234,7 +268,7 @@ const UserView = ({ data }) => {
         name: stage.replace(/_/g, ' '), minutes: Math.round(time / 60000)
     }));
 
-    const smScores = (data.outcomeMetrics?.storyMapHealthScores || []).map(entry => typeof entry === 'object' ? entry.score : entry)
+    const smScores = (data.outcomeMetrics?.storyMapHealthScores || []).map(entry => typeof entry === 'object' ? entry.score : entry);
     const tlScores = (data.outcomeMetrics?.timelineCoherenceScores || []).map((s, i) => ({ run: i + 1, score: s }));
 
     const recentJourney = (data.journey || []).slice(-10).reverse();
@@ -316,25 +350,36 @@ const UserView = ({ data }) => {
                 </div>
             )}
 
-            {/* Feature-specific dedicated sections */}
+            {/* Feature-specific sections */}
             {data.featureMetrics?.storyMap && <StoryMapMetricsSection metrics={data.featureMetrics.storyMap} />}
             {data.featureMetrics?.mentorText && <MentorTextMetricsSection metrics={data.featureMetrics.mentorText} />}
             {data.featureMetrics?.timeline && <TimelineMetricsSection metrics={data.featureMetrics.timeline} />}
-            {data.featureMetrics?.reflectiveChatbot && <ReflectiveChatbotMetricsSection
-                metrics={data.featureMetrics.reflectiveChatbot}
-                chatSessions={data.chatSessions || {}}
-                brainstorming={data.brainstormingSummary || {}}
-            />}
+            {data.featureMetrics?.reflectiveChatbot && (
+                <ReflectiveChatbotMetricsSection
+                    metrics={data.featureMetrics.reflectiveChatbot}
+                    chatSessions={data.chatSessions || {}}
+                    brainstorming={data.brainstormingSummary || {}}
+                />
+            )}
+            {data.featureMetrics?.worldAI && (
+                <WorldMetricsSection metrics={data.featureMetrics.worldAI} />
+            )}
+            {(data.featureMetrics?.bookRecommendations || data.featureMetrics?.bookRecs) && (
+                <BookRecommendationsMetricsSection
+                    metrics={data.featureMetrics.bookRecommendations || data.featureMetrics.bookRecs}
+                    savedBooks={data.savedBooks || {}}
+                />
+            )}
 
             {/* Generic fallback for anything else */}
             {Object.entries(data.featureMetrics || {})
-                .filter(([k]) => !['storyMap', 'mentorText', 'timeline', 'reflectiveChatbot'].includes(k))
+                .filter(([k]) => !['storyMap', 'mentorText', 'timeline', 'reflectiveChatbot', 'worldAI', 'bookRecommendations', 'bookRecs'].includes(k))
                 .length > 0 && (
                     <div className="admin-dashboard-feature-metrics">
                         <h3 className="admin-dashboard-chart-title">📊 Other Feature Metrics</h3>
                         <div className="admin-dashboard-feature-metrics-list">
                             {Object.entries(data.featureMetrics)
-                                .filter(([k]) => !['storyMap', 'mentorText', 'timeline', 'reflectiveChatbot'].includes(k))
+                                .filter(([k]) => !['storyMap', 'mentorText', 'timeline', 'reflectiveChatbot', 'worldAI', 'bookRecommendations', 'bookRecs'].includes(k))
                                 .map(([feature, metrics]) => (
                                     <FeatureMetricsCard key={feature} feature={feature} metrics={metrics} />
                                 ))}
@@ -381,60 +426,176 @@ const UserView = ({ data }) => {
     );
 };
 
-// ─── Reflective Chatbot Section ────────────────────────────────────────────────
-//
-// DATA PATHS (written by logger.py + new ai_server endpoints):
-//
-//  featureMetrics/reflectiveChatbot/
-//    totalSessions           — from /api/chat/log-session-start
-//    bsSessions              — BS-mode session count
-//    dtSessions              — DT-mode session count
-//    totalMessages           — all messages (user + assistant)
-//    userMessages            — user messages only
-//    avgUserMessageLength    — running average character count
-//    totalUserMessageChars   — cumulative chars (for avg)
-//    totalModeSwitches       — from log_ui_interaction mode_switch handler
-//    modeSwitches/           — { bs_to_dt: N, dt_to_bs: N }
-//    focusAreas/             — { character: N, plot: N, setting: N, theme: N, conflict: N }
-//    focusAreasByMode/       — nested by mode
-//    totalRecursions         — backward CPS stage transitions
-//    totalTimeInFeature      — cumulative page-dwell ms (from page-exit logs)
-//
-//  chatSessions/{sessionId}/messageLengths/  — push-list of { index, length, timestamp, stage? }
-//  (passed in as chatSessions prop)
-//
-//  Brainstorming-specific (written by BSConversationFlowManager):
-//    bsChatbot/ideas/        — push-list of ideas with { scamperTechnique, fluency, flexibility,
-//                              elaboration, originality }
-//    bsChatbot/stageHistory/ — per-session CPS stage transitions
-//
-const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions, brainstorming }) => {
-    const totalSessions = metrics.totalSessions || 0;
-    const bsSessions = metrics.bsSessions || 0;
-    const dtSessions = metrics.dtSessions || 0;
-    const totalMessages = metrics.totalMessages || 0;
-    const userMessages = metrics.userMessages || 0;
-    const assistantMsgs = totalMessages - userMessages;
-    const avgMsgLength = metrics.avgUserMessageLength;
-    const totalSwitches = metrics.totalModeSwitches || 0;
-    const totalRecursions = metrics.totalRecursions || 0;
-    const totalTimeMs = metrics.totalTimeInFeature;
+// ─── World Metrics Section ─────────────────────────────────────────────────────
+const PIE_COLORS_WORLD = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#F97316', '#84CC16'];
 
-    // Mode distribution pie
+const WorldMetricsSection = ({ metrics }) => {
+    if (!metrics) return null;
+
+    const totalSuggestions = metrics.totalTemplateSuggestions || 0;
+    const totalCreated     = metrics.totalItemsCreated || 0;
+    const totalEdits       = metrics.totalItemEdits || 0;
+    const avgAcceptance    = metrics.acceptanceRateStats?.average;
+    const avgCompletion    = metrics.fieldCompletionStats?.average;
+
+    const choiceRaw = metrics.templateChoices || {};
+    const choiceData = ['ai', 'manual', 'inherit', 'none']
+        .map(key => ({ name: key.charAt(0).toUpperCase() + key.slice(1), count: choiceRaw[key] || 0 }))
+        .filter(d => d.count > 0);
+    const totalChoices = choiceData.reduce((s, d) => s + d.count, 0);
+    const aiChoiceRate = pct(choiceRaw.ai || 0, totalChoices);
+
+    const typeRaw = metrics.itemTypeDistribution || {};
+    const typeData = Object.entries(typeRaw)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count);
+
+    const returnRate = totalCreated > 0 ? pct(totalEdits, totalCreated) : '—';
+
+    if (totalCreated === 0 && totalSuggestions === 0) return null;
+
+    return (
+        <div className="admin-dashboard-story-map-section" style={{ borderColor: '#6366f155' }}>
+            <h3 className="admin-dashboard-section-title">
+                <Globe className="w-6 h-6" style={{ color: '#6366f1' }} />
+                Story World Analytics
+                <span style={{ fontSize: '0.8rem', fontWeight: 400, color: '#6b7280', marginLeft: '0.75rem' }}>
+                    TLC: Joint Construction — AI as Reflective Guide
+                </span>
+            </h3>
+
+            {/* Top stat row */}
+            <div className="admin-dashboard-stats-grid">
+                <StatCard icon={<Layers      className="w-5 h-5" />} label="Items Created"          value={totalCreated}     color="blue"   />
+                <StatCard icon={<CheckSquare className="w-5 h-5" />} label="AI Templates Requested" value={totalSuggestions} color="purple" />
+                <StatCard icon={<TrendingUp  className="w-5 h-5" />} label="Avg Field Acceptance"
+                    value={avgAcceptance != null ? `${Math.round(avgAcceptance * 100)}%` : '—'} color="green" />
+                <StatCard icon={<PenTool     className="w-5 h-5" />} label="Avg Field Completion"
+                    value={avgCompletion != null ? `${Math.round(avgCompletion * 100)}%` : '—'} color="pink" />
+            </div>
+
+            {/* Pedagogical validation card */}
+            <div className="admin-dashboard-info-card admin-dashboard-validation-card" style={{ marginTop: '1.5rem' }}>
+                <h3 className="admin-dashboard-info-title">
+                    <CheckCircle className="w-5 h-5" style={{ color: '#6366f1' }} />
+                    Scaffolding Effectiveness — Framework Validation
+                </h3>
+                <p className="admin-dashboard-info-subtext" style={{ marginBottom: '1rem' }}>
+                    High acceptance rate + high field completion = AI scaffolding was pedagogically useful.
+                    Low acceptance but high manual fields = student engaged independently.
+                    Return edits (<strong>edits ÷ items created</strong>) indicate ongoing worldbuilding investment.
+                </p>
+                <div className="admin-dashboard-info-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">AI Template Choice Rate</p>
+                        <p className="admin-dashboard-info-item-value" style={{ color: '#6366f1' }}>{aiChoiceRate}</p>
+                        <p className="admin-dashboard-info-item-subtext">of items used AI template</p>
+                    </div>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Field Acceptance Rate</p>
+                        <p className="admin-dashboard-info-item-value" style={{ color: '#10b981' }}>
+                            {avgAcceptance != null ? `${Math.round(avgAcceptance * 100)}%` : '—'}
+                        </p>
+                        <p className="admin-dashboard-info-item-subtext">avg AI-suggested fields kept</p>
+                    </div>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Field Completion Rate</p>
+                        <p className="admin-dashboard-info-item-value" style={{ color: '#f59e0b' }}>
+                            {avgCompletion != null ? `${Math.round(avgCompletion * 100)}%` : '—'}
+                        </p>
+                        <p className="admin-dashboard-info-item-subtext">avg fields filled at save</p>
+                    </div>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Return Edit Rate</p>
+                        <p className="admin-dashboard-info-item-value">{returnRate}</p>
+                        <p className="admin-dashboard-info-item-subtext">{totalEdits} total edits on {totalCreated} items</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Charts row */}
+            {(choiceData.length > 0 || typeData.length > 0) && (
+                <div className="admin-dashboard-charts-grid" style={{ marginTop: '1.5rem' }}>
+                    {choiceData.length > 0 && (
+                        <ChartCard title="Template Choice Distribution">
+                            <ResponsiveContainer width="100%" height={240}>
+                                <PieChart>
+                                    <Pie
+                                        data={choiceData}
+                                        dataKey="count"
+                                        nameKey="name"
+                                        cx="50%"
+                                        cy="50%"
+                                        outerRadius={80}
+                                        label={({ name, percent }) =>
+                                            percent > 0.05 ? `${name} ${Math.round(percent * 100)}%` : ''
+                                        }
+                                    >
+                                        {choiceData.map((_, i) => (
+                                            <Cell key={i} fill={PIE_COLORS_WORLD[i % PIE_COLORS_WORLD.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                    <Legend iconSize={10} wrapperStyle={{ fontSize: '0.75rem' }} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </ChartCard>
+                    )}
+                    {typeData.length > 0 && (
+                        <ChartCard title="Items by Type">
+                            <ResponsiveContainer width="100%" height={240}>
+                                <BarChart data={typeData} layout="vertical">
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+                                    <XAxis type="number" stroke="#52525B" allowDecimals={false} tick={{ fontSize: 11 }} />
+                                    <YAxis dataKey="name" type="category" width={90} stroke="#52525B" tick={{ fontSize: 11 }} />
+                                    <Tooltip />
+                                    <Bar dataKey="count" fill="#6366f1" radius={[0, 3, 3, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </ChartCard>
+                    )}
+                </div>
+            )}
+
+            {/* Summary info row */}
+            <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
+                <h3 className="admin-dashboard-info-title">
+                    <RotateCcw className="w-5 h-5" /> Item & Engagement Summary
+                </h3>
+                <div className="admin-dashboard-info-grid">
+                    <InfoItem label="Total Items Created"    value={totalCreated}     />
+                    <InfoItem label="Return Edits"           value={totalEdits}       sub={`${returnRate} of items revisited`} />
+                    <InfoItem label="Distinct Item Types"    value={typeData.length || '—'} />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ─── Reflective Chatbot Section ────────────────────────────────────────────────
+const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions, brainstorming }) => {
+    const totalSessions  = metrics.totalSessions || 0;
+    const bsSessions     = metrics.bsSessions || 0;
+    const dtSessions     = metrics.dtSessions || 0;
+    const totalMessages  = metrics.totalMessages || 0;
+    const userMessages   = metrics.userMessages || 0;
+    const assistantMsgs  = totalMessages - userMessages;
+    const avgMsgLength   = metrics.avgUserMessageLength;
+    const totalSwitches  = metrics.totalModeSwitches || 0;
+    const totalRecursions = metrics.totalRecursions || 0;
+    const totalTimeMs    = metrics.totalTimeInFeature;
+
     const modeData = [
         { name: 'Brainstorming (CPS)', count: bsSessions },
         { name: 'Deep Thinking (Socratic)', count: dtSessions },
     ].filter(d => d.count > 0);
 
-    // Focus area bar chart
     const focusData = Object.entries(metrics.focusAreas || {})
         .map(([name, count]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), count }))
         .sort((a, b) => b.count - a.count);
 
-    // Mode switches breakdown
     const modeSwitchEntries = Object.entries(metrics.modeSwitches || {});
 
-    // ── Message-length trend across all sessions ────────────────────────────
     const allLengthEntries = [];
     Object.values(chatSessions || {}).forEach(session => {
         const msgs = session.messageLengths || {};
@@ -449,7 +610,6 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions, brainstorming 
         stage: m.stage || null,
     }));
 
-    // ── Per-session message count distribution ──────────────────────────────
     const sessionMsgCounts = Object.values(chatSessions || {}).map(s => {
         const msgs = s.messageLengths || {};
         return Object.keys(msgs).length;
@@ -458,11 +618,9 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions, brainstorming 
         ? (sessionMsgCounts.reduce((a, b) => a + b, 0) / sessionMsgCounts.length).toFixed(1)
         : null;
 
-    // CPS stage distribution
     const cpsStageData = Object.entries(metrics.cpsStageReach || {})
         .map(([stage, count]) => ({ name: stage, count }));
 
-    // ── Brainstorming creativity metrics (from brainstorming prop) ──────────
     const avgFluency     = brainstorming.avgFluency;
     const avgFlexibility = brainstorming.avgFlexibility;
     const avgElaboration = brainstorming.avgElaboration;
@@ -475,11 +633,9 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions, brainstorming 
         .map(([technique, count]) => ({ name: technique, count }))
         .sort((a, b) => b.count - a.count);
 
-    const elaborationData = Object.entries(brainstorming.elaborationDist || {})
-        .map(([name, count]) => ({ name, count }));
-    const originalityData = Object.entries(brainstorming.originalityDist || {})
-        .map(([name, count]) => ({ name, count }));
-    const flexCatData = Object.entries(brainstorming.flexibilityCategories || {})
+    const elaborationData  = Object.entries(brainstorming.elaborationDist || {}).map(([name, count]) => ({ name, count }));
+    const originalityData  = Object.entries(brainstorming.originalityDist || {}).map(([name, count]) => ({ name, count }));
+    const flexCatData      = Object.entries(brainstorming.flexibilityCategories || {})
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count);
 
@@ -495,15 +651,13 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions, brainstorming 
                 </span>
             </h3>
 
-            {/* ── Top-level counts ── */}
             <div className="admin-dashboard-stats-grid">
-                <StatCard icon={<MessageSquare className="w-5 h-5" />} label="Total Sessions"   value={totalSessions}          color="purple" />
-                <StatCard icon={<Activity      className="w-5 h-5" />} label="Total Messages"   value={totalMessages}          color="blue"   />
-                <StatCard icon={<Repeat        className="w-5 h-5" />} label="CPS Recursions"   value={totalRecursions}        color="pink"   />
-                <StatCard icon={<Clock         className="w-5 h-5" />} label="Time on Page"     value={fmtMin(totalTimeMs)}    color="green"  />
+                <StatCard icon={<MessageSquare className="w-5 h-5" />} label="Total Sessions"   value={totalSessions}       color="purple" />
+                <StatCard icon={<Activity      className="w-5 h-5" />} label="Total Messages"   value={totalMessages}       color="blue"   />
+                <StatCard icon={<Repeat        className="w-5 h-5" />} label="CPS Recursions"   value={totalRecursions}     color="pink"   />
+                <StatCard icon={<Clock         className="w-5 h-5" />} label="Time on Page"     value={fmtMin(totalTimeMs)} color="green"  />
             </div>
 
-            {/* ── Framework validation card ── */}
             <div className="admin-dashboard-info-card admin-dashboard-validation-card" style={{ marginTop: '1.5rem' }}>
                 <h3 className="admin-dashboard-info-title">
                     <TrendingUp className="w-5 h-5" style={{ color: '#8b5cf6' }} />
@@ -540,7 +694,6 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions, brainstorming 
                 </div>
             </div>
 
-            {/* ── Message-length trend chart ── */}
             {messageLengthTrend.length >= 3 && (
                 <div className="admin-dashboard-chart-card" style={{ marginTop: '1.5rem' }}>
                     <h3 className="admin-dashboard-chart-title">
@@ -561,7 +714,6 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions, brainstorming 
                 </div>
             )}
 
-            {/* ── Mode distribution + focus areas ── */}
             <div className="admin-dashboard-charts-grid" style={{ marginTop: '1.5rem' }}>
                 {modeData.length > 0 && (
                     <ChartCard title="Sessions by Mode">
@@ -591,7 +743,6 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions, brainstorming 
                 )}
             </div>
 
-            {/* ── Session-level detail ── */}
             <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
                 <h3 className="admin-dashboard-info-title">Session Breakdown</h3>
                 <div className="admin-dashboard-info-grid">
@@ -614,7 +765,6 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions, brainstorming 
                 )}
             </div>
 
-            {/* ── CPS Stage progression ── */}
             {(cpsStageData.length > 0 || totalRecursions > 0) && (
                 <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
                     <h3 className="admin-dashboard-info-title">
@@ -643,7 +793,6 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions, brainstorming 
                 </div>
             )}
 
-            {/* ── Brainstorming Creativity Metrics ── */}
             {hasCreativity && (
                 <div className="admin-dashboard-story-map-section"
                     style={{ borderColor: '#f59e0b55', marginTop: '1.5rem', borderWidth: '1px' }}>
@@ -737,7 +886,6 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions, brainstorming 
                 </div>
             )}
 
-            {/* ── Deep Thinking proxy metrics ── */}
             {dtSessions > 0 && (
                 <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
                     <h3 className="admin-dashboard-info-title">
@@ -763,9 +911,9 @@ const ReflectiveChatbotMetricsSection = ({ metrics, chatSessions, brainstorming 
 // ─── Story Map Section ─────────────────────────────────────────────────────────
 const StoryMapMetricsSection = ({ metrics }) => {
     const totalGenerations = metrics.totalGenerations || 0;
-    const totalAnalyses = metrics.totalAnalyses || 0;
-    const editsAfterGen = metrics.editsAfterGeneration || 0;
-    const editsAfterAna = metrics.editsAfterAnalysis || 0;
+    const totalAnalyses    = metrics.totalAnalyses || 0;
+    const editsAfterGen    = metrics.editsAfterGeneration || 0;
+    const editsAfterAna    = metrics.editsAfterAnalysis || 0;
 
     const analysisResultsList = metrics.analysisResults
         ? Object.values(metrics.analysisResults)
@@ -773,17 +921,17 @@ const StoryMapMetricsSection = ({ metrics }) => {
 
     const severityTotals = analysisResultsList.reduce(
         (acc, r) => {
-            acc.high += r.issuesBySeverity?.high || 0;
+            acc.high   += r.issuesBySeverity?.high   || 0;
             acc.medium += r.issuesBySeverity?.medium || 0;
-            acc.low += r.issuesBySeverity?.low || 0;
+            acc.low    += r.issuesBySeverity?.low    || 0;
             return acc;
         },
         { high: 0, medium: 0, low: 0 }
     );
     const issuesBySeverityData = [
-        { name: 'High', count: severityTotals.high, fill: '#EF4444' },
+        { name: 'High',   count: severityTotals.high,   fill: '#EF4444' },
         { name: 'Medium', count: severityTotals.medium, fill: '#F59E0B' },
-        { name: 'Low', count: severityTotals.low, fill: '#10B981' },
+        { name: 'Low',    count: severityTotals.low,    fill: '#10B981' },
     ].filter(d => d.count > 0);
 
     const scoreTrend = analysisResultsList
@@ -792,15 +940,9 @@ const StoryMapMetricsSection = ({ metrics }) => {
         .map((r, i) => ({ run: i + 1, score: r.overallScore }));
 
     const triggersList = metrics.generationTriggers ? Object.values(metrics.generationTriggers) : [];
-    const avgNodes = triggersList.length
-        ? (triggersList.reduce((s, t) => s + (t.nodesExtracted || 0), 0) / triggersList.length).toFixed(1)
-        : null;
-    const avgWords = triggersList.length
-        ? (triggersList.reduce((s, t) => s + (t.wordCount || 0), 0) / triggersList.length).toFixed(0)
-        : null;
-    const avgGenMs = triggersList.length
-        ? triggersList.reduce((s, t) => s + (t.processingTimeMs || 0), 0) / triggersList.length
-        : null;
+    const avgNodes  = triggersList.length ? (triggersList.reduce((s, t) => s + (t.nodesExtracted || 0), 0) / triggersList.length).toFixed(1) : null;
+    const avgWords  = triggersList.length ? (triggersList.reduce((s, t) => s + (t.wordCount || 0), 0) / triggersList.length).toFixed(0) : null;
+    const avgGenMs  = triggersList.length ? triggersList.reduce((s, t) => s + (t.processingTimeMs || 0), 0) / triggersList.length : null;
 
     return (
         <div className="admin-dashboard-story-map-section">
@@ -809,10 +951,10 @@ const StoryMapMetricsSection = ({ metrics }) => {
             </h3>
 
             <div className="admin-dashboard-stats-grid">
-                <StatCard icon={<Zap className="w-5 h-5" />} label="AI Generations" value={totalGenerations} color="blue" />
-                <StatCard icon={<Activity className="w-5 h-5" />} label="Analyses Run" value={totalAnalyses} color="purple" />
-                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Edits After Gen." value={`${editsAfterGen} / ${totalGenerations}`} color="green" />
-                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Edits After Anal." value={`${editsAfterAna} / ${totalAnalyses}`} color="pink" />
+                <StatCard icon={<Zap         className="w-5 h-5" />} label="AI Generations"   value={totalGenerations}                         color="blue"   />
+                <StatCard icon={<Activity    className="w-5 h-5" />} label="Analyses Run"     value={totalAnalyses}                            color="purple" />
+                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Edits After Gen." value={`${editsAfterGen} / ${totalGenerations}`} color="green"  />
+                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Edits After Anal."value={`${editsAfterAna} / ${totalAnalyses}`}    color="pink"   />
             </div>
 
             <div className="admin-dashboard-info-card admin-dashboard-validation-card" style={{ marginTop: '1.5rem' }}>
@@ -889,9 +1031,9 @@ const StoryMapMetricsSection = ({ metrics }) => {
                         <Zap className="w-5 h-5" /> Generation Details
                     </h3>
                     <div className="admin-dashboard-info-grid">
-                        <InfoItem label="Avg Nodes Extracted" value={orDash(avgNodes)} />
+                        <InfoItem label="Avg Nodes Extracted"  value={orDash(avgNodes)} />
                         <InfoItem label="Avg Input Word Count" value={orDash(avgWords)} />
-                        <InfoItem label="Avg Processing Time" value={fmtSec(avgGenMs)} />
+                        <InfoItem label="Avg Processing Time"  value={fmtSec(avgGenMs)} />
                     </div>
                 </div>
             )}
@@ -901,14 +1043,14 @@ const StoryMapMetricsSection = ({ metrics }) => {
 
 // ─── Timeline Section ──────────────────────────────────────────────────────────
 const TimelineMetricsSection = ({ metrics }) => {
-    const totalCreated = metrics.totalEventsCreated || 0;
-    const majorEvents = metrics.majorEventsCreated || 0;
-    const minorEvents = metrics.minorEventsCreated || 0;
-    const totalEdits = metrics.totalManualEdits || 0;
-    const totalReorders = metrics.totalReorders || 0;
-    const totalDeleted = metrics.totalEventsDeleted || 0;
-    const totalChecks = metrics.totalCoherenceChecks || 0;
-    const netEvents = totalCreated - totalDeleted;
+    const totalCreated  = metrics.totalEventsCreated  || 0;
+    const majorEvents   = metrics.majorEventsCreated  || 0;
+    const minorEvents   = metrics.minorEventsCreated  || 0;
+    const totalEdits    = metrics.totalManualEdits    || 0;
+    const totalReorders = metrics.totalReorders       || 0;
+    const totalDeleted  = metrics.totalEventsDeleted  || 0;
+    const totalChecks   = metrics.totalCoherenceChecks || 0;
+    const netEvents     = totalCreated - totalDeleted;
 
     const stageDistData = Object.entries(metrics.stageDistribution || {})
         .map(([stage, count]) => ({ name: stage, count }));
@@ -921,8 +1063,8 @@ const TimelineMetricsSection = ({ metrics }) => {
         .filter(c => c.overallScore != null)
         .map(c => ({ run: c.checkNumber, score: c.overallScore }));
 
-    const firstScore = metrics.firstCoherenceScore;
-    const lastScore = metrics.lastCoherenceScore;
+    const firstScore       = metrics.firstCoherenceScore;
+    const lastScore        = metrics.lastCoherenceScore;
     const scoreImprovement = (firstScore != null && lastScore != null && totalChecks >= 2)
         ? (lastScore - firstScore).toFixed(1)
         : null;
@@ -937,10 +1079,10 @@ const TimelineMetricsSection = ({ metrics }) => {
             </h3>
 
             <div className="admin-dashboard-stats-grid">
-                <StatCard icon={<Activity className="w-5 h-5" />} label="Events Created" value={totalCreated} color="blue" />
-                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Net Events" value={netEvents} color="green" />
-                <StatCard icon={<Layers className="w-5 h-5" />} label="Manual Edits" value={totalEdits} color="purple" />
-                <StatCard icon={<RefreshCw className="w-5 h-5" />} label="Coherence Checks" value={totalChecks} color="pink" />
+                <StatCard icon={<Activity    className="w-5 h-5" />} label="Events Created"   value={totalCreated} color="blue"   />
+                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Net Events"       value={netEvents}    color="green"  />
+                <StatCard icon={<Layers      className="w-5 h-5" />} label="Manual Edits"     value={totalEdits}   color="purple" />
+                <StatCard icon={<RefreshCw   className="w-5 h-5" />} label="Coherence Checks" value={totalChecks}  color="pink"   />
             </div>
 
             <div className="admin-dashboard-info-card admin-dashboard-validation-card" style={{ marginTop: '1.5rem' }}>
@@ -986,9 +1128,9 @@ const TimelineMetricsSection = ({ metrics }) => {
                 <div className="admin-dashboard-info-grid">
                     <InfoItem label="Major Events" value={majorEvents} sub={pct(majorEvents, totalCreated) + ' of total'} />
                     <InfoItem label="Minor Events" value={minorEvents} sub={pct(minorEvents, totalCreated) + ' of total'} />
-                    <InfoItem label="Reorders" value={totalReorders} sub="drag-and-drop moves" />
-                    <InfoItem label="Deletions" value={totalDeleted} sub="events removed" />
-                    <InfoItem label="Mode Used" value={metrics.lastModeUsed || '—'} />
+                    <InfoItem label="Reorders"     value={totalReorders} sub="drag-and-drop moves" />
+                    <InfoItem label="Deletions"    value={totalDeleted}  sub="events removed" />
+                    <InfoItem label="Mode Used"    value={metrics.lastModeUsed || '—'} />
                 </div>
             </div>
 
@@ -1071,10 +1213,10 @@ const TimelineMetricsSection = ({ metrics }) => {
 
 // ─── Mentor Text Section ───────────────────────────────────────────────────────
 const MentorTextMetricsSection = ({ metrics }) => {
-    const totalAnalyses = metrics.totalAnalyses || 0;
-    const totalViews = metrics.totalAnalysisViews || 0;
-    const totalDeletions = metrics.totalDeletions || 0;
-    const totalSearches = metrics.totalSearches || 0;
+    const totalAnalyses   = metrics.totalAnalyses || 0;
+    const totalViews      = metrics.totalAnalysisViews || 0;
+    const totalDeletions  = metrics.totalDeletions || 0;
+    const totalSearches   = metrics.totalSearches || 0;
 
     const retentionRate = metrics.retentionRate != null
         ? metrics.retentionRate
@@ -1099,10 +1241,10 @@ const MentorTextMetricsSection = ({ metrics }) => {
             </h3>
 
             <div className="admin-dashboard-stats-grid">
-                <StatCard icon={<FileText className="w-5 h-5" />} label="Analyses Created" value={totalAnalyses} color="purple" />
-                <StatCard icon={<Eye className="w-5 h-5" />} label="Total Reviews" value={totalViews} color="blue" />
-                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Retention Rate" value={retentionRate != null ? `${retentionRate}%` : '—'} color="green" />
-                <StatCard icon={<Activity className="w-5 h-5" />} label="Reviews / Analysis" value={viewRatio} color="pink" />
+                <StatCard icon={<FileText    className="w-5 h-5" />} label="Analyses Created"  value={totalAnalyses}                                       color="purple" />
+                <StatCard icon={<Eye         className="w-5 h-5" />} label="Total Reviews"     value={totalViews}                                          color="blue"   />
+                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Retention Rate"    value={retentionRate != null ? `${retentionRate}%` : '—'}   color="green"  />
+                <StatCard icon={<Activity    className="w-5 h-5" />} label="Reviews / Analysis" value={viewRatio}                                          color="pink"   />
             </div>
 
             <div className="admin-dashboard-info-card admin-dashboard-validation-card" style={{ marginTop: '1.5rem' }}>
@@ -1153,11 +1295,9 @@ const MentorTextMetricsSection = ({ metrics }) => {
                         <AlertCircle className="w-5 h-5" /> Deletion Behaviour
                     </h3>
                     <div className="admin-dashboard-info-grid">
-                        <InfoItem label="Total Deletions" value={totalDeletions} />
-                        <InfoItem label="Deleted After Viewing" value={metrics.deletionsAfterViewing || 0}
-                            sub="Reviewed, then removed" />
-                        <InfoItem label="Deleted Immediately" value={metrics.immediateDeletions || 0}
-                            sub="Never reviewed" />
+                        <InfoItem label="Total Deletions"        value={totalDeletions} />
+                        <InfoItem label="Deleted After Viewing"  value={metrics.deletionsAfterViewing || 0} sub="Reviewed, then removed" />
+                        <InfoItem label="Deleted Immediately"    value={metrics.immediateDeletions || 0}    sub="Never reviewed" />
                     </div>
                 </div>
             )}
@@ -1241,8 +1381,8 @@ const MentorTextMetricsSection = ({ metrics }) => {
             )}
 
             <div className="admin-dashboard-engagement-row" style={{ marginTop: '1.5rem' }}>
-                <MetricBox label="Library Searches" value={totalSearches} icon="🔍" />
-                <MetricBox label="Filter Uses" value={totalFilterUses} icon="🎛️" />
+                <MetricBox label="Library Searches" value={totalSearches}   icon="🔍" />
+                <MetricBox label="Filter Uses"      value={totalFilterUses} icon="🎛️" />
             </div>
 
             {filterEntries.length > 0 && (
@@ -1256,6 +1396,180 @@ const MentorTextMetricsSection = ({ metrics }) => {
                             </div>
                         ))}
                     </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// ─── Book Recommendations Section ─────────────────────────────────────────────
+//
+// Firebase paths read:
+//   featureMetrics/bookRecommendations/
+//     totalRecommendationRequests   int
+//     recommendations/              push-list of { genre, themes[], extractionConfidence,
+//                                                  booksReturned, booksViewed, timestamp }
+//     savedBooks/totalSaved         int   (written by /api/log-ui-interaction save_book)
+//     totalTimeInFeature            ms    (from page-exit logs)
+//
+//   savedBooks/{userId}/            push-list of saved book objects (fetched separately
+//                                   and passed in as savedBooks prop)
+//
+const BookRecommendationsMetricsSection = ({ metrics, savedBooks }) => {
+    if (!metrics) return null;
+
+    const totalRequests    = metrics.totalRecommendationRequests || 0;
+    const totalSaved       = metrics.savedBooks?.totalSaved || Object.keys(savedBooks || {}).length || 0;
+    const totalTimeMs      = metrics.totalTimeInFeature;
+
+    // Build per-request history list
+    const recHistory = metrics.recommendations
+        ? Object.values(metrics.recommendations).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
+        : [];
+
+    // Genre distribution from history
+    const genreMap = {};
+    recHistory.forEach(r => {
+        const g = r.genre || 'unknown';
+        genreMap[g] = (genreMap[g] || 0) + 1;
+    });
+    const genreData = Object.entries(genreMap)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count);
+
+    // Avg books returned / viewed per request
+    const avgReturned = recHistory.length
+        ? (recHistory.reduce((s, r) => s + (r.booksReturned || 0), 0) / recHistory.length).toFixed(1)
+        : null;
+    const avgViewed = recHistory.length
+        ? (recHistory.reduce((s, r) => s + (r.booksViewed || 0), 0) / recHistory.length).toFixed(1)
+        : null;
+
+    // Avg extraction confidence
+    const confList = recHistory.filter(r => r.extractionConfidence != null).map(r => r.extractionConfidence);
+    const avgConf  = confList.length ? (confList.reduce((s, v) => s + v, 0) / confList.length * 100).toFixed(0) : null;
+
+    // Save rate = saved / (requests × avgReturned)  — rough engagement signal
+    const saveRate = totalRequests > 0 ? pct(totalSaved, totalRequests) : '—';
+
+    // Saved books list for display (most recent first)
+    const savedList = Object.values(savedBooks || {})
+        .sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0))
+        .slice(0, 8);
+
+    if (totalRequests === 0 && totalSaved === 0) return null;
+
+    return (
+        <div className="admin-dashboard-story-map-section" style={{ borderColor: '#10b98155' }}>
+            <h3 className="admin-dashboard-section-title">
+                <BookOpen className="w-6 h-6" style={{ color: '#10b981' }} />
+                Book Recommendations Analytics
+                <span style={{ fontSize: '0.8rem', fontWeight: 400, color: '#6b7280', marginLeft: '0.75rem' }}>
+                    TLC: Building Knowledge — AI as Curator
+                </span>
+            </h3>
+
+            {/* Top stat row */}
+            <div className="admin-dashboard-stats-grid">
+                <StatCard icon={<BookOpen    className="w-5 h-5" />} label="Recommendation Requests" value={totalRequests}               color="green"  />
+                <StatCard icon={<CheckCircle className="w-5 h-5" />} label="Books Saved"             value={totalSaved}                  color="blue"   />
+                <StatCard icon={<Activity    className="w-5 h-5" />} label="Avg Books Returned"      value={avgReturned ?? '—'}          color="purple" />
+                <StatCard icon={<Clock       className="w-5 h-5" />} label="Time on Page"            value={fmtMin(totalTimeMs)}         color="pink"   />
+            </div>
+
+            {/* Engagement validation card */}
+            <div className="admin-dashboard-info-card admin-dashboard-validation-card" style={{ marginTop: '1.5rem' }}>
+                <h3 className="admin-dashboard-info-title">
+                    <TrendingUp className="w-5 h-5" style={{ color: '#10b981' }} />
+                    Curation Engagement — Framework Validation
+                </h3>
+                <p className="admin-dashboard-info-subtext" style={{ marginBottom: '1rem' }}>
+                    Did students engage with the curated output? Save rate and view-to-returned ratio validate the Building Knowledge stage claim.
+                    High extraction confidence means the AI understood the student's story context well.
+                </p>
+                <div className="admin-dashboard-info-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Books Saved</p>
+                        <p className="admin-dashboard-info-item-value" style={{ color: '#10b981' }}>{totalSaved}</p>
+                        <p className="admin-dashboard-info-item-subtext">{saveRate} save-per-request rate</p>
+                    </div>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Avg Books Returned</p>
+                        <p className="admin-dashboard-info-item-value">{avgReturned ?? '—'}</p>
+                        <p className="admin-dashboard-info-item-subtext">per recommendation request</p>
+                    </div>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Avg Books Viewed</p>
+                        <p className="admin-dashboard-info-item-value">{avgViewed ?? '—'}</p>
+                        <p className="admin-dashboard-info-item-subtext">card expanded per request</p>
+                    </div>
+                    <div className="admin-dashboard-info-item">
+                        <p className="admin-dashboard-info-item-label">Avg Extraction Confidence</p>
+                        <p className="admin-dashboard-info-item-value">{avgConf != null ? `${avgConf}%` : '—'}</p>
+                        <p className="admin-dashboard-info-item-subtext">story-to-theme extraction quality</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Genre distribution */}
+            {genreData.length > 0 && (
+                <div className="admin-dashboard-chart-card" style={{ marginTop: '1.5rem' }}>
+                    <h3 className="admin-dashboard-chart-title">Genres Extracted from Student Stories</h3>
+                    <ResponsiveContainer width="100%" height={200}>
+                        <BarChart data={genreData} layout="vertical">
+                            <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+                            <XAxis type="number" stroke="#52525B" allowDecimals={false} />
+                            <YAxis dataKey="name" type="category" width={110} stroke="#52525B" tick={{ fontSize: 12 }} />
+                            <Tooltip />
+                            <Bar dataKey="count" fill="#10b981" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
+
+            {/* Saved books list */}
+            {savedList.length > 0 && (
+                <div className="admin-dashboard-info-card" style={{ marginTop: '1.5rem' }}>
+                    <h3 className="admin-dashboard-info-title">
+                        <BookOpen className="w-5 h-5" /> Saved Books (Most Recent {savedList.length})
+                    </h3>
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '2px solid var(--border-light)', textAlign: 'left' }}>
+                                    <th style={{ padding: '8px 12px', color: '#6b7280' }}>Title</th>
+                                    <th style={{ padding: '8px 12px', color: '#6b7280' }}>Author</th>
+                                    <th style={{ padding: '8px 12px', color: '#6b7280' }}>Year</th>
+                                    <th style={{ padding: '8px 12px', color: '#6b7280' }}>Rating</th>
+                                    <th style={{ padding: '8px 12px', color: '#6b7280' }}>Source</th>
+                                    <th style={{ padding: '8px 12px', color: '#6b7280' }}>Saved</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {savedList.map((book, i) => (
+                                    <tr key={i} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                        <td style={{ padding: '8px 12px', fontWeight: 600, color: '#111827', maxWidth: '220px' }}>
+                                            {book.title || '—'}
+                                        </td>
+                                        <td style={{ padding: '8px 12px', color: '#6b7280' }}>{book.author || '—'}</td>
+                                        <td style={{ padding: '8px 12px', color: '#6b7280' }}>{book.year || '—'}</td>
+                                        <td style={{ padding: '8px 12px', color: '#6b7280' }}>
+                                            {book.rating != null ? `⭐ ${book.rating}` : '—'}
+                                        </td>
+                                        <td style={{ padding: '8px 12px', color: '#6b7280' }}>{book.source || '—'}</td>
+                                        <td style={{ padding: '8px 12px', color: '#6b7280', whiteSpace: 'nowrap' }}>
+                                            {book.savedAt ? new Date(book.savedAt).toLocaleDateString() : '—'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    {Object.keys(savedBooks || {}).length > 8 && (
+                        <p style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '0.5rem', textAlign: 'center' }}>
+                            Showing 8 of {Object.keys(savedBooks).length} saved books
+                        </p>
+                    )}
                 </div>
             )}
         </div>

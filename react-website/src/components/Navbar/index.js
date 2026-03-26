@@ -1,14 +1,18 @@
 import React from "react";
 import { Nav, NavLink, NavMenu, NavRight, ProfileIcon, AuthButtons } from "./NavbarElements";
-import { FaUserCircle } from "react-icons/fa"; // Profile icon
-import { useAuth } from "./useAuth"; // Custom hook to check if the user is logged in
+import { FaUserCircle } from "react-icons/fa";
+import { useAuth } from "./useAuth";
+import { useAuthValue } from "../../Firebase/AuthContext";
+
+const ADMIN_UIDS = ['04E9XYnVi8QD3yHAIXeBHCRp2sN2'];
 
 const Navbar = () => {
-  const { isLoggedIn } = useAuth(); // Check if the user is logged in
+  const { isLoggedIn } = useAuth();
+  const { currentUser } = useAuthValue();
+  const isAdmin = currentUser && ADMIN_UIDS.includes(currentUser.uid);
 
   return (
     <Nav>
-      {/* Centered Navigation Links */}
       <NavMenu>
         <NavLink to="/map-generator">Map Generator</NavLink>
         <NavLink to="/story-map">Story Map</NavLink>
@@ -18,12 +22,10 @@ const Navbar = () => {
         <NavLink to="/chatbot">Chatbot</NavLink>
         <NavLink to="/library">Library</NavLink>
         <NavLink to="/story-editor">Story Editor</NavLink>
-        <NavLink to="/admin-dashboard">Admin Dashboard</NavLink>
+        {isAdmin && <NavLink to="/admin-dashboard">Admin Dashboard</NavLink>}
       </NavMenu>
 
-      {/* Right-Aligned Section */}
       <NavRight>
-        {/* Profile Icon */}
         {isLoggedIn && (
           <NavLink to="/profile">
             <ProfileIcon>
@@ -31,8 +33,6 @@ const Navbar = () => {
             </ProfileIcon>
           </NavLink>
         )}
-
-        {/* Sign In/Sign Up Buttons */}
         {!isLoggedIn && (
           <AuthButtons>
             <NavLink to="/sign-up">Sign Up</NavLink>
