@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
+import { logWorldTemplateRequest, logWorldReflectivePromptViewed } from '../../utils/analytics';
+
 const NewItemModal = ({
     isOpen,
     closeModal,
@@ -152,6 +154,7 @@ const NewItemModal = ({
             setShowPedagogy(initialShowState);
 
             setStep(3);
+            logWorldTemplateRequest(userId, itemType, 'ai');
         } catch (error) {
             console.error('AI suggestion error:', error);
             setAiError('Failed to get AI suggestions. Try manual template or try again.');
@@ -227,10 +230,12 @@ const NewItemModal = ({
     };
 
     const togglePedagogy = (fieldName) => {
-        setShowPedagogy(prev => ({
-            ...prev,
-            [fieldName]: !prev[fieldName]
-        }));
+        const nowShowing = !showPedagogy[fieldName];
+        setShowPedagogy(prev => ({ ...prev, [fieldName]: nowShowing }));
+        // Log when student opens the prompt (not closes)
+        if (nowShowing) {
+            logWorldReflectivePromptViewed(userId, fieldName, itemType);
+        }
     };
 
 
@@ -272,7 +277,17 @@ const NewItemModal = ({
             inheritedFrom: parentTemplate?.firebaseKey || null
         } : null;
 
-        onSave(newItem, template);
+        const fieldsAccepted = templateChoice === 'ai'
+            ? suggestedFields.filter(f => f.accepted).length
+            : 0;
+        const fieldsAddedManually = customFields.filter(f => f.manual).length;
+
+        onSave(newItem, template, {
+            templateChoice,
+            fieldsSuggested: suggestedFields.length,
+            fieldsAccepted,
+            fieldsAddedManually,
+        });
         handleClose();
     };
 

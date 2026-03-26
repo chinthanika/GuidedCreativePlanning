@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
+import { logWorldReflectivePromptViewed } from '../../utils/analytics';
+
 const ItemDetailsModal = ({ isOpen, closeModal, item, template, onSave, onDelete }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedItem, setEditedItem] = useState(item || {});
@@ -41,7 +43,12 @@ const ItemDetailsModal = ({ isOpen, closeModal, item, template, onSave, onDelete
     if (!isOpen || !item) return null;
 
     const handleSave = () => {
-        onSave(editedItem, editedTemplate);
+        const origFieldNames = new Set((template?.fields || []).map(f => f.fieldName));
+        const newFieldNames = new Set((editedTemplate?.fields || []).map(f => f.fieldName));
+        const fieldsAdded = [...newFieldNames].filter(n => !origFieldNames.has(n)).length;
+        const fieldsRemoved = [...origFieldNames].filter(n => !newFieldNames.has(n)).length;
+
+        onSave(editedItem, editedTemplate, { fieldsAdded, fieldsRemoved });
         setIsEditing(false);
         setIsManagingFields(false);
     };

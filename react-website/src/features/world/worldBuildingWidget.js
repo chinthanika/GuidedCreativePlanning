@@ -1,15 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuthValue } from '../../Firebase/AuthContext';
 import ItemDetailsModal from '../../components/world/ItemDetailsModal';
 import NewItemModal from '../../components/world/newItemModal';
+import {
+  logToolEntry,
+  logToolExit,
+  logWorldTemplateRequest,
+  logWorldItemCreated,
+  logWorldItemEdited,
+} from '../../utils/analytics';
 import './worldbuilding.css';
 
 const WorldBuildingWidget = () => {
     const { currentUser } = useAuthValue();
     const userId = currentUser ? currentUser.uid : null;
-    const PROFILE_MANAGER_URL = process.env.REACT_APP_PROFILE_MANAGER_URL || "https://guidedcreativeplanning-pfm.onrender.com" || "http://localhost:5001";
-    // const PROFILE_MANAGER_URL = process.env.REACT_APP_PROFILE_MANAGER_URL || "http://localhost:5001";
+
+    const PROFILE_MANAGER_URL = process.env.REACT_APP_PROFILE_MANAGER_URL
+        || "https://guidedcreativeplanning-pfm.onrender.com";
+
     const [worldMetadata, setWorldMetadata] = useState(null);
     const [items, setItems] = useState({});
     const [templates, setTemplates] = useState({});
@@ -22,36 +31,44 @@ const WorldBuildingWidget = () => {
     const [loading, setLoading] = useState(false);
     const [toast, setToast] = useState(null);
 
+    // Cross-feature session tracking
+    const entryTimestampRef = useRef(null);
+
+    useEffect(() => {
+        if (!userId) return;
+
+        // Log tool entry for cross-feature journey tracking
+        logToolEntry(userId, 'worldAI', 'joint_construction').then(ts => {
+            entryTimestampRef.current = ts;
+        });
+
+        fetchWorldData();
+
+        // Log exit on unmount / navigation away
+        return () => {
+            if (entryTimestampRef.current) {
+                logToolExit(userId, 'worldAI', 'joint_construction', entryTimestampRef.current);
+            }
+        };
+    }, [userId]);
+
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
         setTimeout(() => setToast(null), 3000);
     };
 
-    useEffect(() => {
-        if (!userId) return;
-        fetchWorldData();
-    }, [userId]);
-
     const fetchWorldData = async () => {
         try {
             setLoading(true);
 
-            // Fetch metadata
-            const metaResponse = await axios.get(`${PROFILE_MANAGER_URL}/api/world/metadata`, {
-                params: { userId }
-            });
+            const [metaResponse, itemsResponse, templatesResponse] = await Promise.all([
+                axios.get(`${PROFILE_MANAGER_URL}/api/world/metadata`, { params: { userId } }),
+                axios.get(`${PROFILE_MANAGER_URL}/api/world/items`, { params: { userId } }),
+                axios.get(`${PROFILE_MANAGER_URL}/api/world/templates`, { params: { userId } }),
+            ]);
+
             setWorldMetadata(metaResponse.data);
-
-            // Fetch all items
-            const itemsResponse = await axios.get(`${PROFILE_MANAGER_URL}/api/world/items`, {
-                params: { userId }
-            });
             setItems(itemsResponse.data || {});
-
-            // Fetch all templates
-            const templatesResponse = await axios.get(`${PROFILE_MANAGER_URL}/api/world/templates`, {
-                params: { userId }
-            });
             setTemplates(templatesResponse.data || {});
         } catch (error) {
             console.error("Error fetching world data:", error);
@@ -61,7 +78,6 @@ const WorldBuildingWidget = () => {
         }
     };
 
-    // Get current item or root
     const getCurrentItem = () => {
         if (navigationPath.length === 0) {
             return worldMetadata?.rootId ? items[worldMetadata.rootId] : null;
@@ -70,57 +86,63 @@ const WorldBuildingWidget = () => {
         return items[lastId];
     };
 
-    // Get children of current item
     const getChildren = () => {
-        const currentItem = getCurrentItem();
-        if (!currentItem) return [];
-
-        const currentKey = navigationPath.length === 0 ? worldMetadata?.rootId : navigationPath[navigationPath.length - 1];
+        const currentKey = navigationPath.length === 0
+            ? worldMetadata?.rootId
+            : navigationPath[navigationPath.length - 1];
 
         return Object.entries(items)
             .filter(([_, item]) => item?.parentId === currentKey)
             .map(([key, item]) => ({ ...item, firebaseKey: key }));
     };
 
-    // Navigate to item
     const handleNavigateToItem = (itemId) => {
         setNavigationPath([...navigationPath, itemId]);
     };
 
-    // Navigate via breadcrumb
     const handleBreadcrumbClick = (index) => {
         setNavigationPath(navigationPath.slice(0, index));
     };
 
-    // Go to root
     const handleGoHome = () => {
         setNavigationPath([]);
     };
 
-    // Open item details
     const handleItemClick = (item) => {
         setSelectedItem(item);
         setIsDetailsModalOpen(true);
     };
 
-    // Open new item modal
     const handleAddItem = () => {
         setIsNewItemModalOpen(true);
     };
 
-    // Save new item
-    const handleSaveNewItem = async (newItem, template) => {
+    // ─── Save new item ────────────────────────────────────────────────────────
+
+    /**
+     * Called by NewItemModal with the item data, chosen template, and analytics
+     * context that the modal gathered during the creation flow.
+     *
+     * NewItemModal must pass an extra `analyticsContext` object:
+     * {
+     *   templateChoice: 'ai'|'manual'|'inherit'|'none',
+     *   fieldsSuggested: number,
+     *   fieldsAccepted: number,
+     *   fieldsAddedManually: number,
+     * }
+     */
+    const handleSaveNewItem = async (newItem, template, analyticsContext = {}) => {
         try {
-            const currentItem = getCurrentItem();
-            const currentKey = navigationPath.length === 0 ? worldMetadata?.rootId : navigationPath[navigationPath.length - 1];
+            const currentKey = navigationPath.length === 0
+                ? worldMetadata?.rootId
+                : navigationPath[navigationPath.length - 1];
 
             const itemData = {
                 ...newItem,
                 parentId: currentKey || null,
-                templateId: null // Will be set after template creation
+                templateId: null
             };
 
-            // Create item first
             const itemResponse = await axios.post(`${PROFILE_MANAGER_URL}/api/world/items`, {
                 userId,
                 data: itemData
@@ -128,25 +150,37 @@ const WorldBuildingWidget = () => {
 
             const newItemKey = itemResponse.data.firebaseKey;
 
-            // If template was created, save it and link to item
             if (template && !template.firebaseKey) {
                 const templateResponse = await axios.post(`${PROFILE_MANAGER_URL}/api/world/templates`, {
                     userId,
-                    data: {
-                        ...template,
-                        createdFor: newItemKey
-                    }
+                    data: { ...template, createdFor: newItemKey }
                 });
 
-                // Update item with templateId
                 await axios.put(`${PROFILE_MANAGER_URL}/api/world/items/${newItemKey}`, {
                     userId,
-                    data: {
-                        ...itemData,
-                        templateId: templateResponse.data.firebaseKey
-                    }
+                    data: { ...itemData, templateId: templateResponse.data.firebaseKey }
                 });
             }
+
+            // ── Analytics: item created ──
+            const { templateChoice = 'none', fieldsSuggested = 0, fieldsAccepted = 0, fieldsAddedManually = 0 } = analyticsContext;
+            const customFields = newItem.customFields || {};
+            const totalFields = Object.keys(customFields).length;
+            const filledFields = Object.values(customFields).filter(v =>
+                v !== '' && v !== null && v !== undefined && !(Array.isArray(v) && v.length === 0)
+            ).length;
+
+            logWorldItemCreated(
+                userId,
+                newItem.type || 'unknown',
+                templateChoice,
+                fieldsSuggested,
+                fieldsAccepted,
+                fieldsAddedManually,
+                filledFields,
+                totalFields
+            );
+            // ────────────────────────────
 
             fetchWorldData();
             setIsNewItemModalOpen(false);
@@ -157,45 +191,61 @@ const WorldBuildingWidget = () => {
         }
     };
 
-    // Save edited item
-    const handleSaveEditedItem = async (updatedItem, updatedTemplate) => {
+    // ─── Save edited item ─────────────────────────────────────────────────────
+
+    /**
+     * Called by ItemDetailsModal.
+     * analyticsContext (optional):
+     * {
+     *   fieldsAdded: number,
+     *   fieldsRemoved: number,
+     * }
+     */
+    const handleSaveEditedItem = async (updatedItem, updatedTemplate, analyticsContext = {}) => {
         try {
             const { firebaseKey, ...itemData } = updatedItem;
 
-            // Update item
             await axios.put(`${PROFILE_MANAGER_URL}/api/world/items/${firebaseKey}`, {
                 userId,
                 data: itemData
             });
 
-            // If template was updated, save it too
             if (updatedTemplate) {
                 if (updatedTemplate.firebaseKey) {
-                    // Update existing template
                     await axios.put(`${PROFILE_MANAGER_URL}/api/world/templates/${updatedTemplate.firebaseKey}`, {
                         userId,
                         data: updatedTemplate
                     });
                 } else {
-                    // Create new template
                     const templateResponse = await axios.post(`${PROFILE_MANAGER_URL}/api/world/templates`, {
                         userId,
-                        data: {
-                            ...updatedTemplate,
-                            createdFor: firebaseKey
-                        }
+                        data: { ...updatedTemplate, createdFor: firebaseKey }
                     });
 
-                    // Update item with new templateId
                     await axios.put(`${PROFILE_MANAGER_URL}/api/world/items/${firebaseKey}`, {
                         userId,
-                        data: {
-                            ...itemData,
-                            templateId: templateResponse.data.firebaseKey
-                        }
+                        data: { ...itemData, templateId: templateResponse.data.firebaseKey }
                     });
                 }
             }
+
+            // ── Analytics: item edited ──
+            const { fieldsAdded = 0, fieldsRemoved = 0 } = analyticsContext;
+            const customFields = updatedItem.customFields || {};
+            const totalFields = Object.keys(customFields).length;
+            const filledFields = Object.values(customFields).filter(v =>
+                v !== '' && v !== null && v !== undefined && !(Array.isArray(v) && v.length === 0)
+            ).length;
+
+            logWorldItemEdited(
+                userId,
+                updatedItem.type || 'unknown',
+                fieldsAdded,
+                fieldsRemoved,
+                filledFields,
+                totalFields
+            );
+            // ───────────────────────────
 
             fetchWorldData();
             setIsDetailsModalOpen(false);
@@ -206,11 +256,8 @@ const WorldBuildingWidget = () => {
         }
     };
 
-    // Delete item
     const handleDeleteItem = async (item) => {
-        if (!window.confirm(`Delete "${item.name}"? This will also delete all child items.`)) {
-            return;
-        }
+        if (!window.confirm(`Delete "${item.name}"? This will also delete all child items.`)) return;
 
         try {
             await axios.delete(`${PROFILE_MANAGER_URL}/api/world/items/${item.firebaseKey}`, {
@@ -287,14 +334,16 @@ const WorldBuildingWidget = () => {
                             <div className="world-focus-buttons">
                                 <button
                                     className="btn-edit-focus"
-                                    onClick={() => handleItemClick({ ...currentItem, firebaseKey: navigationPath.length === 0 ? worldMetadata?.rootId : navigationPath[navigationPath.length - 1] })}
+                                    onClick={() => handleItemClick({
+                                        ...currentItem,
+                                        firebaseKey: navigationPath.length === 0
+                                            ? worldMetadata?.rootId
+                                            : navigationPath[navigationPath.length - 1]
+                                    })}
                                 >
                                     View Details
                                 </button>
-                                <button
-                                    className="btn-add-new-item"
-                                    onClick={handleAddItem}
-                                >
+                                <button className="btn-add-new-item" onClick={handleAddItem}>
                                     + New Item
                                 </button>
                             </div>
@@ -338,6 +387,7 @@ const WorldBuildingWidget = () => {
                 template={selectedItem?.templateId ? templates[selectedItem.templateId] : null}
                 onSave={handleSaveEditedItem}
                 onDelete={handleDeleteItem}
+                userId={userId}
             />
 
             <NewItemModal
@@ -348,7 +398,7 @@ const WorldBuildingWidget = () => {
                 existingItems={items}
                 templates={templates}
                 onSave={handleSaveNewItem}
-                apiBase={PROFILE_MANAGER_URL}  // Changed from profileManagerUrl
+                apiBase={PROFILE_MANAGER_URL}
                 userId={userId}
             />
         </div>

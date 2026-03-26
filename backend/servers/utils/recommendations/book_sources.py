@@ -143,13 +143,25 @@ class BookSourceManager:
         self._current_query = query
         
         try:
+            pub_date = getattr(self, '_current_filters', {}).get('pubDate')
+            
             params = {
                 'q': query,
                 'limit': min(limit, 100),
                 'fields': 'key,title,author_name,first_publish_year,'
                         'cover_i,subject,ratings_average',
-                'sort': 'rating desc'
+                'sort': 'new' if pub_date in ('last5', 'last10') else 'rating desc'
             }
+            
+            if pub_date == 'last5':
+                params['publish_year'] = f'[2020 TO 9999]'
+            elif pub_date == 'last10':
+                params['publish_year'] = f'[2015 TO 9999]'
+            elif pub_date == 'classic':
+                params['publish_year'] = f'[0 TO 2005]'
+            elif not pub_date or pub_date == 'any':
+                params['publish_year'] = f'[2000 TO 9999]'
+
             
             response = self.session.get(OPENLIBRARY_URL, params=params, timeout=15)
             response.raise_for_status()
@@ -190,6 +202,7 @@ class BookSourceManager:
         Returns:
             List of book dictionaries with metadata
         """
+        self._current_filters = filters  # Make available to API query methods
         books = []
         
         # Tier 1: Google Books (if API key available)
@@ -289,6 +302,18 @@ class BookSourceManager:
             'maxResults': min(limit, 40),
             'orderBy': 'relevance'
         }
+        
+        # Apply year constraint directly to query string
+        pub_date = getattr(self, '_current_filters', {}).get('pubDate')
+        if pub_date == 'last5':
+            params['q'] += ' after:2020'
+        elif pub_date == 'last10':
+            params['q'] += ' after:2015'
+        elif pub_date == 'classic':
+            params['q'] += ' before:2005'
+        elif pub_date == 'any' or not pub_date:
+            # Bias toward modern without hard cutoff — push recency up
+            params['q'] += ' after:2005'
         
         if GOOGLE_BOOKS_API_KEY:
             params['key'] = GOOGLE_BOOKS_API_KEY

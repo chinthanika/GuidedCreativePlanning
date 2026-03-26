@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-    Library, Star, Trash2, FolderPlus, X, Search,
-    Filter, BookOpen, Heart, Sparkles, Plus, Folder,
-    Check, AlertTriangle, Compass
+    Library, Trash2, X, Search,
+    BookOpen, Sparkles, Plus, Compass
 } from 'lucide-react';
 import { useAuthValue } from '../../Firebase/AuthContext'
 
 import SavedBookCard from '../../features/recommender/SavedBookCard';
 import BrowseCollectionsPanel from '../../features/recommender/BrowseCollectionsPanel';
 
+import { logPageView, logPageExit, logUIInteraction, createDebouncedSearchLogger } from '../../utils/analytics';
 import "./library-page.css";
 
 const API_BASE = process.env.REACT_APP_AI_SERVER_URL || "http://localhost:5000";
@@ -24,6 +24,92 @@ const LibraryPage = () => {
     const [filterGenre, setFilterGenre] = useState('all');
     const [selectedCollection, setSelectedCollection] = useState('all');
     const [showBrowsePanel, setShowBrowsePanel] = useState(false);
+
+    // ─── Analytics refs ───────────────────────────────────────────────────────
+    const pageEntryTimeRef = useRef(Date.now());
+    const pageViewIdRef = useRef(null);
+
+    // ─── Page-view / page-exit tracking ──────────────────────────────────────
+    useEffect(() => {
+        if (!userId) return;
+
+        pageEntryTimeRef.current = Date.now();
+
+        // Log page view and store the returned ID for the matching exit event
+        const logView = async () => {
+            try {
+                const res = await fetch(`${API_BASE}/api/log-page-view`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId,
+                        pageName: 'library',
+                        tlcStage: 'building_knowledge',
+                        timestamp: Date.now()
+                    })
+                });
+                const data = await res.json();
+                pageViewIdRef.current = data.pageViewId || null;
+            } catch { /* non-blocking */ }
+        };
+        logView();
+
+        return () => {
+            const durationMs = Date.now() - pageEntryTimeRef.current;
+            // Use sendBeacon so the exit fires even if the tab is closing
+            const payload = JSON.stringify({
+                userId,
+                pageName: 'library',
+                durationMs,
+                pageViewId: pageViewIdRef.current,
+                timestamp: Date.now()
+            });
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(`${API_BASE}/api/log-page-exit`, payload);
+            } else {
+                fetch(`${API_BASE}/api/log-page-exit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payload,
+                    keepalive: true
+                }).catch(() => {});
+            }
+        };
+    }, [userId]);
+
+    // ─── Debounced search logger ──────────────────────────────────────────────
+    // Re-create logger whenever the books list changes so result counts are fresh
+    const logSearchRef = useRef(null);
+    useEffect(() => {
+        if (!userId) return;
+        logSearchRef.current = createDebouncedSearchLogger(userId, 'bookRecs', books);
+    }, [userId, books]);
+
+    const handleSearchChange = (e) => {
+        const value = e.target.value;
+        setSearchQuery(value);
+        if (logSearchRef.current && value.length >= 3) {
+            logSearchRef.current(value);
+        }
+    };
+
+    // ─── Genre filter logging ─────────────────────────────────────────────────
+    const handleGenreChange = (e) => {
+        const genre = e.target.value;
+        setFilterGenre(genre);
+        if (userId) {
+            logUIInteraction(userId, 'bookRecs', 'filter_genre', { genre });
+        }
+    };
+
+    // ─── Collection filter logging ────────────────────────────────────────────
+    const handleCollectionChange = (e) => {
+        const collectionId = e.target.value;
+        setSelectedCollection(collectionId);
+        if (userId) {
+            logUIInteraction(userId, 'bookRecs', 'filter_collection', { collectionId });
+        }
+    };
 
     useEffect(() => {
         loadSavedBooks();
@@ -89,6 +175,9 @@ const LibraryPage = () => {
         const previousBooks = books;
         setBooks(prev => prev.filter(b => b.id !== bookId));
 
+        // Log the removal
+        logUIInteraction(userId, 'bookRecs', 'remove_book', { bookId });
+
         try {
             const response = await fetch(`${API_BASE}/api/book-recommendations/remove`, {
                 method: 'POST',
@@ -107,6 +196,14 @@ const LibraryPage = () => {
     };
 
     const handleMoveToCollection = async (bookId, collectionId) => {
+        // Log the action
+        if (userId) {
+            logUIInteraction(userId, 'bookRecs', 'move_to_collection', {
+                bookId,
+                collectionId
+            });
+        }
+
         try {
             const response = await fetch(`${API_BASE}/api/collections/add-book`, {
                 method: 'POST',
@@ -116,11 +213,7 @@ const LibraryPage = () => {
 
             if (response.ok) {
                 const data = await response.json();
-
-                if (data.alreadyInCollection) {
-                    console.log('Book already in collection');
-                } else {
-                    console.log('Book added to collection');
+                if (!data.alreadyInCollection) {
                     loadCollections();
                 }
             } else {
@@ -134,6 +227,13 @@ const LibraryPage = () => {
     };
 
     const handleCreateCollection = async (collectionData, bookId = null) => {
+        // Log collection creation
+        if (userId) {
+            logUIInteraction(userId, 'bookRecs', 'create_collection', {
+                hasInitialBook: !!bookId
+            });
+        }
+
         try {
             const response = await fetch(`${API_BASE}/api/collections/create`, {
                 method: 'POST',
@@ -150,8 +250,6 @@ const LibraryPage = () => {
                 if (bookId) {
                     await handleMoveToCollection(bookId, newCollection.id);
                 }
-
-                console.log('Collection created successfully');
             } else {
                 const errorData = await response.json();
                 setError(errorData.error || 'Failed to create collection');
@@ -169,7 +267,7 @@ const LibraryPage = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     userId,
-                    sessionId: 'browse-session', // Special session for browse mode
+                    sessionId: 'browse-session',
                     book: book
                 })
             });
@@ -177,16 +275,36 @@ const LibraryPage = () => {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                // Reload books to show the newly saved book
                 await loadSavedBooks();
-                console.log('Book saved successfully from browse:', result);
+
+                // Log book saved from browse panel
+                if (userId) {
+                    logUIInteraction(userId, 'bookRecs', 'save_book', {
+                        bookId: book.id,
+                        bookTitle: book.title,
+                        source: 'browse'
+                    });
+                }
             } else {
-                console.error('Save failed:', result);
                 throw new Error(result.error || 'Failed to save book');
             }
         } catch (err) {
             console.error('Failed to save book from browse:', err);
             throw err;
+        }
+    };
+
+    const handleBrowseOpen = () => {
+        setShowBrowsePanel(true);
+        if (userId) {
+            logUIInteraction(userId, 'bookRecs', 'open_browse_panel', {});
+        }
+    };
+
+    const handleBrowseClose = () => {
+        setShowBrowsePanel(false);
+        if (userId) {
+            logUIInteraction(userId, 'bookRecs', 'close_browse_panel', {});
         }
     };
 
@@ -266,9 +384,8 @@ const LibraryPage = () => {
                         </div>
                     </div>
 
-                    {/* Browse Collections Button */}
                     <button
-                        onClick={() => setShowBrowsePanel(true)}
+                        onClick={handleBrowseOpen}
                         className="library-browse-btn"
                     >
                         <Compass className="w-5 h-5" />
@@ -284,14 +401,14 @@ const LibraryPage = () => {
                             type="text"
                             placeholder="Search by title or author..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={handleSearchChange}
                             className="library-search-input"
                         />
                     </div>
 
                     <select
                         value={filterGenre}
-                        onChange={(e) => setFilterGenre(e.target.value)}
+                        onChange={handleGenreChange}
                         className="library-filter-select"
                     >
                         {genres.map(genre => (
@@ -303,7 +420,7 @@ const LibraryPage = () => {
 
                     <select
                         value={selectedCollection}
-                        onChange={(e) => setSelectedCollection(e.target.value)}
+                        onChange={handleCollectionChange}
                         className="library-filter-select"
                     >
                         <option value="all">All Collections</option>
@@ -330,7 +447,7 @@ const LibraryPage = () => {
                                     Start saving books from recommendations or browse collections to build your reading list
                                 </p>
                                 <button
-                                    onClick={() => setShowBrowsePanel(true)}
+                                    onClick={handleBrowseOpen}
                                     className="library-browse-cta-btn"
                                 >
                                     <Compass className="w-5 h-5" />
@@ -359,18 +476,18 @@ const LibraryPage = () => {
                                 onMoveToCollection={handleMoveToCollection}
                                 onCreateCollection={handleCreateCollection}
                                 collections={collections}
+                                userId={userId}
                             />
                         ))}
                     </div>
                 )}
             </div>
 
-            {/* Browse Collections Panel */}
             {showBrowsePanel && (
                 <BrowseCollectionsPanel
                     userId={userId}
                     isVisible={showBrowsePanel}
-                    onToggle={() => setShowBrowsePanel(false)}
+                    onToggle={handleBrowseClose}
                     onSaveBook={handleSaveBookFromBrowse}
                 />
             )}

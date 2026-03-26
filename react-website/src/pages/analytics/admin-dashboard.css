@@ -1,0 +1,812 @@
+/* Base Container */
+.admin-dashboard {
+  min-height: 100vh;
+  background-color: var(--background-default);
+  padding: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Header Section */
+.admin-dashboard-header {
+  margin-bottom: 2rem;
+}
+
+.admin-dashboard-title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.admin-dashboard-title {
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.admin-dashboard-subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin: 0;
+}
+
+/* Button Group */
+.admin-dashboard-button-group {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.admin-dashboard-button {
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 400;
+  border: 1px solid var(--divider);
+  background-color: var(--background-paper);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-dashboard-button:hover {
+  background-color: var(--border-light);
+  border-color: var(--text-disabled);
+}
+
+.admin-dashboard-button-primary {
+  background-color: var(--primary-main);
+  color: var(--background-default);
+  border-color: var(--primary-main);
+}
+
+.admin-dashboard-button-primary:hover {
+  background-color: var(--primary-light);
+  border-color: var(--primary-light);
+}
+
+.admin-dashboard-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* User Selector Card */
+.admin-dashboard-user-selector {
+  background-color: var(--background-paper);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--divider);
+  padding: 1rem;
+  margin-bottom: 2rem;
+}
+
+.admin-dashboard-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.admin-dashboard-select-group {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.admin-dashboard-select {
+  flex: 1;
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--divider);
+  background-color: var(--background-paper);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.admin-dashboard-select:focus {
+  outline: none;
+  border-color: var(--text-disabled);
+}
+
+/* Loading State */
+.admin-dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: var(--background-default);
+}
+
+.admin-dashboard-loading-spinner {
+  animation: spin 1s linear infinite;
+  color: var(--primary-main);
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.admin-dashboard-loading-text {
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+/* Error State */
+.admin-dashboard-error {
+  background-color: #FEE2E2;
+  border: 1px solid #FCA5A5;
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-dashboard-error-text {
+  font-size: 14px;
+  color: var(--error-dark);
+  margin: 0;
+}
+
+/* Content Grid */
+.admin-dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Stat Cards Grid */
+.admin-dashboard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.admin-dashboard-stat-card {
+  background-color: var(--background-paper);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.admin-dashboard-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.admin-dashboard-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.admin-dashboard-stat-icon.purple {
+  background-color: #F3E8FF;
+  color: #7C3AED;
+}
+
+.admin-dashboard-stat-icon.pink {
+  background-color: #FCE7F3;
+  color: #EC4899;
+}
+
+.admin-dashboard-stat-icon.blue {
+  background-color: #DBEAFE;
+  color: #3B82F6;
+}
+
+.admin-dashboard-stat-icon.green {
+  background-color: #D1FAE5;
+  color: var(--success-main);
+}
+
+.admin-dashboard-stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.admin-dashboard-stat-value {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Charts Grid */
+.admin-dashboard-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.admin-dashboard-chart-card {
+  background-color: var(--background-paper);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+}
+
+.admin-dashboard-chart-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+}
+
+/* Info Cards */
+.admin-dashboard-info-card {
+  background-color: var(--background-paper);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+}
+
+.admin-dashboard-info-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-dashboard-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.admin-dashboard-info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-dashboard-info-item-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.admin-dashboard-info-item-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.admin-dashboard-info-item-subtext {
+  font-size: 12px;
+  color: var(--text-disabled);
+  margin-top: 0.25rem;
+}
+
+/* Journey Timeline */
+.admin-dashboard-journey {
+  background-color: var(--background-paper);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+}
+
+.admin-dashboard-journey-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-dashboard-journey-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background-color: var(--border-light);
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s ease;
+}
+
+.admin-dashboard-journey-item:hover {
+  background-color: var(--divider);
+}
+
+.admin-dashboard-journey-item-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.admin-dashboard-journey-time {
+  font-size: 11px;
+  color: var(--text-disabled);
+}
+
+.admin-dashboard-journey-tool {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.admin-dashboard-journey-action {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.admin-dashboard-journey-badge {
+  padding: 0.25rem 0.75rem;
+  background-color: #F3E8FF;
+  color: #7C3AED;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Transitions */
+.admin-dashboard-transitions {
+  background-color: var(--background-paper);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+}
+
+.admin-dashboard-transitions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-dashboard-transition-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.admin-dashboard-transition-item.forward {
+  background-color: #D1FAE5;
+  border: 1px solid #A7F3D0;
+}
+
+.admin-dashboard-transition-item.backward {
+  background-color: #FEE2E2;
+  border: 1px solid #FCA5A5;
+}
+
+.admin-dashboard-transition-item:hover {
+  transform: translateX(4px);
+}
+
+.admin-dashboard-transition-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.admin-dashboard-transition-badge.forward {
+  background-color: #A7F3D0;
+  color: var(--success-dark);
+}
+
+.admin-dashboard-transition-badge.backward {
+  background-color: #FCA5A5;
+  color: var(--error-dark);
+}
+
+/* Feature Metrics */
+.admin-dashboard-feature-metrics {
+  background-color: var(--background-paper);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+}
+
+.admin-dashboard-feature-metrics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.admin-dashboard-feature-card {
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.admin-dashboard-feature-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-dashboard-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-dashboard-metric-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-dashboard-metric-icon {
+  font-size: 24px;
+}
+
+.admin-dashboard-metric-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-dashboard-metric-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.admin-dashboard-metric-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.admin-dashboard-metric-value-small {
+  font-size: 14px;
+}
+
+/* Distribution Grid */
+.admin-dashboard-distribution-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-dashboard-distribution-card {
+  background-color: var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+}
+
+.admin-dashboard-distribution-title {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-dashboard-distribution-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.admin-dashboard-distribution-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.admin-dashboard-distribution-item-name {
+  color: var(--text-primary);
+}
+
+.admin-dashboard-distribution-item-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.admin-dashboard-distribution-empty {
+  font-size: 13px;
+  color: var(--text-disabled);
+}
+
+/* Stats Grid (for Teaching Points, Excerpt Length, etc.) */
+.admin-dashboard-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-dashboard-stat-box {
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+}
+
+.admin-dashboard-stat-box.blue {
+  background-color: #DBEAFE;
+}
+
+.admin-dashboard-stat-box.green {
+  background-color: #D1FAE5;
+}
+
+.admin-dashboard-stat-box.purple {
+  background-color: #F3E8FF;
+}
+
+.admin-dashboard-stat-box-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.admin-dashboard-stat-box-value {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.admin-dashboard-stat-box.blue .admin-dashboard-stat-box-value {
+  color: #1E40AF;
+}
+
+.admin-dashboard-stat-box.green .admin-dashboard-stat-box-value {
+  color: var(--success-dark);
+}
+
+.admin-dashboard-stat-box.purple .admin-dashboard-stat-box-value {
+  color: #7C3AED;
+}
+
+/* Quality Distribution */
+.admin-dashboard-quality {
+  background-color: var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+}
+
+.admin-dashboard-quality-title {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-dashboard-quality-list {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-dashboard-quality-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-dashboard-quality-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.admin-dashboard-quality-dot.excellent {
+  background-color: var(--success-main);
+}
+
+.admin-dashboard-quality-dot.good {
+  background-color: #3B82F6;
+}
+
+.admin-dashboard-quality-dot.fair {
+  background-color: #EAB308;
+}
+
+.admin-dashboard-quality-dot.poor {
+  background-color: var(--error-main);
+}
+
+.admin-dashboard-quality-name {
+  font-size: 13px;
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+
+.admin-dashboard-quality-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Engagement Row */
+.admin-dashboard-engagement-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* Empty State */
+.admin-dashboard-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.admin-dashboard-empty-icon {
+  width: 64px;
+  height: 64px;
+  color: var(--text-disabled);
+  margin-bottom: 1rem;
+}
+
+.admin-dashboard-empty-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.admin-dashboard-empty-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1280px) {
+  .admin-dashboard-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .admin-dashboard-metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-dashboard {
+    padding: 1rem;
+  }
+  
+  .admin-dashboard-stats-grid,
+  .admin-dashboard-charts-grid,
+  .admin-dashboard-distribution-grid,
+  .admin-dashboard-metric-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .admin-dashboard-title-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .admin-dashboard-button-group {
+    width: 100%;
+    flex-direction: column;
+  }
+  
+  .admin-dashboard-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .admin-dashboard-button-group,
+  .admin-dashboard-user-selector {
+    display: none !important;
+  }
+  
+  .admin-dashboard {
+    padding: 0;
+  }
+  
+  .admin-dashboard-chart-card,
+  .admin-dashboard-info-card,
+  .admin-dashboard-journey,
+  .admin-dashboard-transitions {
+    page-break-inside: avoid;
+    box-shadow: none !important;
+  }
+}
+
+/* Add these styles to admin-dashboard.css for Story Map analytics section */
+
+/* Story Map Section Wrapper */
+.admin-dashboard-story-map-section {
+  background-color: var(--background-paper);
+  border: 2px solid var(--primary-light);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-dashboard-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--divider);
+}
+
+/* Highlighted Stat Box (for important metrics) */
+.admin-dashboard-stat-highlight {
+  background: linear-gradient(135deg, #F3E8FF 0%, #DBEAFE 100%);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.admin-dashboard-stat-highlight-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-dashboard-stat-highlight-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--primary-main);
+  margin: 0 0 0.25rem 0;
+}
+
+.admin-dashboard-stat-highlight-description {
+  font-size: 12px;
+  color: var(--text-disabled);
+  margin: 0;
+}
+
+/* Make distribution grid more flexible for Story Map */
+.admin-dashboard-story-map-section .admin-dashboard-distribution-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* Ensure all charts in Story Map section have consistent spacing */
+.admin-dashboard-story-map-section .admin-dashboard-charts-grid {
+  margin-top: 1.5rem;
+}
+
+.admin-dashboard-story-map-section .admin-dashboard-info-card {
+  margin-top: 1.5rem;
+}
+
+/* Validation highlight card — used for the "Framework Validation" sections
+   in both StoryMap and MentorText analytics panels */
+.admin-dashboard-validation-card {
+  border-color: var(--primary-light) !important;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f3ff 100%);
+}
+
+/* Small explanatory text that sits below an info-title inside info cards */
+.admin-dashboard-info-subtext {
+  font-size: 12px;
+  color: var(--text-disabled);
+  margin: 0;
+  line-height: 1.5;
+}

@@ -26,6 +26,7 @@ const WritingStudio = () => {
   const [feedbackExists, setFeedbackExists] = useState(false); // NEW
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [panelTimeTracker, setPanelTimeTracker] = useState(null);
 
   // Modal states
   const [storyModalOpen, setStoryModalOpen] = useState(false);
@@ -332,6 +333,11 @@ const WritingStudio = () => {
 
   const handleCloseFeedback = () => {
     setFeedbackOpen(false);
+
+    if (panelTimeTracker) {
+      panelTimeTracker();
+      setPanelTimeTracker(null);
+    }
   };
 
   if (loading) {

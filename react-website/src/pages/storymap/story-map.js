@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import 'firebase/database';
 import { set, ref, get, onValue, orderByChild, equalTo, query, update, remove } from "firebase/database";
 import { useAuthValue } from '../../Firebase/AuthContext';
@@ -14,7 +14,25 @@ import EditLinkModal from '../../components/storymap/EditLinkModal';
 import StoryMapAnalysis from '../../components/storymap/StoryMapAnalysis';
 import AnalysisPanel from '../../components/storymap/AnalysisPanel';
 
+import {
+  logStoryMapRender,
+  logNodeAction,
+  logLinkAction,
+  logNodeMerge,
+  logAnalysisPanelInteraction,
+  logViewToggle,
+  logMergeModeAction,
+  trackAnalysisPanelTime
+} from '../../utils/analytics';
+
+// page-level and UI interaction tracking
+import { logPageView, logPageExit, logUIInteraction } from '../../utils/analytics';
+
 import './story-map.css';
+
+// How long (ms) after a generation or analysis event to watch for manual edits.
+// If the user edits within this window we fire the editedAfter* flag.
+const EDIT_WATCH_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 
 function StoryMap() {
   const { currentUser } = useAuthValue();
@@ -31,12 +49,53 @@ function StoryMap() {
   const [newLinkTarget, setNewLinkTarget] = useState("");
   const [notification, setNotification] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
-  const [cachedAnalysis, setCachedAnalysis] = useState(null); // Store generated feedback
+  const [cachedAnalysis, setCachedAnalysis] = useState(null);
   const [shouldRegenerate, setShouldRegenerate] = useState(false);
   const [mergeMode, setMergeMode] = useState(false);
   const [selectedForMerge, setSelectedForMerge] = useState([]);
+  const [panelTimeTracker, setPanelTimeTracker] = useState(null);
+  const [sessionStartTime] = useState(Date.now());
+  const [actionCount, setActionCount] = useState(0);
+
+  // track when the last AI generation and last AI analysis happened
+  // so we can detect whether subsequent manual edits fall within the watch window
+  const lastGenerationTimeRef = useRef(null);
+  const lastAnalysisTimeRef = useRef(null);
+
+  // flags to avoid firing the same editedAfter event more than once per generation/analysis
+  const editedAfterGenerationFiredRef = useRef(false);
+  const editedAfterAnalysisFiredRef = useRef(false);
 
   const graphRef = ref(database, `stories/${userId}/graph/`);
+
+  // page view on mount, page exit on unmount
+  useEffect(() => {
+    if (!userId) return;
+
+    const entryTime = Date.now();
+    logPageView(userId, 'storyMap', 'modelling');
+
+    return () => {
+      const duration = Date.now() - entryTime;
+      logPageExit(userId, 'storyMap', duration);
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    const generatedAt = sessionStorage.getItem('storyMapGeneratedAt');
+    if (generatedAt) {
+      lastGenerationTimeRef.current = parseInt(generatedAt);
+      editedAfterGenerationFiredRef.current = false;
+      sessionStorage.removeItem('storyMapGeneratedAt');
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (userId && data.nodes.length > 0) {
+      logStoryMapRender(userId, data.nodes, data.links);
+    }
+  }, [userId]);
 
   useEffect(() => {
     if (selectedNode) {
@@ -62,6 +121,36 @@ function StoryMap() {
   const getNodeSize = (level) => {
     return 10 / level;
   };
+
+  const checkEditedAfterGeneration = useCallback(() => {
+    if (!userId) return;
+    const now = Date.now();
+    if (
+      lastGenerationTimeRef.current &&
+      !editedAfterGenerationFiredRef.current &&
+      now - lastGenerationTimeRef.current <= EDIT_WATCH_WINDOW_MS
+    ) {
+      editedAfterGenerationFiredRef.current = true;
+      logUIInteraction(userId, 'storyMap', 'edited_after_generation', {
+        msAfterGeneration: now - lastGenerationTimeRef.current
+      });
+    }
+  }, [userId]);
+
+  const checkEditedAfterAnalysis = useCallback(() => {
+    if (!userId) return;
+    const now = Date.now();
+    if (
+      lastAnalysisTimeRef.current &&
+      !editedAfterAnalysisFiredRef.current &&
+      now - lastAnalysisTimeRef.current <= EDIT_WATCH_WINDOW_MS
+    ) {
+      editedAfterAnalysisFiredRef.current = true;
+      logUIInteraction(userId, 'storyMap', 'edited_after_analysis', {
+        msAfterAnalysis: now - lastAnalysisTimeRef.current
+      });
+    }
+  }, [userId]);
 
   const handleSaveClick = useCallback(async () => {
     if (!selectedNode) return;
@@ -93,18 +182,18 @@ function StoryMap() {
   }, [data, selectedNode, textInput, userId]);
 
   const handleNodeClick = (node) => {
-    // If in merge mode, select nodes for merging
     if (mergeMode) {
       if (selectedForMerge.length === 0) {
-        // First node selected
+        logMergeModeAction(userId, 'select_first', [node.id]);
         setSelectedForMerge([node]);
       } else if (selectedForMerge.length === 1) {
-        // Second node selected - perform merge
         if (selectedForMerge[0].id === node.id) {
           alert('Please select a different node');
           return;
         }
-        
+
+        logMergeModeAction(userId, 'select_second', [selectedForMerge[0].id, node.id]);
+
         const confirmMerge = window.confirm(
           `Merge "${selectedForMerge[0].label}" into "${node.label}"?\n\n` +
           `This will:\n` +
@@ -113,26 +202,32 @@ function StoryMap() {
           `• Delete "${selectedForMerge[0].label}"\n\n` +
           `This cannot be undone.`
         );
-        
+
         if (confirmMerge) {
+          const mergeStartTime = Date.now();
           handleMergeNodes([selectedForMerge[0].id, node.id], node.label);
+
+          const mergeTime = Date.now() - mergeStartTime;
+          logNodeMerge(userId, 2, node.label, mergeTime);
+          logMergeModeAction(userId, 'complete', [selectedForMerge[0].id, node.id]);
         }
-        
-        // Exit merge mode
+
         setMergeMode(false);
         setSelectedForMerge([]);
+        logMergeModeAction(userId, 'exit');
       }
     } else {
-      // Normal mode - open edit modal
       console.log("Clicked node: ", node);
       setSelectedNode(node);
       setIsModalOpen(true);
+      logNodeAction(userId, 'view', node);
     }
   };
 
   const handleLinkClick = (link) => {
     setSelectedLink(link);
     setIsEditLinkModalOpen(true);
+    logLinkAction(userId, 'view', link);
   };
 
   const updateNode = (updatedNode) => {
@@ -142,7 +237,6 @@ function StoryMap() {
       const updatedNodes = prevData.nodes.map((node) =>
         node.id === updatedNode.id ? { ...node, ...updatedNode } : node
       );
-
       return { ...prevData, nodes: updatedNodes };
     });
 
@@ -152,7 +246,7 @@ function StoryMap() {
 
     if (updatedNode.id) {
       const nodeIndex = data.nodes.findIndex((node) => node.id === updatedNode.id);
-      console.log("Updated Node: ", updatedNode)
+      console.log("Updated Node: ", updatedNode);
       if (nodeIndex !== -1) {
         set(ref(database, `stories/${currentUser.uid}/graph/nodes/${nodeIndex}`), updatedNode)
           .then(() => console.log("Node successfully updated in Firebase"))
@@ -160,6 +254,14 @@ function StoryMap() {
       } else {
         console.error("Error: Node with ID not found in dataset");
       }
+
+      logNodeAction(userId, 'edit', updatedNode);
+      setActionCount(prev => prev + 1);
+
+      // check if this edit falls within a post-generation or post-analysis window
+      checkEditedAfterGeneration();
+      checkEditedAfterAnalysis();
+
     } else {
       console.error("Error: updatedNode.id is undefined");
     }
@@ -168,6 +270,8 @@ function StoryMap() {
   const deleteNode = (nodeId) => {
     const nodeIndex = data.nodes.findIndex((node) => node.id === nodeId);
     if (nodeIndex === -1) return;
+
+    const nodeData = data.nodes[nodeIndex];
 
     const linkIndices = data.links
       .map((link, linkIndex) => (link.source === nodeId || link.target === nodeId ? linkIndex : -1))
@@ -183,6 +287,13 @@ function StoryMap() {
         remove(ref(database, `stories/${currentUser.uid}/graph/links/${linkIndex}`));
       });
 
+      logNodeAction(userId, 'delete', nodeData);
+      setActionCount(prev => prev + 1);
+
+      // deletion is also a manual edit
+      checkEditedAfterGeneration();
+      checkEditedAfterAnalysis();
+
       return { ...prevData, nodes: updatedNodes, links: updatedLinks };
     });
   };
@@ -196,6 +307,7 @@ function StoryMap() {
   };
 
   const saveNewNode = async (nodeDetails) => {
+    const startTime = Date.now();
     const { label, aliases } = nodeDetails;
 
     const existingNode = data.nodes.find(node =>
@@ -224,6 +336,15 @@ function StoryMap() {
     set(ref(database, `stories/${userId}/graph/nodes/${data.nodes.length}`), newNode)
       .then(showNotification)
       .catch((error) => console.error("Error adding node:", error));
+
+    const processingTime = Date.now() - startTime;
+    await logNodeAction(userId, 'create', newNode, processingTime);
+
+    setActionCount(prev => prev + 1);
+
+    // adding a node is a manual edit
+    checkEditedAfterGeneration();
+    checkEditedAfterAnalysis();
 
     closeNewNodeModal();
   };
@@ -282,12 +403,19 @@ function StoryMap() {
       .then(showNotification)
       .catch((error) => console.error("Error adding link:", error));
 
+    logLinkAction(userId, 'create', newLink);
+    setActionCount(prev => prev + 1);
+
+    // adding a link is a manual edit
+    checkEditedAfterGeneration();
+    checkEditedAfterAnalysis();
+
     closeNewLinkModal();
   };
 
   const saveEditedLink = (linkDetails) => {
     const { context, source, target, type } = linkDetails;
-    console.log(source, target, type, context)
+    console.log(source, target, type, context);
 
     if (source === target) {
       console.log("Source: ", source, " Target: ", target);
@@ -311,18 +439,28 @@ function StoryMap() {
 
     setData((prev) => {
       const updatedLinks = prev.links.map((link) =>
-        link.source === selectedLink.source && link.target === selectedLink.target ? { ...link, source, target, type } : link
+        link.source === selectedLink.source && link.target === selectedLink.target
+          ? { ...link, source, target, type }
+          : link
       );
-
       return { ...prev, links: updatedLinks };
     });
 
-    const linkIndex = data.links.findIndex((link) => link.source === selectedLink.source && link.target === selectedLink.target);
+    const linkIndex = data.links.findIndex(
+      (link) => link.source === selectedLink.source && link.target === selectedLink.target
+    );
     if (linkIndex !== -1) {
       set(ref(database, `stories/${userId}/graph/links/${linkIndex}`), { context, source, target, type })
         .then(showNotification)
         .catch((error) => console.error("Error updating link:", error));
     }
+
+    logLinkAction(userId, 'edit', { ...linkDetails, source, target, type });
+    setActionCount(prev => prev + 1);
+
+    // editing a link is a manual edit
+    checkEditedAfterGeneration();
+    checkEditedAfterAnalysis();
 
     closeEditLinkModal();
   };
@@ -345,7 +483,7 @@ function StoryMap() {
     };
 
     const rootNodeNames = new Set(snapshotData.nodes.map(node => node.id));
-    
+
     snapshotData.links.forEach(link => {
       if (!snapshotData.nodes.some(node => node.id === link.source) || !snapshotData.nodes.some(node => node.id === link.target)) {
         removeLink(link);
@@ -357,7 +495,7 @@ function StoryMap() {
         }
       }
     });
-    
+
     const queue = Array.from(rootNodeNames, rootNodeName => ({ id: rootNodeName, level: 1 }));
     while (queue.length > 0) {
       const { id, level } = queue.shift();
@@ -388,7 +526,7 @@ function StoryMap() {
     }
 
     const flattenedLinks = Array.from(links, (link) => JSON.parse(link));
-    
+
     const finalNodes = snapshotData.nodes.filter((node) => nodes.has(node.id)).map((node) => ({
       ...node,
       id: node.id,
@@ -399,7 +537,7 @@ function StoryMap() {
       aliases: node.aliases,
       hidden: false
     }));
-    
+
     return { nodes: finalNodes, links: flattenedLinks };
   };
 
@@ -469,16 +607,12 @@ function StoryMap() {
       .filter(a => a !== primaryName);
     primaryNode.aliases = allAliases.length > 0 ? [...new Set(allAliases)].join(', ') : '';
 
-    const allNotes = nodesToMerge
-      .map(n => n.note)
-      .filter(Boolean);
+    const allNotes = nodesToMerge.map(n => n.note).filter(Boolean);
     primaryNode.note = allNotes.length > 0 ? allNotes.join('\n---\n') : '';
 
     const updatedLinks = data.links.map(link => {
-      // Ensure we're working with IDs, not objects
       const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
       const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-      
       return {
         type: link.type || 'Unspecified',
         source: nodeIds.includes(sourceId) ? primaryNode.id : sourceId,
@@ -501,7 +635,6 @@ function StoryMap() {
       .filter(n => n.id === primaryNode.id || !nodeIds.includes(n.id))
       .map(n => {
         if (n.id === primaryNode.id) {
-          // Clean primary node - only keep essential properties
           return {
             id: primaryNode.id,
             label: primaryNode.label || '',
@@ -512,7 +645,6 @@ function StoryMap() {
             hidden: false
           };
         }
-        // Clean all other nodes - only keep essential properties
         return {
           id: n.id,
           label: n.label || '',
@@ -524,7 +656,6 @@ function StoryMap() {
         };
       });
 
-    // Final pass: ensure links only have primitive values
     const cleanedLinks = uniqueLinks.map(link => ({
       type: String(link.type || 'Unspecified'),
       source: String(link.source),
@@ -534,8 +665,8 @@ function StoryMap() {
 
     setData({ nodes: updatedNodes, links: cleanedLinks });
 
-    const graphRef = ref(database, `stories/${currentUser.uid}/graph/`);
-    set(graphRef, { nodes: updatedNodes, links: cleanedLinks })
+    const graphRefLocal = ref(database, `stories/${currentUser.uid}/graph/`);
+    set(graphRefLocal, { nodes: updatedNodes, links: cleanedLinks })
       .then(() => {
         showNotification();
         alert(`Successfully merged ${nodesToMerge.length} nodes into "${primaryName}"`);
@@ -546,29 +677,61 @@ function StoryMap() {
       });
   };
 
-  // Handler to regenerate analysis
+  // ✅ UPDATED: record analysis time so subsequent edits can be flagged
   const handleRegenerateAnalysis = () => {
     setShouldRegenerate(true);
     setShowAnalysis(true);
+
+    const tracker = trackAnalysisPanelTime(userId);
+    setPanelTimeTracker(() => tracker);
+    logAnalysisPanelInteraction(userId, 'open');
   };
 
-  // Handler to view existing feedback
   const handleViewFeedback = () => {
     setShouldRegenerate(false);
     setShowAnalysis(true);
+
+    const tracker = trackAnalysisPanelTime(userId);
+    setPanelTimeTracker(() => tracker);
+    logAnalysisPanelInteraction(userId, 'open');
   };
 
-  // Toggle merge mode
   const toggleMergeMode = () => {
+    const newMergeMode = !mergeMode;
     setMergeMode(!mergeMode);
     setSelectedForMerge([]);
+
+    if (newMergeMode) {
+      logMergeModeAction(userId, 'enter');
+    } else {
+      logMergeModeAction(userId, 'exit');
+    }
   };
 
-  // Callback when analysis completes
+  // ✅ UPDATED: record that analysis just completed so we can watch for subsequent edits
   const handleAnalysisComplete = (analysisResult) => {
     setCachedAnalysis(analysisResult);
     setShouldRegenerate(false);
+
+    // Record analysis time and reset the editedAfterAnalysis flag
+    lastAnalysisTimeRef.current = Date.now();
+    editedAfterAnalysisFiredRef.current = false;
   };
+
+  useEffect(() => {
+    return () => {
+      const sessionDuration = Date.now() - sessionStartTime;
+      console.log('[StoryMap Analytics] Session ended', {
+        duration: sessionDuration,
+        actionCount,
+        userId
+      });
+
+      if (panelTimeTracker) {
+        panelTimeTracker();
+      }
+    };
+  }, [sessionStartTime, actionCount, panelTimeTracker, userId]);
 
   return (
     <div>
@@ -586,7 +749,7 @@ function StoryMap() {
         >
           + Add Node
         </button>
-        
+
         <button
           onClick={openNewLinkModal}
           className="story-map-btn add-link-btn"
@@ -602,33 +765,22 @@ function StoryMap() {
           {mergeMode ? '✓ Merge Mode Active' : '🔀 Merge Nodes'}
         </button>
 
-        {/* Show different buttons based on whether feedback exists */}
         {cachedAnalysis ? (
           <>
-            <button 
-              onClick={handleViewFeedback} 
-              className="story-map-btn view-feedback-btn"
-            >
+            <button onClick={handleViewFeedback} className="story-map-btn view-feedback-btn">
               📊 View Feedback
             </button>
-            <button 
-              onClick={handleRegenerateAnalysis} 
-              className="story-map-btn analyze-btn"
-            >
+            <button onClick={handleRegenerateAnalysis} className="story-map-btn analyze-btn">
               🔄 Regenerate Analysis
             </button>
           </>
         ) : (
-          <button 
-            onClick={handleRegenerateAnalysis} 
-            className="story-map-btn analyze-btn"
-          >
+          <button onClick={handleRegenerateAnalysis} className="story-map-btn analyze-btn">
             🔍 Analyze Structure
           </button>
         )}
       </div>
 
-      {/* Merge Mode Instructions */}
       {mergeMode && (
         <div style={{
           padding: '12px 16px',
@@ -644,7 +796,7 @@ function StoryMap() {
         }}>
           <span style={{ fontSize: '18px' }}>ℹ️</span>
           <div>
-            <strong>Merge Mode Active:</strong> 
+            <strong>Merge Mode Active:</strong>
             {selectedForMerge.length === 0 ? (
               <> Click the first node (this will be deleted)</>
             ) : (
@@ -654,7 +806,6 @@ function StoryMap() {
         </div>
       )}
 
-      {/* Graph Display */}
       <div className="graph-container">
         <Graph
           data={data}
@@ -665,14 +816,13 @@ function StoryMap() {
         />
       </div>
 
-      {/* Analysis Panel */}
       {showAnalysis && (
         <AnalysisPanel
           isOpen={showAnalysis}
           onClose={() => setShowAnalysis(false)}
         >
-          <StoryMapAnalysis 
-            data={data} 
+          <StoryMapAnalysis
+            data={data}
             onMergeNodes={handleMergeNodes}
             autoAnalyze={shouldRegenerate}
             cachedAnalysis={shouldRegenerate ? null : cachedAnalysis}
@@ -681,7 +831,6 @@ function StoryMap() {
         </AnalysisPanel>
       )}
 
-      {/* Modals */}
       {selectedNode && (
         <GraphModal
           isModalOpen={isModalOpen}

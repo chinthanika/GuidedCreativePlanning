@@ -1,9 +1,9 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route} from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-import {auth} from './Firebase/firebase'
-import {onAuthStateChanged} from 'firebase/auth'
+import { auth } from './Firebase/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
 import { AuthProvider } from './Firebase/AuthContext';
 
 import './App.css';
@@ -20,12 +20,14 @@ import StoryMap from './pages/storymap/story-map';
 import StoryTimeline from './pages/timeline/timeline';
 import StoryEditorPage from './pages/storyeditor/story';
 import Chatbot from './pages/chatbot/chatbot'; // Import the Chatbot page
-import StoryWorld from './pages/world/world';  
+import StoryWorld from './pages/world/world';
 import LibraryPage from './pages/recommender/LibraryPage';
 import GuidanceAssistant from './assistant/GuidanceAssistant';
+import AdminDashboard from './pages/analytics/AdminDashboard';
 
 function App() {
 
+    const ADMIN_UIDS = ['04E9XYnVi8QD3yHAIXeBHCRp2sN2']; // Replace with actual admin UIDs
     //These constants will be visible inside AuthProvider
     const [currentUser, setCurrentUser] = useState(null)
     const [timeActive, setTimeActive] = useState(false)
@@ -33,37 +35,42 @@ function App() {
     //Get the current user from firebase and set it in the state when rendered
     useEffect(() => {
         onAuthStateChanged(auth, (user) => {
-          setCurrentUser(user)
-         })
-      }, [])
+            setCurrentUser(user)
+        })
+    }, [])
 
-return (
-    <Router>
-        <AuthProvider value={{currentUser, timeActive, setTimeActive}}>
-            <Navbar />
-            <Routes>
-                <Route path='/sign-up' element={<SignUp/>} />
-                <Route path='/login' element={<Login/>} />
-                <Route path='/verify-email' element={<VerifyEmail/>} />
-                <Route path='/profile' element={<Profile/>} />
-                <Route path='/mentor-text' element={<MentorTextPage/>} />
-                <Route path='/map-generator' element={<MapGenerator/>}/>
-                <Route path='/story-map' element={<StoryMap/>}/>
-                <Route path='/story-timeline' element={<StoryTimeline/>}/>
-                <Route path='/story-world' element={<StoryWorld/>}/>
-                <Route path='/chatbot' element={<Chatbot/>}/>
-                <Route path='/library' element={<LibraryPage/>}/>
-                <Route path='/story-editor' element={<StoryEditorPage/>}/>
-                <Route exact path='/' element={
-                    <PrivateRoute>
-                    <Profile/>
-                    </PrivateRoute>
-                }/>
-            </Routes>
+    return (
+        <Router>
+            <AuthProvider value={{ currentUser, timeActive, setTimeActive }}>
+                <Navbar />
+                <Routes>
+                    <Route path='/sign-up' element={<SignUp />} />
+                    <Route path='/login' element={<Login />} />
+                    <Route path='/verify-email' element={<VerifyEmail />} />
+                    <Route path='/profile' element={<Profile />} />
+                    <Route path='/mentor-text' element={<MentorTextPage />} />
+                    <Route path='/map-generator' element={<MapGenerator />} />
+                    <Route path='/story-map' element={<StoryMap />} />
+                    <Route path='/story-timeline' element={<StoryTimeline />} />
+                    <Route path='/story-world' element={<StoryWorld />} />
+                    <Route path='/chatbot' element={<Chatbot />} />
+                    <Route path='/library' element={<LibraryPage />} />
+                    <Route path='/story-editor' element={<StoryEditorPage />} />
+                    <Route path='/admin-dashboard' element={
+                        currentUser && ADMIN_UIDS.includes(currentUser.uid)
+                            ? <AdminDashboard />
+                            : <Navigate to='/' replace />
+                    } />
+                    <Route exact path='/' element={
+                        <PrivateRoute>
+                            <Profile />
+                        </PrivateRoute>
+                    } />
+                </Routes>
                 <GuidanceAssistant />
-        </AuthProvider>
-    </Router>
-);
+            </AuthProvider>
+        </Router>
+    );
 }
-  
+
 export default App;

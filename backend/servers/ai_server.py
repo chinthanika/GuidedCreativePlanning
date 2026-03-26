@@ -6,6 +6,10 @@ import time
 import threading
 import random
 import re
+import statistics
+from collections import defaultdict
+import statistics
+from collections import defaultdict
 
 import firebase_admin
 from firebase_admin import credentials, db
@@ -45,6 +49,47 @@ from prompts.timeline_reflection_prompt import TIMELINE_REFLECTION_PROMPT, TIMEL
 from prompts.story_map_analysis_prompt import STORY_MAP_ANALYSIS_PROMPT
 from prompts.mentor_analysis_prompt import MENTOR_TEXT_ANALYSIS_SYSTEM_PROMPT, build_mentor_analysis_user_prompt, validate_analysis_output
 
+from utils.analytics.logger import (
+    log_tool_interaction,
+    get_current_session_id,
+    log_story_map_generation,
+    log_book_recommendation,
+    log_timeline_coherence,
+    log_feedback_submission,
+    log_chat_message,
+    log_world_ai_template_suggestion,
+    log_world_item_created,
+    log_world_item_edited,
+    log_world_field_completion,
+)
+from utils.analytics.mentor_text_logger import (
+    log_mentor_text_analysis,
+    log_mentor_text_view,
+    log_mentor_text_deletion,
+    log_mentor_text_search,
+    log_mentor_text_filter
+)
+from utils.analytics.story_map_logger import (
+    log_story_map_graph_render,
+    log_story_map_node_action,
+    log_story_map_link_action,
+    log_story_map_merge,
+    log_story_map_analysis as log_story_map_analysis_detailed,
+    log_story_map_analysis_panel_interaction,
+    log_story_map_view_toggle,
+    log_story_map_merge_mode,
+    log_story_map_iteration_pattern,
+)
+from utils.analytics.timeline_logger import (
+    log_timeline_page_view,
+    log_timeline_page_exit,
+    log_timeline_event_created,
+    log_timeline_event_edited,
+    log_timeline_event_deleted,
+    log_timeline_event_reordered,
+    log_timeline_mode_used,
+    log_timeline_coherence_check,
+)
 app = Flask(__name__)
 
 CORS(app, origins="*", supports_credentials=True) 
@@ -213,8 +258,422 @@ def guidance_chat():
         print(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
 
+def _calculate_stage_times(journey_list):
+    """Calculate time spent in each TLC stage."""
+    stage_times = {}
+    
+    for i in range(len(journey_list) - 1):
+        stage = journey_list[i].get('stage')
+        if not stage:
+            continue
+        
+        duration = journey_list[i+1]['timestamp'] - journey_list[i]['timestamp']
+        stage_times[stage] = stage_times.get(stage, 0) + duration
+    
+    return stage_times
+
 # ============================================
-# BRAINSTORMING CHAT (FIXED)
+# PAGE VIEW TRACKING ENDPOINTS
+# ============================================
+
+@app.route('/api/log-page-view', methods=['POST'])
+def log_page_view():
+    """
+    Track when user navigates to a tool page.
+    Called by frontend on page mount.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        page_name = data.get('pageName')
+        tlc_stage = data.get('tlcStage')
+        timestamp = data.get('timestamp', int(time.time() * 1000))
+        
+        if not user_id or not page_name:
+            return jsonify({'error': 'userId and pageName required'}), 400
+        
+        # Log as tool interaction
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name=page_name,
+            interaction_type='page_view',
+            tlc_stage=tlc_stage,
+            metadata={'timestamp': timestamp}
+        )
+        
+        # Track page view separately for timing analysis
+        page_views_ref = db.reference(f"analytics/{user_id}/pageViews")
+        page_view_id = page_views_ref.push({
+            'pageName': page_name,
+            'entryTimestamp': timestamp,
+            'exitTimestamp': None,  # Will be filled on exit
+            'duration': None
+        }).key
+        
+        rec_logger.info(f"[PAGE_VIEW] {user_id} entered {page_name}")
+        
+        return jsonify({
+            'success': True, 
+            'logged': 'page_view',
+            'pageViewId': page_view_id
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[PAGE_VIEW] Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/log-page-exit', methods=['POST'])
+def log_page_exit():
+    """
+    Track when user exits a tool page.
+    Called by frontend on page unmount.
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        page_name = data.get('pageName')
+        duration_ms = data.get('durationMs')
+        timestamp = data.get('timestamp', int(time.time() * 1000))
+        
+        if not user_id or not page_name:
+            return jsonify({'error': 'userId and pageName required'}), 400
+        
+        # Find the most recent page view for this page
+        page_views_ref = db.reference(f"analytics/{user_id}/pageViews")
+        all_views = page_views_ref.order_by_child('entryTimestamp').get() or {}
+        
+        # Find matching entry (most recent view of this page with no exit)
+        matching_view_key = None
+        for view_key, view_data in reversed(list(all_views.items())):
+            if (view_data.get('pageName') == page_name and 
+                view_data.get('exitTimestamp') is None):
+                matching_view_key = view_key
+                break
+        
+        if matching_view_key:
+            # Update with exit data
+            page_views_ref.child(matching_view_key).update({
+                'exitTimestamp': timestamp,
+                'duration': duration_ms
+            })
+        
+        # Also track in feature metrics
+        feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/{page_name}")
+        total_time = feature_ref.child('totalTimeInFeature').get() or 0
+        feature_ref.child('totalTimeInFeature').set(total_time + duration_ms)
+        
+        rec_logger.info(f"[PAGE_EXIT] {user_id} exited {page_name} after {duration_ms}ms")
+        
+        return jsonify({'success': True, 'logged': 'page_exit'}), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[PAGE_EXIT] Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/log-ui-interaction', methods=['POST'])
+def log_ui_interaction():
+    """
+    Endpoint for frontend to log UI-only interactions.
+    
+    Expected body:
+    {
+        "userId": "user_123",
+        "feature": "mentorText",
+        "action": "open_analysis" | "search" | "filter" | etc.,
+        "metadata": { ... feature-specific data ... }
+    }
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        feature = data.get('feature')
+        action = data.get('action')
+        metadata = data.get('metadata', {})
+        
+        if not user_id or not feature or not action:
+            return jsonify({'error': 'userId, feature, and action required'}), 400
+        
+        # Map feature to TLC stage (default to joint_construction for UI interactions)
+        stage_map = {
+            'bookRecs': 'building_knowledge',
+            'mentorText': 'modelling',
+            'storyMap': 'joint_construction',
+            'timeline': 'joint_construction',
+            'bsChatbot': 'joint_construction',
+            'dtChatbot': 'joint_construction',
+            'feedback': 'independent_construction'
+        }
+        
+        tlc_stage = stage_map.get(feature, 'joint_construction')
+        
+        # Log the interaction
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name=feature,
+            interaction_type=action,
+            tlc_stage=tlc_stage,
+            metadata=metadata
+        )
+        
+        # Update feature-specific metrics if needed
+        if feature == 'bookRecs' and action == 'save_book':
+            feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/bookRecommendations/savedBooks")
+            total_saved = feature_ref.child('totalSaved').get() or 0
+            feature_ref.child('totalSaved').set(total_saved + 1)
+
+        elif feature == 'bookRecs' and action == 'view_book_details':
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/bookRecommendations")
+                views = feature_ref.child('totalBooksViewed').get() or 0
+                feature_ref.child('totalBooksViewed').set(views + 1)
+                book_id = metadata.get('bookId')
+                if book_id:
+                    feature_ref.child(f'bookViews/{book_id}').push({
+                        'timestamp': int(time.time() * 1000),
+                        'relevanceScore': metadata.get('relevanceScore')
+                    })
+            except Exception as view_err:
+                rec_logger.warning(f"[UI_LOG] view_book_details metrics failed: {view_err}")
+
+        elif feature == 'bookRecs' and action == 'pass_book':
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/bookRecommendations")
+                passed = feature_ref.child('totalBooksPassed').get() or 0
+                feature_ref.child('totalBooksPassed').set(passed + 1)
+            except Exception as pass_err:
+                rec_logger.warning(f"[UI_LOG] pass_book metrics failed: {pass_err}")
+
+        elif feature == 'bookRecs' and action == 'recommendations_received':
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/bookRecommendations")
+                returned = metadata.get('booksReturned', 0)
+                total_returned = feature_ref.child('totalBooksReturned').get() or 0
+                feature_ref.child('totalBooksReturned').set(total_returned + returned)
+            except Exception as rate_err:
+                rec_logger.warning(f"[UI_LOG] recommendations_received metrics failed: {rate_err}")
+
+        elif feature == 'bookRecs' and action == 'request_recommendations':
+            pass  # journey-only, no counter needed — log_tool_interaction above handles it
+
+        elif feature == 'worldAI' and action == 'item_created':
+            try:
+                log_world_item_created(
+                    user_id=user_id,
+                    item_type=metadata.get('itemType', 'unknown'),
+                    template_choice=metadata.get('templateChoice', 'none'),
+                    fields_accepted=metadata.get('fieldsAccepted', 0),
+                    fields_suggested=metadata.get('fieldsSuggested', 0),
+                    fields_added_manually=metadata.get('fieldsAddedManually', 0)
+                )
+                # Also log field completion separately
+                if metadata.get('totalFields', 0) > 0:
+                    log_world_field_completion(
+                        user_id=user_id,
+                        item_type=metadata.get('itemType', 'unknown'),
+                        total_fields=metadata.get('totalFields', 0),
+                        filled_fields=metadata.get('filledFields', 0)
+                    )
+            except Exception as e:
+                rec_logger.warning(f"[UI_LOG] World item_created log failed: {e}")
+
+        elif feature == 'worldAI' and action == 'item_edited':
+            try:
+                log_world_item_edited(
+                    user_id=user_id,
+                    item_type=metadata.get('itemType', 'unknown'),
+                    fields_added=metadata.get('fieldsAdded', 0),
+                    fields_removed=metadata.get('fieldsRemoved', 0)
+                )
+                if metadata.get('totalFields', 0) > 0:
+                    log_world_field_completion(
+                        user_id=user_id,
+                        item_type=metadata.get('itemType', 'unknown'),
+                        total_fields=metadata.get('totalFields', 0),
+                        filled_fields=metadata.get('filledFields', 0)
+                    )
+            except Exception as e:
+                rec_logger.warning(f"[UI_LOG] World item_edited log failed: {e}")
+
+        elif feature == 'mentorText' and action == 'search':
+            feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/mentorText")
+            total_searches = feature_ref.child('totalSearches').get() or 0
+            feature_ref.child('totalSearches').set(total_searches + 1)
+        
+        elif feature == 'mentorText' and action == 'filter':
+            feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/mentorText")
+            filter_type = metadata.get('filterType')
+            if filter_type:
+                filter_count = feature_ref.child(f'filterUsage/{filter_type}').get() or 0
+                feature_ref.child(f'filterUsage/{filter_type}').set(filter_count + 1)
+
+        elif feature == 'mentorText' and action == 'view_analysis_complete':
+            # Fired by AnalysisDetailModal on close — records how long student reviewed an analysis
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/mentorText")
+                duration_ms = metadata.get('durationMs', 0)
+                analysis_id = metadata.get('analysisId')
+                view_type = metadata.get('viewType', 'library_review')
+
+                total_view_time = feature_ref.child('totalReviewTimeMs').get() or 0
+                feature_ref.child('totalReviewTimeMs').set(total_view_time + duration_ms)
+
+                total_views = feature_ref.child('totalAnalysisViews').get() or 0
+                feature_ref.child('totalAnalysisViews').set(total_views + 1)
+
+                avg_review_time = (total_view_time + duration_ms) / (total_views + 1)
+                feature_ref.child('avgReviewTimeMs').set(round(avg_review_time, 1))
+
+                # Per-analysis engagement log
+                if analysis_id and analysis_id != 'new':
+                    feature_ref.child(f'analysisViews/{analysis_id}').push({
+                        'timestamp': int(time.time() * 1000),
+                        'durationMs': duration_ms,
+                        'viewType': view_type
+                    })
+            except Exception as view_err:
+                rec_logger.warning(f"[UI_LOG] view_analysis_complete metrics failed: {view_err}")
+
+        elif feature == 'storyMap' and action == 'edited_after_generation':
+            # Fired when user manually edits the map within 10 min of AI generation
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/storyMap")
+                edit_after_gen_count = feature_ref.child('editsAfterGeneration').get() or 0
+                feature_ref.child('editsAfterGeneration').set(edit_after_gen_count + 1)
+                feature_ref.child('lastEditAfterGenerationTimestamp').set(int(time.time() * 1000))
+            except Exception as edit_err:
+                rec_logger.warning(f"[UI_LOG] edited_after_generation metrics failed: {edit_err}")
+
+        elif feature == 'storyMap' and action == 'edited_after_analysis':
+            # Fired when user manually edits the map within 10 min of receiving analysis feedback
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/storyMap")
+                edit_after_analysis_count = feature_ref.child('editsAfterAnalysis').get() or 0
+                feature_ref.child('editsAfterAnalysis').set(edit_after_analysis_count + 1)
+                feature_ref.child('lastEditAfterAnalysisTimestamp').set(int(time.time() * 1000))
+            except Exception as edit_err:
+                rec_logger.warning(f"[UI_LOG] edited_after_analysis metrics failed: {edit_err}")
+        
+        elif feature == 'reflectiveChatbot' and action == 'focus_area_set':
+            # Track focus area distribution
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
+                focus_area = metadata.get('focusArea')
+                mode       = metadata.get('mode', 'unknown')
+                if focus_area:
+                    focus_count = feature_ref.child(f'focusAreas/{focus_area}').get() or 0
+                    feature_ref.child(f'focusAreas/{focus_area}').set(focus_count + 1)
+                    mode_focus_count = feature_ref.child(f'focusAreasByMode/{mode}/{focus_area}').get() or 0
+                    feature_ref.child(f'focusAreasByMode/{mode}/{focus_area}').set(mode_focus_count + 1)
+            except Exception as fa_err:
+                rec_logger.warning(f"[UI_LOG] focus_area_set metrics failed: {fa_err}")
+
+        elif feature == 'reflectiveChatbot' and action == 'mode_switch':
+            # Track how often students switch modes mid-session
+            try:
+                feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
+                from_mode = metadata.get('fromMode', 'unknown')
+                to_mode   = metadata.get('toMode', 'unknown')
+                switch_key = f'{from_mode}_to_{to_mode}'
+                switch_count = feature_ref.child(f'modeSwitches/{switch_key}').get() or 0
+                feature_ref.child(f'modeSwitches/{switch_key}').set(switch_count + 1)
+                total_switches = feature_ref.child('totalModeSwitches').get() or 0
+                feature_ref.child('totalModeSwitches').set(total_switches + 1)
+            except Exception as ms_err:
+                rec_logger.warning(f"[UI_LOG] mode_switch metrics failed: {ms_err}")
+        elif action in ('tool_entry', 'tool_exit'):
+            try:
+                log_tool_interaction(
+                    user_id=user_id,
+                    tool_name=feature,
+                    interaction_type=action,
+                    tlc_stage=metadata.get('tlcStage', 'joint_construction'),
+                    metadata=metadata
+                )
+            except Exception as e:
+                rec_logger.warning(f"[UI_LOG] Tool entry/exit log failed: {e}")
+
+        rec_logger.info(f"[UI_LOG] {user_id} - {feature}.{action}")
+        
+        return jsonify({'success': True, 'logged': action}), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[UI_LOG] Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/log-ui-batch', methods=['POST'])
+def log_ui_batch():
+    """
+    Batch endpoint for logging multiple rapid interactions.
+    Used by createBatchLogger in frontend.
+    
+    Expected body:
+    {
+        "userId": "user_123",
+        "feature": "storyMap",
+        "interactions": [
+            {"action": "move_node", "metadata": {...}, "timestamp": 123456},
+            {"action": "move_node", "metadata": {...}, "timestamp": 123457}
+        ]
+    }
+    """
+    try:
+        data = request.json
+        user_id = data.get('userId')
+        feature = data.get('feature')
+        interactions = data.get('interactions', [])
+        
+        if not user_id or not feature or not interactions:
+            return jsonify({'error': 'userId, feature, and interactions required'}), 400
+        
+        # Map feature to TLC stage
+        stage_map = {
+            'bookRecs': 'building_knowledge',
+            'mentorText': 'modelling',
+            'storyMap': 'modelling',
+            'timeline': 'joint_construction',
+            'bsChatbot': 'joint_construction',
+            'dtChatbot': 'joint_construction',
+            'feedback': 'independent_construction'
+        }
+        
+        tlc_stage = stage_map.get(feature, 'joint_construction')
+        
+        # Log each interaction
+        for interaction in interactions:
+            action = interaction.get('action')
+            metadata = interaction.get('metadata', {})
+            timestamp = interaction.get('timestamp')
+            
+            if action:
+                # Add timestamp to metadata
+                if timestamp:
+                    metadata['batchTimestamp'] = timestamp
+                
+                log_tool_interaction(
+                    user_id=user_id,
+                    tool_name=feature,
+                    interaction_type=action,
+                    tlc_stage=tlc_stage,
+                    metadata=metadata
+                )
+        
+        rec_logger.info(f"[UI_BATCH] {user_id} - {feature}: {len(interactions)} interactions")
+        
+        return jsonify({
+            'success': True, 
+            'logged': len(interactions),
+            'feature': feature
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[UI_BATCH] Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# ============================================
+# BRAINSTORMING CHAT
 # ============================================
 @app.route('/chat/brainstorming', methods=['POST'])
 def brainstorming_chat():
@@ -256,6 +715,10 @@ def brainstorming_chat():
         cfm_session.save_message("user", user_message, 
                                 stage=cfm_session.get_stage(), visible=True)
 
+        try:
+            log_chat_message(user_id, 'brainstorming', 'user', len(user_message), cfm_session.get_stage())
+        except Exception as e:
+            bs_logger.warning(f"[BS] log_chat_message failed: {e}")
         # Build prompt
         recent = cfm_session.get_recent_messages(limit=10)
         session_snapshot = cfm_session.get_session_snapshot()
@@ -379,7 +842,11 @@ def brainstorming_chat():
         if chat_message:
             cfm_session.save_message("assistant", chat_message, 
                                     stage=cfm_session.get_stage(), visible=True)
-            
+            try:
+                log_chat_message(user_id, 'brainstorming', 'assistant', len(chat_message), cfm_session.get_stage())
+            except Exception as e:
+                bs_logger.warning(f"[BS] log_chat_message failed: {e}")
+
             try:
                 messages_ref = db.reference(f"chatSessions/{user_id}/{session_id}/messages")
                 all_messages = messages_ref.get() or {}
@@ -454,6 +921,11 @@ def deepthinking_chat():
 
         # Save user message
         cfm_session.save_message("user", user_message, visible=True)
+
+        try:
+            log_chat_message(user_id, 'deepthinking', 'user', len(user_message), None)
+        except Exception as e:
+            dt_logger.warning(f"[DT] log_chat_message failed: {e}")
 
         # Build prompt
         recent = cfm_session.get_recent_messages(limit=10)
@@ -676,6 +1148,11 @@ Instructions:
             cfm_session.save_message("assistant", chat_message, visible=True)
 
             try:
+                log_chat_message(user_id, 'deepthinking', 'assistant', len(chat_message), None)
+            except Exception as e:
+                dt_logger.warning(f"[DT] log_chat_message failed: {e}")
+
+            try:
                 messages_ref = db.reference(f"chatSessions/{user_id}/{session_id}/messages")
                 all_messages = messages_ref.get() or {}
                 user_message_count = sum(1 for m in all_messages.values() 
@@ -707,6 +1184,161 @@ Instructions:
     except Exception as e:
         dt_logger.exception(f"[DT] Error: {e}")
         return jsonify({"error": str(e)}), 500
+    
+# ============================================
+# Session start counter
+# ============================================
+
+@app.route('/api/chat/log-session-start', methods=['POST'])
+def log_chat_session_start():
+    """
+    Increment the per-user total session counter and record which mode
+    the session started in.
+
+    Called by the frontend logChatSessionStart() helper immediately after
+    a new chat session is created.
+
+    Expected body:
+    {
+        "userId":    "...",
+        "sessionId": "...",
+        "mode":      "brainstorming" | "deepthinking",
+        "timestamp": 1234567890
+    }
+    """
+    try:
+        data = request.json
+        user_id  = data.get('userId')
+        session_id = data.get('sessionId')
+        mode     = data.get('mode', 'brainstorming')
+        ts       = data.get('timestamp', int(time.time() * 1000))
+
+        if not user_id or not session_id:
+            return jsonify({'error': 'userId and sessionId required'}), 400
+
+        feature_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
+
+        # Increment total session count
+        total_sessions = feature_ref.child('totalSessions').get() or 0
+        feature_ref.child('totalSessions').set(total_sessions + 1)
+
+        # Increment per-mode session count
+        mode_key = 'bsSessions' if mode == 'brainstorming' else 'dtSessions'
+        mode_sessions = feature_ref.child(mode_key).get() or 0
+        feature_ref.child(mode_key).set(mode_sessions + 1)
+
+        # Log session start in the tool journey
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name='bsChatbot' if mode == 'brainstorming' else 'dtChatbot',
+            interaction_type='session_start',
+            tlc_stage='joint_construction',
+            metadata={'sessionId': session_id, 'mode': mode, 'timestamp': ts}
+        )
+
+        rec_logger.info(f"[CHAT_LOG] session_start for {user_id}, mode={mode}, total={total_sessions + 1}")
+        return jsonify({'success': True, 'totalSessions': total_sessions + 1}), 200
+
+    except Exception as e:
+        rec_logger.exception(f"[CHAT_LOG] log-session-start error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# ============================================
+# BS CPS stage transition
+# ============================================
+
+@app.route('/api/chat/log-stage-transition', methods=['POST'])
+def log_chat_stage_transition():
+    """
+    Mirror a Brainstorming CPS stage transition into the main analytics tree
+    (analytics/{userId}/stageTransitions) so it appears alongside transitions
+    from other tools in the cross-study analysis.
+
+    The Session API's stageHistory already stores this inside the session doc;
+    this endpoint makes it available for aggregate queries without having to
+    join across every session document.
+
+    Expected body:
+    {
+        "userId":    "...",
+        "sessionId": "...",
+        "fromStage": "Clarify",
+        "toStage":   "Ideate",
+        "trigger":   "auto" | "manual",
+        "timestamp": 1234567890
+    }
+    """
+    try:
+        data       = request.json
+        user_id    = data.get('userId')
+        session_id = data.get('sessionId')
+        from_stage = data.get('fromStage')
+        to_stage   = data.get('toStage')
+        trigger    = data.get('trigger', 'auto')
+        ts         = data.get('timestamp', int(time.time() * 1000))
+
+        if not user_id or not from_stage or not to_stage:
+            return jsonify({'error': 'userId, fromStage, toStage required'}), 400
+
+        # Determine direction for recursion tracking
+        cps_order = {'Clarify': 0, 'Ideate': 1, 'Develop': 2, 'Implement': 3}
+        from_idx  = cps_order.get(from_stage, -1)
+        to_idx    = cps_order.get(to_stage, -1)
+
+        if from_idx == -1 or to_idx == -1:
+            direction = 'unknown'
+        elif to_idx > from_idx:
+            direction = 'forward'
+        elif to_idx < from_idx:
+            direction = 'backward'   # recursion event
+        else:
+            direction = 'lateral'
+
+        # Write to the shared stageTransitions node
+        transition_ref = db.reference(f"analytics/{user_id}/stageTransitions")
+        transition_ref.push({
+            'from':            from_stage,
+            'to':              to_stage,
+            'direction':       direction,
+            'transitionType':  direction,   # matches existing schema used by other tools
+            'tool':            'bsChatbot',
+            'trigger':         trigger,
+            'sessionId':       session_id,
+            'timestamp':       ts,
+        })
+
+        # Also update the tool journey so the transition shows in the timeline
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name='bsChatbot',
+            interaction_type='stage_transition',
+            tlc_stage='joint_construction',
+            metadata={
+                'fromStage': from_stage,
+                'toStage':   to_stage,
+                'direction': direction,
+                'trigger':   trigger,
+                'sessionId': session_id,
+            }
+        )
+
+        # Increment backward-transition (recursion) counter if applicable
+        if direction == 'backward':
+            feature_ref = db.reference(
+                f"analytics/{user_id}/featureMetrics/reflectiveChatbot"
+            )
+            recursions = feature_ref.child('totalRecursions').get() or 0
+            feature_ref.child('totalRecursions').set(recursions + 1)
+
+        rec_logger.info(
+            f"[CHAT_LOG] stage_transition {from_stage} → {to_stage} "
+            f"({direction}) for {user_id}"
+        )
+        return jsonify({'success': True, 'direction': direction}), 200
+
+    except Exception as e:
+        rec_logger.exception(f"[CHAT_LOG] log-stage-transition error: {e}")
+        return jsonify({'error': str(e)}), 500
     
 # ============================================
 # SESSION MANAGEMENT ENDPOINTS
@@ -1122,6 +1754,17 @@ def suggest_world_template():
 
         world_logger.info(f"[WORLD] Suggested {len(validated_fields)} fields ({len(parent_template_fields)} inherited) with pedagogical guidance")
         
+        # Analytics logging (non-blocking)
+        try:
+            log_world_ai_template_suggestion(
+                user_id=user_id,
+                item_type=item_type,
+                fields_suggested=len(validated_fields),
+                template_choice='ai'  # This endpoint is only called for AI choice
+            )
+        except Exception as log_err:
+            world_logger.warning(f"[WORLD] Analytics log failed: {log_err}")
+
         return jsonify({
             'suggestedFields': validated_fields,
             'guidingQuestion': guiding_question
@@ -1137,9 +1780,12 @@ def suggest_world_template():
 @app.route('/characters/extract', methods=['POST'])
 def extract_characters():
     char_logger.info("[CHAR] Extraction request")
+    request_start = time.time()
     
     data = request.json
     text = data.get('text', '')
+
+    user_id = data.get('userId')
 
     if not text:
         return jsonify({'error': 'text required'}), 400
@@ -1261,6 +1907,18 @@ def extract_characters():
             char_logger.info(f"[CHAR] Single extraction: {len(result.get('entities', []))} entities, "
                            f"{len(result.get('relationships', []))} relationships")
         
+        if user_id:
+            try:
+                log_story_map_generation(
+                    user_id=user_id,
+                    input_text=text,
+                    nodes_extracted=len(result.get('entities', [])),
+                    links_extracted=len(result.get('relationships', [])),
+                    processing_time_ms=int((time.time() - request_start) * 1000),
+                )
+            except Exception as log_err:
+                char_logger.warning(f"[CHAR] Analytics logging failed: {log_err}")
+
         return jsonify(result)
 
     except openai.APITimeoutError:
@@ -1350,8 +2008,10 @@ def get_book_recommendations():
         mode = data.get('mode', 'brainstorming')
         filters = data.get('filters', {})
         limit = data.get('limit', 5)
-        generate_explanations = data.get('generateExplanations', True)  # NEW: Optional flag
-        
+        generate_explanations = data.get('generateExplanations', True) 
+
+        # Books the user has already seen or passed — don't return these again
+        exclude_book_ids = set(data.get('excludeBookIds', []))
         if not user_id or not session_id:
             return jsonify({
                 'error': 'Missing required fields',
@@ -1521,6 +2181,13 @@ def get_book_recommendations():
             rec_logger.error(f"[REC] Ranking failed: {e}")
             ranked_books = books[:limit]
         
+        # Strip books the user already saw or passed this session
+        if exclude_book_ids:
+            before = len(ranked_books)
+            ranked_books = [b for b in ranked_books if b.get('id') not in exclude_book_ids]
+            rec_logger.info(f"[REC] After seen-book exclusion: {len(ranked_books)} books "
+                            f"(removed {before - len(ranked_books)} of {before})")
+        
         # Step 4: Generate explanations (NEW!)
         if generate_explanations and ranked_books:
             explain_start = time.time()
@@ -1595,6 +2262,15 @@ def get_book_recommendations():
         # Log metrics (non-blocking)
         def log_metrics():
             try:
+                # 1. Log to Firebase analytics (featureMetrics + toolJourney)
+                log_book_recommendation(
+                    user_id=user_id,
+                    extracted_elements=story_elements,
+                    books_returned=len(explained_books),
+                    books_viewed_count=0  # views tracked client-side
+                )
+
+                # 2. Also update session-API metadata (existing behaviour)
                 metrics_data = {
                     'timestamp': int(time.time() * 1000),
                     'booksDisplayed': len(explained_books),
@@ -1607,9 +2283,10 @@ def get_book_recommendations():
                         'open_library': sum(1 for b in explained_books if b.get('source') == 'open_library'),
                         'curated': sum(1 for b in explained_books if b.get('source') == 'curated')
                     },
-                    'explanationsGenerated': generate_explanations
+                    'explanationsGenerated': generate_explanations,
+                    'excludedBookCount': len(exclude_book_ids)
                 }
-                
+
                 requests.post(
                     f"{session_api_url}/session/update_metadata",
                     json={
@@ -1622,6 +2299,16 @@ def get_book_recommendations():
                 )
             except Exception as e:
                 rec_logger.warning(f"[REC] Failed to log metrics: {e}")
+
+            try:
+                log_book_recommendation(
+                    user_id=user_id,
+                    extracted_elements=story_elements,
+                    books_returned=len(explained_books),
+                    books_viewed_count=0,
+                )
+            except Exception as log_err:
+                rec_logger.warning(f"[REC] Analytics logging failed: {log_err}")
         
         threading.Thread(target=log_metrics, daemon=True).start()
         
@@ -2909,7 +3596,49 @@ Return analysis in the specified JSON format."""
             f"M:{analysis['severity_counts']['medium']}, "
             f"L:{analysis['severity_counts']['low']})"
         )
-        
+
+        # ============================================
+        # ANALYTICS LOGGING
+        # ============================================
+        try:
+            from utils.analytics.story_map_logger import log_story_map_analysis as _log_sm_analysis
+            _log_sm_analysis(
+                user_id=user_id,
+                overall_score=analysis.get('overall_score', 0),
+                overall_health=analysis.get('overall_health', 'unknown'),
+                node_count=len(nodes),
+                link_count=len(links),
+                issues_found=analysis.get('issues', []),
+                genre_inferred=analysis.get('genre_insights', {}).get('detected_genre') if isinstance(analysis.get('genre_insights'), dict) else None,
+                processing_time_ms=int((time.time() - request_start) * 1000)
+            )
+            rec_logger.info("[STORY_MAP] Analysis metrics logged")
+        except Exception as log_err:
+            rec_logger.warning(f"[STORY_MAP] Failed to log analysis metrics: {log_err}")
+
+        # Store longitudinal score for improvement tracking (same pattern as timeline coherence)
+        try:
+            scores_ref = db.reference(f"analytics/{user_id}/outcomeMetrics/storyMapAnalysisScores")
+            scores = scores_ref.get() or []
+            scores.append(analysis.get('overall_score', 0))
+            scores_ref.set(scores)
+        except Exception as score_err:
+            rec_logger.warning(f"[STORY_MAP] Failed to store longitudinal score: {score_err}")
+
+        try:
+            log_story_map_analysis_detailed(
+                user_id=user_id,
+                overall_score=analysis.get('overall_score', 0),
+                overall_health=analysis.get('overall_health', 'unknown'),
+                node_count=len(nodes),
+                link_count=len(links),
+                issues_found=analysis.get('issues', []),
+                genre_inferred=analysis.get('genre_context', {}).get('detected_genre'),
+                processing_time_ms=int(total_time * 1000),
+            )
+        except Exception as log_err:
+            rec_logger.warning(f"[STORY_MAP] Analytics logging failed: {log_err}")
+
         return jsonify(analysis), 200
         
     except Exception as e:
@@ -3031,6 +3760,22 @@ Provide feedback in the specified JSON format."""
             stage = event.get('stage', 'unknown')
             stage_distribution[stage] = stage_distribution.get(stage, 0) + 1
         result['stageDistribution'] = stage_distribution
+
+        try:
+            check_stats = log_timeline_coherence_check(
+                user_id=user_id,
+                overall_score=result.get('overallScore', 0),
+                event_count=len(timeline),
+                issues_found=result.get('issues', []),
+                genre_used=result.get('genreInferred'),
+            )
+            # Surface score-change delta to the frontend
+            result['scoreChange']   = check_stats.get('scoreChange')
+            result['checkNumber']   = check_stats.get('checkNumber')
+            result['previousScore'] = check_stats.get('previousScore')
+        except Exception as log_err:
+            rec_logger.warning(f"[TIMELINE_COHERENCE] Analytics log failed: {log_err}")
+
         
         total_time = time.time() - request_start
         rec_logger.info(
@@ -3038,6 +3783,17 @@ Provide feedback in the specified JSON format."""
             f"score: {result.get('overallScore', 'N/A')}"
         )
         
+        try:
+            log_timeline_coherence_check(
+                user_id=user_id,
+                overall_score=result.get('overallScore', 0),
+                event_count=len(timeline),
+                issues_found=result.get('issues', []),
+                genre_used=data.get('genre'),
+            )
+        except Exception as log_err:
+            rec_logger.warning(f"[TIMELINE_COHERENCE] Analytics logging failed: {log_err}")
+
         return jsonify(result), 200
         
     except Exception as e:
@@ -3179,6 +3935,22 @@ Generate reflective questions and suggestions in the specified JSON format."""
         total_time = time.time() - request_start
         rec_logger.info(f"[TIMELINE_REFLECT] Completed in {total_time:.2f}s")
         
+        try:
+            log_tool_interaction(
+                user_id=user_id,
+                tool_name='timeline',
+                interaction_type='event_reflect',
+                tlc_stage='joint_construction',
+                metadata={
+                    'context': context,
+                    'eventStage': event.get('stage'),
+                    'timelineLength': len(timeline),
+                    'processingTimeMs': int((time.time() - request_start) * 1000),
+                },
+            )
+        except Exception as log_err:
+            rec_logger.warning(f"[TIMELINE_REFLECT] Analytics logging failed: {log_err}")
+
         return jsonify(result), 200
         
     except Exception as e:
@@ -3427,6 +4199,19 @@ Start by requesting relevant context based on what you see in the draft."""
         total_time = time.time() - request_start
         rec_logger.info(f"[FEEDBACK] Total: {total_time:.2f}s ({iteration} iterations)")
         
+        try:
+            log_feedback_submission(
+                user_id=user_id,
+                word_count=word_count,
+                overall_score=final_feedback.get('overallScore', 0),
+                category_scores={
+                    k: v for k, v in final_feedback.items()
+                    if isinstance(v, (int, float)) and k != 'overallScore'
+                },
+            )
+        except Exception as log_err:
+            rec_logger.warning(f"[FEEDBACK] Analytics logging failed: {log_err}")
+
         return jsonify({
             'feedback': final_feedback,
             'processingTime': int(total_time * 1000),
@@ -3620,19 +4405,19 @@ def debug_book_sources():
 def analyze_mentor_text():
     """
     Analyze a mentor text excerpt and generate teaching points.
-    AI acts as Modelling Guide: Notice & Name techniques for student learning.
+    NOW WITH ANALYTICS TRACKING.
     """
     request_start = time.time()
     rec_logger.info("[MODELLING] Incoming analysis request")
     
     try:
         data = request.json
-        user_id = data.get('userId')
+        user_id = data.get('userId')  # REQUIRED for logging
         excerpt = data.get('excerpt', '').strip()
         genre = data.get('genre', 'general fiction')
         focus = data.get('focus', 'general')
         
-        # Validation
+        # Validation (existing code)
         if not user_id or not excerpt:
             return jsonify({
                 'error': 'Missing required fields',
@@ -3642,23 +4427,23 @@ def analyze_mentor_text():
         if len(excerpt) < 100:
             return jsonify({
                 'error': 'Excerpt too short',
-                'details': f'Please provide at least 100 characters for meaningful analysis (currently: {len(excerpt)} chars)'
+                'details': f'Please provide at least 100 characters'
             }), 400
         
         if len(excerpt) > 6000:
             return jsonify({
                 'error': 'Excerpt too long',
-                'details': f'Please limit excerpts to 6000 characters (currently: {len(excerpt)} chars). Try selecting a key scene or passage.'
+                'details': f'Please limit excerpts to 6000 characters'
             }), 400
         
-        rec_logger.info(f"[MODELLING] Analyzing {len(excerpt)} char excerpt | Genre: {genre} | Focus: {focus}")
+        rec_logger.info(f"[MODELLING] Analyzing {len(excerpt)} char excerpt")
         
-        # Build user message (data in user prompt, like other endpoints)
+        # Build user message (existing code)
         user_message = build_mentor_analysis_user_prompt(excerpt, genre, focus)
         
         rec_logger.info("[MODELLING] Calling DeepSeek")
         
-        # Call DeepSeek (static system prompt, dynamic data in user message)
+        # Call DeepSeek (existing code)
         try:
             response = client.chat.completions.create(
                 model="deepseek-chat",
@@ -3669,7 +4454,7 @@ def analyze_mentor_text():
                 response_format={'type': 'json_object'},
                 stream=False,
                 timeout=60,
-                temperature=0.4  # Lower for consistent pedagogical analysis
+                temperature=0.4
             )
             
             rec_logger.info("[MODELLING] DeepSeek response received")
@@ -3678,7 +4463,7 @@ def analyze_mentor_text():
             rec_logger.error("[MODELLING] DeepSeek timeout")
             return jsonify({
                 'error': 'Analysis timeout',
-                'details': 'Mentor text analysis took too long. Try a shorter excerpt.'
+                'details': 'Mentor text analysis took too long.'
             }), 504
         
         except Exception as api_err:
@@ -3688,11 +4473,10 @@ def analyze_mentor_text():
                 'details': str(api_err)
             }), 500
         
-        # Parse response
+        # Parse response (existing code)
         try:
             result_text = response.choices[0].message.content.strip()
             
-            # Clean markdown code blocks if present
             if result_text.startswith('```'):
                 result_text = re.sub(r'```(?:json)?\s*', '', result_text).strip()
                 if result_text.endswith('```'):
@@ -3703,27 +4487,41 @@ def analyze_mentor_text():
             
         except json.JSONDecodeError as parse_err:
             rec_logger.error(f"[MODELLING] JSON parse error: {parse_err}")
-            rec_logger.error(f"[MODELLING] Problematic response (first 500 chars): {result_text[:500]}")
             return jsonify({
                 'error': 'Failed to parse AI response',
                 'details': 'AI returned invalid JSON format'
             }), 500
         
-        # Validate output using utility function
+        # Validate output (existing code)
         validation = validate_analysis_output(result, excerpt)
         
         if not validation['passesValidation']:
             rec_logger.warning(f"[MODELLING] Validation issues: {validation['issues']}")
-            # Include validation warning in response but don't fail
             result['_validationWarning'] = {
                 'issues': validation['issues'],
                 'warnings': validation['warnings']
             }
         
-        if validation['warnings']:
-            rec_logger.info(f"[MODELLING] Validation warnings: {validation['warnings'][:3]}")
+        # Calculate processing time
+        processing_time = int((time.time() - request_start) * 1000)
         
-        # Add metadata
+        # Logging analytics
+        try:
+            log_mentor_text_analysis(
+                user_id=user_id,
+                excerpt_length=len(excerpt),
+                teaching_points_count=len(result.get('teachingPoints', [])),
+                genre_identified=result.get('genreIdentified', genre),
+                focus_area=focus,
+                validation_quality=validation['quality'],
+                processing_time_ms=processing_time
+            )
+            rec_logger.info("[MODELLING] Analytics logged successfully")
+        except Exception as log_err:
+            rec_logger.warning(f"[MODELLING] Failed to log analytics: {log_err}")
+            # Don't fail the request if logging fails
+        
+        # Add metadata (existing code)
         result['metadata'] = {
             'timestamp': int(time.time() * 1000),
             'excerptLength': len(excerpt),
@@ -3736,16 +4534,15 @@ def analyze_mentor_text():
                 'passesValidation': validation['passesValidation'],
                 'teachingPointCount': validation['teachingPointCount']
             },
-            'processingTime': int((time.time() - request_start) * 1000)
+            'processingTime': processing_time
         }
-        
-        # Optional: Save to user's library (non-blocking)
+
+        # Save to library (non-blocking)
         def save_to_library():
             try:
                 analysis_id = f"analysis_{int(time.time() * 1000)}"
                 analyses_ref = db.reference(f"mentorTextAnalyses/{user_id}/{analysis_id}")
                 
-                # Store truncated excerpt to save Firebase space
                 truncated_excerpt = excerpt[:500] + '...' if len(excerpt) > 500 else excerpt
                 
                 analyses_ref.set({
@@ -3758,17 +4555,16 @@ def analyze_mentor_text():
                     'validation': validation
                 })
                 
-                rec_logger.info(f"[MODELLING] Saved analysis {analysis_id} to library")
+                rec_logger.info(f"[MODELLING] Saved analysis {analysis_id}")
             except Exception as save_error:
-                rec_logger.warning(f"[MODELLING] Failed to save to library: {save_error}")
+                rec_logger.warning(f"[MODELLING] Failed to save: {save_error}")
         
-        # Save in background thread
         threading.Thread(target=save_to_library, daemon=True).start()
         
         total_time = time.time() - request_start
         rec_logger.info(
             f"[MODELLING] Total: {total_time:.2f}s, "
-            f"generated {len(result.get('teachingPoints', []))} teaching points, "
+            f"points: {len(result.get('teachingPoints', []))}, "
             f"quality: {validation['quality']}"
         )
         
@@ -3879,6 +4675,7 @@ def get_mentor_text_analysis(analysis_id):
 def delete_mentor_text_analysis(analysis_id):
     """
     Delete a saved mentor text analysis.
+    NOW WITH ANALYTICS TRACKING.
     """
     try:
         data = request.json
@@ -3892,11 +4689,28 @@ def delete_mentor_text_analysis(analysis_id):
         
         # Check if analysis exists
         analysis_ref = db.reference(f"mentorTextAnalyses/{user_id}/{analysis_id}")
-        if not analysis_ref.get():
+        analysis_data = analysis_ref.get()
+        
+        if not analysis_data:
             return jsonify({
                 'error': 'Analysis not found',
                 'analysisId': analysis_id
             }), 404
+        
+        # Log deletion analytics
+        try:
+            # Check if it was ever viewed (simple heuristic: created more than 5 min ago)
+            created_at = analysis_data.get('createdAt', 0)
+            was_viewed = (int(time.time() * 1000) - created_at) > 300000  # 5 minutes
+            
+            log_mentor_text_deletion(
+                user_id=user_id,
+                analysis_id=analysis_id,
+                was_viewed=was_viewed
+            )
+            rec_logger.info("[MODELLING] Deletion logged")
+        except Exception as log_err:
+            rec_logger.warning(f"[MODELLING] Failed to log deletion: {log_err}")
         
         # Delete analysis
         analysis_ref.delete()
@@ -3909,7 +4723,7 @@ def delete_mentor_text_analysis(analysis_id):
         }), 200
         
     except Exception as e:
-        rec_logger.exception(f"[MODELLING] Failed to delete analysis: {e}")
+        rec_logger.exception(f"[MODELLING] Failed to delete: {e}")
         return jsonify({
             'error': 'Failed to delete analysis',
             'details': str(e)
@@ -3944,6 +4758,771 @@ def clear_mapping_cache():
     except Exception as e:
         rec_logger.exception(f"[CACHE] Failed to clear cache: {e}")
         return jsonify({'error': str(e)}), 500
+    
+    # ============================================
+# TIMELINE FRONTEND LOG ENDPOINTS
+# ============================================
+
+@app.route('/api/timeline/log-page-view', methods=['POST'])
+def timeline_log_page_view():
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+        key = log_timeline_page_view(user_id=user_id)
+        return jsonify({'success': True, 'pageViewKey': key}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/timeline/log-page-exit', methods=['POST'])
+def timeline_log_page_exit():
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+        log_timeline_page_exit(
+            user_id=user_id,
+            duration_ms=data.get('durationMs', 0),
+            page_view_key=data.get('pageViewKey'),
+        )
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/timeline/log-event', methods=['POST'])
+def timeline_log_event():
+    """action: 'created' | 'edited' | 'deleted' | 'reordered'"""
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        action = data.get('action')
+        if not user_id or not action:
+            return jsonify({'error': 'userId and action required'}), 400
+        event_id = data.get('eventId', '')
+        stage = data.get('stage', 'unknown')
+        is_main = data.get('isMainEvent', False)
+        if action == 'created':
+            log_timeline_event_created(user_id, event_id, stage, is_main,
+                                       data.get('hasDate', False), data.get('descriptionLength', 0))
+        elif action == 'edited':
+            log_timeline_event_edited(user_id, event_id, stage, is_main)
+        elif action == 'deleted':
+            log_timeline_event_deleted(user_id, event_id, stage)
+        elif action == 'reordered':
+            log_timeline_event_reordered(user_id, event_id, data.get('fromIndex', 0), data.get('toIndex', 0))
+        else:
+            return jsonify({'error': f'Unknown action: {action}'}), 400
+        return jsonify({'success': True, 'logged': action}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/timeline/log-mode', methods=['POST'])
+def timeline_log_mode():
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        mode = data.get('mode')
+        if not user_id or not mode:
+            return jsonify({'error': 'userId and mode required'}), 400
+        log_timeline_mode_used(user_id=user_id, mode=mode)
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================
+# STORY MAP FRONTEND LOG ENDPOINTS
+# ============================================
+
+@app.route('/api/story-map/log-render', methods=['POST'])
+def story_map_log_render():
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+        log_story_map_graph_render(user_id, data.get('nodeCount', 0),
+                                   data.get('linkCount', 0), data.get('isolatedNodes', 0))
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-node-action', methods=['POST'])
+def story_map_log_node_action():
+    """actionType: 'create' | 'edit' | 'delete' | 'view'"""
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        action_type = data.get('actionType')
+        if not user_id or not action_type:
+            return jsonify({'error': 'userId and actionType required'}), 400
+        log_story_map_node_action(user_id, action_type, data.get('nodeData', {}),
+                                  data.get('processingTimeMs'))
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-link-action', methods=['POST'])
+def story_map_log_link_action():
+    """actionType: 'create' | 'edit' | 'delete' | 'view'"""
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        action_type = data.get('actionType')
+        if not user_id or not action_type:
+            return jsonify({'error': 'userId and actionType required'}), 400
+        log_story_map_link_action(user_id, action_type, data.get('linkData', {}))
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-merge', methods=['POST'])
+def story_map_log_merge():
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+        log_story_map_merge(user_id, data.get('mergedNodeCount', 2),
+                            data.get('primaryNodeLabel', ''), data.get('processingTimeMs'))
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-analysis-panel', methods=['POST'])
+def story_map_log_analysis_panel():
+    """interactionType: 'open' | 'close' | 'expand_category' | 'view_issue' | 'accept_suggestion' | 'dismiss_issue'"""
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        interaction_type = data.get('interactionType')
+        if not user_id or not interaction_type:
+            return jsonify({'error': 'userId and interactionType required'}), 400
+        log_story_map_analysis_panel_interaction(user_id, interaction_type,
+                                                 data.get('durationMs'), data.get('issueInteractedWith'))
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-view-toggle', methods=['POST'])
+def story_map_log_view_toggle():
+    """viewMode: 'node' | 'label'"""
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        view_mode = data.get('viewMode')
+        if not user_id or not view_mode:
+            return jsonify({'error': 'userId and viewMode required'}), 400
+        log_story_map_view_toggle(user_id, view_mode)
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-merge-mode', methods=['POST'])
+def story_map_log_merge_mode():
+    """actionType: 'enter' | 'exit' | 'select_first' | 'select_second' | 'complete'"""
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        action_type = data.get('actionType')
+        if not user_id or not action_type:
+            return jsonify({'error': 'userId and actionType required'}), 400
+        log_story_map_merge_mode(user_id, action_type, data.get('nodesSelected'))
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/story-map/log-iteration', methods=['POST'])
+def story_map_log_iteration():
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+        log_story_map_iteration_pattern(user_id, {
+            'mapVersion': data.get('mapVersion', 1),
+            'actionsTaken': data.get('actionsTaken', 0),
+            'timeSpent': data.get('timeSpent', 0),
+            'triggeredByAnalysis': data.get('triggeredByAnalysis', False),
+        })
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ============================================
+# ADMIN ANALYTICS ENDPOINTS
+# ============================================
+
+@app.route('/api/chat/log-session-start', methods=['POST'])
+def chat_log_session_start_endpoint():
+    """
+    { userId, mode, focusArea }
+    mode: 'brainstorming' | 'deepthinking'
+    """
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        mode = data.get('mode', 'brainstorming')
+        focus_area = data.get('focusArea')
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+
+        tool_name = 'bsChatbot' if mode == 'brainstorming' else 'dtChatbot'
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name=tool_name,
+            interaction_type='session_start',
+            tlc_stage='joint_construction',
+            metadata={'mode': mode, 'focusArea': focus_area},
+        )
+
+        feat_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
+        feat_ref.child('totalSessions').transaction(lambda c: (c or 0) + 1)
+        mode_key = 'bsSessions' if mode == 'brainstorming' else 'dtSessions'
+        feat_ref.child(mode_key).transaction(lambda c: (c or 0) + 1)
+        if focus_area:
+            feat_ref.child(f'focusAreas/{focus_area}').transaction(lambda c: (c or 0) + 1)
+            return jsonify({'success': True}), 200
+
+    except Exception as e:
+        rec_logger.warning(f"[CHAT_LOG] log-session-start error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/chat/log-message', methods=['POST'])
+def chat_log_message_endpoint():
+    """
+    { userId, mode, role, messageLength, sessionId?, stage? }
+    role: 'user' | 'assistant'
+    """
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        mode = data.get('mode', 'brainstorming')
+        role = data.get('role', 'user')
+        message_length = data.get('messageLength', 0)
+        session_id = data.get('sessionId')
+        stage = data.get('stage')
+        if not user_id:
+            return jsonify({'error': 'userId required'}), 400
+
+        tool_name = 'bsChatbot' if mode == 'brainstorming' else 'dtChatbot'
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name=tool_name,
+            interaction_type='message',
+            tlc_stage='joint_construction',
+            metadata={'role': role, 'messageLength': message_length, 'stage': stage},
+        )
+
+        feat_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
+        feat_ref.child('totalMessages').transaction(lambda c: (c or 0) + 1)
+
+        if role == 'user':
+            feat_ref.child('userMessages').transaction(lambda c: (c or 0) + 1)
+            # Rolling average message length
+            total_chars = feat_ref.child('totalUserMessageChars').get() or 0
+            new_total = total_chars + message_length
+            user_msgs = feat_ref.child('userMessages').get() or 1
+            feat_ref.child('totalUserMessageChars').set(new_total)
+            feat_ref.child('avgUserMessageLength').set(new_total / user_msgs)
+            # Per-session message length log (for trend chart)
+            if session_id:
+                db.reference(f"chatSessions/{user_id}/{session_id}/messageLengths").push({
+                    'index': user_msgs,
+                    'length': message_length,
+                    'timestamp': int(time.time() * 1000),
+                    'stage': stage,
+                })
+
+                return jsonify({'success': True}), 200
+    except Exception as e:
+        rec_logger.warning(f"[CHAT_LOG] log-message error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/chat/log-stage-transition', methods=['POST'])
+def chat_log_stage_transition_endpoint():
+    """
+    { userId, mode, fromStage, toStage, sessionId? }
+    For BS mode CPS stage tracking.
+    """
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        mode = data.get('mode', 'brainstorming')
+        from_stage = data.get('fromStage')
+        to_stage = data.get('toStage')
+        if not user_id or not from_stage or not to_stage:
+            return jsonify({'error': 'userId, fromStage, toStage required'}), 400
+
+        cps_order = ['clarify', 'ideate', 'develop', 'implement']
+        is_backward = (
+            from_stage.lower() in cps_order and
+            to_stage.lower() in cps_order and
+            cps_order.index(to_stage.lower()) < cps_order.index(from_stage.lower())
+        )
+
+        log_tool_interaction(
+            user_id=user_id,
+            tool_name='bsChatbot',
+            interaction_type='cps_stage_transition',
+            tlc_stage='joint_construction',
+            metadata={'fromStage': from_stage, 'toStage': to_stage, 'isBackward': is_backward},
+        )
+
+        feat_ref = db.reference(f"analytics/{user_id}/featureMetrics/reflectiveChatbot")
+        stage_count = feat_ref.child(f'cpsStageReach/{to_stage}').get() or 0
+        feat_ref.child(f'cpsStageReach/{to_stage}').set(stage_count + 1)
+        if is_backward:
+            recursions = feat_ref.child('totalRecursions').get() or 0
+            feat_ref.child('totalRecursions').set(recursions + 1)
+
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        rec_logger.warning(f"[CHAT_LOG] log-stage-transition error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/admin/analytics/users-list', methods=['GET'])
+def get_users_list():
+    """
+    Get list of all users with basic stats.
+    Used for dropdown in admin dashboard.
+    """
+    try:
+        analytics_ref = db.reference('analytics')
+        all_data = analytics_ref.get() or {}
+        
+        users = []
+        for user_id, user_data in all_data.items():
+            journey = user_data.get('toolJourney', {})
+            total_interactions = len(journey)
+            
+            users.append({
+                'userId': user_id,
+                'totalInteractions': total_interactions
+            })
+        
+        # Sort by most active first
+        users.sort(key=lambda x: x['totalInteractions'], reverse=True)
+        
+        rec_logger.info(f"[ADMIN] Returning {len(users)} users")
+        
+        return jsonify({
+            'users': users,
+            'count': len(users)
+        }), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[ADMIN] Failed to get users list: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/admin/analytics/user/<user_id>', methods=['GET'])
+def get_user_analytics(user_id):
+    try:
+        analytics_ref = db.reference(f"analytics/{user_id}")
+        data = analytics_ref.get() or {}
+        
+        if not data:
+            return jsonify({
+                'error': 'User not found',
+                'userId': user_id
+            }), 404
+        
+        user_ref = db.reference(f"users/{user_id}")
+        user_data = user_ref.get() or {}
+        
+        tool_journey = data.get('toolJourney', {})
+        transitions = data.get('stageTransitions', {})
+        
+        journey_list = [
+            {
+                'timestamp': v['timestamp'],
+                'tool': v['tool'],
+                'stage': v['stage'],
+                'interactionType': v.get('interactionType'),
+                'metadata': v.get('metadata', {})
+            }
+            for v in tool_journey.values()
+        ]
+        journey_list.sort(key=lambda x: x['timestamp'])
+        
+        stage_times = _calculate_stage_times(journey_list)
+        
+        recursion_events = [
+            t for t in transitions.values()
+            if t.get('transitionType') == 'backward'
+        ]
+        
+        rec_logger.info(f"[ADMIN] Loaded analytics for user {user_id}")
+        
+        chat_sessions_data = {}
+        try:
+            chat_sessions_data = db.reference(f"chatSessions/{user_id}").get() or {}
+        except Exception as e:
+            rec_logger.warning(f"[ADMIN] chatSessions fetch failed: {e}")
+
+        # ── Aggregate brainstorming metrics across all chat sessions ─────────
+        bs_session_count  = 0
+        dt_session_count  = 0
+        all_ideas         = []
+        scamper_coverage  = {}
+        elaboration_dist  = {'Low': 0, 'Medium': 0, 'High': 0}
+        originality_dist  = {'Low': 0, 'Medium': 0, 'High': 0}
+        flexibility_cats  = {}
+        refined_count     = 0
+        score_map         = {'Low': 1, 'Medium': 2, 'High': 3}
+        elaboration_scores = []
+        originality_scores = []
+
+        for sid, session in chat_sessions_data.items():
+            if not isinstance(session, dict):
+                continue
+
+            messages = session.get('messages', {})
+
+            # Classify session by majority mode from actual message records
+            bs_msg_count = sum(
+                1 for m in messages.values()
+                if isinstance(m, dict) and m.get('mode') == 'brainstorming'
+            )
+            dt_msg_count = sum(
+                1 for m in messages.values()
+                if isinstance(m, dict) and m.get('mode') == 'deepthinking'
+            )
+
+            dominant_mode = 'deepthinking' if dt_msg_count > bs_msg_count else 'brainstorming'
+
+            if dominant_mode == 'deepthinking':
+                dt_session_count += 1
+                continue
+
+            # ── Brainstorming session ────────────────────────────────────────
+            bs_session_count += 1
+
+            ideas = session.get('ideas', {})
+            for idea in (ideas.values() if isinstance(ideas, dict) else []):
+                if not isinstance(idea, dict):
+                    continue
+
+                all_ideas.append(idea)
+
+                technique = idea.get('scamperTechnique')
+                if technique:
+                    scamper_coverage[technique] = scamper_coverage.get(technique, 0) + 1
+
+                evals    = idea.get('evaluations', {})
+                elab     = evals.get('elaboration')
+                orig     = evals.get('originality')
+                flex_cat = evals.get('flexibilityCategory') or idea.get('category')
+
+                if elab in elaboration_dist:
+                    elaboration_dist[elab] += 1
+                if elab in score_map:
+                    elaboration_scores.append(score_map[elab])
+
+                if orig in originality_dist:
+                    originality_dist[orig] += 1
+                if orig in score_map:
+                    originality_scores.append(score_map[orig])
+
+                if flex_cat:
+                    flexibility_cats[flex_cat] = flexibility_cats.get(flex_cat, 0) + 1
+
+                if idea.get('refined'):
+                    refined_count += 1
+
+        avg = lambda lst: round(sum(lst) / len(lst), 2) if lst else None
+
+        # Fluency  = avg ideas per BS session
+        ideas_per_session = (
+            round(len(all_ideas) / bs_session_count, 1) if bs_session_count else 0
+        )
+        # Flexibility = total distinct idea categories across all BS sessions
+        flex_count = len(flexibility_cats)
+
+        brainstorming_summary = {
+            'bsSessionCount':        bs_session_count,
+            'dtSessionCount':        dt_session_count,
+            'totalIdeas':            len(all_ideas),
+            'refinedIdeas':          refined_count,
+            'scamperCoverage':       scamper_coverage,
+            'elaborationDist':       elaboration_dist,
+            'originalityDist':       originality_dist,
+            'flexibilityCategories': flexibility_cats,
+            # Fluency  — raw: avg ideas per session (always computable)
+            'avgFluency':     ideas_per_session,
+            # Flexibility — raw: distinct categories (always computable)
+            'avgFlexibility': flex_count,
+            # Elaboration / Originality — 1–3 scale from per-idea evaluations
+            'avgElaboration': avg(elaboration_scores),
+            'avgOriginality': avg(originality_scores),
+        }
+
+        # Sync ground-truth session counts back to featureMetrics
+        try:
+            feat_ref = db.reference(
+                f"analytics/{user_id}/featureMetrics/reflectiveChatbot"
+            )
+            feat_ref.update({
+                'bsSessions':   bs_session_count,
+                'dtSessions':   dt_session_count,
+                'totalSessions': bs_session_count + dt_session_count,
+            })
+        except Exception as e:
+            rec_logger.warning(f"[ADMIN] Failed to sync session counts: {e}")
+
+        return jsonify({
+            'userId': user_id,
+            'userMetadata': {
+                'studyGroup': user_data.get('studyGroup'),
+                'condition':  user_data.get('condition')
+            },
+            'toolUsage':             data.get('toolUsage', {}),
+            'journey':               journey_list,
+            'stageTimeDistribution': stage_times,
+            'stageTransitions':      list(transitions.values()),
+            'recursionEvents':       recursion_events,
+            'recursionCount':        len(recursion_events),
+            'totalToolInteractions': len(journey_list),
+            'featureMetrics':        data.get('featureMetrics', {}),
+            'outcomeMetrics':        data.get('outcomeMetrics', {}),
+            'chatSessions':          chat_sessions_data,
+            'brainstormingSummary':  brainstorming_summary,
+        }), 200
+
+    except Exception as e:
+        rec_logger.exception(f"[ADMIN] Failed to get user analytics: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/admin/analytics/study-summary', methods=['GET'])
+def get_study_summary():
+    """
+    Get aggregate analytics across ALL users.
+    """
+    try:
+        analytics_ref = db.reference('analytics')
+        all_data = analytics_ref.get() or {}
+        
+        users_ref = db.reference('users')
+        all_users = users_ref.get() or {}
+        
+        summary = {
+            'totalParticipants': len(all_data),
+            'studyGroups': {
+                'tool_first': 0,
+                'no_tool_first': 0
+            },
+            'avgToolUsagePerUser': {},
+            'toolPopularity': {},
+            'avgStageTime': {},
+            'recursionStats': {
+                'totalRecursions': 0,
+                'avgRecursionsPerUser': 0,
+                'mostCommonTransition': None,
+                'commonTriggers': {}
+            },
+            'outcomeAverages': {}
+        }
+        
+        # Aggregate tool usage
+        all_tool_usage = []
+        all_stage_times = defaultdict(list)
+        all_recursions = []
+        all_coherence_scores = []
+        all_feedback_scores = []
+        
+        for user_id, user_data in all_data.items():
+            # Study group counts
+            user_info = all_users.get(user_id, {})
+            study_group = user_info.get('studyGroup')
+            if study_group in summary['studyGroups']:
+                summary['studyGroups'][study_group] += 1
+            
+            # Tool usage
+            tool_usage = user_data.get('toolUsage', {})
+            all_tool_usage.append(tool_usage)
+            for tool, count in tool_usage.items():
+                summary['toolPopularity'][tool] = summary['toolPopularity'].get(tool, 0) + count
+            
+            # Stage times
+            journey = user_data.get('toolJourney', {})
+            journey_list = sorted(journey.values(), key=lambda x: x.get('timestamp', 0))
+            stage_times = _calculate_stage_times(journey_list)
+            for stage, time in stage_times.items():
+                all_stage_times[stage].append(time)
+            
+            # Stage transitions (recursion)
+            transitions = user_data.get('stageTransitions', {})
+            for trans in transitions.values():
+                if trans.get('transitionType') == 'backward':
+                    all_recursions.append(trans)
+            
+            # Outcome metrics
+            outcomes = user_data.get('outcomeMetrics', {})
+            coherence_scores = outcomes.get('timelineCoherenceScores', [])
+            if coherence_scores:
+                all_coherence_scores.extend(coherence_scores)
+            
+            feedback_scores = outcomes.get('feedbackScores', [])
+            if feedback_scores:
+                all_feedback_scores.extend(feedback_scores)
+        
+        # Calculate averages
+        if all_tool_usage:
+            all_tools = set(tool for usage in all_tool_usage for tool in usage.keys())
+            for tool in all_tools:
+                counts = [usage.get(tool, 0) for usage in all_tool_usage]
+                summary['avgToolUsagePerUser'][tool] = statistics.mean(counts)
+        
+        # Average stage times
+        for stage, times in all_stage_times.items():
+            if times:
+                summary['avgStageTime'][stage] = statistics.mean(times)
+        
+        # Recursion stats
+        summary['recursionStats']['totalRecursions'] = len(all_recursions)
+        if len(all_data) > 0:
+            summary['recursionStats']['avgRecursionsPerUser'] = len(all_recursions) / len(all_data)
+        
+        if all_recursions:
+            # Most common transition
+            transition_counts = {}
+            for r in all_recursions:
+                key = f"{r['from']} â†’ {r['to']}"
+                transition_counts[key] = transition_counts.get(key, 0) + 1
+            summary['recursionStats']['mostCommonTransition'] = max(
+                transition_counts.items(),
+                key=lambda x: x[1]
+            )
+        
+        # Outcome averages
+        if all_coherence_scores:
+            summary['outcomeAverages']['avgTimelineCoherence'] = statistics.mean(all_coherence_scores)
+        if all_feedback_scores:
+            summary['outcomeAverages']['avgFeedbackScore'] = statistics.mean(all_feedback_scores)
+        
+        rec_logger.info(f"[ADMIN] Loaded study summary for {summary['totalParticipants']} participants")
+        
+        return jsonify(summary), 200
+        
+    except Exception as e:
+        rec_logger.exception(f"[ADMIN] Failed to get study summary: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/admin/analytics/export-csv', methods=['GET'])
+def export_study_data_csv():
+    """
+    Export all study data as CSV for statistical analysis.
+    Returns a CSV file download.
+    """
+    try:
+        import csv
+        from io import StringIO
+        
+        analytics_ref = db.reference('analytics')
+        all_data = analytics_ref.get() or {}
+        
+        users_ref = db.reference('users')
+        all_users = users_ref.get() or {}
+        
+        # Create CSV
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Header row
+        writer.writerow([
+            'user_id',
+            'study_group',
+            'total_tool_uses',
+            'story_map_uses',
+            'mentor_text_uses',
+            'book_rec_uses',
+            'timeline_uses',
+            'chat_uses',
+            'feedback_uses',
+            'total_recursions',
+            'avg_coherence_score',
+            'avg_feedback_score',
+            'final_coherence_score',
+            'final_feedback_score',
+            'total_time_minutes'
+        ])
+        
+        # Data rows
+        for user_id, user_data in all_data.items():
+            user_info = all_users.get(user_id, {})
+            tool_usage = user_data.get('toolUsage', {})
+            transitions = user_data.get('stageTransitions', {})
+            outcomes = user_data.get('outcomeMetrics', {})
+            
+            # Count recursions
+            recursions = sum(
+                1 for t in transitions.values()
+                if t.get('transitionType') == 'backward'
+            )
+            
+            # Get outcome scores
+            coherence_scores = outcomes.get('timelineCoherenceScores', [])
+            feedback_scores = outcomes.get('feedbackScores', [])
+            
+            # Calculate total time
+            journey = user_data.get('toolJourney', {})
+            journey_list = sorted(journey.values(), key=lambda x: x.get('timestamp', 0))
+            if len(journey_list) >= 2:
+                total_time_ms = journey_list[-1]['timestamp'] - journey_list[0]['timestamp']
+                total_time_minutes = total_time_ms / 60000
+            else:
+                total_time_minutes = 0
+            
+            writer.writerow([
+                user_id,
+                user_info.get('studyGroup', ''),
+                sum(tool_usage.values()),
+                tool_usage.get('storyMap', 0),
+                tool_usage.get('mentorText', 0),
+                tool_usage.get('bookRecs', 0),
+                tool_usage.get('timeline', 0),
+                tool_usage.get('bsChatbot', 0) + tool_usage.get('dtChatbot', 0),
+                tool_usage.get('feedback', 0),
+                recursions,
+                statistics.mean(coherence_scores) if coherence_scores else '',
+                statistics.mean(feedback_scores) if feedback_scores else '',
+                coherence_scores[-1] if coherence_scores else '',
+                feedback_scores[-1] if feedback_scores else '',
+                round(total_time_minutes, 1)
+            ])
+        
+        # Prepare response
+        output.seek(0)
+        
+        from flask import make_response
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=study_data_{int(time.time())}.csv'
+        
+        rec_logger.info(f"[ADMIN] Exported CSV for {len(all_data)} users")
+        
+        return response
+        
+    except Exception as e:
+        rec_logger.exception(f"[ADMIN] Failed to export CSV: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 # ============================================
 # RUN SERVER
