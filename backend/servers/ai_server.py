@@ -8,6 +8,8 @@ import random
 import re
 import statistics
 from collections import defaultdict
+import statistics
+from collections import defaultdict
 
 import firebase_admin
 from firebase_admin import credentials, db
