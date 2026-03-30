@@ -92,7 +92,14 @@ from utils.analytics.timeline_logger import (
 )
 app = Flask(__name__)
 
-CORS(app, origins="*", supports_credentials=True) 
+CORS(
+    app,
+    supports_credentials=True,
+    origins=[
+        "https://guided-creative-planning.vercel.app",
+        "http://localhost:3000"
+    ]
+)
 
 # ============================================
 # LOGGING SETUP
