@@ -24,8 +24,8 @@ export default function StoryMapAnalysis({
   const [expandedCategories, setExpandedCategories] = useState({});
   const hasAnalyzedRef = useRef(false);
 
-  // const AI_API_BASE_URL = process.env.REACT_APP_AI_API_BASE_URL || 'http://localhost:5000/';
-  const AI_API_BASE_URL = 'http://localhost:5000';
+  const AI_API_BASE_URL = process.env.REACT_APP_AI_API_BASE_URL || 'http://localhost:5000/';
+  // const AI_API_BASE_URL = 'http://localhost:5000';
 
   // Load cached analysis if provided
   useEffect(() => {
