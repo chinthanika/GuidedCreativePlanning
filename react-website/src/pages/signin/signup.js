@@ -1,65 +1,53 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-
-import { auth } from '../../Firebase/firebase.js'
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
-import { useAuthValue } from '../../Firebase/AuthContext.js'
-
+import { auth, database } from '../../Firebase/firebase.js'
+import { createUserWithEmailAndPassword } from 'firebase/auth'
+import { ref, set } from 'firebase/database'
 import '../../forms.css'
 
 function SignUp() {
-
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
+  const [realName, setRealName] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
-  const { setTimeActive } = useAuthValue()
 
-  //Validate password through double-entry
-
-  /*Returns 
-  * isValid : Boolean
-  */
   const validatePassword = () => {
-
-    let isValid = true
-
-    if (password !== '' && confirmPassword !== '') {
-
-      if (password !== confirmPassword) {
-        isValid = false
-        setError('Passwords does not match')
-      }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      return false
     }
-    return isValid
+    return true
   }
 
-  const register = e => {
-
+  const register = async (e) => {
     e.preventDefault()
     setError('')
 
-    if (validatePassword()) {
-
-      // Create a new user with email and password using firebase
-      createUserWithEmailAndPassword(auth, email, password)
-
-        //When the user has signed up, send a verification message to their email then
-        //navigate to the email verification page.
-        .then(() => {
-          sendEmailVerification(auth.currentUser)
-            .then(() => {
-              setTimeActive(true)
-              navigate('/verify-email')
-            })
-            .catch((err) => alert(err.message))
-        })
-        .catch(err => setError(err.message))
+    if (!validatePassword()) return
+    if (!username) {
+      setError("Username is required")
+      return
     }
-    setEmail('')
-    setPassword('')
-    setConfirmPassword('')
+
+    const safeUsername = username.trim().toLowerCase().replace(/\s+/g, "_")
+    const fakeEmail = `${safeUsername}@workshop.local`
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, fakeEmail, password)
+      const uid = userCredential.user.uid
+
+      // Save profile info in Realtime Database
+      await set(ref(database, "users/" + uid), {
+        username: safeUsername,
+        realName: realName
+      })
+
+      navigate("/")
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
   return (
@@ -67,13 +55,20 @@ function SignUp() {
       <div className='auth'>
         <h1>Register</h1>
         {error && <div className='auth__error'>{error}</div>}
-        <form onSubmit={register} name='registration_form'>
+        <form onSubmit={register}>
           <input
-            type='email'
-            value={email}
-            placeholder="Enter your email"
+            type='text'
+            value={username}
+            placeholder="Choose a username"
             required
-            onChange={e => setEmail(e.target.value)} />
+            onChange={e => setUsername(e.target.value)} />
+
+          <input
+            type='text'
+            value={realName}
+            placeholder="Enter your real name"
+            required
+            onChange={e => setRealName(e.target.value)} />
 
           <input
             type='password'
@@ -88,6 +83,7 @@ function SignUp() {
             required
             placeholder='Confirm password'
             onChange={e => setConfirmPassword(e.target.value)} />
+
           <button type='submit' className="form-btn">Sign Up</button>
         </form>
         <span>
