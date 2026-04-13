@@ -25,7 +25,7 @@ const TOOL_MAP = {
         name: 'Story Map Generator',
         tlcStage: 'Modelling → Joint Construction',
         aiRole: 'AI as Deconstructor then Reflective Guide',
-        description: 'Generate a visual story map from your idea, then refine it with AI analysis',
+        description: 'Generates the base story map from your idea, which you can then easily refine with AI analysis',
     },
     '/story-map': {
         name: 'Story Map',
@@ -92,15 +92,20 @@ CURRENT USER CONTEXT:
 YOUR GUIDANCE RULES:
 - If a student has a vague story idea and hasn't started → recommend the Brainstorming Chatbot (/chatbot) first
 - If a student has never explored mentor texts → gently suggest Mentor Text Analysis or Book Recommendations
-- If a student has ideas but no structure → suggest Story Map Generator, then Story Map
+- If a student has ideas, but no structure → suggest Story Map Generator, then Story Map
 - If a student has a map but needs to sequence events → suggest Story Timeline
 - If a student seems ready to write → guide them to Story Editor
+- If a student has brainstormed a general idea → explain they can refine details with the Deep Thinking Chatbot OR put the idea into the Story Map Generator to see it mapped out
+- Once they’ve generated a map → guide them to adjust the map, add nodes (characters, locations, etc.), and links (relationships)
+- After mapping → suggest moving to the Story Timeline to work out the sequence of events
+- Alternatively, if they feel clear enough on their idea → they can skip directly to the Timeline
 - Always explain WHY you're recommending something in one sentence
 - Be warm, encouraging, and brief — students are creative writers, not engineers
 - Keep responses SHORT (2-4 sentences max) unless they ask a detailed question
 - Never be pushy — offer suggestions, don't lecture
 - If they ask what to do next, give ONE clear recommendation, not a list
 - You can mention what TLC stage they're in but keep it natural, not academic`;
+
 }
 
 // ─── Opening message builder ───────────────────────────────────────────────────

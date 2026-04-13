@@ -1,42 +1,28 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { auth } from '../../Firebase/firebase.js'
 import '../../forms.css'
-import { signInWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
-import { auth } from '../../Firebase/firebase'
-import { useNavigate } from 'react-router-dom'
-import { useAuthValue } from '../../Firebase/AuthContext'
-
 
 function Login() {
-
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const { setTimeActive } = useAuthValue()
   const navigate = useNavigate()
 
-  //Logs the user in and
-  //check if they are verified.
-  //If not verifiedsend a verification email and
-  //display the email verification page.
-  //If they are verified,
-  //navigate to the profile page.
-  const login = e => {
+  const login = async (e) => {
     e.preventDefault()
-    signInWithEmailAndPassword(auth, email, password)
-      .then(() => {
-        if (!auth.currentUser.emailVerified) {
-          sendEmailVerification(auth.currentUser)
-            .then(() => {
-              setTimeActive(true)
-              navigate('/verify-email')
-            })
-            .catch(err => alert(err.message))
-        } else {
-          navigate('/')
-        }
-      })
-      .catch(err => setError(err.message))
+    setError("")
+
+    const safeUsername = username.trim().toLowerCase().replace(/\s+/g, "_")
+    const fakeEmail = `${safeUsername}@workshop.local`
+
+    try {
+      await signInWithEmailAndPassword(auth, fakeEmail, password)
+      navigate("/")
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
   return (
@@ -44,13 +30,13 @@ function Login() {
       <div className='auth'>
         <h1>Sign In</h1>
         {error && <div className='auth__error'>{error}</div>}
-        <form onSubmit={login} name='login_form'>
+        <form onSubmit={login}>
           <input
-            type='email'
-            value={email}
+            type='text'
+            value={username}
             required
-            placeholder="Enter your email"
-            onChange={e => setEmail(e.target.value)} />
+            placeholder="Enter your username"
+            onChange={e => setUsername(e.target.value)} />
 
           <input
             type='password'
@@ -58,10 +44,11 @@ function Login() {
             required
             placeholder='Enter your password'
             onChange={e => setPassword(e.target.value)} />
+
           <button type='submit' className="form-btn">Sign In</button>
         </form>
         <p>
-          Don't have an account?  
+          Don't have an account?
           <Link to='/register'> Create one here </Link>
         </p>
       </div>
@@ -69,4 +56,4 @@ function Login() {
   )
 }
 
-export default Login
+export default Login;
