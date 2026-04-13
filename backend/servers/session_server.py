@@ -78,7 +78,14 @@ client = openai.OpenAI(
 
 # ---------------- FLASK APP ----------------
 app = Flask(__name__)
-CORS(app)
+CORS(
+    app,
+    supports_credentials=True,
+    origins=[
+        "https://guided-creative-planning.vercel.app",
+        "http://localhost:3000"
+    ]
+)
 
 # ---------------- UTIL ----------------
 
