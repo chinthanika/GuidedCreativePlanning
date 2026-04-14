@@ -13,7 +13,7 @@ import SessionsPanel from "./SessionsPanel";
 
 import { logPageView, logPageExit, logUIInteraction } from '../../utils/analytics';
 
-const API_BASE = process.env.REACT_APP_AI_SERVER_URL || "http://localhost:5000";
+const API_BASE = process.env.REACT_APP_AI_SERVER_URL || "https://guidedcreativeplanning-ai.onrender.com";
 // const API_BASE = "http://localhost:5000";
 
 // ─── Thin fire-and-forget helpers ────────────────────────────────────────────
