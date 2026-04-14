@@ -303,8 +303,8 @@ function deduplicateLinks(newLinks, existingLinks, idMapping) {
 }
 
 function MapGenerator() {
-  // const url_base = process.env.REACT_APP_AI_SERVER_URL || 'http:localhost:5000';
-  const url_base = 'http://localhost:5000';
+  const url_base = process.env.REACT_APP_AI_SERVER_URL || 'http:localhost:5000';
+  // const url_base = 'http://localhost:5000';
   const url = `${url_base}/characters/extract`;
 
   const { currentUser } = useAuthValue()
