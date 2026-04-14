@@ -5,7 +5,7 @@ import { auth } from '../../Firebase/firebase.js'
 import '../../forms.css'
 
 function Login() {
-  const [username, setUsername] = useState('')
+  const [identifier, setIdentifier] = useState('')   // can be username OR email
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
@@ -14,11 +14,18 @@ function Login() {
     e.preventDefault()
     setError("")
 
-    const safeUsername = username.trim().toLowerCase().replace(/\s+/g, "_")
-    const fakeEmail = `${safeUsername}@workshop.local`
+    let loginEmail
+    if (identifier.includes("@")) {
+      // Treat as a real email
+      loginEmail = identifier.trim()
+    } else {
+      // Treat as workshop username → convert to fake email
+      const safeUsername = identifier.trim().toLowerCase().replace(/\s+/g, "_")
+      loginEmail = `${safeUsername}@workshop.local`
+    }
 
     try {
-      await signInWithEmailAndPassword(auth, fakeEmail, password)
+      await signInWithEmailAndPassword(auth, loginEmail, password)
       navigate("/")
     } catch (err) {
       setError(err.message)
@@ -33,10 +40,10 @@ function Login() {
         <form onSubmit={login}>
           <input
             type='text'
-            value={username}
+            value={identifier}
             required
             placeholder="Enter your username"
-            onChange={e => setUsername(e.target.value)} />
+            onChange={e => setIdentifier(e.target.value)} />
 
           <input
             type='password'
@@ -56,4 +63,4 @@ function Login() {
   )
 }
 
-export default Login;
+export default Login
