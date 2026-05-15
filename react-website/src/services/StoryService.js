@@ -169,7 +169,7 @@ export const storyService = {
       });
 
       const data = await response.json();
-      console.log(data)
+
       if (!response.ok) {
         throw new Error(data.details || data.error || 'Failed to get feedback');
       }
