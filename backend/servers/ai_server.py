@@ -167,6 +167,7 @@ if not GOOGLE_BOOKS_API_KEY:
     raise ValueError("GOOGLE_BOOKS_API_KEY not set")
 
 client = openai.OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_URL)
+print(DEEPSEEK_API_KEY)
 
 theme_extractor = ThemeExtractor(client)
 book_source_manager = BookSourceManager()
