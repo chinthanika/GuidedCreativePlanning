@@ -14,7 +14,6 @@ import SessionsPanel from "./SessionsPanel";
 import { logPageView, logPageExit, logUIInteraction } from '../../utils/analytics';
 
 const API_BASE = process.env.REACT_APP_AI_SERVER_URL || "https://guidedcreativeplanning-ai.onrender.com";
-// const API_BASE = "http://localhost:5000";
 
 // ─── Thin fire-and-forget helpers ────────────────────────────────────────────
 
@@ -79,13 +78,12 @@ const ChatWindow = () => {
   const messagesEndRef = useRef(null);
 
   // ── Analytics refs ──────────────────────────────────────────────────────────
-  const pageEntryTimeRef     = useRef(null);   // page-level dwell time
-  const userMessageCountRef  = useRef(0);      // running count of user msgs this session
-  const prevBsStageRef       = useRef(null);   // last known BS CPS stage
-  const modeRef              = useRef(mode);   // always-current mode for callbacks
-  const sessionIDRef         = useRef(null);   // always-current sessionID for callbacks
+  const pageEntryTimeRef     = useRef(null);
+  const userMessageCountRef  = useRef(0);
+  const prevBsStageRef       = useRef(null);
+  const modeRef              = useRef(mode);
+  const sessionIDRef         = useRef(null);
 
-  // Keep refs in sync with state
   useEffect(() => { modeRef.current = mode; }, [mode]);
   useEffect(() => { sessionIDRef.current = sessionID; }, [sessionID]);
 
@@ -135,7 +133,6 @@ const ChatWindow = () => {
   }, [uid]);
 
   // ── BS stage-transition watcher ─────────────────────────────────────────────
-  // Watches the session metadata in Firebase for CPS stage changes and logs them.
   useEffect(() => {
     if (!uid || !sessionID || mode !== 'brainstorming') return;
 
@@ -146,10 +143,7 @@ const ChatWindow = () => {
 
       const prev = prevBsStageRef.current;
       if (prev && prev !== currentStage) {
-        // Stage changed — log the transition
         logStageTransition(uid, sessionID, prev, currentStage);
-
-        // Also log mode_switch-style UI interaction so the dashboard sees it
         logUIInteraction(uid, 'reflectiveChatbot', 'cps_stage_reached', {
           stage: currentStage,
           sessionId: sessionID
@@ -161,44 +155,46 @@ const ChatWindow = () => {
     return () => unsubscribe();
   }, [uid, sessionID, mode]);
 
-  // ── Session initialisation ──────────────────────────────────────────────────
+  // ── Effect 1: Find or create a session on mount ─────────────────────────────
+  // Runs only when uid becomes available and we don't yet have a sessionID.
+  // Separated from the message listener so the early-return doesn't block it.
   useEffect(() => {
-    if (!uid) return;
+    if (!uid || sessionID) return;  // already have a session — skip
 
-    if (!sessionID) {
-      const sessionsRef = ref(database, `chatSessions/${uid}`);
-      get(sessionsRef).then((snapshot) => {
-        const sessions = snapshot.val();
-        if (sessions && Object.keys(sessions).length > 0) {
-          const sorted = Object.entries(sessions).sort((a, b) => {
-            const aTime = a[1]?.metadata?.updatedAt || 0;
-            const bTime = b[1]?.metadata?.updatedAt || 0;
-            return bTime - aTime;
-          });
-          const mostRecentId = sorted[0][0];
-          const sessionMode  = sorted[0][1]?.metadata?.mode || 'brainstorming';
-          setSessionID(mostRecentId);
-          setMode(sessionMode);
+    const sessionsRef = ref(database, `chatSessions/${uid}`);
+    get(sessionsRef).then((snapshot) => {
+      const sessions = snapshot.val();
+      if (sessions && Object.keys(sessions).length > 0) {
+        const sorted = Object.entries(sessions).sort((a, b) => {
+          const aTime = a[1]?.metadata?.updatedAt || 0;
+          const bTime = b[1]?.metadata?.updatedAt || 0;
+          return bTime - aTime;
+        });
+        const mostRecentId = sorted[0][0];
+        const sessionMode  = sorted[0][1]?.metadata?.mode || 'brainstorming';
 
-          // Seed user-message count from existing session so the index is correct
-          const existingMessages = sorted[0][1]?.messages || {};
-          const existingUserMsgs = Object.values(existingMessages)
-            .filter(m => m?.role === 'user').length;
-          userMessageCountRef.current = existingUserMsgs;
+        setSessionID(mostRecentId);
+        setMode(sessionMode);
 
-          // Seed prev BS stage
-          prevBsStageRef.current =
-            sorted[0][1]?.metadata?.brainstorming?.stage || null;
+        const existingMessages = sorted[0][1]?.messages || {};
+        userMessageCountRef.current = Object.values(existingMessages)
+          .filter(m => m?.role === 'user').length;
 
-          console.log('Loaded most recent session:', mostRecentId);
-        } else {
-          createNewSession();
-        }
-      }).catch(() => createNewSession());
-      return;
-    }
+        prevBsStageRef.current =
+          sorted[0][1]?.metadata?.brainstorming?.stage || null;
 
-    // Listen to messages for this session
+        console.log('Loaded most recent session:', mostRecentId);
+      } else {
+        createNewSession();
+      }
+    }).catch(() => createNewSession());
+  }, [uid]); // intentionally omit sessionID — this runs once on mount only
+
+  // ── Effect 2: Attach Firebase message listener whenever sessionID changes ───
+  // Runs every time sessionID is set (mount, session switch, new session).
+  useEffect(() => {
+    if (!uid || !sessionID) return;
+
     const messagesRef = ref(database, `chatSessions/${uid}/${sessionID}/messages`);
     const unsubscribe = onValue(messagesRef, (snapshot) => {
       const data = snapshot.val();
@@ -219,7 +215,7 @@ const ChatWindow = () => {
   const createNewSession = useCallback(() => {
     if (!uid) return;
 
-    const sessionsRef  = ref(database, `chatSessions/${uid}`);
+    const sessionsRef   = ref(database, `chatSessions/${uid}`);
     const newSessionRef = push(sessionsRef);
 
     set(newSessionRef, {
@@ -238,20 +234,15 @@ const ChatWindow = () => {
     userMessageCountRef.current = 0;
     prevBsStageRef.current = null;
 
-    // Log session start
     logSessionStart(uid, newId, modeRef.current);
-
     console.log('Created new session:', newId);
   }, [uid]);
 
   // ── Mode switch ─────────────────────────────────────────────────────────────
   const handleModeSwitch = useCallback((newMode) => {
     if (newMode === mode) return;
-
     const prevMode = mode;
     setMode(newMode);
-
-    // Log mode switch as UI interaction
     logUIInteraction(uid, 'reflectiveChatbot', 'mode_switch', {
       fromMode: prevMode,
       toMode: newMode,
@@ -263,14 +254,11 @@ const ChatWindow = () => {
   const handleSelectSession = useCallback((selectedSessionId) => {
     if (selectedSessionId === sessionID) return;
 
-    // Look up the session's mode so we can sync state
     get(ref(database, `chatSessions/${uid}/${selectedSessionId}/metadata`))
       .then((snap) => {
         const meta = snap.val() || {};
-        const sessionMode = meta.mode || 'brainstorming';
-        setMode(sessionMode);
+        setMode(meta.mode || 'brainstorming');
 
-        // Seed message count
         get(ref(database, `chatSessions/${uid}/${selectedSessionId}/messages`))
           .then((msgSnap) => {
             const msgs = msgSnap.val() || {};
@@ -303,11 +291,9 @@ const ChatWindow = () => {
     setInput("");
     setLoading(true);
 
-    // ── Log the user message ──
     const msgIndex = userMessageCountRef.current;
     userMessageCountRef.current += 1;
 
-    // Grab current BS stage for the message log (brainstorming only)
     let currentBsStage = null;
     if (currentMode === 'brainstorming' && uid && currentSid) {
       try {
