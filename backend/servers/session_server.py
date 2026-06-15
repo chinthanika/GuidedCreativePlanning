@@ -233,31 +233,154 @@ def update_metadata():
     session.update_metadata(updates, mode)
     logger.info(f"Metadata updated for session={session.session_id}, mode={mode}, updates={updates}")
     return jsonify({"success": True})
-@app.route("/sessions/list", methods=["POST", "OPTIONS"])
-def list_sessions():
-    if request.method == "OPTIONS":
-        return "", 200
 
+app.route("/sessions/list", methods=["POST"])
+def list_sessions():
+    """
+    Returns all sessions for a user, normalised for the SessionsPanel component.
+    Firebase shape:  chatSessions/{uid}/{sessionId}/{ metadata, messages, ... }
+    Component wants: { sessionId, title, mode, updatedAt, messageCount, stage }
+    """
     data = request.json
     uid = data.get("userId")
     if not uid:
         return jsonify({"error": "userId is required"}), 400
-
-    ref = db.reference(f"chatSessions/{uid}")
-    sessions = ref.get() or {}
-
-    session_list = []
-    for sid, info in sessions.items():
-        session_list.append({
-            "sessionId": sid,
-            "title": info.get("metadata", {}).get("title", "Untitled"),
-            "lastUpdated": info.get("metadata", {}).get("updatedAt", 0),
-            "messages": info.get("messages", {}),
-            "metadata": info.get("metadata", {})
+ 
+    try:
+        sessions_ref = db.reference(f"chatSessions/{uid}")
+        raw = sessions_ref.get()
+ 
+        if not raw:
+            return jsonify({"sessions": []})
+ 
+        sessions = []
+        for session_id, session_data in raw.items():
+            if not isinstance(session_data, dict):
+                continue
+ 
+            metadata = session_data.get("metadata", {})
+            messages = session_data.get("messages", {})
+ 
+            # Count messages that are visible to the user
+            message_count = sum(
+                1 for m in messages.values()
+                if isinstance(m, dict) and m.get("visible", True)
+            ) if messages else 0
+ 
+            # Pull updatedAt — stored directly on metadata in your DB
+            updated_at = metadata.get("updatedAt") or metadata.get("createdAt") or 0
+ 
+            # Mode is stored directly on metadata
+            mode = metadata.get("mode", "brainstorming")
+ 
+            # Stage lives under metadata.brainstorming.stage or metadata.deepthinking.stage
+            stage = None
+            if mode == "brainstorming":
+                stage = metadata.get("brainstorming", {}).get("stage")
+            elif mode == "deepthinking":
+                stage = metadata.get("deepthinking", {}).get("currentCategory")
+ 
+            sessions.append({
+                "sessionId": session_id,
+                "title": metadata.get("title") or "New Chat",
+                "mode": mode,
+                "updatedAt": updated_at,
+                "messageCount": message_count,
+                "stage": stage,
+            })
+ 
+        # Sort newest first
+        sessions.sort(key=lambda s: s["updatedAt"] or 0, reverse=True)
+ 
+        logger.info(f"Listed {len(sessions)} sessions for uid={uid}")
+        return jsonify({"sessions": sessions})
+ 
+    except Exception as e:
+        logger.error(f"List sessions error: {e}")
+        return jsonify({"error": str(e)}), 500
+ 
+@app.route("/sessions/delete", methods=["POST"])
+def delete_session():
+    data = request.json
+    uid = data.get("userId")
+    session_id = data.get("sessionId")
+ 
+    if not uid or not session_id:
+        return jsonify({"error": "userId and sessionId are required"}), 400
+ 
+    try:
+        db.reference(f"chatSessions/{uid}/{session_id}").delete()
+        logger.info(f"Deleted session {session_id} for uid={uid}")
+        return jsonify({"success": True})
+    except Exception as e:
+        logger.error(f"Delete session error: {e}")
+        return jsonify({"error": str(e)}), 500
+ 
+ 
+@app.route("/sessions/generate-title", methods=["POST"])
+def generate_session_title():
+    """Generate an AI title from the first few messages of a session."""
+    data = request.json
+    uid = data.get("userId")
+    session_id = data.get("sessionId")
+ 
+    if not uid or not session_id:
+        return jsonify({"error": "userId and sessionId are required"}), 400
+ 
+    try:
+        messages_ref = db.reference(f"chatSessions/{uid}/{session_id}/messages")
+        messages_raw = messages_ref.get() or {}
+ 
+        # Get first 6 visible messages sorted by timestamp
+        messages = sorted(
+            [m for m in messages_raw.values() if isinstance(m, dict) and m.get("visible", True)],
+            key=lambda m: m.get("timestamp", "")
+        )[:6]
+ 
+        if not messages:
+            return jsonify({"success": False, "error": "No messages to generate title from"})
+ 
+        # Build a short transcript for the AI
+        transcript = "\n".join(
+            f"{m.get('role', 'user').upper()}: {str(m.get('content', ''))[:200]}"
+            for m in messages
+        )
+ 
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You generate short, descriptive chat session titles. "
+                        "Return ONLY the title — no quotes, no punctuation at the end, "
+                        "max 6 words."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": f"Generate a title for this conversation:\n\n{transcript}"
+                }
+            ],
+            max_tokens=20,
+            temperature=0.7,
+        )
+ 
+        title = response.choices[0].message.content.strip().strip('"\'')
+ 
+        # Save it back to Firebase
+        db.reference(f"chatSessions/{uid}/{session_id}/metadata").update({
+            "title": title,
+            "titleSource": "ai",
+            "updatedAt": time.time() * 1000,
         })
-
-    return jsonify({"sessions": session_list})
-
+ 
+        logger.info(f"Generated title '{title}' for session {session_id}")
+        return jsonify({"success": True, "title": title})
+ 
+    except Exception as e:
+        logger.error(f"Generate title error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/session/save_message", methods=["POST"])
 def save_message():
