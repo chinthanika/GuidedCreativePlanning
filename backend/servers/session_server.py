@@ -233,7 +233,6 @@ def update_metadata():
     session.update_metadata(updates, mode)
     logger.info(f"Metadata updated for session={session.session_id}, mode={mode}, updates={updates}")
     return jsonify({"success": True})
-
 @app.route("/sessions/list", methods=["POST", "OPTIONS"])
 def list_sessions():
     if request.method == "OPTIONS":
@@ -253,7 +252,8 @@ def list_sessions():
             "sessionId": sid,
             "title": info.get("title", "Untitled"),
             "lastUpdated": info.get("lastUpdated", 0),
-            "messages": info.get("messages", {})
+            "messages": info.get("messages", {}),
+            "metadata": info.get("metadata", {})
         })
 
     return jsonify({"sessions": session_list})
