@@ -20,20 +20,20 @@ const SessionsPanel = ({ userId, currentSessionId, onSelectSession, onNewSession
         }
     }, [isVisible, userId]);
 
-    const loadSessions = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const data = await getSessions(userId);
-            // backend now returns an array directly
-            setSessions(data.sessions || []);
-        } catch (err) {
-            setError('Failed to load sessions');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
+   const loadSessions = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getSessions(userId);
+        setSessions(data.sessions || []);
+      } catch (err) {
+        setError('Failed to load sessions');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
+
 
     const handleSelectSession = (sessionId) => {
         onSelectSession(sessionId);
