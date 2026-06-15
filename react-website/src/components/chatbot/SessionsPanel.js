@@ -25,7 +25,16 @@ const SessionsPanel = ({ userId, currentSessionId, onSelectSession, onNewSession
         setError(null);
         try {
             const data = await getSessions(userId);
-            setSessions(data.sessions || []);
+    
+            // If backend returns { sessions: { id1: {...}, id2: {...} } }
+            const sessionsObj = data.sessions || {};
+            const sessionsArray = Object.entries(sessionsObj).map(([id, session]) => ({
+                sessionId: id,
+                title: session.title || "Untitled",
+                ...session
+            }));
+    
+            setSessions(sessionsArray);
         } catch (err) {
             setError('Failed to load sessions');
             console.error(err);
@@ -33,6 +42,7 @@ const SessionsPanel = ({ userId, currentSessionId, onSelectSession, onNewSession
             setLoading(false);
         }
     };
+
 
     const handleSelectSession = (sessionId) => {
         onSelectSession(sessionId);
