@@ -237,20 +237,26 @@ def update_metadata():
 @app.route("/sessions/list", methods=["POST", "OPTIONS"])
 def list_sessions():
     if request.method == "OPTIONS":
-        return "", 200  # Preflight success
+        return "", 200
 
     data = request.json
     uid = data.get("userId")
     if not uid:
         return jsonify({"error": "userId is required"}), 400
 
-    try:
-        ref = db.reference(f"chatSessions/{uid}")
-        sessions = ref.get() or {}
-        return jsonify({"sessions": sessions})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    ref = db.reference(f"chatSessions/{uid}")
+    sessions = ref.get() or {}
 
+    session_list = []
+    for sid, info in sessions.items():
+        session_list.append({
+            "sessionId": sid,
+            "title": info.get("title", "Untitled"),
+            "lastUpdated": info.get("lastUpdated", 0),
+            "messages": info.get("messages", {})
+        })
+
+    return jsonify({"sessions": session_list})
 
 @app.route("/session/save_message", methods=["POST"])
 def save_message():
