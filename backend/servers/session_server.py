@@ -250,13 +250,14 @@ def list_sessions():
     for sid, info in sessions.items():
         session_list.append({
             "sessionId": sid,
-            "title": info.get("title", "Untitled"),
-            "lastUpdated": info.get("lastUpdated", 0),
+            "title": info.get("metadata", {}).get("title", "Untitled"),
+            "lastUpdated": info.get("metadata", {}).get("updatedAt", 0),
             "messages": info.get("messages", {}),
             "metadata": info.get("metadata", {})
         })
 
     return jsonify({"sessions": session_list})
+
 
 @app.route("/session/save_message", methods=["POST"])
 def save_message():
