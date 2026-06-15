@@ -234,7 +234,7 @@ def update_metadata():
     logger.info(f"Metadata updated for session={session.session_id}, mode={mode}, updates={updates}")
     return jsonify({"success": True})
 
-app.route("/sessions/list", methods=["POST"])
+@app.route("/sessions/list", methods=["POST"])
 def list_sessions():
     """
     Returns all sessions for a user, normalised for the SessionsPanel component.
