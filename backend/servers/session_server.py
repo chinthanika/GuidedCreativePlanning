@@ -234,6 +234,24 @@ def update_metadata():
     logger.info(f"Metadata updated for session={session.session_id}, mode={mode}, updates={updates}")
     return jsonify({"success": True})
 
+@app.route("/sessions/list", methods=["POST", "OPTIONS"])
+def list_sessions():
+    if request.method == "OPTIONS":
+        return "", 200  # Preflight success
+
+    data = request.json
+    uid = data.get("userId")
+    if not uid:
+        return jsonify({"error": "userId is required"}), 400
+
+    try:
+        ref = db.reference(f"chatSessions/{uid}")
+        sessions = ref.get() or {}
+        return jsonify({"sessions": sessions})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/session/save_message", methods=["POST"])
 def save_message():
     session, err = get_session_from_request()
