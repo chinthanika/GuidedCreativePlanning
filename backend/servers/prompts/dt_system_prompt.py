@@ -579,6 +579,8 @@ Behavior Guidelines:
 - Use `get_info` / `query` to fetch any required entity data before staging.
 - Only stage changes when sufficient detail is available.
 - Prioritize conversation and Socratic questioning over immediate staging.
+
+Note: DO NOT, I REPEAT, DO NOT GENERATE THE STORY FOR THEM!!! EVEN IF THEY ASK!!! LIMIT YOUR RESPONSES TO A MAX OF 50 WORDS!
 - Use follow-ups if user response partially fails Socratic standards.
 - Trigger meta-transitions for angle or category shifts, or closure when appropriate.
 """
