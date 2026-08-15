@@ -1,11 +1,11 @@
 """
 Enhanced book ranking with improved scoring system.
 Updated scoring weights based on your requirements:
-- Theme matches: 40% (up from 30%)
-- Keyword matches in description: 30% (maintained)
-- High rating (>4.0): 15% (increased from basic check)
-- Publication recency: 10%
-- Source priority: 5%
+- Theme matches: 32% (up from 30%)
+- Keyword matches in description: 10% (maintained)
+- High rating (>4.0): 49% (increased from basic check)
+- Publication recency: 6%
+- Source priority: 3%
 """
 
 import logging
@@ -20,11 +20,11 @@ class BookRanker:
     Enhanced ranker with improved scoring and diversity enforcement.
     
     Scoring breakdown (out of 100):
-    - Theme/genre matches: 40 points
-    - Description keyword matches: 30 points  
-    - Rating quality: 15 points
-    - Publication recency: 10 points
-    - Source priority: 5 points
+    - Theme/genre matches: 32 points
+    - Description keyword matches: 10 points  
+    - Rating quality: 49 points
+    - Publication recency: 6 points
+    - Source priority: 3 points
     """
     
     def rank_and_deduplicate_books(
@@ -86,11 +86,11 @@ class BookRanker:
         Calculate detailed relevance score with component breakdown.
         
         Returns breakdown dict with:
-        - theme_score (max 40)
-        - keyword_score (max 30)
-        - rating_score (max 15)
-        - recency_score (max 10)
-        - source_score (max 5)
+        - theme_score (max 32)
+        - keyword_score (max 10)
+        - rating_score (max 49)
+        - recency_score (max 6)
+        - source_score (max 3)
         - total (sum of above)
         """
         breakdown = {
@@ -104,23 +104,23 @@ class BookRanker:
         
         # 1. THEME/GENRE MATCHES (40 points max) - INCREASED WEIGHT
         theme_score = self._score_theme_matches(book, themes)
-        breakdown['theme_score'] = min(theme_score, 40)
+        breakdown['theme_score'] = min(theme_score, 32)
         
         # 2. DESCRIPTION KEYWORD MATCHES (30 points max)
         keyword_score = self._score_keyword_matches(book, themes)
-        breakdown['keyword_score'] = min(keyword_score, 30)
+        breakdown['keyword_score'] = min(keyword_score, 10)
         
         # 3. RATING QUALITY (15 points max) - ENHANCED SCORING
         rating_score = self._score_rating_quality(book)
-        breakdown['rating_score'] = min(rating_score, 15)
+        breakdown['rating_score'] = min(rating_score, 49)
         
         # 4. PUBLICATION RECENCY (10 points max)
         recency_score = self._score_publication_recency(book)
-        breakdown['recency_score'] = min(recency_score, 10)
+        breakdown['recency_score'] = min(recency_score, 6)
         
         # 5. SOURCE PRIORITY (5 points max)
         source_score = self._score_source_priority(book)
-        breakdown['source_score'] = min(source_score, 5)
+        breakdown['source_score'] = min(source_score, 3)
         
         # Calculate total
         breakdown['total'] = (
@@ -135,13 +135,13 @@ class BookRanker:
     
     def _score_theme_matches(self, book: Dict, themes: Dict) -> float:
         """
-        Score based on theme/genre matches (max 40 points).
+        Score based on theme/genre matches (max 32 points).
         
         Breakdown:
-        - Genre match in categories: 15 points
-        - Genre match in description: 10 points
-        - Each theme match in description: 10 points
-        - Each theme match in categories: 5 points
+        - Genre match in categories: 12 points
+        - Genre match in description: 8 points
+        - Each theme match in description: 8 points
+        - Each theme match in categories: 4 points
         """
         score = 0.0
         
@@ -157,13 +157,13 @@ class BookRanker:
         if genre:
             # Exact or fuzzy genre match in categories
             if any(genre in cat or cat in genre for cat in categories):
-                score += 15
-                logger.debug(f"[SCORE] Genre '{genre}' in categories: +15")
+                score += 12
+                logger.debug(f"[SCORE] Genre '{genre}' in categories: +12")
             
             # Genre in description
             if genre in description:
-                score += 10
-                logger.debug(f"[SCORE] Genre '{genre}' in description: +10")
+                score += 8
+                logger.debug(f"[SCORE] Genre '{genre}' in description: +8")
         
         # Theme matching (up to 15 points)
         for theme in theme_list[:3]:  # Top 3 themes
@@ -171,19 +171,19 @@ class BookRanker:
             
             # Theme in description (prioritized)
             if theme_lower in description:
-                score += 10
-                logger.debug(f"[SCORE] Theme '{theme}' in description: +10")
+                score += 8
+                logger.debug(f"[SCORE] Theme '{theme}' in description: +8")
             
             # Theme in categories
             elif any(theme_lower in cat for cat in categories):
-                score += 5
-                logger.debug(f"[SCORE] Theme '{theme}' in categories: +5")
+                score += 4
+                logger.debug(f"[SCORE] Theme '{theme}' in categories: +4")
         
         return score
     
     def _score_keyword_matches(self, book: Dict, themes: Dict) -> float:
         """
-        Score based on keyword matches in description (max 30 points).
+        Score based on keyword matches in description (max 49 points).
         
         Checks for:
         - Character archetypes
@@ -198,54 +198,54 @@ class BookRanker:
         if not description or description == 'no description available':
             return 0.0
         
-        # Character archetypes (up to 10 points)
+        # Character archetypes (up to 2 points)
         char_types = themes.get('characterTypes', [])
         for char_type in char_types[:2]:  # Top 2 character types
             keywords = char_type.lower().split()
             # Check if any keyword appears in description
             if any(kw in description for kw in keywords):
-                score += 5
-                logger.debug(f"[SCORE] Character type '{char_type}' match: +5")
+                score += 2
+                logger.debug(f"[SCORE] Character type '{char_type}' match: +2")
         
-        # Plot structures (up to 10 points)
+        # Plot structures (up to 5 points)
         plot_structures = themes.get('plotStructures', [])
         if isinstance(plot_structures, list):
             for structure in plot_structures[:2]:
                 keywords = structure.lower().split()
                 if any(kw in description for kw in keywords):
-                    score += 5
-                    logger.debug(f"[SCORE] Plot structure '{structure}' match: +5")
+                    score += 2
+                    logger.debug(f"[SCORE] Plot structure '{structure}' match: +2")
         elif isinstance(plot_structures, str):
             keywords = plot_structures.lower().split()
             if any(kw in description for kw in keywords):
-                score += 10
-                logger.debug(f"[SCORE] Plot structure match: +10")
+                score += 3
+                logger.debug(f"[SCORE] Plot structure match: +3")
         
-        # Tone/atmosphere (5 points)
+        # Tone/atmosphere (2 points)
         tone = themes.get('tone', '').lower()
         if tone and tone in description:
-            score += 5
-            logger.debug(f"[SCORE] Tone '{tone}' match: +5")
+            score += 2
+            logger.debug(f"[SCORE] Tone '{tone}' match: +2")
         
-        # Setting (5 points)
+        # Setting (1 points)
         setting = themes.get('settingType', '').lower()
         if setting:
             setting_keywords = setting.split()
             if any(kw in description for kw in setting_keywords if len(kw) > 3):
-                score += 5
-                logger.debug(f"[SCORE] Setting match: +5")
+                score += 1
+                logger.debug(f"[SCORE] Setting match: +1")
         
         return score
     
     def _score_rating_quality(self, book: Dict) -> float:
         """
-        Enhanced rating quality scoring (max 15 points).
+        Enhanced rating quality scoring (max 49 points).
         
         Scoring tiers:
-        - 4.5+: 15 points (excellent)
-        - 4.0-4.49: 12 points (very good)
-        - 3.5-3.99: 8 points (good)
-        - 3.0-3.49: 4 points (decent)
+        - 4.5+: 49 points (excellent)
+        - 4.0-4.49: 39 points (very good)
+        - 3.5-3.99: 26 points (good)
+        - 3.0-3.49: 13 points (decent)
         - <3.0: 0 points
         """
         rating = book.get('rating')
@@ -254,25 +254,25 @@ class BookRanker:
             return 0.0
         
         if rating >= 4.5:
-            return 15.0
+            return 49.0
         elif rating >= 4.0:
-            return 12.0
+            return 39.0
         elif rating >= 3.5:
-            return 8.0
+            return 26.0
         elif rating >= 3.0:
-            return 4.0
+            return 13.0
         else:
             return 0.0
     
     def _score_publication_recency(self, book: Dict) -> float:
         """
-        Score based on publication recency (max 10 points).
+        Score based on publication recency (max 6 points).
         
         Tiers:
-        - Last 5 years: 10 points
-        - 6-10 years: 7 points
-        - 11-20 years: 4 points
-        - 20+ years: 2 points (classics still get points)
+        - Last 5 years: 6 points
+        - 6-10 years: 4 points
+        - 11-20 years: 2 points
+        - 20+ years: 1 points (classics still get points)
         """
         year = book.get('year')
         
@@ -283,22 +283,22 @@ class BookRanker:
         age = current_year - year
         
         if age <= 5:
-            return 10.0
+            return 6.0
         elif age <= 10:
-            return 7.0
-        elif age <= 20:
             return 4.0
+        elif age <= 20:
+            return 2.0
         else:
-            return 2.0  # Classics still get some points
+            return 1.0  # Classics still get some points
     
     def _score_source_priority(self, book: Dict) -> float:
         """
-        Score based on source quality (max 5 points).
+        Score based on source quality (max 3 points).
         
         Priority:
-        - Google Books with description: 5 points
-        - Curated collection: 4 points
-        - Google Books without description: 3 points
+        - Google Books with description: 3 points
+        - Curated collection: 2 points
+        - Google Books without description: 2 points
         - Open Library with good mapping: 2 points
         - Open Library basic: 1 point
         """
@@ -308,11 +308,11 @@ class BookRanker:
         
         if source == 'google_books':
             if description and len(description) > 100:
-                return 5.0
-            else:
                 return 3.0
+            else:
+                return 2.0
         elif source == 'curated':
-            return 4.0
+            return 2.0
         elif source == 'open_library':
             # Reward good subject mapping
             if mapping_method == 'dynamic':
