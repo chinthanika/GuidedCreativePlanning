@@ -2,9 +2,9 @@
 Enhanced book ranking with improved scoring system.
 Updated scoring weights based on your requirements:
 - Theme matches: 32% (up from 30%)
-- Keyword matches in description: 10% (maintained)
+- Keyword matches in description: 11% (maintained)
 - High rating (>4.0): 49% (increased from basic check)
-- Publication recency: 6%
+- Publication recency: 5%
 - Source priority: 3%
 """
 
@@ -87,9 +87,9 @@ class BookRanker:
         
         Returns breakdown dict with:
         - theme_score (max 32)
-        - keyword_score (max 10)
+        - keyword_score (max 11)
         - rating_score (max 49)
-        - recency_score (max 6)
+        - recency_score (max 5)
         - source_score (max 3)
         - total (sum of above)
         """
@@ -108,7 +108,7 @@ class BookRanker:
         
         # 2. DESCRIPTION KEYWORD MATCHES (30 points max)
         keyword_score = self._score_keyword_matches(book, themes)
-        breakdown['keyword_score'] = min(keyword_score, 10)
+        breakdown['keyword_score'] = min(keyword_score, 11)
         
         # 3. RATING QUALITY (15 points max) - ENHANCED SCORING
         rating_score = self._score_rating_quality(book)
@@ -116,7 +116,7 @@ class BookRanker:
         
         # 4. PUBLICATION RECENCY (10 points max)
         recency_score = self._score_publication_recency(book)
-        breakdown['recency_score'] = min(recency_score, 6)
+        breakdown['recency_score'] = min(recency_score, 5)
         
         # 5. SOURCE PRIORITY (5 points max)
         source_score = self._score_source_priority(book)
@@ -183,7 +183,7 @@ class BookRanker:
     
     def _score_keyword_matches(self, book: Dict, themes: Dict) -> float:
         """
-        Score based on keyword matches in description (max 49 points).
+        Score based on keyword matches in description (max 11 points).
         
         Checks for:
         - Character archetypes
@@ -232,8 +232,8 @@ class BookRanker:
         if setting:
             setting_keywords = setting.split()
             if any(kw in description for kw in setting_keywords if len(kw) > 3):
-                score += 1
-                logger.debug(f"[SCORE] Setting match: +1")
+                score += 2
+                logger.debug(f"[SCORE] Setting match: +2")
         
         return score
     
@@ -266,10 +266,10 @@ class BookRanker:
     
     def _score_publication_recency(self, book: Dict) -> float:
         """
-        Score based on publication recency (max 6 points).
+        Score based on publication recency (max 5 points).
         
         Tiers:
-        - Last 5 years: 6 points
+        - Last 5 years: 5 points
         - 6-10 years: 4 points
         - 11-20 years: 2 points
         - 20+ years: 1 points (classics still get points)
@@ -283,7 +283,7 @@ class BookRanker:
         age = current_year - year
         
         if age <= 5:
-            return 6.0
+            return 5.0
         elif age <= 10:
             return 4.0
         elif age <= 20:
