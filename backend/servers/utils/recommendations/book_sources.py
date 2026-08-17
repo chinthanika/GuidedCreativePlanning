@@ -517,44 +517,28 @@ class BookSourceManager:
                 year = book['year']
                 
                 if pub_date == 'last5':
-                    if year >= current_year - 5:
-                        filter_bonus += 5.0  # Bonus for match
-                    else:
-                        include_book = False  # EXCLUDE if doesn't match
-                        
-                elif pub_date == 'last10':
-                    if year >= current_year - 10:
-                        filter_bonus += 3.0
-                    else:
+                    if year < current_year - 5:
                         include_book = False
-                        
+                elif pub_date == 'last10':
+                    if year < current_year - 10:
+                        include_book = False
                 elif pub_date == 'classic':
-                    if year < current_year - 20:
-                        filter_bonus += 4.0
-                    else:
+                    if year >= current_year - 20:
                         include_book = False
             
             # 2. HARD FILTER: Minimum rating
             min_rating = filters.get('minRating')
-            if min_rating and min_rating > 0:  # Only filter if explicitly set
+            if min_rating and min_rating > 0:
                 book_rating = book.get('rating')
-                
-                if book_rating is None:
-                    # No rating - treat as neutral (don't exclude unless rating required)
-                    pass
-                elif book_rating >= min_rating:
-                    # Bonus for exceeding minimum
-                    filter_bonus += (book_rating - min_rating) * 2.0
-                else:
-                    # Below minimum - EXCLUDE
+                if book_rating is not None and book_rating < min_rating:
                     include_book = False
             
-            # 3. SOFT FILTER: Age range (best-effort matching)
+            # 3. SOFT FILTER: Age range (unchanged)
             age_range = filters.get('ageRange')
             if age_range and age_range != 'any':
                 age_match = self._check_age_match(book, age_range)
                 if age_match:
-                    filter_bonus += 3.0
+                    filter_bonus += 3.0       
                 # Don't exclude on age mismatch (too unreliable)
             
             # Only include book if it passed all filters
