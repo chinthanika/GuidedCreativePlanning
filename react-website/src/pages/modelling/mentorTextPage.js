@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import {
-    BookOpen, Plus, Search, Filter, Sparkles, 
-    Loader2, AlertTriangle, X, Trash2
-} from 'lucide-react';
+import { BookOpen, Plus, Search, Filter, Sparkles, Loader2, AlertTriangle, X, Trash2, BookMarked } from 'lucide-react';
 import { useAuthValue } from '../../Firebase/AuthContext';
 
 import MentorTextCard from '../../components/modelling/MentorTextCard';
 import CreateAnalysisModal from '../../components/modelling/CreateAnalysisModal';
 import DeleteConfirmModal from '../../components/modelling/DeleteConfirmModal';
 import AnalysisDetailModal from '../../components/modelling/AnalysisDetailModal';
+import ExcerptLibraryModal from '../../components/modelling/ExcerptLibraryModal';
+import { MENTOR_TEXT_EXCERPTS } from '../../components/modelling/mentorTextExcerpts';
 
 import { logPageExit, logPageView, logUIInteraction } from '../../utils/analytics';
 
 import "./mentor-text-page.css";
 
-const API_BASE = process.env.REACT_APP_AI_SERVER_URL || "http://localhost:5000";
+const API_BASE = process.env.REACT_APP_AI_SERVER_URL || "https://guidedcreativeplanning-ai.onrender.com" || "http://localhost:5000";
 
 const MentorTextPage = () => {
     const { currentUser } = useAuthValue();
     const userId = currentUser?.uid;
-    
+
     const [analyses, setAnalyses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -29,19 +28,42 @@ const MentorTextPage = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [detailModal, setDetailModal] = useState({ isOpen: false, analysisId: null, data: null });
-    
+
+    const [showExcerptLibrary, setShowExcerptLibrary] = useState(false);
+    const [prefill, setPrefill] = useState(null);
+
     // Track page entry time for duration calculation
     const [pageEntryTime] = useState(Date.now());
+
+    const handleOpenExcerptLibrary = () => {
+        logUIInteraction(userId, 'mentorText', 'open_excerpt_library', {});
+        setShowExcerptLibrary(true);
+    };
+
+    const handleUseExcerpt = (item) => {
+        setPrefill({
+            excerpt: item.text,
+            genre: item.genre,
+            focus: item.suggestedFocus
+        });
+        setShowExcerptLibrary(false);
+        setShowCreateModal(true);
+    };
+
+    const handleCloseCreate = () => {
+        setShowCreateModal(false);
+        setPrefill(null);
+    };
 
     // Track page view on mount, page exit on unmount
     useEffect(() => {
         if (!userId) return;
-        
+
         const entryTime = Date.now();
-        
+
         // Log page entry
         logPageView(userId, 'mentorText', 'modelling');
-        
+
         // Cleanup: log page exit
         return () => {
             const duration = Date.now() - entryTime;
@@ -102,17 +124,17 @@ const MentorTextPage = () => {
             if (response.ok) {
                 const data = await response.json();
                 console.log('Analysis created:', data);
-                
+
                 // Close create modal
                 setShowCreateModal(false);
-                
+
                 // Open detail modal with fresh analysis
                 setDetailModal({
                     isOpen: true,
                     analysisId: null,
                     data: data
                 });
-                
+
                 // Reload library
                 await loadAnalyses();
             } else {
@@ -133,7 +155,7 @@ const MentorTextPage = () => {
             focus: analysis.focus,
             teachingPointCount: analysis.teachingPointCount
         });
-        
+
         setDetailModal({
             isOpen: true,
             analysisId: analysis.id,
@@ -174,14 +196,14 @@ const MentorTextPage = () => {
     // Log search interactions
     const handleSearchChange = (query) => {
         setSearchQuery(query);
-        
+
         // Only log if query is meaningful (3+ chars)
         if (query.length >= 3) {
-            const results = analyses.filter(a => 
+            const results = analyses.filter(a =>
                 a.excerpt?.toLowerCase().includes(query.toLowerCase()) ||
                 a.genreIdentified?.toLowerCase().includes(query.toLowerCase())
             );
-            
+
             logUIInteraction(userId, 'mentorText', 'search', {
                 query: query,
                 resultsCount: results.length
@@ -192,7 +214,7 @@ const MentorTextPage = () => {
     // Log filter interactions
     const handleGenreFilter = (genre) => {
         setFilterGenre(genre);
-        
+
         if (genre !== 'all') {
             logUIInteraction(userId, 'mentorText', 'filter', {
                 filterType: 'genre',
@@ -203,7 +225,7 @@ const MentorTextPage = () => {
 
     const handleFocusFilter = (focus) => {
         setFilterFocus(focus);
-        
+
         if (focus !== 'all') {
             logUIInteraction(userId, 'mentorText', 'filter', {
                 filterType: 'focus',
@@ -223,16 +245,16 @@ const MentorTextPage = () => {
 
     // Filter analyses
     const filteredAnalyses = analyses.filter(analysis => {
-        const matchesSearch = 
+        const matchesSearch =
             analysis.excerpt?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             analysis.genreIdentified?.toLowerCase().includes(searchQuery.toLowerCase());
 
-        const matchesGenre = 
-            filterGenre === 'all' || 
+        const matchesGenre =
+            filterGenre === 'all' ||
             analysis.genreIdentified === filterGenre;
 
-        const matchesFocus = 
-            filterFocus === 'all' || 
+        const matchesFocus =
+            filterFocus === 'all' ||
             analysis.focus === filterFocus;
 
         return matchesSearch && matchesGenre && matchesFocus;
@@ -288,20 +310,30 @@ const MentorTextPage = () => {
                         </div>
                     </div>
 
-                    {/* Create New Analysis Button */}
-                    <button
-                        onClick={() => {
-                            // ✅ NEW: Log when user opens create modal
-                            logUIInteraction(userId, 'mentorText', 'open_create_modal', {
-                                currentAnalysesCount: analyses.length
-                            });
-                            setShowCreateModal(true);
-                        }}
-                        className="mentor-text-create-btn"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Analyze New Text
-                    </button>
+                    <div className="mentor-text-header-actions">
+                        {/* Browse Excerpts Button */}
+                        <button
+                            onClick={handleOpenExcerptLibrary}
+                            className="mentor-text-library-btn"
+                        >
+                            <BookMarked className="w-5 h-5" />
+                            Browse Excerpts
+                        </button>
+
+                        {/* Create New Analysis Button */}
+                        <button
+                            onClick={() => {
+                                logUIInteraction(userId, 'mentorText', 'open_create_modal', {
+                                    currentAnalysesCount: analyses.length
+                                });
+                                setShowCreateModal(true);
+                            }}
+                            className="mentor-text-create-btn"
+                        >
+                            <Plus className="w-5 h-5" />
+                            Analyze New Text
+                        </button>
+                    </div>
                 </div>
 
                 {/* Search and Filters */}
@@ -384,7 +416,7 @@ const MentorTextPage = () => {
                         <p className="mentor-text-flip-hint">
                             💡 <strong>Tip:</strong> Click any card to flip and see the full analysis
                         </p>
-                        
+
                         <div className="mentor-text-flip-grid">
                             {filteredAnalyses.map((analysis) => (
                                 <MentorTextCard
@@ -398,11 +430,24 @@ const MentorTextPage = () => {
                 )}
             </div>
 
+            {/* Excerpt Library Modal */}
+            {showExcerptLibrary && (
+                <ExcerptLibraryModal
+                    excerpts={MENTOR_TEXT_EXCERPTS}
+                    userId={userId}
+                    onClose={() => setShowExcerptLibrary(false)}
+                    onUseExcerpt={handleUseExcerpt}
+                />
+            )}
+
             {/* Create Analysis Modal */}
             {showCreateModal && (
                 <CreateAnalysisModal
-                    onClose={() => setShowCreateModal(false)}
+                    onClose={handleCloseCreate}
                     onCreate={handleCreateAnalysis}
+                    initialExcerpt={prefill?.excerpt}
+                    initialGenre={prefill?.genre}
+                    initialFocus={prefill?.focus}
                 />
             )}
 
@@ -431,7 +476,7 @@ const MentorTextPage = () => {
                 initialData={detailModal.data}
             />
         </div>
-    );
+    )
 };
 
-export default MentorTextPage;
+    export default MentorTextPage;
