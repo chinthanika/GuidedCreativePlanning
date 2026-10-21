@@ -762,3 +762,207 @@
     border-radius: 0;
   }
 }
+
+/* ===== Browse Excerpts button (secondary header action) ===== */
+.mentor-text-library-btn {
+  padding: 12px 24px;
+  background: var(--background-paper);
+  color: var(--text-primary);
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.mentor-text-library-btn:hover {
+  border-color: var(--secondary-main);
+  background: var(--border-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(39, 39, 42, 0.15);
+}
+
+/* ===== Excerpt Library Modal ===== */
+.excerpt-library-modal {
+  max-width: 760px;
+}
+
+.excerpt-library-intro {
+  margin: 0;
+  padding: 16px 24px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.excerpt-library-search {
+  flex: none;
+  margin: 16px 24px;
+  min-width: 0;
+}
+
+.excerpt-library-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.excerpt-library-empty {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding: 32px 0;
+  margin: 0;
+}
+
+/* Item card */
+.excerpt-library-item {
+  background: var(--background-paper);
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  padding: 16px 20px;
+  transition: all 0.3s;
+}
+
+.excerpt-library-item:hover {
+  border-color: var(--secondary-main);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.excerpt-library-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.excerpt-library-meta h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.excerpt-library-meta p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 4px 0 0 0;
+}
+
+/* Actions */
+.excerpt-library-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.excerpt-library-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.excerpt-library-btn.secondary {
+  background: var(--border-light);
+  color: var(--text-secondary);
+}
+
+.excerpt-library-btn.secondary:hover {
+  background: var(--divider);
+  color: var(--text-primary);
+}
+
+.excerpt-library-btn.primary {
+  background: var(--primary-main);
+  border-color: var(--primary-main);
+  color: var(--background-paper);
+  box-shadow: 0 4px 6px -1px rgba(39, 39, 42, 0.2);
+}
+
+.excerpt-library-btn.primary:hover {
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 12px -1px rgba(39, 39, 42, 0.3);
+}
+
+/* Preview text (matches the card excerpt style) */
+.excerpt-library-text {
+  margin: 16px 0 0 0;
+  padding: 16px 20px;
+  background: var(--background-default);
+  border: 1px solid var(--divider);
+  border-left: 3px solid var(--secondary-main);
+  border-radius: 8px;
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  max-height: 280px;
+  overflow-y: auto;
+  user-select: text;
+}
+
+.excerpt-library-chars {
+  display: block;
+  margin-top: 12px;
+  font-family: inherit;
+  font-style: normal;
+  font-size: 12px;
+  color: var(--text-disabled);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+ .mentor-text-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: nowrap;
+}
+
+.mentor-text-library-btn,
+.mentor-text-create-btn {
+  flex-shrink: 0;
+}
+
+  .excerpt-library-intro {
+    padding: 16px 20px 0;
+  }
+
+  .excerpt-library-search {
+    margin: 16px 20px;
+  }
+
+  .excerpt-library-list {
+    padding: 0 20px 20px;
+  }
+
+  .excerpt-library-actions {
+    width: 100%;
+  }
+
+  .excerpt-library-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
