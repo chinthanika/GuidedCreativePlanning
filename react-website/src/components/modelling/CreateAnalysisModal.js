@@ -28,10 +28,16 @@ const FOCUS_OPTIONS = [
     { value: 'conflict', label: 'Conflict & Stakes' }
 ];
 
-const CreateAnalysisModal = ({ onClose, onCreate }) => {
-    const [excerpt, setExcerpt] = useState('');
-    const [genre, setGenre] = useState('general fiction');
-    const [focus, setFocus] = useState('general');
+const CreateAnalysisModal = ({
+    onClose,
+    onCreate,
+    initialExcerpt = '',
+    initialGenre = 'general fiction',
+    initialFocus = 'general'
+}) => {
+    const [excerpt, setExcerpt] = useState(initialExcerpt);
+    const [genre, setGenre] = useState(initialGenre);
+    const [focus, setFocus] = useState(initialFocus);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -40,7 +46,7 @@ const CreateAnalysisModal = ({ onClose, onCreate }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!isValid) {
             setError('Excerpt must be between 100 and 6000 characters');
             return;
@@ -60,8 +66,8 @@ const CreateAnalysisModal = ({ onClose, onCreate }) => {
 
     return (
         <div className="mentor-text-modal-overlay" onClick={onClose}>
-            <div 
-                className="mentor-text-modal-content" 
+            <div
+                className="mentor-text-modal-content"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
