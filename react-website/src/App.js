@@ -22,6 +22,7 @@ import StoryEditorPage from './pages/storyeditor/story';
 import Chatbot from './pages/chatbot/chatbot'; // Import the Chatbot page
 import StoryWorld from './pages/world/world';
 import LibraryPage from './pages/recommender/LibraryPage';
+import ResourceRecommenderPage from './pages/recommender/ResourceRecommenderPage';
 import GuidanceAssistant from './assistant/GuidanceAssistant';
 import AdminDashboard from './pages/analytics/AdminDashboard';
 
@@ -48,6 +49,7 @@ function App() {
                     <Route path='/login' element={<Login />} />
                     <Route path='/verify-email' element={<VerifyEmail />} />
                     <Route path='/profile' element={<Profile />} />
+                    <Route path="/resources" element={<ResourceRecommenderPage />} />
                     <Route path='/mentor-text' element={<MentorTextPage />} />
                     <Route path='/map-generator' element={<MapGenerator />} />
                     <Route path='/story-map' element={<StoryMap />} />

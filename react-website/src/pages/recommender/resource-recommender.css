@@ -1,0 +1,418 @@
+/* =========================================================
+   Resource Recommender: standalone styles
+   (page shell + header rules copied from mentor-text-page.css)
+   ========================================================= */
+
+/* ---------- Page shell ---------- */
+.mentor-text-page {
+  min-height: 100vh;
+  background: var(--background-default);
+}
+
+/* ---------- Header ---------- */
+.mentor-text-header {
+  background: var(--background-paper);
+  border-bottom: 1px solid var(--divider);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.mentor-text-header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.mentor-text-header-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mentor-text-header-icon {
+  padding: 12px;
+  background: var(--primary-main);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(39, 39, 42, 0.2);
+}
+
+.mentor-text-header-title h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.mentor-text-header-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 4px 0 0 0;
+}
+
+/* ---------- Content area ---------- */
+.mentor-text-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+/* ---------- Error banner ---------- */
+.mentor-text-form-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background-color: #fee2e2;
+  color: var(--error-main);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* ---------- Spinner ---------- */
+.mentor-text-loading-spinner {
+  animation: spin 1s linear infinite;
+  color: var(--primary-main);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Icon sizing (only needed if you don't already
+   have Tailwind-style utility classes globally; values match
+   Tailwind's defaults so they won't conflict if you do) ---------- */
+.w-4 { width: 1rem; }
+.h-4 { height: 1rem; }
+.w-5 { width: 1.25rem; }
+.h-5 { height: 1.25rem; }
+.w-8 { width: 2rem; }
+.h-8 { height: 2rem; }
+.text-white { color: #fff; }
+
+/* =========================================================
+   Resource Recommender components
+   ========================================================= */
+
+/* ---------- Input section ---------- */
+.resource-input-section {
+  max-width: 800px;
+  margin: 0 auto 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resource-input-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.resource-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  background-color: var(--background-paper);
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.resource-textarea:focus {
+  outline: none;
+  border-color: var(--secondary-main);
+  box-shadow: 0 0 0 3px rgba(82, 82, 91, 0.1);
+}
+
+.resource-search-btn {
+  align-self: flex-start;
+  padding: 12px 24px;
+  background: var(--primary-main);
+  color: var(--background-paper);
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 6px -1px rgba(39, 39, 42, 0.2);
+}
+
+.resource-search-btn:enabled:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px -1px rgba(39, 39, 42, 0.3);
+}
+
+.resource-search-btn:disabled {
+  background: var(--divider);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ---------- Feedback ---------- */
+.resource-feedback {
+  max-width: 800px;
+  margin: 0 auto 24px;
+}
+
+.resource-message {
+  max-width: 800px;
+  margin: 0 auto 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.resource-queries {
+  max-width: 800px;
+  margin: 0 auto 16px;
+  font-size: 13px;
+  color: var(--text-disabled);
+}
+
+/* ---------- Result cards ---------- */
+.resource-list {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.resource-card {
+  background: var(--background-paper);
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  padding: 20px 24px;
+  transition: all 0.3s;
+}
+
+.resource-card:hover {
+  border-color: var(--secondary-main);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.resource-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.resource-card-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.resource-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--border-light);
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.resource-link:hover {
+  background: var(--divider);
+  color: var(--text-primary);
+}
+
+.resource-why {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0 0 12px 0;
+}
+
+.resource-points {
+  margin: 0 0 12px 0;
+  padding: 10px 12px 10px 32px;
+  background: var(--border-light);
+  border-left: 3px solid var(--secondary-main);
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+/* ---------- Vocabulary chips ---------- */
+.resource-vocab {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.resource-vocab-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-disabled);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.resource-vocab-chip {
+  padding: 4px 10px;
+  background: var(--background-paper);
+  border: 1px solid var(--divider);
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* ---------- Extract toggle ---------- */
+.resource-extract-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.resource-extract-toggle:hover {
+  color: var(--text-primary);
+}
+
+.resource-extract {
+  margin: 12px 0 0 0;
+  padding: 16px 20px;
+  background: var(--background-default);
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+  font-family: Georgia, serif;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  white-space: pre-line;
+}
+
+/* ---------- Footer actions ---------- */
+.resource-more {
+  max-width: 800px;
+  margin: 24px auto 0;
+  display: flex;
+  justify-content: center;
+}
+
+.resource-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--border-light);
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.resource-more-btn:enabled:hover {
+  background: var(--divider);
+  color: var(--text-primary);
+}
+
+.resource-more-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.resource-attribution {
+  max-width: 800px;
+  margin: 24px auto 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-disabled);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .mentor-text-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
+  }
+
+  .mentor-text-content {
+    padding: 20px;
+  }
+
+  .resource-search-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .resource-card {
+    padding: 16px;
+  }
+
+  .resource-link {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.resource-summary { font-size: 14px; line-height: 1.6; color: var(--text-primary); margin: 0 0 12px 0; }
+
+.resource-section-tag {
+  display: inline-block; margin-left: 8px; padding: 1px 8px;
+  border: 1px solid var(--divider); border-radius: 10px;
+  font-size: 11px; font-weight: 600; color: var(--text-disabled);
+}
+
+.resource-ask { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--divider); }
+.resource-ask-turn { margin-bottom: 16px; }
+.resource-ask-q { font-size: 13px; font-weight: 700; color: var(--text-primary); margin: 0 0 6px 0; }
+.resource-ask-a { font-size: 14px; line-height: 1.6; color: var(--text-secondary); margin: 0 0 10px 0; }
+.resource-ask-miss { font-style: italic; }
+.resource-ask-error { font-size: 13px; color: var(--error-main); margin: 0 0 8px 0; }
+
+.resource-ask-row { display: flex; gap: 8px; }
+.resource-ask-input {
+  flex: 1; padding: 10px 12px; border: 1px solid var(--divider); border-radius: 8px;
+  font-size: 14px; font-family: inherit; background: var(--background-paper); color: var(--text-primary);
+}
+.resource-ask-input:focus { outline: none; border-color: var(--secondary-main); }
+.resource-ask-btn {
+  padding: 0 14px; background: var(--primary-main); color: var(--background-paper);
+  border: none; border-radius: 8px; cursor: pointer;
+}
+.resource-ask-btn:disabled { background: var(--divider); color: var(--text-disabled); cursor: not-allowed; }

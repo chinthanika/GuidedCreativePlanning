@@ -17,6 +17,8 @@ from firebase_admin import credentials, db
 import logging
 from logging.handlers import RotatingFileHandler
 
+from concurrent.futures import ThreadPoolExecutor
+
 from utils.chat.BSConversationFlowManager import BSConversationFlowManager
 from utils.chat.DTConversationFlowManager import DTConversationFlowManager
 
@@ -36,6 +38,25 @@ from utils.recommendations.book_sources import BookSourceManager
 from utils.recommendations.ranker import BookRanker
 from utils.recommendations.StoryElementExtractor import StoryElementExtractor
 from utils.recommendations.book_explanation import BookExplanationGenerator
+
+
+from utils.recommendations.article_reader import build_article_context
+from prompts.resource_prompts import (
+    RESOURCE_QUERY_SYSTEM_PROMPT,
+    RESOURCE_RANKING_SYSTEM_PROMPT,
+    RESOURCE_DEEP_SUMMARY_SYSTEM_PROMPT,
+    RESOURCE_FOLLOWUP_SYSTEM_PROMPT,
+    build_resource_ranking_user_prompt,
+    build_deep_summary_user_prompt,
+    build_followup_user_prompt,
+)
+
+from utils.recommendations.resource_sources import WikipediaResourceSource
+from prompts.resource_prompts import (
+    RESOURCE_QUERY_SYSTEM_PROMPT,
+    RESOURCE_RANKING_SYSTEM_PROMPT,
+    build_resource_ranking_user_prompt,
+)
 
 from utils.feedback.utils import _validate_feedback, _build_context_summary, _validate_feedback_structure
 
@@ -173,6 +194,7 @@ book_source_manager = BookSourceManager()
 book_ranker = BookRanker()
 story_extractor = StoryElementExtractor()
 explanation_generator = BookExplanationGenerator(client)
+resource_source = WikipediaResourceSource()
 # ============================================
 # ROUTE: HEALTH CHECK
 # ============================================
@@ -1998,6 +2020,327 @@ def generate_image():
 # ============================================
 # BOOK RECOMMENDATIONS ENDPOINTS (CONSOLIDATED)
 # ============================================
+
+def _llm_json(system_prompt, user_prompt, timeout=40, max_retries=2, temperature=0.2):
+    """DeepSeek JSON call with retry on malformed output."""
+    last_err = None
+    for attempt in range(max_retries):
+        try:
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                response_format={'type': 'json_object'},
+                stream=False,
+                timeout=timeout,
+                temperature=temperature
+            )
+            text = response.choices[0].message.content.strip()
+            if text.startswith('```'):
+                text = re.sub(r'```(?:json)?\s*', '', text).strip().rstrip('`').strip()
+            return json.loads(text)
+        except (json.JSONDecodeError, openai.APITimeoutError) as e:
+            last_err = e
+            rec_logger.warning(f"[RESOURCES] LLM attempt {attempt + 1} failed: {e}")
+    raise last_err
+
+def _ground_points(raw_points, ctx, cap=4):
+    """Key points keep a section label only if it's a heading we actually sent."""
+    headings = {h.lower(): h for h in ctx['headings']}
+    pts = []
+    for p in raw_points or []:
+        if isinstance(p, str):
+            text, sec = p, None
+        elif isinstance(p, dict):
+            text, sec = p.get('point'), p.get('section')
+        else:
+            continue
+        if not isinstance(text, str) or not text.strip():
+            continue
+        sec = headings.get(str(sec).strip().lower()) if sec else None
+        pts.append({'point': text.strip(), 'section': sec})
+    return pts[:cap]
+
+
+def _ground_vocab(raw, ctx, cap=4):
+    """Vocabulary must literally appear in the text we sent."""
+    ctx_lower = ctx['context'].lower()
+    return [v.strip() for v in (raw or [])
+            if isinstance(v, str) and v.strip() and v.strip().lower() in ctx_lower][:cap]
+
+@app.route('/api/resource-recommendations', methods=['POST'])
+def get_resource_recommendations():
+    """
+    Resource Recommender (Building Knowledge of the Field).
+    Idea -> LLM search queries -> real Wikipedia articles -> LLM ranks on intros ->
+    full article fetched for each pick, most relevant sections selected and summarised.
+    URLs and article text always come from our data, never the LLM.
+    """
+    request_start = time.time()
+    rec_logger.info("[RESOURCES] Incoming request")
+
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        idea = (data.get('idea') or '').strip()
+        exclude_titles = set(data.get('excludeTitles', []))
+        limit = max(1, min(int(data.get('limit', 5)), 8))
+
+        if not user_id or not idea:
+            return jsonify({
+                'error': 'Missing required fields',
+                'details': 'userId and idea are required'
+            }), 400
+        if len(idea) < 10:
+            return jsonify({
+                'error': 'Idea too short',
+                'details': 'Tell us a bit more about your story or topic'
+            }), 400
+        idea = idea[:1000]
+
+        # Step 1: idea -> search queries
+        try:
+            q_out = _llm_json(RESOURCE_QUERY_SYSTEM_PROMPT, idea, timeout=30)
+            queries = [q.strip() for q in q_out.get('queries', [])
+                       if isinstance(q, str) and q.strip()][:3]
+        except Exception as e:
+            rec_logger.error(f"[RESOURCES] Query generation failed: {e}")
+            queries = []
+        if not queries:
+            queries = [idea[:80]]
+        rec_logger.info(f"[RESOURCES] Queries: {queries}")
+
+        # Step 2: retrieve real articles
+        candidates = resource_source.gather(
+            queries, per_query=5, max_total=12, exclude_titles=exclude_titles
+        )
+        rec_logger.info(f"[RESOURCES] {len(candidates)} candidates")
+
+        if not candidates:
+            return jsonify({
+                'results': [],
+                'queries': queries,
+                'message': 'No articles found. Try describing the setting, activity or place in more detail.',
+                'processingTime': int((time.time() - request_start) * 1000)
+            }), 200
+
+        # Step 3a: cheap ranking pass on intros
+        ranking_fallback = False
+        results = []
+        picked = []  # [(result, candidate)]
+
+        def make_result(c, why='', key_points=None, vocab=None):
+            return {
+                'id': f"wiki_{c['pageId']}",
+                'pageId': c['pageId'],
+                'title': c['title'],
+                'url': c['url'],
+                'source': 'wikipedia',
+                'extract': c['extract'],
+                'summary': '',
+                'whyUseful': why,
+                'keyPoints': key_points or [],
+                'vocabulary': vocab or [],
+                'sectionsUsed': ['Introduction'],
+                'deepRead': False,
+                'lastRevId': c.get('lastRevId'),
+                'matchedQuery': c.get('query')
+            }
+
+        try:
+            r_out = _llm_json(
+                RESOURCE_RANKING_SYSTEM_PROMPT,
+                build_resource_ranking_user_prompt(idea, candidates, limit),
+                timeout=60
+            )
+            used = set()
+            for pick in r_out.get('picks', []):
+                idx = pick.get('id')
+                if not isinstance(idx, int) or idx in used or not (0 <= idx < len(candidates)):
+                    continue
+                used.add(idx)
+                c = candidates[idx]
+                extract_lower = c['extract'].lower()
+
+                # Guard: vocabulary must literally appear in the retrieved text
+                vocab = [v.strip() for v in pick.get('vocabulary', [])
+                         if isinstance(v, str) and v.strip().lower() in extract_lower][:4]
+                key_points = [{'point': k.strip(), 'section': 'Introduction'}
+                              for k in pick.get('key_points', [])
+                              if isinstance(k, str) and k.strip()][:3]
+
+                res = make_result(c, (pick.get('why_useful') or '').strip(), key_points, vocab)
+                results.append(res)
+                picked.append((res, c))
+                if len(results) >= limit:
+                    break
+        except Exception as e:
+            rec_logger.error(f"[RESOURCES] Ranking failed: {e}")
+
+        if not results:
+            ranking_fallback = True
+            for c in candidates[:limit]:
+                res = make_result(c)
+                results.append(res)
+                picked.append((res, c))
+
+        # Step 3b: deep read of each pick, in parallel.
+        # On any failure the result keeps its intro-based content.
+        def deepen(pair):
+            res, c = pair
+            try:
+                ctx = build_article_context(
+                    c['pageId'], idea, idea, _llm_json, resource_source.fetch_full_text
+                )
+                out = _llm_json(
+                    RESOURCE_DEEP_SUMMARY_SYSTEM_PROMPT,
+                    build_deep_summary_user_prompt(idea, c['title'], ctx['context']),
+                    timeout=60
+                )
+                points = _ground_points(out.get('key_points'), ctx, cap=4)
+                if not points:
+                    return
+                res.update({
+                    'summary': (out.get('summary') or '').strip(),
+                    'whyUseful': (out.get('why_useful') or res['whyUseful']).strip(),
+                    'keyPoints': points,
+                    'vocabulary': _ground_vocab(out.get('vocabulary'), ctx) or res['vocabulary'],
+                    'sectionsUsed': ctx['headings'],
+                    'deepRead': True,
+                    'deepRevId': ctx['revId'],
+                })
+            except Exception as e:
+                rec_logger.warning(f"[RESOURCES] Deep read failed for '{c['title']}': {e}")
+
+        deep_start = time.time()
+        with ThreadPoolExecutor(max_workers=min(5, len(picked))) as pool:
+            list(pool.map(deepen, picked))
+        deep_ok = sum(1 for r in results if r['deepRead'])
+        rec_logger.info(
+            f"[RESOURCES] Deep read {deep_ok}/{len(results)} in {time.time() - deep_start:.1f}s"
+        )
+
+        processing_time = int((time.time() - request_start) * 1000)
+
+        # Non-blocking analytics (RQ2 data)
+        def log_run():
+            try:
+                log_tool_interaction(
+                    user_id=user_id,
+                    tool_name='resourceRecs',
+                    interaction_type='request_resources',
+                    tlc_stage='building_knowledge',
+                    metadata={
+                        'ideaLength': len(idea),
+                        'queries': queries,
+                        'candidateCount': len(candidates),
+                        'resultCount': len(results),
+                        'deepReadCount': deep_ok,
+                        'rankingFallback': ranking_fallback,
+                        'processingTimeMs': processing_time
+                    }
+                )
+                feat_ref = db.reference(f"analytics/{user_id}/featureMetrics/resourceRecs")
+                feat_ref.child('totalRequests').transaction(lambda c: (c or 0) + 1)
+                feat_ref.child('runs').push({
+                    'timestamp': int(time.time() * 1000),
+                    'idea': idea,
+                    'queries': queries,
+                    'candidates': [{'title': c['title'], 'lastRevId': c.get('lastRevId')}
+                                   for c in candidates],
+                    'shown': [{'title': r['title'],
+                               'deepRead': r['deepRead'],
+                               'sectionsUsed': r['sectionsUsed']} for r in results],
+                    'rankingFallback': ranking_fallback
+                })
+            except Exception as log_err:
+                rec_logger.warning(f"[RESOURCES] Analytics logging failed: {log_err}")
+
+        threading.Thread(target=log_run, daemon=True).start()
+
+        rec_logger.info(f"[RESOURCES] Total {processing_time}ms, returned {len(results)}")
+        return jsonify({
+            'results': results,
+            'queries': queries,
+            'candidateCount': len(candidates),
+            'rankingFallback': ranking_fallback,
+            'processingTime': processing_time
+        }), 200
+
+    except Exception as e:
+        rec_logger.exception(f"[RESOURCES] Unexpected error: {e}")
+        return jsonify({
+            'error': 'Resource recommendation failed',
+            'details': str(e)
+        }), 500
+
+@app.route('/api/resource-followup', methods=['POST'])
+def resource_followup():
+    """Follow-up question on ONE article: find the relevant sections, answer from them only."""
+    request_start = time.time()
+    try:
+        data = request.json or {}
+        user_id = data.get('userId')
+        title = (data.get('title') or '').strip()
+        idea = (data.get('idea') or '').strip()[:1000]
+        question = (data.get('question') or '').strip()[:500]
+        try:
+            page_id = int(data.get('pageId'))
+        except (TypeError, ValueError):
+            page_id = None
+        history = [
+            {'question': str(h.get('question', '')), 'answer': str(h.get('answer', ''))}
+            for h in (data.get('history') or [])[-3:] if isinstance(h, dict)
+        ]
+
+        if not user_id or not page_id or not question or not title:
+            return jsonify({'error': 'userId, pageId, title and question are required'}), 400
+        if len(question) < 5:
+            return jsonify({'error': 'Question too short'}), 400
+
+        ctx = build_article_context(
+            page_id, question, idea, _llm_json, resource_source.fetch_full_text,
+            max_sections=3
+        )
+        out = _llm_json(
+            RESOURCE_FOLLOWUP_SYSTEM_PROMPT,
+            build_followup_user_prompt(idea, title, ctx['context'], question, history),
+            timeout=60
+        )
+        covered = bool(out.get('covered', True))
+        result = {
+            'covered': covered,
+            'answer': (out.get('answer') or '').strip(),
+            'keyPoints': _ground_points(out.get('key_points'), ctx, cap=4) if covered else [],
+            'vocabulary': _ground_vocab(out.get('vocabulary'), ctx) if covered else [],
+            'sectionsUsed': ctx['headings'],
+            'processingTime': int((time.time() - request_start) * 1000),
+        }
+
+        def log_followup():
+            try:
+                log_tool_interaction(
+                    user_id=user_id, tool_name='resourceRecs',
+                    interaction_type='followup_question', tlc_stage='building_knowledge',
+                    metadata={'title': title, 'questionLength': len(question),
+                              'covered': covered, 'sectionsUsed': ctx['headings']}
+                )
+                db.reference(f"analytics/{user_id}/featureMetrics/resourceRecs/followups").push({
+                    'timestamp': int(time.time() * 1000), 'title': title, 'pageId': page_id,
+                    'question': question, 'covered': covered, 'sectionsUsed': ctx['headings'],
+                    'revId': ctx['revId'],
+                })
+            except Exception as log_err:
+                rec_logger.warning(f"[RESOURCES] Follow-up logging failed: {log_err}")
+        threading.Thread(target=log_followup, daemon=True).start()
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        rec_logger.exception(f"[RESOURCES] Follow-up failed: {e}")
+        return jsonify({'error': 'Follow-up failed', 'details': str(e)}), 500
 
 @app.route('/api/book-recommendations', methods=['POST'])
 def get_book_recommendations():

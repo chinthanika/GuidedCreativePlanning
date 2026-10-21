@@ -16,6 +16,7 @@ const Navbar = () => {
       <NavMenu>
         <NavLink to="/map-generator">Map Generator</NavLink>
         <NavLink to="/story-map">Story Map</NavLink>
+        <NavLink to="/resources">Resource Recommender</NavLink>
         <NavLink to="/mentor-text">Mentor Text</NavLink>
         <NavLink to="/story-timeline">Timeline</NavLink>
         <NavLink to="/story-world">World</NavLink>
