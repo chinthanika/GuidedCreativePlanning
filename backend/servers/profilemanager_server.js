@@ -730,14 +730,15 @@ app.post("/api/events/update", async (req, res) => {
       }
     }
 
-    if (updates.date !== undefined && updates.date !== null) {
-      const dateRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/;
-      if (!dateRegex.test(updates.date)) {
+    if (updates.date !== undefined && updates.date !== null && updates.date !== "") {
+      const isoDate = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+      const usDate  = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/\d{4}$/;
+      if (!isoDate.test(updates.date) && !usDate.test(updates.date)) {
         return res.status(400).json({
-          error: "Event 'date' must be in MM/DD/YYYY format if provided"
+          error: "Event 'date' must be YYYY-MM-DD or MM/DD/YYYY if provided"
         });
       }
-    }
+}
 
     // Merge and save
     const updatedEvent = {
