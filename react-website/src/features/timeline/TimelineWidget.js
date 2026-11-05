@@ -322,11 +322,16 @@ const TimelineCardGrid = () => {
     };
 
     const handleSaveEditedEvent = async (updatedEvent) => {
+        const { id, order, ...fields } = updatedEvent;   // order is managed by drag-reorder
+        const updates = Object.fromEntries(
+            Object.entries(fields).filter(([, v]) => v !== undefined)
+        );
+        
         try {
             await axios.post(`${API_BASE}/events/update`, {
                 userId,
-                eventId: updatedEvent.id,
-                updates: updatedEvent,
+                eventId: id,
+                updates,
             });
 
             // ── Analytics ──────────────────────────────────────────────
@@ -336,10 +341,10 @@ const TimelineCardGrid = () => {
             setIsEventDetailsModalOpen(false);
             showToast("Event updated successfully!", "success");
 
-            getAiInsight(updatedEvent, 'edit');
+            getAiInsight(updatedEvent, 'edit', events.map(e => e.id === id ? updatedEvent : e));
         } catch (error) {
-            console.error("Error updating event:", error);
-            showToast("Failed to update event", "error");
+            console.error("Error updating event:", error.response?.data?.error || error);
+            showToast(error.response?.data?.error || "Failed to update event", "error");
         }
     };
 
